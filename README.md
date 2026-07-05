@@ -1,2 +1,2 @@
-# feature-pilot
+# FeaturePilot
 做功能时的引导员，包含“需求 → 设计 → 计划 → 执行 → 归档”的完整链路
