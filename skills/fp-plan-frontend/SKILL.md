@@ -8,7 +8,7 @@ description: Use when generating frontend FeaturePilot task plans from proposal.
 Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree: `fp-docs/settings/`, `fp-docs/changes/`, `fp-docs/archive/`, `fp-docs/agents/`.
+2. If `fp-docs/` does not exist and this phase needs to create artifacts, create only the directories this phase actually writes to. Do not pre-create empty directories for other phases.
 3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
 4. If settings are absent, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
 

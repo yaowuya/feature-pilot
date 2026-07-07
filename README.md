@@ -43,7 +43,7 @@ FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，
 - **低成本初始化**：`/fp-init` 只创建最小 `fp-docs/` 目录；配置文件不是必须的。
 - **以变更目录作为审查单元**：每个功能放在 `fp-docs/changes/<slug>/` 下，PRD、提案、设计、任务、执行记录和审查都在同一个目录中。
 - **产物依赖图，而不是重流程**：推荐路径是 `PRD → 提案 → 设计 → 任务 → 执行`，但已有产物会被复用，不会强迫重复访谈。
-- **归档保留历史**：完成后的变更移动到 `fp-docs/archive/YYYY-MM-DD-<slug>/`，并在 `fp-docs/agents/history.md` 中记录为什么做、做了什么。
+- **归档保留历史**：完成后的变更移动到 `fp-docs/archive/YYYY-MM-DD-<slug>/`，并在 `fp-docs/history/history.md` 中记录为什么做、做了什么。
 
 ## 低成本使用流程
 
@@ -75,11 +75,14 @@ fp-docs/
 
 ## 输出目录
 
-FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。核心位置包括 `fp-docs/changes/<slug>/`、`fp-docs/archive/` 和 `fp-docs/agents/history.md`：
+FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。核心位置包括 `fp-docs/changes/<slug>/`，以及归档后生成的 `fp-docs/archive/` 和 `fp-docs/history/history.md`（由 `fp-archive` 自动创建）：
 
 ```text
 fp-docs/
-  changes/<slug>/
+  settings/                     # 仅 fp-init 创建，非必须
+    agent.md                    # 可选
+    frontend_design.md          # 可选
+  changes/<slug>/               # 按需由各阶段创建
     prd.md
     proposal.md
     design-backend.md
@@ -92,8 +95,8 @@ fp-docs/
       briefs/
       packages/
       reviews/
-  archive/
-  agents/history.md
+  archive/                      # 由 fp-archive 自动创建
+  history/history.md             # 由 fp-archive 自动创建
 ```
 
 ## 本地安装测试（Claude Code）

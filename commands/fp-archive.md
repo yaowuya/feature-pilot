@@ -13,7 +13,7 @@ description: 归档已完成的变更
 调用 `fp-archive` skill，完成：
 - 确认归档目标（slug 或从列表选择）
 - 移动变更目录并更新历史记录
-- 更新 `fp-docs/agents/history.md` 和 `AGENTS.md`
+- 更新 `fp-docs/history/history.md` 和 `AGENTS.md`
 
 等待执行完成后，输出 `✅ 已归档`。
 

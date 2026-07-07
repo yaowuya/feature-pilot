@@ -27,7 +27,7 @@ When the user asks to run FeaturePilot, read the matching skill file before acti
 Before choosing output paths, component-library guidance, test commands, or workflow behavior, locate the target project's FeaturePilot workspace:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
-2. If `fp-docs/` does not exist and the selected phase needs to create artifacts, initialize the minimal tree: `fp-docs/settings/`, `fp-docs/changes/`, `fp-docs/archive/`, and `fp-docs/agents/`.
+2. If `fp-docs/` does not exist and the selected phase needs to create artifacts, create only the directories this phase actually writes to. Do not pre-create empty directories for other phases. Most phases only need `fp-docs/changes/`. Only `fp-archive` creates `fp-docs/archive/` and `fp-docs/history/`. `fp-init` only creates `fp-docs/settings/`.
 3. Read `fp-docs/settings/agent.md` if it exists. It may contain project-specific FeaturePilot rules, component/design-system guidance, checks, review gates, source/test paths, and workflow preferences.
 4. If settings are absent, fall back to current project code, adjacent implementations, and public defaults only.
 5. Do not create, overwrite, or rewrite customer settings unless the user explicitly asks.
@@ -43,7 +43,7 @@ Use `fp-docs/changes/<slug>/` as the review unit for a feature. Keep artifacts t
 - `tasks/` — implementation checklist.
 - `.fp-execute/` — execution ledger, task briefs, packages, and reviews.
 
-When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and summarize the change in `fp-docs/agents/history.md`.
+When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and summarize the change in `fp-docs/history/history.md`.
 
 ## Low-cost flow
 
@@ -61,7 +61,7 @@ Do not skip phases unless the selected skill explicitly allows it.
 2. Generate and confirm design files under `fp-docs/changes/<slug>/`.
 3. Generate and confirm task plans under `fp-docs/changes/<slug>/tasks/`.
 4. Execute tasks using the confirmed task files, not chat summaries.
-5. Review and archive when complete, using `fp-docs/archive/`, and `fp-docs/agents/history.md` as the canonical archive/spec/history locations.
+5. Review and archive when complete, using `fp-docs/archive/`, and `fp-docs/history/history.md` as the canonical archive/spec/history locations.
 
 ## Naming
 
