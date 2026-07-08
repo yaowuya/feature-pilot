@@ -1,6 +1,6 @@
 {
   "name": "fp-dev",
-  "description": "Development marketplace for FeaturePilot fp plugin",
+  "description": "FeaturePilot 插件开发市场 - 信息层驱动 SDD",
   "owner": {
     "name": "zhong"
   },
