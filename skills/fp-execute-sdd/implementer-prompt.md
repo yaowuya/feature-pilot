@@ -17,7 +17,11 @@ Read this task brief first and treat it as your source of truth:
 
 {BRIEF_PATH}
 
-The brief contains task text, allowed files, reasoning, interfaces, global constraints, TDD/validation commands, scope exclusions, and commit instructions.
+The brief contains task text, allowed files, reasoning, interfaces, global constraints, Relevant Project Information Layer, TDD/validation commands, scope exclusions, and commit instructions.
+
+## Information Layer Rules
+
+Before editing, read the task brief's Relevant Project Information Layer section. Re-open every referenced live source/config file before relying on it. Treat settings/intel as navigation and constraints, not proof of current behavior. If a referenced path is missing or stale, stop and report the blocker instead of guessing.
 
 ## Report File
 

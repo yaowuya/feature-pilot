@@ -32,10 +32,11 @@ Findings to fix:
 
 1. Read all inputs.
 2. Confirm each finding is understood.
-3. Edit only files needed to fix the listed findings.
-4. Run the targeted tests/validation commands from the brief plus any regression command needed for the fixes.
-5. Commit the fix if code changes are made.
-6. Append a fix section to {REPORT_PATH}; do not create a separate unnamed report.
+3. Re-check the task brief's Relevant Project Information Layer section before applying fixes. If a stale-intel or stale-settings issue is discovered, surface it rather than patching around it.
+4. Edit only files needed to fix the listed findings.
+5. Run the targeted tests/validation commands from the brief plus any regression command needed for the fixes.
+6. Commit the fix if code changes are made.
+7. Append a fix section to {REPORT_PATH}; do not create a separate unnamed report.
 
 If a finding cannot be fixed without changing approved scope or making a product/architecture/security decision, stop with BLOCKED and explain exactly why.
 

@@ -38,6 +38,15 @@ From implementer report and controller verification:
 | --- | --- | --- |
 | `<command>` | `PASS/FAIL` | `<key output or report section>` |
 
+## Information Layer Evidence
+
+- Manifest read:
+- Settings considered:
+- Intel considered:
+- Unknowns checked:
+- Stale sections found:
+- Source files re-opened:
+
 ## Known Concerns
 
 - `<none or implementer/controller concern>`

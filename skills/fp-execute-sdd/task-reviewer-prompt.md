@@ -30,7 +30,7 @@ Applicable Global Constraints:
 
 ## Review Method
 
-1. Read the task brief.
+1. Read the task brief including the Relevant Project Information Layer section.
 2. Read the implementer report.
 3. Read the review package, including commit list, diff stat, full diff, and test evidence.
 4. Inspect referenced source/test files read-only when needed for line evidence.
@@ -39,6 +39,7 @@ Applicable Global Constraints:
 7. Verify tests or alternative validations actually prove the behavior.
 8. For frontend tasks, verify Template Outline, Script Outline, Style Outline, and Visual Checks are respected.
 9. Report every Critical/Important issue with file:line evidence. Do not filter out real bugs for politeness.
+10. Check whether the implementer followed the Relevant Project Information Layer section. If the task touched UI, verify `settings/frontend.md` was considered when present. If it touched backend/API/data/security behavior, verify `settings/backend.md` was considered when present. Flag any reliance on stale intel or missing source-file revalidation.
 
 ## Read-Only Rules
 
