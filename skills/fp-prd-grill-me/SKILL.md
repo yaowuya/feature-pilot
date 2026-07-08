@@ -5,7 +5,7 @@ description: Use with fp-prd to grill a product idea, pain point, user story, or
 
 ## FeaturePilot workspace and information layer
 
-Before asking PRD-blocking questions, locate the target project's FeaturePilot workspace:
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
 2. If `fp-docs/manifest.md` exists, read it first.
@@ -15,18 +15,10 @@ Before asking PRD-blocking questions, locate the target project's FeaturePilot w
 6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
 7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-If settings are absent, use current project code and adjacent implementations only. Do not assume any customer component library, vendor, component prefix, design token, or workflow policy.
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-# FeaturePilot workspace and customer settings
+Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
 
-Before asking PRD-blocking questions that depend on project conventions, read relevant target-project settings when present:
-
-- `fp-docs/settings/agent.md` for project-specific FeaturePilot rules.
-- `fp-docs/settings/agent.md` for UI/component/design-system rules.
-- `fp-docs/settings/agent.md` for review and execution rules.
-- `fp-docs/settings/agent.md` for project path conventions.
-
-If settings are absent, use current project code and adjacent implementations only. Do not assume any customer component library, vendor, component prefix, design token, or workflow policy.
 
 # FeaturePilot PRD Grill Me
 
