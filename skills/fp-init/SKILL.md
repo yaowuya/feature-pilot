@@ -3,6 +3,9 @@ name: fp-init
 description: Use when a project is adopting FeaturePilot for the first time, needs a single-manifest fp-docs information layer, or wants guided creation of optional fp-docs/settings/agent.md, frontend.md, and backend.md configuration.
 ---
 
+## FeaturePilot workspace and information layer
+
+
 # FeaturePilot Init
 
 `fp-init` bootstraps a FeaturePilot information layer with low setup cost. It creates the minimal skeleton and optionally guides the user through lightweight read-only discovery to populate `fp-docs/intel/`.

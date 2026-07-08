@@ -3,20 +3,21 @@ name: fp-plan-frontend
 description: Use when generating frontend FeaturePilot task plans from proposal.md and design-frontend.md, especially for project-configured component libraries, Figma mapping, page, route, state, API, style, and visual-check work.
 ---
 
-## FeaturePilot workspace and customer settings
+## FeaturePilot workspace and information layer
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
-2. If `fp-docs/` does not exist and this phase needs to create artifacts, create only the directories this phase actually writes to. Do not pre-create empty directories for other phases.
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-4. If settings are absent, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Read only relevant settings and intel listed by the manifest.
+4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
+6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Recommended settings file:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, frontend framework, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
+Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
 
 ---
 
