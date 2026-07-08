@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "fp",
-      "description": "AI 功能开发引导员：需求 → 设计 → 计划 → 执行 → 归档",
-      "version": "0.1.0",
+      "description": "AI 功能开发引导员 - 信息层驱动 SDD：需求 → 设计 → 计划 → 执行 → 归档。fp-docs/manifest.md 为单一入口，intel/ 为 source-backed 项目事实层。",
+      "version": "0.2.0",
       "source": "./",
       "author": {
         "name": "zhong"
