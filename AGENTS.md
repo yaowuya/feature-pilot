@@ -27,11 +27,25 @@ When the user asks to run FeaturePilot, read the matching skill file before acti
 Before choosing output paths, component-library guidance, test commands, or workflow behavior, locate the target project's FeaturePilot workspace:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
-2. If `fp-docs/` does not exist and the selected phase needs to create artifacts, create only the directories this phase actually writes to. Do not pre-create empty directories for other phases. Most phases only need `fp-docs/changes/`. Only `fp-archive` creates `fp-docs/archive/` and `fp-docs/history/`. `fp-init` only creates `fp-docs/settings/`.
-3. Read `fp-docs/settings/agent.md` if it exists. It may contain project-specific FeaturePilot rules, component/design-system guidance, checks, review gates, source/test paths, and workflow preferences.
-4. If settings are absent, fall back to current project code, adjacent implementations, and public defaults only.
-5. Do not create, overwrite, or rewrite customer settings unless the user explicitly asks.
-6. Do not assume any customer component library, vendor, component prefix, design token, or workflow policy in public workflow behavior.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Read only relevant settings and intel listed by the manifest.
+4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
+6. If the information layer is absent, fall back to current project code, adjacent implementations, and public defaults only.
+7. Do not create, overwrite, or rewrite customer manifest/settings/intel unless the user explicitly asks.
+8. Do not assume any customer component library, vendor, component prefix, design token, backend framework, or workflow policy in public workflow behavior.
+
+Information layer structure:
+
+```text
+fp-docs/
+  manifest.md               # FeaturePilot 信息层唯一入口
+  settings/
+    agent.md                # 可选：轻量 FeaturePilot policy adapter
+    frontend.md             # 可选：前端/UI/视觉/设计系统规则
+    backend.md              # 可选：后端/API/数据/安全规则
+  intel/                    # 生成的 source-backed 项目事实
+```
 
 ## OpenSpec-inspired artifact model
 
@@ -49,7 +63,7 @@ When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and 
 
 Preferred path:
 
-1. `/fp-init` when the project has no `fp-docs/` workspace or wants optional `settings/agent.md` guidance.
+1. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`, `fp-docs/intel/`).
 2. `/fp-prd <idea>` to complete requirement design in `fp-docs/changes/<slug>/prd.md`.
 3. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
 
