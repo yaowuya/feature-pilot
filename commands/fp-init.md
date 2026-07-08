@@ -6,9 +6,21 @@ description: 初始化 fp-docs 信息层（单一 manifest.md、settings/agent.m
 
 **初始化目标（可选）：** $ARGUMENTS
 
-## FeaturePilot workspace
+## FeaturePilot workspace and information layer
 
-执行命令前，先遵守目标项目的 `fp-docs` 信息层契约：`fp-docs/manifest.md` 是唯一入口；如存在 `fp-docs/settings/agent.md`、`fp-docs/settings/frontend.md`、`fp-docs/settings/backend.md` 或 `fp-docs/intel/*`，先读取 `fp-docs/manifest.md` 判断相关文件。不要覆盖客户 manifest/settings/intel，除非用户明确要求。
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+
+1. Walk upward from the current working directory to find `fp-docs/`.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Read only relevant settings and intel listed by the manifest.
+4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
+6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
+
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
+
+Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
 
 调用并严格遵守本插件内 `fp-init` skill：`skills/fp-init/SKILL.md`。
 
