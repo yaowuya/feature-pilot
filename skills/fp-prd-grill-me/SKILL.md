@@ -7,7 +7,7 @@ description: Use with fp-prd to grill a product idea, pain point, user story, or
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -17,7 +17,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 
 
 # FeaturePilot PRD Grill Me
@@ -27,6 +27,74 @@ This skill specializes `grill-me` for PRD creation.
 ## First Step
 
 Load and follow `grill-me` first. This skill adds PRD-specific decision gates, output expectations, and stricter question/answer protocol. If `grill-me` conflicts with this skill, this skill wins for PRD interviews.
+
+### PRD override for code exploration
+
+The base `grill-me` rule “If a question can be answered by exploring the codebase, explore the codebase instead” applies only to implementation facts and existing-product constraints. It does **not** apply to product decisions.
+
+Code exploration may answer:
+
+- which modules, menus, enums, routes, permissions, APIs, or components already exist;
+- what current behavior and constraints are;
+- which neighboring patterns can inform options.
+
+Code exploration may **not** decide:
+
+- target users and business value;
+- MVP vs out-of-scope boundaries;
+- risk acceptance, permission policy, audit needs, or operational fallback expectations;
+- acceptance criteria, success metrics, or prototype expectations.
+
+Unless the user provided a complete PRD or explicitly authorized assumption-based generation, ask at least one PRD-blocking question before returning to `fp-prd`.
+
+## Batch Confirmation Mode
+
+The PRD interview must minimize user friction. The default mode is **batch confirmation**, not question-by-question.
+
+### Decision Classification
+
+For every item in the PRD Blocking Decisions list, classify it into one of three buckets:
+
+**Bucket A — Confident Inference（可自行确定）：** The assistant has enough information from user input, code facts, existing product patterns, or common best practices to propose a reasonable answer with high confidence. These go into the batch confirmation summary as "已确定" items.
+
+**Bucket B — Low-Risk Default（低风险默认）：** The decision has a clear industry-standard or product-convention default that carries low risk if wrong. Propose the default, mark confidence level, and include in the batch summary.
+
+**Bucket C — Must Ask（必须提问）：** The decision has high impact, no clear default, genuinely ambiguous trade-offs, or the assistant's confidence is low. These become the "需确认" questions.
+
+### Batch Confirmation Flow
+
+1. Explore code facts and read relevant settings.
+2. Classify every PRD Blocking Decision into Bucket A, B, or C.
+3. Prepare a single batch confirmation message:
+
+```markdown
+## PRD 决策确认
+
+以下是根据你的需求、现有代码和常见实践整理的决策。请快速审阅，有异议的指出即可，没异议我会直接使用。
+
+### 已确定（基于现有代码/实践推断）
+
+| # | 决策项 | 推断结果 | 依据 |
+|---|---|---|---|
+| 1 | <决策项> | <结果> | <依据> |
+| 2 | ... | ... | ... |
+
+### 需确认（3-5 个关键问题）
+```
+
+4. Ask **only Bucket C items** as numbered questions. Target 3–5 questions. If Bucket C exceeds 5, keep only the 5 highest-impact questions; move the rest to Bucket A with lower confidence noted.
+5. The user can respond with:
+   - `全部确认` / `没问题` → proceed with all decisions.
+   - `第3项改成...` / `问题2选B` → apply the correction, re-confirm only the changed item.
+   - Individual corrections → apply and proceed.
+6. After user confirmation, proceed to write the PRD.
+
+### Bucket C Selection Rules
+
+- Maximum 5 Bucket C questions. If more than 5 decisions are genuinely uncertain, prioritize by: safety/risk impact > scope/cost impact > user experience impact.
+- If 0 Bucket C items remain (everything is A or B), still show the batch summary and ask for a single `全部确认` before proceeding.
+- Every Bucket C question must include a recommended answer with reasoning.
+- Multi-question format for Bucket C follows the existing multi-question format in Question Format below.
 
 ## PRD Blocking Decisions
 

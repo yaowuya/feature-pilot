@@ -10,7 +10,7 @@ description: 初始化 fp-docs 信息层（单一 manifest.md、settings/agent.m
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -20,7 +20,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: `/fp-init` is the only workflow that may create or repair `fp-docs/manifest.md`, `fp-docs/settings/`, and `fp-docs/intel/`. It must do so only under the target project root, never in a parent directory.
 
 调用并严格遵守本插件内 `fp-init` skill：`skills/fp-init/SKILL.md`。
 

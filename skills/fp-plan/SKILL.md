@@ -6,7 +6,7 @@ description: Use when coordinating FeaturePilot task plan generation after propo
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -16,7 +16,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Plan
@@ -57,5 +57,7 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 - 哪一端被明确跳过，以及跳过原因。
 
 输出计划摘要后，明确询问用户是否确认计划。
+
+写出 `plan-backend.md` / `plan-frontend.md` 只表示计划草案已生成，不等于用户确认。没有用户明确确认前，不得进入 `fp-execute`、`fp-execute-sdd`，也不得修改业务代码。
 
 用户确认后输出：`✅ 执行计划已确认，进入执行阶段`

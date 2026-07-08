@@ -58,9 +58,15 @@ fp-docs/
 
 ### 1. Locate or create workspace
 
-Walk upward from the current working directory to find `fp-docs/`.
+Treat the target project repository root as the FeaturePilot project root. `fp-init` must create and manage `fp-docs/` only at:
 
-If absent, create only:
+```text
+<project-root>/fp-docs/
+```
+
+Do not walk upward to reuse or create a parent directory's `fp-docs/`. If the current working directory is a subdirectory, first identify the repository/project root, then create the workspace there.
+
+If absent at the project root, create only:
 
 - `fp-docs/`
 - `fp-docs/settings/`

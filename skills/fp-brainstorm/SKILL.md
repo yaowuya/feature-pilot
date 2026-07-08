@@ -6,7 +6,7 @@ description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta sp
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -16,7 +16,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Brainstorm
@@ -76,7 +76,7 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 - 状态管理：沿用项目现有全局状态/数据获取方案，还是使用局部状态？
 - 路由与权限守卫
 
-**用户每次回答后**，立即将决策追加写入文档的【第一部分：架构决策】。
+**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案和设计章节都获得用户确认后，才写入 `design-backend.md` / `design-frontend.md`。
 
 ### 第三步：提出方案与 trade-off
 
@@ -112,6 +112,15 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，确认后再写入文件。
 
 ### 第五步：写入设计文件
+
+写入设计文件前必须满足全部条件：
+
+- 已提出 2-3 个方案和 trade-off。
+- 用户已明确确认推荐方案或给出替代方案。
+- 设计章节已按实际涉及端逐节展示。
+- 用户已明确确认可以写入设计文件。
+
+未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
 
 【立即用工具执行】按实际涉及端写入设计文件，然后输出：`✅ 设计已完成，进入计划阶段`
 

@@ -6,7 +6,7 @@ description: 启动并严格执行全流程开发向导（propose → brainstorm
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -16,7 +16,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Start
@@ -26,6 +26,20 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 **功能描述或 PRD slug：** 用户在命令中提供的需求文本，或 `fp-docs/changes/<slug>/prd.md` 对应的 slug。
 
 **如果功能描述为空**，只提示工程师提供详细的需求说明：背景与目标、具体需求、约束与边界；不要继续扫描或创建文件。
+
+## Init availability check
+
+At the start of `/fp-start`, check only the target project root for `fp-docs/manifest.md`.
+
+If it is missing:
+
+- Tell the user: `未检测到项目根目录下的 fp-docs/manifest.md。建议先运行 /fp-init 初始化 FeaturePilot 信息层，以便记录 settings/intel；这不是强制要求。`
+- Do not stop the workflow for this reason alone.
+- Do not run `/fp-init` automatically.
+- Do not create `manifest.md`, `settings/`, or `intel/` from `/fp-start`.
+- If the user continues, downstream phases may create only the necessary change artifacts under project-root `fp-docs/changes/<slug>/`.
+
+---
 
 ## 强制执行契约
 

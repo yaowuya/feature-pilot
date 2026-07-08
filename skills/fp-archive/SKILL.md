@@ -6,7 +6,7 @@ description: 归档已完成的变更：移动变更目录，更新 history.md
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
@@ -25,8 +25,10 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 ### Step 1: 确定归档目标
 
-- 若调用时已有 slug 参数 → 直接使用
-- 若无参数 → 列出 `fp-docs/changes/` 下所有目录，让用户选择
+- 若调用时已有 slug 参数 → 读取并展示目标 `fp-docs/changes/<slug>/` 的摘要，要求用户确认后再继续。
+- 若无参数 → 列出 `fp-docs/changes/` 下所有目录，让用户选择。
+
+归档会移动目录并更新历史，属于不可轻易回滚的文件操作。无论 slug 来自参数还是选择，都必须在移动前展示源路径、目标归档路径和检查摘要，并等待用户明确确认。
 
 ### Step 2: 归档前检查
 

@@ -6,7 +6,7 @@ description: Use when a user invokes /fp-prd or provides a product idea, feature
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -16,7 +16,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot PRD
@@ -36,6 +36,22 @@ Before writing any PRD file, load and follow `fp-prd-grill-me`.
 
 `fp-prd-grill-me` is responsible for questioning, code-fact exploration limits, blocking decisions, recommended answers, answer-format instructions, ambiguity handling, correction handling, and confirmation gates. `fp-prd` is responsible only for the PRD path, template, prototype rules, self-review, and handoff.
 
+### Hard interview gate
+
+`fp-prd` is a requirements-interview workflow, not a one-shot PRD generator.
+
+Before creating any directory or file, the assistant must have one of these forms of user confirmation:
+
+1. Answers from the PRD interview plus explicit approval of the confirmation summary.
+2. A user-provided complete PRD that already covers all PRD-blocking decisions, plus explicit approval to normalize it into the template.
+3. An explicit user instruction such as “无需提问，按以下假设生成” or “直接按你的假设生成”, in which case every assumption must be listed in the confirmation summary before writing.
+
+If none of the above is true, ask at least one PRD-blocking question and stop. Code facts, existing menus, enums, routes, or adjacent implementations can reduce technical uncertainty, but they must not replace user confirmation of product goals, MVP scope, roles, permissions risk, acceptance criteria, or prototype expectations.
+
+Writing `fp-docs/prd-*.md`, `fp-docs/*.prd.md`, or any PRD outside `fp-docs/changes/<slug>/prd.md` is invalid. If such a legacy path exists, offer to migrate or regenerate under `fp-docs/changes/<slug>/prd.md`; do not keep writing to the legacy path.
+
+The generated `prd.md` must use the Mandatory PRD Structure exactly. Do not rename, merge, remove, reorder, or add top-level sections. Do not replace required headings with synonyms. Do not change required table columns. The PRD may add rows and may repeat `3.N <功能名称>` blocks for multiple features, but every feature block must keep the exact five subsections `功能说明` / `交互逻辑` / `异常处理` / `页面元素` / `原型`.
+
 ## Input
 
 If input is empty, stop and ask the user for one sentence describing an idea, pain point, goal, or user story. Do not explore files or create anything.
@@ -50,12 +66,15 @@ Valid inputs include:
 ## Process
 
 1. Load `fp-prd-grill-me`.
-2. Use it to confirm all PRD-blocking decisions.
-3. Show a confirmation summary and wait for user approval.
-4. Generate a kebab-case slug.
-5. Write `fp-docs/changes/<slug>/prd.md` using the Mandatory PRD Structure verbatim: exact top-level headings 一 through 六, exact subsection headings, exact table columns, and no extra top-level sections.
-6. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html`.
-7. Run PRD self-review and report paths.
+2. Perform only minimal fact exploration allowed by `fp-prd-grill-me`, then stop as soon as the next useful product question is known.
+3. Use `fp-prd-grill-me` to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, ask at least one numbered PRD-blocking question and wait for the answer.
+4. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, and the target output path `fp-docs/changes/<slug>/prd.md`.
+5. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
+6. Generate a kebab-case slug.
+7. Create only the necessary project-root artifact directory `fp-docs/changes/<slug>/` if it is missing. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
+8. Write `fp-docs/changes/<slug>/prd.md` using the Mandatory PRD Structure verbatim: exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections.
+9. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html`.
+10. Run PRD self-review and report paths.
 
 Do not create directories or write files before the user confirms the interview summary.
 
@@ -63,12 +82,15 @@ If target `prd.md` already exists, do not overwrite silently. Ask whether to ove
 
 ## Mandatory PRD Structure
 
-**严格结构要求：** 生成 `prd.md` 时必须完整保留下方一级/二级/三级标题及顺序，不得改名、合并、跳过或重排章节。没有内容的章节也必须保留，并写明“不适用”或“无，原因：...”。
+**严格结构要求：** 生成 `prd.md` 时必须完整保留下方一级/二级/三级/四级标题及顺序，不得改名、合并、跳过、重排或新增额外一级章节。没有内容的章节也必须保留，并写明“不适用”或“无，原因：...”。
+
+该模板是输出契约，不是示例建议。除替换占位符、增加表格行、增加 `3.2` / `3.3` 等同构功能块外，不得擅自修改内容结构。
 
 硬性要求：
 
 - 顶部标题必须是 `# <产品/功能名称> PRD`。
 - 必须包含并按顺序输出：`一、用户故事`、`二、核心业务流程`、`三、功能需求`、`四、非功能需求`、`五、测试建议`、`六、待确认问题`。
+- 必须保留模板中的二级、三级、四级标题层级；不得把表格改成列表，或把列表改成表格。
 - `三、功能需求` 下每个功能都必须包含：功能说明、交互逻辑、异常处理、页面元素、原型。
 - 表格列名必须保持模板一致；可新增行，不能删除列。
 - 复杂交互必须提供 mermaid；简单功能也必须在第二章说明为什么无需流程图。
@@ -188,14 +210,81 @@ Interactive prototype minimum:
 
 Do not use backend calls. Simulate data and state in local JavaScript only.
 
+### Prototype Style Extraction
+
+After generating the first prototype for a project, recommend to the user:
+
+> 检测到这是项目的第一个原型。是否需要将当前原型的视觉风格（配色、字体、间距、组件样式、布局模式）提取到 `fp-docs/settings/prototype-style.md`？后续 PRD 生成原型时会自动参考该风格文件，保持视觉一致。
+
+If the user agrees, extract into `fp-docs/settings/prototype-style.md`:
+
+```markdown
+# Prototype Style Reference
+
+Extracted from: `fp-docs/changes/<slug>/prototype.html` on <date>
+
+## Color Palette
+
+| Token | Value | Usage |
+|---|---|---|
+| --color-primary | #xxx | 主按钮、链接 |
+| --color-bg | #xxx | 页面背景 |
+| ... | ... | ... |
+
+## Typography
+
+| Token | Font | Size | Weight | Usage |
+|---|---|---|---|---|
+| --font-heading | ... | ... | ... | 页面标题 |
+| ... | ... | ... | ... | ... |
+
+## Spacing
+
+| Token | Value | Usage |
+|---|---|---|
+| --spacing-sm | 8px | 组件内间距 |
+| ... | ... | ... |
+
+## Component Patterns
+
+- 按钮：<圆角/阴影/hover 效果>
+- 表格：<边框样式/斑马纹/hover 行>
+- 弹窗：<宽度/遮罩/关闭方式>
+- 表单：<标签位置/校验提示位置/必填标记>
+
+## Layout Patterns
+
+- 页面布局：<侧边栏/顶部导航/内容区>
+- 响应式断点：<如适用>
+
+## Notes
+
+- <从当前原型中提取的其他风格约定>
+```
+
+After extraction, add to `fp-docs/manifest.md` Settings Files table:
+
+| `settings/prototype-style.md` | Prototype visual style reference | prototype generation consistency | present |
+
+### Prototype Style Consumption
+
+Before generating a new `prototype.html`:
+
+1. Check if `fp-docs/settings/prototype-style.md` exists.
+2. If present, read it and apply its color palette, typography, spacing, component patterns, and layout patterns to the new prototype.
+3. If the user requests a different visual direction, apply the new direction and offer to update `prototype-style.md` after approval.
+4. If `prototype-style.md` is missing, proceed with sensible neutral defaults and recommend extraction after the first prototype.
+
 ## Self-Review
 
 Before reporting completion, verify:
 
+- PRD path is exactly `fp-docs/changes/<slug>/prd.md`.
 - PRD contains every required section in the exact template order.
 - Required headings are unchanged: `一、用户故事` / `二、核心业务流程` / `三、功能需求` / `四、非功能需求` / `五、测试建议` / `六、待确认问题`.
+- No extra top-level sections were added before, between, or after the required six sections.
 - Every function under `三、功能需求` contains all five required subsections.
-- Required tables keep their original columns.
+- Required tables keep their original columns and remain tables.
 - User stories are complete.
 - Business goal, functional requirements, and tests align.
 - Complex flows have mermaid; simple flows explain why no diagram is needed.
@@ -217,6 +306,7 @@ Report:
 
 - PRD path.
 - Prototype path, if generated.
+- If this is the project's first prototype, recommend extracting visual style to `fp-docs/settings/prototype-style.md`.
 - Confirmed key requirements.
 - Non-blocking open questions.
 - Suggested next step: run `fp-start <slug>` to pick up this PRD and continue into design, planning, and development.

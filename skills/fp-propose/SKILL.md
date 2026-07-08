@@ -6,7 +6,7 @@ description: 为新功能变更生成并确认 proposal.md 提案文档
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-1. Walk upward from the current working directory to find `fp-docs/`.
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
 3. Read only relevant settings and intel listed by the manifest.
 4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
@@ -16,7 +16,7 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Propose
@@ -44,9 +44,10 @@ If `fp-start` or the user provides a PRD slug and `fp-docs/changes/<slug>/prd.md
 
 ## 阶段 2：需求澄清（Socratic 问答）
 
-**判断需求是否清晰：**
-- 描述 ≥ 2 句话、包含具体目标和约束 → 跳过问答，直接生成草稿
-- 描述模糊（如 "加个文件管理"、"优化审批流程"）→ 进入问答
+**判断需求是否足够进入确认摘要：**
+- 如果输入来自已确认的 `fp-docs/changes/<slug>/prd.md`，可以把 PRD 作为已确认需求来源，只询问 proposal 范围、影响或交付策略的阻塞缺口。
+- 如果用户明确提供了具体目标、范围边界、约束和优先级，可以跳过多轮问答，但必须先展示 proposal 确认摘要并等待用户批准，不能直接写文件。
+- 如果描述模糊（如 "加个文件管理"、"优化审批流程"）或存在会改变范围/影响/交付策略的缺口，进入问答。
 
 **问答规则：**
 - 每次只问一个问题，给出 2-3 个选项 + "其他（请描述）"
@@ -58,16 +59,23 @@ If `fp-start` or the user provides a PRD slug and `fp-docs/changes/<slug>/prd.md
   3. **关键约束**：与现有模块的集成方式？是否有性能/安全要求？
   4. **交付优先级**：是否分阶段交付？MVP 是什么？
 
-收集足够信息后（通常 2-4 轮），停止问答，进入起草阶段。
+收集足够信息后（通常 1-4 轮），停止问答，展示确认摘要。
+
+**确认摘要硬门禁：**
+- 写 `proposal.md` 前必须展示 Why / What Changes / Out of Scope / Impact 的摘要。
+- 必须等待用户明确确认（如“确认”“继续”“按这个生成”）。
+- 助手的推荐或代码探索结论不是用户确认。
+- 未获确认前，不得创建 `fp-docs/changes/<slug>/` 或写 `proposal.md`。
 
 ---
 
 ## 阶段 3：生成 proposal.md
 
 1. 根据功能描述生成 kebab-case slug（中文转英文语义缩写，例如 "新增文件库功能" → `file-library`）
-2. 【立即用工具执行】在当前目录向上查找 `fp-docs/` 目录；若不存在，在 cwd 初始化 `fp-docs/` 基础目录。
-3. 【立即用工具执行】创建 `fp-docs/changes/<slug>/` 目录。
-4. 【立即用工具执行】将下方模板填写完整后，写入 `fp-docs/changes/<slug>/proposal.md`
+2. 【立即用工具执行】确认目标项目根目录，并把输出限定在项目根目录下的 `fp-docs/changes/<slug>/proposal.md`。
+3. 如果项目根目录没有 `fp-docs/manifest.md`，只提示建议运行 `/fp-init`；不要强制初始化，也不要创建 manifest/settings/intel。
+4. 【立即用工具执行】在用户确认摘要后，创建必要的 `fp-docs/changes/<slug>/` 目录。
+5. 【立即用工具执行】将下方模板填写完整后，写入 `fp-docs/changes/<slug>/proposal.md`
 
 只生成本阶段产物 `proposal.md`。不要预创建 `design.md`、`tasks.md`、`tasks/`；这些文件/目录只能由后续对应阶段在真正需要时创建。
 
