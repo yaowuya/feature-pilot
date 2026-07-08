@@ -17,3 +17,22 @@ Before asking questions or making recommendations, locate the target project's F
 
 If settings are absent, use current project code and adjacent implementations only. Do not assume any customer component library, vendor, component prefix, design token, or workflow policy.
 
+# FeaturePilot workspace and customer settings
+
+When a question can be answered by project configuration, first read relevant target-project files under `fp-docs/settings/`:
+
+- `fp-docs/settings/agent.md` for project-specific FeaturePilot rules.
+- `fp-docs/settings/agent.md` for UI/component/design-system rules.
+- `fp-docs/settings/agent.md` for review and execution rules.
+- `fp-docs/settings/agent.md` for project path conventions.
+
+If settings are absent, use current project code and adjacent implementations only. Do not assume any customer component library, vendor, component prefix, design token, or workflow policy.
+
+Interview me relentlessly about every aspect of this plan until
+we reach a shared understanding. Walk down each branch of the design
+tree resolving dependencies between decisions one by one.
+
+If a question can be answered by exploring the codebase, explore
+the codebase instead.
+
+For each question, provide your recommended answer.
