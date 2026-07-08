@@ -15,6 +15,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Head ref: {HEAD_REF}
 - Review depth: {REVIEW_DEPTH}
 - Focus: {FOCUS}
+- FeaturePilot manifest: {MANIFEST_PATH_OR_MISSING}
 - Proposal: {PROPOSAL_PATH}
 - Backend design: {BACKEND_DESIGN_PATH_OR_NA}
 - Frontend design: {FRONTEND_DESIGN_PATH_OR_NA}
@@ -22,11 +23,14 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Progress ledger: {PROGRESS_LEDGER_PATH_OR_MISSING}
 - Prior task reviews: {TASK_REVIEW_PATHS_OR_NONE}
 - Project constraints: {PROJECT_CONSTRAINT_PATHS_OR_NONE}
+- Frontend settings: {FRONTEND_SETTINGS_PATH_OR_MISSING}
+- Backend settings: {BACKEND_SETTINGS_PATH_OR_MISSING}
 
 ## Required Method
 
-1. Read the proposal, design files, task plans, progress ledger, prior task reviews, and project constraints that exist.
-2. Inspect branch state and final diff with read-only git commands:
+1. Read the manifest, proposal, design files, task plans, progress ledger, prior task reviews, frontend/backend settings, and project constraints that exist.
+2. Inspect information-layer consumption: was `fp-docs/manifest.md` read? Were `settings/frontend.md` / `settings/backend.md` consulted for UI/backend work? Were relevant unknowns resolved? Was there reliance on stale intel instead of current code?
+3. Inspect branch state and final diff with read-only git commands:
    - git status --short
    - git log --oneline {BASE_REF}..{HEAD_REF}
    - git diff --stat {BASE_REF}...{HEAD_REF}
