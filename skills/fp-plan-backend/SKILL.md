@@ -112,10 +112,10 @@ fp-docs/changes/<slug>/tasks/plan-backend.md
 
 ## Backend Task Order
 
-按真实设计范围拆任务。常见顺序是：
+按真实设计范围和项目现有分层拆任务。常见边界包括：
 
 ```text
-Model → Service → Serializer → ViewSet/API → URL/Router → IAM/Permission → Provider/Register → Tests
+Data/schema changes → business/service logic → request/response contracts → API handlers/routes → permissions/integration points → tests
 ```
 
 但不要机械生成不存在的层：

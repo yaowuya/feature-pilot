@@ -107,7 +107,7 @@ Before any implementation subagent, scan the approved plan files for contradicti
 - `Global Constraints` exist and are concrete.
 - Every task has `Files`, `Reasoning`, `Interfaces`, failure test, expected failure, minimal implementation, pass validation, and commit step.
 - Backend plans have `Backend Interface Ledger` and `Coverage Matrix` consistent with tasks.
-- Frontend page/component tasks have `Template Outline`, `Script Outline`, `Style Outline`, and `Visual Checks`; project frontend framework tasks require `the project-standard script pattern`.
+- Frontend page/component tasks have structure/state/style outlines appropriate to the target framework plus `Visual Checks`; tasks must follow the project’s existing frontend framework and script/state patterns.
 - Backend/frontend contract names match exactly: URL, method, fields, enums, error shape, permissions, pagination/filter/sort semantics.
 - No placeholders: `TBD`, `TODO`, `按需处理`, `类似上面`, `补充样式`, `run tests`, `Add appropriate error handling`, or equivalent vague instructions.
 - No plan-mandated behavior that would obviously fail review: tests without assertions, hardcoded secrets, missing permission negative tests, unverified UI visual claims.

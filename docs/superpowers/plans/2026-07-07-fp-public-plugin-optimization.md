@@ -40,5 +40,5 @@
 ## Task 4: Verify
 
 - [x] Scan for legacy workspace paths and customer-specific frontend defaults.
-- [ ] Validate required command and skill frontmatter still exists.
-- [ ] Check git status and summarize modified files.
+- [x] Validate required command and skill frontmatter still exists.
+- [x] Check git status and summarize modified files.

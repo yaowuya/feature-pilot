@@ -19,6 +19,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 设计 →
 | `commands/fp-prd.md` | 将想法、用户故事或痛点澄清为 PRD |
 | `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路 |
 | `commands/fp-propose.md` | 仅生成并确认开发提案 `proposal.md` |
+| `commands/fp-brainstorm.md` | 基于已确认提案生成技术设计 |
+| `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
 | `commands/fp-review.md` | 归档前最终整分支只读审查 |
 | `commands/fp-archive.md` | 归档已完成的变更 |
 | `commands/fp-figma.md` | UI / Figma 设计稿分析入口 |

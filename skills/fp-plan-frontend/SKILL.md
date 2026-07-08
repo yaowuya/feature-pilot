@@ -105,7 +105,7 @@ Each task must be small enough to implement and review independently.
 - Include container hierarchy, slots, props, and events when relevant.
 
 **Script/State Outline:**
-- Use the project-standard script/state pattern.
+- Use the project’s existing script/state pattern as observed in settings or adjacent code.
 - Define state, derived values, lifecycle/data loading, and event handlers.
 
 **Style Outline:**

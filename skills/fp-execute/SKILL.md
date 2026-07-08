@@ -99,7 +99,7 @@ Base SHA: <执行开始时的 git sha>
 3. **Interfaces**：如果任务包含 `Interfaces`，后续任务引用的函数、字段、URL、route、store、组件 props/events 必须由现有代码或前序任务明确产出。
 4. **前后端契约**：后端 API、字段名、错误结构、权限 action 与前端 API wrapper/store/page 任务必须一致；不一致时暂停并汇总给用户决策。
 5. **TDD 可执行性**：每个任务必须有明确失败测试、失败预期、最小实现、通过验证和提交步骤；泛泛的 `run tests` 或 `实现页面` 视为计划缺陷。
-6. **前端骨架完整性**：前端任务必须包含 `Reasoning`、`Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`；project frontend framework 任务必须显式使用 `the project-standard script pattern`。
+6. **前端骨架完整性**：前端任务必须包含 `Reasoning`、`Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`；前端任务必须显式遵循项目现有前端框架和脚本/状态管理写法。
 7. **占位符扫描**：发现 `TBD`、`TODO`、`按需处理`、`类似上面`、`补充样式`、`Add appropriate error handling` 等占位表达，先修正计划或请求用户确认，不要直接执行。
 8. **review 风险前置**：如果计划要求了明显会被代码审查判为缺陷的做法（例如测试没有断言、硬编码敏感配置、跳过权限负向测试），先把问题与对应计划文本一起提交给用户决定哪个约束优先。
 
@@ -128,7 +128,7 @@ Base SHA: <执行开始时的 git sha>
 - 不能忽略 `Reasoning` 中约定的组件映射与布局策略。
 - 不能忽略 `Interfaces` 中约定的 API/store/route/props/events 契约。
 - 不能在执行阶段擅自偏离 `Visual Checks` 中约定的设计稿对齐目标。
-- project frontend framework 组件必须使用 `the project-standard script pattern`；若任务生成了 `non-project-standard component style` 或 non-project-standard component style 写法，必须立即改回 `setup` 模式。
+- 前端组件必须遵循项目现有框架、脚本/状态管理和样式写法；若任务生成了与项目惯例不一致的组件结构，必须立即改回项目既有模式。
 - 若发现 `plan-frontend.md` 缺少必要的模板/脚本/样式骨架、接口契约或视觉检查，先回退补全计划，再继续执行。
 
 ## 完成汇报

@@ -56,7 +56,7 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 > **⚠️ 涉及前端 UI 时，必须加载并遵循以下 skill（作为设计约束）：**
 > - **Figma 入口必须唯一**：凡是涉及 Figma 链接、截图还原、设计稿解析，**只允许使用本插件内的 `fp-figma` skill**；**禁止使用全局 `figma-to-vue` 或其他同类 skill**，避免规范分叉。
-> - `fp-docs/settings/agent.md` skill — 组件库完整清单与用法；**优先使用 项目组件，确实无对应组件才允许自行封装，且需在 design.md 中注明原因**
+> - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
 > - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
 > - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
 > 生成的 design.md 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
@@ -75,11 +75,11 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
   > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
   > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出并写入 `design-frontend.md`：`Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用 项目组件的自封装理由、`Visual Checks`。**不得改用全局 `figma-to-vue`**。
   > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在 `design-frontend.md` 写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
-  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自 客户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
-- 组件复用：复用现有组件还是新建？是否需要参考现有的`.vue`文件骨架？
-- 状态管理：Vuex/Pinia store 还是局部 data？
+- 组件复用：复用现有组件还是新建？是否需要参考现有页面/组件文件骨架？
+- 状态管理：沿用项目现有全局状态/数据获取方案，还是使用局部状态？
 - 路由与权限守卫
 
 **用户每次回答后**，立即将决策追加写入文档的【第一部分：架构决策】。
@@ -158,7 +158,7 @@ design.md 分为两部分，合并在同一文件：
 
 ### API 接口
 
-（ViewSet + 路径 + HTTP 方法 + 主要请求/响应字段）
+（按项目现有 API 框架记录路由/endpoint、HTTP 方法、主要请求/响应字段）
 
 ### 业务逻辑要点
 
@@ -167,19 +167,19 @@ design.md 分为两部分，合并在同一文件：
 ### 前端设计（如涉及 UI）
 
 #### 页面/视图
-（新增 Vue 页面路径 + 菜单入口）
+（新增页面/视图路径 + 菜单入口）
 
 #### 组件
 （新建组件 + 复用现有组件清单）
 
 #### API 模块
-（ui/src/api/ 下的文件，主要接口列表）
+（按项目现有 API 客户端/请求封装位置记录文件和主要接口列表）
 
 #### 路由
 （路由定义，权限要求）
 
 #### 状态管理
-（Vuex module 或说明仅用局部 data）
+（按项目现有状态管理方案记录 store/composable/hook/context 或说明仅用局部状态）
 ```
 
 ---

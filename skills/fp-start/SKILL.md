@@ -161,7 +161,7 @@ This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, the
 - 基于设计文档生成超级细粒度的 TDD 任务清单。
 - 按实际涉及端生成任务计划：涉及后端才生成 `tasks/plan-backend.md`；涉及前端/UI 才生成 `tasks/plan-frontend.md`。
 - 没有前端计划或不存在已确认的 `design-frontend.md` 时，不得生成 `plan-frontend.md` 或前端任务占位文件。
-- 后端任务按 Model → Service → ViewSet → Serializer → URL → Tests 顺序执行；前端任务按 API 模块 → Store → 路由 → 页面/组件 → ESLint 顺序执行，并严格兑现 `design-frontend.md` 中的设计稿映射。
+- 后端/前端任务都按项目实际分层、已确认设计和现有代码依赖顺序生成；只覆盖真实涉及的模型、服务、接口、权限、客户端、状态、路由、页面/组件、样式和验证边界，不固定框架术语或工具名。
 
 阶段完成检查：
 - 用工具确认任务计划文件存在。

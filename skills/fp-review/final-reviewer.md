@@ -44,7 +44,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Task completion: task checkboxes, progress ledger, commits, reviews, and files agree.
 - Cross-task integration: produced interfaces are consumed correctly; backend/frontend contracts match.
 - Backend correctness: model/migration/service/serializer/API/URL/IAM/provider/async/external call/tenant/error boundaries.
-- Frontend correctness: project frontend framework the project-standard script pattern, project-configured components, route/store/API, Template/Script/Style, loading/empty/error states, style tokens, Visual Checks.
+- Frontend correctness: project frontend framework and script/state patterns, project-configured components, route/store/API, structure/state/style, loading/empty/error states, style tokens, Visual Checks.
 - Tests and validation: meaningful assertions, negative/boundary/permission/contract/visual coverage where applicable.
 - Production readiness: deploy order, compatibility, security leakage, logging, performance, rollback.
 

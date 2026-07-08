@@ -96,7 +96,7 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 执行时遵循项目现有模式：
 - 优先补充或调整测试，再写实现；若需求不适合自动化测试，说明原因并提供替代验证。
 - 后端按现有分层顺序修改：model/service/viewset/serializer/url/tests。
-- 前端按现有工程约束修改；project frontend framework 项目优先使用 `the project-standard script pattern`，项目配置的设计系统项目优先使用 项目组件和已有样式 token。
+- 前端按现有工程约束修改；优先遵循项目现有前端框架、脚本/状态管理写法、项目配置的设计系统、组件和样式 token。
 - 控制改动范围，不顺手重构无关代码。
 - 遇到新阻塞时停下说明，不擅自扩大范围。
 

@@ -97,7 +97,7 @@ Build a coverage table from source artifacts:
 - Every `proposal.md` `What Changes` and `Capabilities` item.
 - Every explicit `Out of Scope` item.
 - Every backend design contract, permission, migration, provider, API, and validation requirement.
-- Every frontend design contract, route/store/API, component mapping, project frontend framework `the project-standard script pattern`, `project-configured components`, style token, and Visual Check requirement.
+- Every frontend design contract, route/store/API, component mapping, project frontend framework and script/state pattern, project-configured components, style token, and Visual Check requirement.
 - Every completed task in task plans and progress ledger.
 
 For each item, mark `Covered`, `Partial`, `Missing`, `Violated`, or `N/A`, with file/test/commit evidence.
@@ -108,7 +108,7 @@ Review changed files as one integrated change, not as isolated tasks.
 
 Check relevant areas:
 - Backend: model, migration, service, serializer/schema, ViewSet/API, URL/router, IAM/permission, provider/registry, async jobs, external calls, tenant isolation, error handling, backward compatibility.
-- Frontend: API wrapper, store/composable, route, project frontend framework `the project-standard script pattern`, project-configured components, state transitions, loading/empty/error states, styles, design tokens, Figma/Visual Checks.
+- Frontend: API wrapper, state management/composable/hook/context, route, project frontend framework and script/state pattern, project-configured components, state transitions, loading/empty/error states, styles, design tokens, Figma/Visual Checks.
 - Contracts: URL, HTTP method, request/response fields, enums, error shape, pagination/filter/sort, permission states, route names, store actions, component props/events.
 - Tests: meaningful assertions, negative paths, permissions, boundary cases, migration/compatibility, frontend contract and visual checks where applicable.
 - Production readiness: deployment order, migrations, config, feature flags, logging, security leakage, performance, rollback implications.
