@@ -26,7 +26,8 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 - 必须先加载并遵守 `fp-prd`，再由 `fp-prd` 加载 `fp-prd-grill-me`。
 - 写任何 PRD 文件前，必须完成 PRD interview gate：提问、记录用户回答、展示确认摘要，并等待用户明确批准。
-- 除非用户输入已经是完整 PRD 或明确授权“无需提问，按假设生成”，否则至少必须问一轮 PRD-blocking 问题。
+- `fp-prd-grill-me` 使用批量确认模式：梳理 Bucket A/B 已确定项 + 最多 3-5 个 Bucket C 待确认问题，**所有 C 问题在一轮内发完**；等待用户一次性回答全部。不得逐题追问、不得逐题反复确认。
+- 除非用户输入已经是完整 PRD 或明确授权”无需提问，按假设生成”，否则至少必须问一轮 PRD-blocking 问题。
 - 未获确认前，不得创建目录、不得写 `prd.md`、不得写 `prototype.html`。
 - PRD 只能写入 `fp-docs/changes/<slug>/prd.md`；禁止写入 `fp-docs/prd-*.md` 或 `fp-docs/*.prd.md`。
 - 生成的 `prd.md` 内容结构必须严格使用 `fp-prd` skill 的 Mandatory PRD Structure：一级标题、二级标题、三级/四级小节、表格列名和顺序都不得擅自改名、合并、删除、重排或新增额外一级章节。

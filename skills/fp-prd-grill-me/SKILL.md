@@ -51,6 +51,10 @@ Unless the user provided a complete PRD or explicitly authorized assumption-base
 
 The PRD interview must minimize user friction. The default mode is **batch confirmation**, not question-by-question.
 
+**HARD GATE:** When Bucket C has ≥1 questions, ALL Bucket C questions MUST be presented in a SINGLE message. Do NOT ask them sequentially one at a time. If the user answers only some questions, collect the missing answer but do NOT rephrase any already-answered question — just restate what's missing and ask for the remaining questions. The assistant MUST NOT split Bucket C into multiple turns. If Bucket C has 0 questions, skip straight to confirmation of Bucket A/B only.
+
+After the user provides answers to ALL Bucket C questions (or confirms all defaults), the assistant may produce a brief confirmation summary, then MUST immediately return to `fp-prd` to write the PRD. Do NOT re-ask answered questions.
+
 ### Decision Classification
 
 For every item in the PRD Blocking Decisions list, classify it into one of three buckets:
@@ -80,14 +84,35 @@ For every item in the PRD Blocking Decisions list, classify it into one of three
 | 2 | ... | ... | ... |
 
 ### 需确认（3-5 个关键问题）
+
+**问题 1：** <具体问题>
+
+选项：
+1A. <选项A> — <影响>
+1B. <选项B> — <影响>
+
+**推荐：** 1A，因为 <依据>。
+
+**问题 2：** <具体问题>
+
+选项：
+2A. <选项A> — <影响>
+2B. <选项B> — <影响>
+
+**推荐：** 2B，因为 <依据>。
+
+请一次性回答所有问题，格式示例：
+- `1A, 2B, 3A`
+- `全部同意推荐`
 ```
 
-4. Ask **only Bucket C items** as numbered questions. Target 3–5 questions. If Bucket C exceeds 5, keep only the 5 highest-impact questions; move the rest to Bucket A with lower confidence noted.
-5. The user can respond with:
-   - `全部确认` / `没问题` → proceed with all decisions.
-   - `第3项改成...` / `问题2选B` → apply the correction, re-confirm only the changed item.
-   - Individual corrections → apply and proceed.
-6. After user confirmation, proceed to write the PRD.
+4. **ALL Bucket C questions in a single message.** Target 3–5 questions. If Bucket C exceeds 5, keep only the 5 highest-impact questions; move the rest to Bucket A with lower confidence noted.
+5. **WAIT for the user's single response.** Do NOT advance or ask follow-up questions until the user answers ALL Bucket C items. If the user answers only some, restate only the unanswered items (keep the same question numbers and options), then ask for the missing answers; do NOT re-ask already-answered items.
+6. The user can respond with:
+   - `全部确认` / `全部同意推荐` / `没问题` → proceed with all decisions.
+   - `1A, 2B, 3A` → apply each answer by number.
+   - `第3项改成...` / `问题2选B` / `1改C` → apply the correction, keep other answers.
+7. After ALL Bucket C are confirmed, produce a brief confirmation summary, then immediately return to `fp-prd` to write the PRD. Do NOT ask additional questions or re-confirm answered items.
 
 ### Bucket C Selection Rules
 
@@ -126,9 +151,9 @@ Explore only facts that reduce PRD questions:
 
 Code facts can explain current behavior and existing patterns; they cannot decide business goals, MVP tradeoffs, risk acceptance, or acceptance criteria for the user.
 
-## Question Format
+## Question Format (non-PRD or edge cases only)
 
-Default to exactly one question per turn. Ask multiple questions in one turn only when they are tightly coupled, all are necessary to unblock the same immediate decision, and the answer format below makes ambiguity unlikely.
+When Batch Confirmation Mode applies, always use the batch format above. The single-question format below is for non-PRD `grill-me` use or when there is exactly one Bucket C item.
 
 Every question must be numbered, even when there is only one question. Every option label is scoped to its question number.
 
@@ -159,72 +184,26 @@ For the common one-question case, use this format:
 - `同意推荐`
 ```
 
-For the rare multi-question case, include the answer instructions after every set of questions:
-
-```markdown
-### 需要确认：<问题主题>
-
-**问题 1：** <具体问题>
-
-选项：
-1A. <选项A> — <影响>
-1B. <选项B> — <影响>
-1C. <选项C> — <影响>
-
-**推荐：** 1A，因为 <依据>。
-
-**问题 2：** <具体问题>
-
-选项：
-2A. <选项A> — <影响>
-2B. <选项B> — <影响>
-2C. <选项C> — <影响>
-
-**推荐：** 2B，因为 <依据>。
-
-请逐题回答，格式示例：
-- `1A, 2B`
-- `1A；问题2：<你的具体答案>`
-- `全部同意推荐`
-
-不要只回复 `A` / `B` / `C`；如果只回复单个字母，我会先确认你指的是哪一道问题。
-```
-
-A recommendation is not confirmation. Proceed only after the user chooses a question-scoped option such as `1A`, gives a concrete answer for the question, says `同意推荐` when exactly one question was asked, says `全部同意推荐` when multiple questions were asked, or explicitly authorizes the listed assumptions.
+A recommendation is not confirmation. Proceed only after the user chooses a question-scoped option such as `1A`, gives a concrete answer, says `同意推荐`, or explicitly authorizes the listed assumptions.
 
 ## Ambiguous Answer Handling
 
 If the user answers with an unscoped option letter such as `A`, `B`, or `C`:
 
-- If exactly one question was asked in the immediately preceding assistant turn, treat it as the corresponding option for that question and briefly restate the interpretation, for example: `我理解为你选择问题 1 的 1A：<选项摘要>。`
-- If more than one question was asked, do not infer. Ask a clarification question before proceeding: `你回复了 “A”，但上一轮有多个问题。请确认是 1A、2A，还是其他？`
+- If exactly one question was asked, treat it as the corresponding option and briefly restate: `我理解为你选择问题 1 的 1A：<选项摘要>。`
+- In batch mode with multiple Bucket C questions: if the answer is ambiguous, ask once more for all unanswered items. Do NOT switch to one-at-a-time mode.
 
-If the user provides fewer answers than the number of questions asked, record only the clearly answered items and ask the next unanswered question as a single-question follow-up.
-
-If the user's free-form answer conflicts with an option label, prioritize the free-form content and ask a single clarification question if the intended decision is still unclear.
+If the user's free-form answer conflicts with an option label, prioritize the free-form content and clarify only if the intended decision is still unclear.
 
 ## Correction Handling
 
-Users may correct a previous answer using phrases such as `不是`, `我说的是`, `改成`, `纠正一下`, or `上一题选错了`.
+Users may correct previous answers. In batch mode, apply ALL corrections in a single turn, produce an updated confirmation summary, and proceed back to `fp-prd`. Do NOT re-enter one-at-a-time questioning.
 
 When a correction appears:
 
-1. Stop advancing the interview.
-2. Identify the exact prior decision being corrected by question number, option label, or topic.
-3. Restate the old interpretation and the new interpretation.
-4. Ask for confirmation only if the corrected target or new value is ambiguous.
-5. Update the confirmed-decision summary before asking the next PRD-blocking question.
-
-Example response:
-
-```markdown
-收到，我更正为：问题 1 选择 1B（<新含义>），不是 1A（<旧含义>）。
-
-当前已确认：
-- <更新后的决策>
-
-下一个需要确认：...
-```
+1. Apply the corrected decision by question number or topic.
+2. If ambiguity remains only about the correction, ask once for clarification of that item only.
+3. Update the confirmation summary and return to `fp-prd`.
 
 For prototype requests, do not accept “make a prototype” as sufficient. Confirm the concrete interactions to demonstrate. If the user does not specify them, recommend a minimal interaction set based on the workflow and ask for approval.
 
