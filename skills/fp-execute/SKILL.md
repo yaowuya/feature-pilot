@@ -2,8 +2,6 @@
 name: fp-execute
 description: 按 TDD 流程执行任务，支持半自动与全自动两种模式，并在执行前做计划冲突扫描、用 progress ledger 支持中断恢复
 ---
-
-
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,7 +17,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot Execute

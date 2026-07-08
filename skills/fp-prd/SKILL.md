@@ -2,8 +2,6 @@
 name: fp-prd
 description: Use when a user invokes /fp-prd or provides a product idea, feature request, user story, pain point, rough requirement, 需求想法, 产品需求, 用户故事, 痛点, or 半成品需求 that needs PRD clarification.
 ---
-
-
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,7 +17,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot PRD

@@ -2,8 +2,6 @@
 name: fp-brainstorm
 description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成 design.md
 ---
-
-
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,7 +17,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot Brainstorm

@@ -1,9 +1,6 @@
-# FeaturePilot Propose
-
-**功能描述：** $ARGUMENTS
-
-**如果功能描述为空**，请提示工程师提供详细的需求说明：背景与目标、具体需求、约束与边界。
-
+---
+description: 仅生成变更提案文档，不进入后续阶段
+---
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,9 +16,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
+---
 
-调用 `fp-propose` skill，完成：
-- 探索项目现状（以 `fp-docs/manifest.md` 为导航入口，不读取历史 changes/archive；必须以真实代码、测试、路由、模型、组件和 API 为实现事实依据）
-- Socratic 需求澄清（如需要，2-4 轮）
-- 生成 `fp-docs/changes/<slug>/proposal.md`
-- 引导工程师逐节确认提案
+**现在开始：** 根据「$ARGUMENTS」调用 fp-propose skill。

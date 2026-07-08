@@ -1,7 +1,6 @@
-# FeaturePilot Brainstorm
-
-**设计目标：** $ARGUMENTS
-
+---
+description: 基于已确认的 PRD 或 proposal，通过苏格拉底式提问生成技术设计方案
+---
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -17,7 +16,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 调用并严格遵守本插件内 `fp-brainstorm` skill：`skills/fp-brainstorm/SKILL.md`。
 
 `fp-brainstorm` 在你已有一个已确认的 proposal（通过 `/fp-propose` 或 `/fp-start` 生成）时使用：
@@ -26,3 +24,5 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 - 通过一次一个问题的苏格拉底式提问，澄清架构决策。
 - 根据实际涉及范围生成 `design-backend.md`、`design-frontend.md` 或两者。
 - 不预建后续阶段的文件（`tasks/`、`.fp-execute/` 等）。
+
+完成后输出生成的设计文件路径，提示下一步通常是 `/fp-start` 进入计划阶段。

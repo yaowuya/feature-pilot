@@ -2,8 +2,6 @@
 name: fp-start
 description: 启动并严格执行全流程开发向导（propose → brainstorm → plan → execute）。用于中大型或需要 FeaturePilot 留痕的需求；必须按阶段门禁执行，显式加载 fp-propose、fp-brainstorm、fp-plan、fp-execute 子 skill，生成并核验对应产物，等待用户确认后才能进入下一阶段。
 ---
-
-
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,7 +17,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot Start

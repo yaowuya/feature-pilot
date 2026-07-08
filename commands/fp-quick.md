@@ -1,7 +1,6 @@
-# FeaturePilot Quick
-
-**快速任务：** $ARGUMENTS
-
+---
+description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化
+---
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -17,7 +16,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 调用并严格遵守本插件内 `fp-quick` skill：`skills/fp-quick/SKILL.md`。
 
 `fp-quick` 用于不适合走完整 proposal-design-plan 链路的小型需求：
@@ -26,3 +24,5 @@ Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue f
 - 如果需求清晰可直接实施，输出内联实现计划并等待用户确认。
 - 如果存在阻塞疑问，向用户提问澄清。
 - 确认后按计划实现与验证。
+
+完成后直接交付改动，不生成持久化流程文档。

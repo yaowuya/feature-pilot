@@ -2,8 +2,6 @@
 name: fp-quick
 description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-propose 并复用其项目探索与需求澄清规则，但不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则向用户提问，如无疑问则直接输出内联实现计划并等待用户确认，确认后按计划实现与验证。
 ---
-
-
 ## FeaturePilot workspace and information layer
 
 Before choosing output paths, commands, UI/backend rules, or workflow behavior:
@@ -19,7 +17,6 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot Quick

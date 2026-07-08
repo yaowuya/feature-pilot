@@ -2,11 +2,9 @@
 name: fp-review
 description: Use when performing a final whole-branch review of an implemented FeaturePilot change before archive or merge, especially after fp-execute finishes and the reviewer must verify proposal, design, tasks, progress ledger, validation evidence, and branch diff without editing files.
 ---
-
-
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Walk upward from the current working directory to find `fp-docs/`.
 2. If `fp-docs/manifest.md` exists, read it first.
@@ -16,12 +14,9 @@ Before choosing output paths, component-library guidance, test commands, or work
 6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
 7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if an older project has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, and recommend `/fp-init` repair/refresh.
-
 ---
 
 # FeaturePilot Final Whole-Branch Review
@@ -59,16 +54,13 @@ If `slug` is missing, list `fp-docs/changes/` directories and ask the user to ch
 ## Required Reads
 
 Immediately read the actual files that exist for the selected change:
-1. `fp-docs/manifest.md` if present (information-layer entry point)
-2. `fp-docs/settings/frontend.md` if present and change involves UI
-3. `fp-docs/settings/backend.md` if present and change involves backend/API/data/security
-4. `fp-docs/changes/<slug>/proposal.md`
-5. `fp-docs/changes/<slug>/design-backend.md` if present
-6. `fp-docs/changes/<slug>/design-frontend.md` if present
-7. all `fp-docs/changes/<slug>/tasks/*.md` files if present
-8. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
-9. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
-10. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
+1. `fp-docs/changes/<slug>/proposal.md`
+2. `fp-docs/changes/<slug>/design-backend.md` if present
+3. `fp-docs/changes/<slug>/design-frontend.md` if present
+4. all `fp-docs/changes/<slug>/tasks/*.md` files if present
+5. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
+6. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
+7. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
 
 Then inspect the whole branch with read-only commands:
 - `git status --short`
