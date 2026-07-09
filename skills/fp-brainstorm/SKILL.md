@@ -1,34 +1,27 @@
 ---
 name: fp-brainstorm
-description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成 design.md
+description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成按实际范围拆分的技术设计文件
 ---
+## FeaturePilot workspace and information layer
 
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-## FeaturePilot workspace and customer settings
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree:
-   - `fp-docs/settings/`
-   - `fp-docs/changes/`
-   - `fp-docs/archive/`
-   - `fp-docs/agents/`
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
-Recommended settings file:
-
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Brainstorm
 
-你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，生成完整的 `design.md`。
+你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，按实际涉及范围生成 `design-backend.md` 和/或 `design-frontend.md`。
 
 ## 流程
 
@@ -57,10 +50,10 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 > **⚠️ 涉及前端 UI 时，必须加载并遵循以下 skill（作为设计约束）：**
 > - **Figma 入口必须唯一**：凡是涉及 Figma 链接、截图还原、设计稿解析，**只允许使用本插件内的 `fp-figma` skill**；**禁止使用全局 `figma-to-vue` 或其他同类 skill**，避免规范分叉。
-> - `fp-docs/settings/agent.md` skill — 组件库完整清单与用法；**优先使用 项目组件，确实无对应组件才允许自行封装，且需在 design.md 中注明原因**
+> - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
 > - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
 > - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
-> 生成的 design.md 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
+> 生成的 `design-frontend.md` 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
 >
 > **Just-in-time Visual 使用原则（只在需要时打开视觉链路）：**
 > - 只有当本次需求实际涉及 UI、Figma、截图还原、视觉走查或用户明确要求视觉验收时，才进入 Figma / browser / local viewer / 截图链路；纯后端、纯接口、纯脚本任务不得为了“完整流程”启动视觉工具。
@@ -76,14 +69,14 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
   > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
   > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出并写入 `design-frontend.md`：`Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用 项目组件的自封装理由、`Visual Checks`。**不得改用全局 `figma-to-vue`**。
   > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在 `design-frontend.md` 写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
-  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自 客户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
-- 组件复用：复用现有组件还是新建？是否需要参考现有的`.vue`文件骨架？
-- 状态管理：Vuex/Pinia store 还是局部 data？
+- 组件复用：复用现有组件还是新建？是否需要参考现有页面/组件文件骨架？
+- 状态管理：沿用项目现有全局状态/数据获取方案，还是使用局部状态？
 - 路由与权限守卫
 
-**用户每次回答后**，立即将决策追加写入文档的【第一部分：架构决策】。
+**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案和设计章节都获得用户确认后，才写入 `design-backend.md` / `design-frontend.md`。
 
 ### 第三步：提出方案与 trade-off
 
@@ -120,13 +113,22 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 ### 第五步：写入设计文件
 
+写入设计文件前必须满足全部条件：
+
+- 已提出 2-3 个方案和 trade-off。
+- 用户已明确确认推荐方案或给出替代方案。
+- 设计章节已按实际涉及端逐节展示。
+- 用户已明确确认可以写入设计文件。
+
+未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
+
 【立即用工具执行】按实际涉及端写入设计文件，然后输出：`✅ 设计已完成，进入计划阶段`
 
 ---
 
 ## 设计文档格式
 
-design.md 分为两部分，合并在同一文件：
+以下章节是可复用模板。涉及后端/API/数据/安全范围时写入 `design-backend.md`；涉及前端/UI 范围时写入 `design-frontend.md`。不要生成合并的 `design.md`，也不要为空范围生成占位文件。
 
 ```markdown
 # <功能描述> — 技术方案设计
@@ -159,7 +161,7 @@ design.md 分为两部分，合并在同一文件：
 
 ### API 接口
 
-（ViewSet + 路径 + HTTP 方法 + 主要请求/响应字段）
+（按项目现有 API 框架记录路由/endpoint、HTTP 方法、主要请求/响应字段）
 
 ### 业务逻辑要点
 
@@ -168,19 +170,19 @@ design.md 分为两部分，合并在同一文件：
 ### 前端设计（如涉及 UI）
 
 #### 页面/视图
-（新增 Vue 页面路径 + 菜单入口）
+（新增页面/视图路径 + 菜单入口）
 
 #### 组件
 （新建组件 + 复用现有组件清单）
 
 #### API 模块
-（ui/src/api/ 下的文件，主要接口列表）
+（按项目现有 API 客户端/请求封装位置记录文件和主要接口列表）
 
 #### 路由
 （路由定义，权限要求）
 
 #### 状态管理
-（Vuex module 或说明仅用局部 data）
+（按项目现有状态管理方案记录 store/composable/hook/context 或说明仅用局部状态）
 ```
 
 ---

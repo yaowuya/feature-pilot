@@ -1,5 +1,5 @@
 ---
-description: 根据 Figma 链接生成或完善项目当前前端框架的 UI 实现，遵循项目本地 `fp-docs/settings/agent.md` 中声明的 UI/UX 规范
+description: 基于已确认的 PRD 或 proposal，通过苏格拉底式提问生成技术设计方案
 ---
 ## FeaturePilot workspace and information layer
 
@@ -16,19 +16,17 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
 Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
-## 基本规则
+调用并严格遵守本插件内 `fp-brainstorm` skill：`skills/fp-brainstorm/SKILL.md`。
 
-- Figma 相关流程统一使用 `fp-figma`
-- 读取 `fp-docs/manifest.md` 作为入口；按需读取 `fp-docs/settings/frontend.md`、`fp-docs/settings/prototype-style.md`，以及 `fp-docs/settings/agent.md` 中的通用策略。
-- 优先使用 `settings/frontend.md`、`settings/prototype-style.md` 或现有代码中确认的组件库、token、布局和视觉规则；没有配置时使用中性组件映射，不假设任何客户专属前缀
-- 遵循项目现有前端框架和脚本/状态管理写法；不得假设 Vue、React 或特定语法
-- 优先使用 Flex / Grid，避免滥用 `position: absolute`
+`fp-brainstorm` 在你已有一个已确认的 proposal（通过 `/fp-propose` 或 `/fp-start` 生成）时使用：
 
-## 执行步骤
+- 读取 `fp-docs/changes/<slug>/proposal.md` 确认范围。
+- 通过一次一个问题的苏格拉底式提问，澄清架构决策。
+- 提出 2-3 个技术方案和 trade-off，等待用户确认方案。
+- 按实际涉及端逐节展示设计内容，等待用户确认可以写入。
+- 根据实际涉及范围生成 `design-backend.md`、`design-frontend.md` 或两者。
+- 不预建后续阶段的文件（`tasks/`、`.fp-execute/` 等）。
 
-1. 读取 Figma 结构与关键样式，仅关注 content 区域和用户指定节点；截图只能作为截图事实，不能替代 Figma 源事实。
-2. 分析页面结构、组件映射和布局方式，输出可延续的节点路径、区域拆解、组件映射、Flex/Grid 容器规划和 Visual Checks。
-3. 若当前处于 brainstorm/design 阶段，只把映射和 Visual Checks 写入 `design-frontend.md`，不得直接写业务 UI 文件。
-4. 若用户直接执行 Figma 还原或后续计划已确认实现目标，再按项目已确认的框架、组件文件类型、脚本/状态管理和样式约定生成目标文件；无法从 settings 或现有代码确认时，先向用户提问，不要猜测框架。
-5. 写入目标文件并执行 Lint 修复。
-6. 页面可运行后再按 Visual Checks 做 just-in-time 本地预览/浏览器验证；不得提前启动 local viewer。
+未获得方案确认和写入确认前，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
+
+完成后输出生成的设计文件路径；若这是独立设计流程，下一步通常是 `/fp-plan <slug>`，若已在 `/fp-start` 编排中则返回 `/fp-start` 阶段 3。

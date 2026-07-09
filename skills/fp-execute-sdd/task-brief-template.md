@@ -24,6 +24,19 @@ Copy only the constraints that apply to this task, preserving exact values:
 
 - `<constraint>`
 
+## Relevant Project Information Layer
+
+- FeaturePilot manifest:
+- Relevant settings excerpts:
+- Relevant workspace-map excerpts:
+- Relevant commands/quality-gates excerpts:
+- Relevant architecture/contracts excerpts:
+- Relevant security/data excerpts:
+- Relevant frontend settings excerpts:
+- Relevant backend settings excerpts:
+- Unknowns checked:
+- Staleness notes:
+
 ## Proposal / Design Context
 
 Relevant proposal excerpt:

@@ -2,28 +2,21 @@
 name: fp-plan
 description: Use when coordinating FeaturePilot task plan generation after proposal and design files are confirmed, especially when deciding whether to invoke backend and/or frontend planning skills.
 ---
+## FeaturePilot workspace and information layer
 
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-## FeaturePilot workspace and customer settings
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree:
-   - `fp-docs/settings/`
-   - `fp-docs/changes/`
-   - `fp-docs/archive/`
-   - `fp-docs/agents/`
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
-Recommended settings file:
-
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Plan
@@ -64,5 +57,7 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 - 哪一端被明确跳过，以及跳过原因。
 
 输出计划摘要后，明确询问用户是否确认计划。
+
+写出 `plan-backend.md` / `plan-frontend.md` 只表示计划草案已生成，不等于用户确认。没有用户明确确认前，不得进入 `fp-execute`、`fp-execute-sdd`，也不得修改业务代码。
 
 用户确认后输出：`✅ 执行计划已确认，进入执行阶段`

@@ -1,22 +1,23 @@
 ---
 description: 归档已完成的变更
 ---
+## FeaturePilot workspace and information layer
 
-# FeaturePilot Archive
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+5. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-## FeaturePilot workspace
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-执行命令前，先遵守目标项目的 `fp-docs` 契约：如需生成产物，使用 `fp-docs/changes/`、`fp-docs/archive/`；如存在 `fp-docs/settings/agent.md`，先读取与当前阶段相关的配置。不要创建或覆盖客户 settings，除非用户明确要求。
-**变更 slug（可选）：** $ARGUMENTS
-
-调用 `fp-archive` skill，完成：
-- 确认归档目标（slug 或从列表选择）
-- 移动变更目录并更新历史记录
-- 更新 `fp-docs/agents/history.md` 和 `AGENTS.md`
-
-等待执行完成后，输出 `✅ 已归档`。
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. `fp-archive` must not create or repair manifest/settings/intel. Its only confirmed outputs are moving the selected change directory into `fp-docs/archive/` and updating `fp-docs/history/history.md`.
 ---
 
 **现在开始：** 根据「$ARGUMENTS」调用 fp-archive skill。
+
+## Hard gate
+
+归档会移动 `fp-docs/changes/<slug>/` 并更新历史文件。即使命令参数里提供了 slug，也必须先展示源路径、目标归档路径、未完成任务检查摘要，并等待用户明确确认后才能移动目录或写 `history.md`。

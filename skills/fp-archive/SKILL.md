@@ -2,28 +2,19 @@
 name: fp-archive
 description: 归档已完成的变更：移动变更目录，更新 history.md
 ---
+## FeaturePilot workspace and information layer
 
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-## FeaturePilot workspace and customer settings
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+5. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree:
-   - `fp-docs/settings/`
-   - `fp-docs/changes/`
-   - `fp-docs/archive/`
-   - `fp-docs/agents/`
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
-Recommended settings file:
-
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. `fp-archive` must not create or repair manifest/settings/intel. Its only confirmed outputs are moving the selected change directory into `fp-docs/archive/` and updating `fp-docs/history/history.md`.
 ---
 
 # fp-archive — 变更归档
@@ -36,8 +27,10 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 ### Step 1: 确定归档目标
 
-- 若调用时已有 slug 参数 → 直接使用
-- 若无参数 → 列出 `fp-docs/changes/` 下所有目录，让用户选择
+- 若调用时已有 slug 参数 → 读取并展示目标 `fp-docs/changes/<slug>/` 的摘要，要求用户确认后再继续。
+- 若无参数 → 列出 `fp-docs/changes/` 下所有目录，让用户选择。
+
+归档会移动目录并更新历史，属于不可轻易回滚的文件操作。无论 slug 来自参数还是选择，都必须在移动前展示源路径、目标归档路径和检查摘要，并等待用户明确确认。
 
 ### Step 2: 归档前检查
 
@@ -58,7 +51,7 @@ Public plugin rule: do not hardcode any customer component library, vendor, comp
 
 ### Step 4: 更新 history.md
 
-在 `fp-docs/agents/history.md` 末尾追加：
+在 `fp-docs/history/history.md` 末尾追加：
 
 ```markdown
 

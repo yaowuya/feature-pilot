@@ -2,28 +2,21 @@
 name: fp-execute
 description: 按 TDD 流程执行任务，支持半自动与全自动两种模式，并在执行前做计划冲突扫描、用 progress ledger 支持中断恢复
 ---
+## FeaturePilot workspace and information layer
 
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-## FeaturePilot workspace and customer settings
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree:
-   - `fp-docs/settings/`
-   - `fp-docs/changes/`
-   - `fp-docs/archive/`
-   - `fp-docs/agents/`
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
-Recommended settings file:
-
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Execute
@@ -100,7 +93,7 @@ Base SHA: <执行开始时的 git sha>
 3. **Interfaces**：如果任务包含 `Interfaces`，后续任务引用的函数、字段、URL、route、store、组件 props/events 必须由现有代码或前序任务明确产出。
 4. **前后端契约**：后端 API、字段名、错误结构、权限 action 与前端 API wrapper/store/page 任务必须一致；不一致时暂停并汇总给用户决策。
 5. **TDD 可执行性**：每个任务必须有明确失败测试、失败预期、最小实现、通过验证和提交步骤；泛泛的 `run tests` 或 `实现页面` 视为计划缺陷。
-6. **前端骨架完整性**：前端任务必须包含 `Reasoning`、`Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`；project frontend framework 任务必须显式使用 `the project-standard script pattern`。
+6. **前端骨架完整性**：前端任务必须包含 `Reasoning`、`Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`；前端任务必须显式遵循项目现有前端框架和脚本/状态管理写法。
 7. **占位符扫描**：发现 `TBD`、`TODO`、`按需处理`、`类似上面`、`补充样式`、`Add appropriate error handling` 等占位表达，先修正计划或请求用户确认，不要直接执行。
 8. **review 风险前置**：如果计划要求了明显会被代码审查判为缺陷的做法（例如测试没有断言、硬编码敏感配置、跳过权限负向测试），先把问题与对应计划文本一起提交给用户决定哪个约束优先。
 
@@ -129,7 +122,7 @@ Base SHA: <执行开始时的 git sha>
 - 不能忽略 `Reasoning` 中约定的组件映射与布局策略。
 - 不能忽略 `Interfaces` 中约定的 API/store/route/props/events 契约。
 - 不能在执行阶段擅自偏离 `Visual Checks` 中约定的设计稿对齐目标。
-- project frontend framework 组件必须使用 `the project-standard script pattern`；若任务生成了 `non-project-standard component style` 或 non-project-standard component style 写法，必须立即改回 `setup` 模式。
+- 前端组件必须遵循项目现有框架、脚本/状态管理和样式写法；若任务生成了与项目惯例不一致的组件结构，必须立即改回项目既有模式。
 - 若发现 `plan-frontend.md` 缺少必要的模板/脚本/样式骨架、接口契约或视觉检查，先回退补全计划，再继续执行。
 
 ## 完成汇报

@@ -1,22 +1,38 @@
 ---
-description: 初始化 fp-docs 工作区，并引导生成可选的 settings/agent.md 项目配置
+description: 初始化 fp-docs 信息层（单一 manifest.md、settings/agent.md/frontend.md/backend.md/prototype-style.md、intel/），引导生成可选 settings、轻量 discovery，并在检测到 Canway/CW 项目时询问是否采用内置示例规范
 ---
 
 # FeaturePilot Init
 
 **初始化目标（可选）：** $ARGUMENTS
 
-## FeaturePilot workspace
+## FeaturePilot workspace and information layer
 
-执行命令前，先遵守目标项目的 `fp-docs` 契约：如需生成产物，使用 `fp-docs/changes/`、`fp-docs/archive/`；如存在 `fp-docs/settings/agent.md`，先读取配置。不要覆盖客户 settings，除非用户明确要求。
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
+
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
+
+Compatibility rule: `/fp-init` is the only workflow that may create or repair `fp-docs/manifest.md`, `fp-docs/settings/`, and `fp-docs/intel/`. It must do so only under the target project root, never in a parent directory.
 
 调用并严格遵守本插件内 `fp-init` skill：`skills/fp-init/SKILL.md`。
 
-`fp-init` 用于低成本接入 FeaturePilot：
+`fp-init` 用于低成本接入 FeaturePilot 信息层：
 
-- 创建最小 `fp-docs/` 目录结构。
-- 引导用户选择是否生成 `fp-docs/settings/agent.md`。
-- 如果用户同意，基于当前项目真实代码、README、package/依赖和测试脚本生成项目配置草案。
-- 如果用户不同意，只创建工作区基础目录，不强制配置。
+- 创建 `fp-docs/manifest.md`、`fp-docs/settings/`、`fp-docs/intel/` 最小骨架。
+- 不创建 `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/`。
+- 如果项目根目录已有 `CLAUDE.md` 或 `AGENTS.md`，在 `fp-docs/manifest.md` 中记录引用，不复制大段内容到 `settings/agent.md`。
+- 引导用户选择是否生成可选的 `fp-docs/settings/agent.md`（轻量 FeaturePilot policy adapter）、`fp-docs/settings/frontend.md`（前端/UI）、`fp-docs/settings/backend.md`（后端/API/数据/安全）和/或 `fp-docs/settings/prototype-style.md`（原型视觉风格参考）。
+- 引导用户选择是否运行轻量只读 discovery，填充 `fp-docs/intel/*`。
+- 运行小范围只读 Canway/CW 检测；如果高置信度识别为 Canway/CW 项目，必须询问是否采用 `examples/canway-cw/fp-docs/settings/` 作为可编辑初始草稿；不得自动采用或覆盖已有文件。
+- 所有可选文件均使用 Unknown 占位而非猜测；已有文件绝不覆盖，除非用户明确要求。
+- 如果用户不同意可选配置，只创建信息层骨架，不强制配置。
 
-完成后输出工作区路径、是否生成配置、下一步建议（通常是 `/fp-prd` 或 `/fp-start`）。
+完成后输出工作区路径、manifest 路径、Canway/CW 检测与示例采用状态、`agent.md`/`frontend.md`/`backend.md`/`prototype-style.md` 配置生成状态、intel 生成状态、critical unknowns、下一步建议（通常是 `/fp-prd` 或 `/fp-start`）。

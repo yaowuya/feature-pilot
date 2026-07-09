@@ -1,35 +1,34 @@
 ---
 description: 启动全流程开发向导 (propose → brainstorm → plan → execute)
 ---
+## FeaturePilot workspace and information layer
 
-# FeaturePilot Start
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-## FeaturePilot workspace
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-执行命令前，先遵守目标项目的 `fp-docs` 契约：如需生成产物，使用 `fp-docs/changes/`、`fp-docs/archive/`；如存在 `fp-docs/settings/agent.md`，先读取与当前阶段相关的配置。不要创建或覆盖客户 settings，除非用户明确要求。
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+---
 
-**功能描述或 PRD slug：** $ARGUMENTS
+## Init availability check
 
-你是一个全流程开发向导，将引导用户完成从需求到实现的完整流程。这个命令必须按 `fp-start` skill 的阶段门禁执行。
+启动 `/fp-start` 时，只检查目标项目根目录下的 `fp-docs/manifest.md`。
 
-**如果功能描述为空**，请提示工程师提供详细的需求说明：背景与目标、具体需求、约束与边界；不要继续扫描或创建文件。
+如果不存在：
 
-## 强制执行规则
-
-- 立即加载并遵守本插件内 `fp-start` skill：`skills/fp-start/SKILL.md`。
-- 每个阶段进入前，显式加载对应子 skill：`fp-propose`、`fp-brainstorm`、`fp-plan`、`fp-execute`。
-- 阶段 1、2、3 完成后必须停下等待用户确认；没有明确确认，不得进入下一阶段。
-- 每个阶段完成后必须用工具核验目标文件存在，并展示路径与摘要。
-- 启动后先判断是否为小需求；若适合 `fp-quick`，必须先征求用户确认。用户确认后加载 `fp-quick` 并按它执行；用户不确认则继续完整 `fp-start`。
-- 除小需求分流且用户确认的情况外，不得跳过 proposal/design/plan 直接实现。
-
-**通用规则：大文档自动拆分**
-
-任何阶段生成的 Markdown 文档，若预计超过 500 行，**必须主动拆分为多个小文件**：
-- `design.md` 超大时：按子系统拆分，`00-overview.md` + `01-<子系统>.md` …
-- `plan.md` 超大时：按任务拆分，`00-overview.md` + `01-<任务名>.md` …
-- 每个文件控制在 200 行以内，`00-overview.md` 包含其他文件的索引链接
+- 提示用户：`未检测到项目根目录下的 fp-docs/manifest.md。建议先运行 /fp-init 初始化 FeaturePilot 信息层，以便记录 settings/intel；这不是强制要求。`
+- 不因此停止 `/fp-start`。
+- 不自动运行 `/fp-init`。
+- 不从 `/fp-start` 创建 `manifest.md`、`settings/` 或 `intel/`。
+- 用户继续时，后续阶段只能按需在项目根目录 `fp-docs/changes/<slug>/` 下创建本次变更产物。
 
 ---
 
@@ -104,9 +103,11 @@ description: 启动全流程开发向导 (propose → brainstorm → plan → ex
 - 基于设计文档生成超级细粒度的 TDD 任务清单
 - 按实际涉及端生成任务计划：涉及后端才生成 `tasks/plan-backend.md`；涉及前端/UI 才生成 `tasks/plan-frontend.md`
 - 没有前端计划或不存在已确认的 `design-frontend.md` 时，不得生成 `plan-frontend.md` 或前端任务占位文件
-- 后端任务按 Model → Service → ViewSet → Serializer → URL → Tests 顺序执行；前端任务按 API 模块 → Store → 路由 → 页面/组件 → ESLint 顺序执行，并严格兑现 `design-frontend.md` 中的设计稿映射
+- 后端/前端任务都按项目实际分层、已确认设计和现有代码依赖顺序生成；只覆盖真实涉及的模型、服务、接口、权限、客户端、状态、路由、页面/组件、样式和验证边界，不固定框架术语或工具名。
 
 用工具确认任务计划文件存在，展示摘要并等待用户确认。确认后输出 `✅ 计划确认，进入执行阶段`。
+
+未获得计划确认前，不得进入 `fp-execute` / `fp-execute-sdd`，不得修改业务代码。
 
 ---
 
@@ -118,7 +119,7 @@ description: 启动全流程开发向导 (propose → brainstorm → plan → ex
 
 执行前必须做 Pre-flight Plan Review；每完成任务更新 checkbox 和 `.fp-execute/progress.md`。若连续失败、review 发现 Critical/Important、或发现计划缺陷，暂停并说明，不得绕过测试或 review。
 
-执行完所有任务并通过最终 review 后提示：运行 `/fp:archive` 归档本次变更。
+执行完所有任务并通过最终 review 后提示：运行 `/fp-archive` 归档本次变更。
 
 ---
 

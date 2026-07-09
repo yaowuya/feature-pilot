@@ -2,28 +2,21 @@
 name: fp-review
 description: Use when performing a final whole-branch review of an implemented FeaturePilot change before archive or merge, especially after fp-execute finishes and the reviewer must verify proposal, design, tasks, progress ledger, validation evidence, and branch diff without editing files.
 ---
+## FeaturePilot workspace and information layer
 
+Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
-## FeaturePilot workspace and customer settings
+1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
+2. If `fp-docs/manifest.md` exists, read it first.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
+7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
-Before choosing output paths, component-library guidance, test commands, or workflow rules, locate the target project's FeaturePilot workspace:
+Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
 
-1. Walk upward from the current working directory to find `fp-docs/`.
-2. If it does not exist and this phase needs to create artifacts, initialize the minimal tree:
-   - `fp-docs/settings/`
-   - `fp-docs/changes/`
-   - `fp-docs/archive/`
-   - `fp-docs/agents/`
-3. Read any settings files that exist. Do not create or overwrite customer settings unless the user explicitly asks.
-
-Settings are optional. If a file is missing, fall back to current project code, adjacent implementations, and public defaults only; never invent customer-specific conventions.
-
-Recommended settings file:
-
-- `fp-docs/settings/agent.md` — optional project-specific FeaturePilot rules, including workflow, paths, component library, design system, UI tokens, Figma mapping, and visual review requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, or workflow policy in public skills. Customer-specific rules may be described in optional `fp-docs/settings/agent.md`.
-
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Final Whole-Branch Review
@@ -98,7 +91,7 @@ Build a coverage table from source artifacts:
 - Every `proposal.md` `What Changes` and `Capabilities` item.
 - Every explicit `Out of Scope` item.
 - Every backend design contract, permission, migration, provider, API, and validation requirement.
-- Every frontend design contract, route/store/API, component mapping, project frontend framework `the project-standard script pattern`, `project-configured components`, style token, and Visual Check requirement.
+- Every frontend design contract, route/store/API, component mapping, project frontend framework and script/state pattern, project-configured components, style token, and Visual Check requirement.
 - Every completed task in task plans and progress ledger.
 
 For each item, mark `Covered`, `Partial`, `Missing`, `Violated`, or `N/A`, with file/test/commit evidence.
@@ -109,7 +102,7 @@ Review changed files as one integrated change, not as isolated tasks.
 
 Check relevant areas:
 - Backend: model, migration, service, serializer/schema, ViewSet/API, URL/router, IAM/permission, provider/registry, async jobs, external calls, tenant isolation, error handling, backward compatibility.
-- Frontend: API wrapper, store/composable, route, project frontend framework `the project-standard script pattern`, project-configured components, state transitions, loading/empty/error states, styles, design tokens, Figma/Visual Checks.
+- Frontend: API wrapper, state management/composable/hook/context, route, project frontend framework and script/state pattern, project-configured components, state transitions, loading/empty/error states, styles, design tokens, Figma/Visual Checks.
 - Contracts: URL, HTTP method, request/response fields, enums, error shape, pagination/filter/sort, permission states, route names, store actions, component props/events.
 - Tests: meaningful assertions, negative paths, permissions, boundary cases, migration/compatibility, frontend contract and visual checks where applicable.
 - Production readiness: deployment order, migrations, config, feature flags, logging, security leakage, performance, rollback implications.
