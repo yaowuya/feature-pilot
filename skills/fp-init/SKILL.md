@@ -1,6 +1,6 @@
 ---
 name: fp-init
-description: Use when a project is adopting FeaturePilot for the first time, needs a single-manifest fp-docs information layer, or wants guided creation of optional fp-docs/settings/agent.md, frontend.md, and backend.md configuration.
+description: Use when a project is adopting FeaturePilot for the first time, needs a single-manifest fp-docs information layer, wants guided creation of optional fp-docs/settings/agent.md, frontend.md, backend.md configuration, or may adopt labelled project-family examples such as Canway/CW settings.
 ---
 
 ## FeaturePilot workspace and information layer
@@ -14,7 +14,7 @@ description: Use when a project is adopting FeaturePilot for the first time, nee
 
 - Create the FeaturePilot information layer skeleton: `fp-docs/manifest.md` (single entry point), `fp-docs/settings/`, and `fp-docs/intel/`.
 - Explain the workflow: `/fp-prd` clarifies requirements; `/fp-start` picks up a PRD or feature description and drives design → plan → execution.
-- Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), and/or `fp-docs/settings/backend.md` (backend/API/data/security) with user confirmation.
+- Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), `fp-docs/settings/backend.md` (backend/API/data/security), and/or `fp-docs/settings/prototype-style.md` (prototype visual style reference) with user confirmation.
 - Optionally run lightweight read-only discovery to populate `fp-docs/intel/*` with source-backed project facts.
 - Never overwrite existing customer manifest/settings/intel without explicit approval.
 
@@ -37,6 +37,7 @@ fp-docs/
     agent.md                 # Optional lean FeaturePilot policy adapter
     frontend.md              # Optional UI/frontend/visual/design-system settings
     backend.md               # Optional backend/API/data/security settings
+    prototype-style.md       # Optional prototype visual style reference
   intel/
     sources-and-provenance.md
     workspace-map.md
@@ -97,19 +98,20 @@ For target-state requirements, user instructions and approved active change arti
 
 ## Settings Files
 
-| File | Role | Authoritative For | Status |
-| --- | --- | --- | --- |
-| `settings/agent.md` | Lean FeaturePilot policy adapter | workflow, constraints, external-doc pointers | missing |
-| `settings/frontend.md` | Frontend/UI/visual settings | UI implementation and visual acceptance | missing/not-applicable |
-| `settings/backend.md` | Backend/API/data/security settings | backend implementation and backend acceptance | missing/not-applicable |
+| File | Role | Authoritative For | When To Read | Status |
+| --- | --- | --- | --- | --- |
+| `settings/agent.md` | Lean FeaturePilot policy adapter | workflow, constraints, external-doc pointers | workflow/policy questions only | missing |
+| `settings/frontend.md` | Frontend/UI/visual settings | UI implementation and visual acceptance | UI/page/prototype work only | missing/not-applicable |
+| `settings/backend.md` | Backend/API/data/security settings | backend implementation and backend acceptance | backend/API/data/security/permission work only | missing/not-applicable |
+| `settings/prototype-style.md` | Prototype visual style reference | prototype generation consistency | prototype generation only | missing/not-applicable |
 
 ## Intel Artifacts
 
-| File | Purpose | Freshness | Sources |
-| --- | --- | --- | --- |
-| `intel/unknowns-and-decisions.md` | Project-level unknowns and confirmations | fresh | init skeleton |
-| `intel/refresh-policy.md` | Freshness and staleness rules | fresh | init skeleton |
-| `intel/sdd-handoff.md` | SDD handoff contract | fresh | init skeleton |
+| File | Purpose | When To Read | Freshness | Sources |
+| --- | --- | --- | --- | --- |
+| `intel/unknowns-and-decisions.md` | Project-level unknowns and confirmations | requirement/design questions affected by known unknowns | fresh | init skeleton |
+| `intel/refresh-policy.md` | Freshness and staleness rules | when deciding whether intel can be trusted | fresh | init skeleton |
+| `intel/sdd-handoff.md` | SDD handoff contract | SDD execution only | fresh | init skeleton |
 
 ## External Project Docs
 
@@ -122,14 +124,18 @@ For target-state requirements, user instructions and approved active change arti
 
 ## Consumption Rules
 
-- Read this manifest first.
-- Pull only relevant settings and intel for the current phase.
+- Read this manifest first as an index, not as permission to read everything.
+- Do **not** bulk-read all settings or intel files.
+- Use `When To Read` to pull only the smallest relevant settings/intel set for the current phase and question.
+- Treat generated intel as navigation and stale-prone hints, not proof of current behavior.
 - Current code and command output win for current-state facts.
 - Approved change artifacts win for target-state requirements.
 - Re-open referenced source files before editing.
 - Re-run commands before claiming validation.
 - Missing referenced paths make dependent sections stale.
+- If an intel artifact is hard-stale or soft-stale, verify just-in-time from current source before using it.
 - UI-related phases must read `settings/frontend.md` when present.
+- Prototype generation should read `settings/prototype-style.md` when present.
 - Backend-related phases must read `settings/backend.md` when present.
 ```
 
@@ -155,6 +161,18 @@ For target-state requirements, user instructions and approved active change arti
 # Refresh Policy
 
 Generated intel is navigation, not proof of current behavior.
+
+Every generated intel artifact should include a small freshness block near the top:
+
+```markdown
+Generated: <timestamp>
+Generated from Git SHA: <sha or unavailable>
+Working tree: clean | dirty | unavailable
+Depends on:
+- <source path> @ <git blob sha or content hash or unavailable>
+Freshness: fresh | soft-stale | hard-stale | unknown
+Use as: navigation-hint-only
+```
 
 ## Hard-stale
 
@@ -245,11 +263,69 @@ If **any** of these exist:
 
 Note: `fp-docs/manifest.md` is always created or updated regardless of whether external project docs exist. FeaturePilot normalization via the manifest should not be skipped.
 
-### 4. Ask about optional settings
+### 4. Detect labelled project-family examples
 
-After updating the manifest, offer optional settings files.
+After checking existing project-level docs and before offering generic optional settings, run a small read-only project-family detection pass.
 
-#### 4-a. Offer `settings/agent.md`
+#### Canway / CW detection
+
+FeaturePilot may ship labelled examples for common project families. The public plugin must never treat these examples as global defaults.
+
+For Canway / CW projects, inspect only small, safe signals such as:
+
+- Repository/root names containing `canway`, `cw`, `auto-ops`, `aoc`, or similar Canway delivery names.
+- Existing docs mentioning `嘉为`, `Canway`, `CW`, `AOC`, `蓝鲸`, or `BlueKing`.
+- Package/module names such as `@canway/*`, `@canway/cw-magic-vue`, `@canway/cw-user-selector`, `auto-ops-platform`, or `cw-auto-ops`.
+- Root layout signals such as `manage.py` plus `ui/package.json` in a Canway/BlueKing-style application.
+- Existing FeaturePilot settings that already reference Canway/CW conventions.
+
+Detection rules:
+
+- Keep detection read-only.
+- Do not scan secrets, environment values, production data, or huge dependency trees.
+- If confidence is low, do nothing special and continue generic `/fp-init`.
+- A positive detection only permits asking the user; it does not permit automatic adoption.
+
+When confidence is high, ask before adopting the example:
+
+```markdown
+检测到当前项目可能是 Canway/CW 项目。是否采用 FeaturePilot 内置的 CW 示例规范作为 `fp-docs/settings/` 的初始草稿？
+
+示例来源：`examples/canway-cw/fp-docs/settings/`
+
+这些示例会写入 agent/frontend/backend/prototype-style 设置文件供你确认；不会覆盖已有文件，且你可以选择只采用部分文件。
+
+选项：
+1. 全部采用 — 创建缺失的 `agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`。
+2. 选择文件 — 只采用我指定的设置文件。
+3. 先看摘要 — 展示示例包含的后端、前端、UI、UX、原型风格要点，再决定。
+4. 跳过 — 不采用 CW 示例，继续普通 `/fp-init`。
+```
+
+If the user chooses adoption:
+
+- Copy from this plugin's labelled example path: `examples/canway-cw/fp-docs/settings/`.
+- Create missing target files only.
+- If any target file already exists, ask separately before overwriting that specific file. Default recommendation is to skip existing files.
+- Record adopted files in the final report.
+- Treat adopted files as editable target-project settings, not as public-plugin defaults.
+- Continue with the remaining `/fp-init` optional settings and lightweight discovery prompts as needed.
+
+The current CW example maps requested spec areas as follows:
+
+| Requested area | Target settings file |
+|---|---|
+| 后端规范 | `fp-docs/settings/backend.md` |
+| 前端规范 | `fp-docs/settings/frontend.md` |
+| UI 规范 | `fp-docs/settings/frontend.md` UI sections |
+| UX 规范 | `fp-docs/settings/frontend.md` UX sections |
+| 原型视觉风格 | `fp-docs/settings/prototype-style.md` |
+
+### 5. Ask about optional settings
+
+After updating the manifest and handling any accepted project-family example, offer optional settings files.
+
+#### 5-a. Offer `settings/agent.md`
 
 Ask:
 
@@ -312,7 +388,7 @@ If the user chooses to generate, write:
 - <unknown general policy items>
 ```
 
-#### 4-b. Offer `settings/frontend.md`
+#### 5-b. Offer `settings/frontend.md`
 
 Ask:
 
@@ -370,7 +446,7 @@ If the user chooses to generate, read lightweight project frontend facts and wri
 - <unknown frontend/UI/visual items>
 ```
 
-#### 4-c. Offer `settings/backend.md`
+#### 5-c. Offer `settings/backend.md`
 
 Ask:
 
@@ -429,7 +505,74 @@ If the user chooses to generate, write:
 - <unknown backend/API/data/security items>
 ```
 
-### 5. Ask about lightweight discovery
+#### 5-d. Offer `settings/prototype-style.md`
+
+Ask:
+
+```markdown
+是否需要生成 `fp-docs/settings/prototype-style.md`（HTML 原型视觉风格参考）？
+
+该文件用于后续 `/fp-prd` 生成 `prototype.html` 时保持项目原型风格一致，包含：
+- 原型适用场景
+- 页面骨架与布局模式
+- 颜色、字体、间距 token
+- 常用组件/表格/表单/弹窗/抽屉风格
+- 原型交互与文案规则
+
+选项：
+1. 生成 — 根据已有原型、截图、Figma 或相邻页面提炼初始草稿；不确定项写 Unknown。
+2. 跳过 — 后续首个原型确认后再提取。
+```
+
+If the user chooses to generate, write:
+
+```markdown
+# FeaturePilot Prototype Style
+
+## Usage
+
+- Use when creating or updating `fp-docs/changes/<slug>/prototype.html`.
+
+## Visual Sources
+
+- Existing prototype/page/Figma/screenshot sources:
+- Confidence:
+
+## Page Skeleton and Layout
+
+- Shell/navigation:
+- Content layout:
+- Responsive/min-width rules:
+
+## Color, Typography, and Spacing
+
+- Primary colors:
+- Text colors:
+- Backgrounds/borders:
+- Font stack:
+- Spacing scale:
+
+## Component Patterns
+
+- Buttons:
+- Forms:
+- Tables:
+- Dialogs/drawers:
+- Empty/loading/error states:
+
+## Interaction and Copy Rules
+
+- Required prototype interactions:
+- Validation/error behavior:
+- Permission/disabled behavior:
+- Copy tone/examples:
+
+## Unknowns
+
+- <unknown prototype style items>
+```
+
+### 6. Ask about lightweight discovery
 
 After handling settings, ask:
 
@@ -444,7 +587,7 @@ FeaturePilot 可以为 SDD 构建一个轻量只读项目信息层，记录源�
 
 If approved, perform a read-only discovery pass.
 
-### 6. Lightweight discovery boundaries
+### 7. Lightweight discovery boundaries
 
 **Allowed:**
 - Read project docs and manifests.
@@ -463,15 +606,16 @@ If approved, perform a read-only discovery pass.
 
 If facts cannot be confirmed from source files, write `Unknown` — not a guess.
 
-### 7. Report next steps
+### 8. Report next steps
 
 After init, report:
 
 - Workspace path.
 - Whether `fp-docs/manifest.md` was created/updated.
-- Whether `settings/agent.md` was created/skipped.
-- Whether `settings/frontend.md` was created/skipped.
-- Whether `settings/backend.md` was created/skipped.
+- Whether `settings/agent.md` was created/skipped/adopted.
+- Whether `settings/frontend.md` was created/skipped/adopted.
+- Whether `settings/backend.md` was created/skipped/adopted.
+- Whether `settings/prototype-style.md` was created/skipped/adopted.
 - Whether intel artifacts were created (lightweight discovery) or kept as skeleton.
 - External docs detected and recorded in manifest.
 - Critical unknowns.
@@ -491,6 +635,8 @@ After init, report:
 - Do not create `fp-docs/changes/<slug>/` during init unless the user explicitly asks.
 - When project root already has `CLAUDE.md` or `AGENTS.md`, record the reference in `fp-docs/manifest.md` instead of duplicating content into `agent.md`.
 - Keep generated settings concise and editable; use `Unknown` instead of guessing.
+- Manifest and generated intel must include `When To Read` / freshness guidance so downstream skills can avoid token-heavy bulk reads.
+- Generated intel is stale-prone; downstream skills must verify exact current facts from code instead of treating intel as authoritative.
 
 ## Compatibility
 

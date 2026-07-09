@@ -8,11 +8,13 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
-3. Read only relevant settings and intel listed by the manifest.
-4. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
 5. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
+
+Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. `fp-archive` must not create or repair manifest/settings/intel. Its only confirmed outputs are moving the selected change directory into `fp-docs/archive/` and updating `fp-docs/history/history.md`.
 ---
 
 # fp-archive — 变更归档

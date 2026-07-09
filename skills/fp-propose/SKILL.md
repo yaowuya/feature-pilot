@@ -8,10 +8,10 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
-3. Read only relevant settings and intel listed by the manifest.
-4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
-6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
 7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
@@ -126,6 +126,6 @@ If `fp-start` or the user provides a PRD slug and `fp-docs/changes/<slug>/prd.md
 
 ## 阶段 4：提案审查
 
-提示工程师自行 review 生成的 proposal.md，确认内容无误后告知继续。
+写入 `proposal.md` 后，必须展示生成路径和 Why / What Changes / Out of Scope / Impact 摘要，要求工程师 review 生成的 proposal.md。
 
-输出：`✅ 提案已确认，进入设计阶段`
+这属于第二个确认门禁：写文件前的确认只授权创建/写入 `proposal.md`；写入后仍必须等待用户明确确认该提案产物无误，才能输出 `✅ 提案已确认，进入设计阶段` 或进入设计。

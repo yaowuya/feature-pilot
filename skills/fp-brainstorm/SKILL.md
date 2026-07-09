@@ -1,6 +1,6 @@
 ---
 name: fp-brainstorm
-description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成 design.md
+description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成按实际范围拆分的技术设计文件
 ---
 ## FeaturePilot workspace and information layer
 
@@ -8,10 +8,10 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
-3. Read only relevant settings and intel listed by the manifest.
-4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
-6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
 7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
@@ -21,7 +21,7 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 # FeaturePilot Brainstorm
 
-你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，生成完整的 `design.md`。
+你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，按实际涉及范围生成 `design-backend.md` 和/或 `design-frontend.md`。
 
 ## 流程
 
@@ -53,7 +53,7 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 > - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
 > - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
 > - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
-> 生成的 design.md 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
+> 生成的 `design-frontend.md` 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
 >
 > **Just-in-time Visual 使用原则（只在需要时打开视觉链路）：**
 > - 只有当本次需求实际涉及 UI、Figma、截图还原、视觉走查或用户明确要求视觉验收时，才进入 Figma / browser / local viewer / 截图链路；纯后端、纯接口、纯脚本任务不得为了“完整流程”启动视觉工具。
@@ -128,7 +128,7 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 ## 设计文档格式
 
-design.md 分为两部分，合并在同一文件：
+以下章节是可复用模板。涉及后端/API/数据/安全范围时写入 `design-backend.md`；涉及前端/UI 范围时写入 `design-frontend.md`。不要生成合并的 `design.md`，也不要为空范围生成占位文件。
 
 ```markdown
 # <功能描述> — 技术方案设计

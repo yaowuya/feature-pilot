@@ -1,8 +1,15 @@
 # FeaturePilot (`fp`)
 
-FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 设计 → 计划 → 执行 → 归档”的完整链路。
+FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设计 → 计划 → 执行 → 归档”的完整链路。
 
-第一版提供需求设计与完整启动链路能力，并统一使用 `fp-*` 命名。
+当前版本（`0.3.0`）提供 Claude Code 原生插件能力，并提供 Codex 可读的 Markdown/AGENTS.md 流程入口；统一使用 `fp-*` 命名。
+
+## 0.3.0 发布重点
+
+- **PRD interview gate 强化**：`fp-prd` 是需求澄清入口，不是一次性 PRD 生成器；写文件前必须完成确认摘要并获得用户明确批准。Bucket A/B 已确定项必须批量输出供用户审阅；Bucket C 待确认项必须逐个提问、一问一答；助手建议不等于用户确认，禁止自问自答或替用户确认 Bucket C。
+- **Prototype-first PRD 流程**：UI-heavy 或明确要求“先看原型”的需求，可先确认 prototype-blocking 问题并生成 `prototype.html`，用户确认后再沉淀 PRD。
+- **Lazy context 与 stale intel 规则**：默认只读 `fp-docs/manifest.md` 和最小相关 settings/intel；`fp-docs/intel/*` 只作为可能过期的导航线索，涉及当前实现时必须回到当前代码验证。
+- **Claude Code + Codex 双入口**：Claude Code 使用插件清单、命令与 Skill tool；Codex 通过 `AGENTS.md` 和 `skills/*/SKILL.md` 读取同一套阶段门禁。
 
 ## Claude Code 插件结构
 
@@ -15,8 +22,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 设计 →
 
 | 命令文件 | 用途 |
 |---|---|
-| `commands/fp-init.md` | 初始化 `fp-docs/` 工作区，并可选生成 `settings/agent.md` |
-| `commands/fp-prd.md` | 将想法、用户故事或痛点澄清为 PRD |
+| `commands/fp-init.md` | 初始化 `fp-docs/` 信息层（`manifest.md`、可选 `settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`、`intel/`）；检测到 Canway/CW 项目且用户确认时，可采用标注示例规范 |
+| `commands/fp-prd.md` | 将想法、用户故事或痛点澄清为 PRD；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
 | `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路 |
 | `commands/fp-propose.md` | 仅生成并确认开发提案 `proposal.md` |
 | `commands/fp-brainstorm.md` | 基于已确认提案生成技术设计 |
@@ -27,8 +34,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 设计 →
 
 ## 核心技能
 
-- `fp-init`：初始化 `fp-docs/`，并可选引导生成 `fp-docs/settings/agent.md`。
-- `fp-prd` / `fp-prd-grill-me`：需求与 PRD 澄清。
+- `fp-init`：初始化 `fp-docs/` 信息层，并可选引导生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；检测到 Canway/CW 项目且用户确认时，可采用 `examples/canway-cw/fp-docs/settings/` 标注示例。
+- `fp-prd` / `fp-prd-grill-me`：需求与 PRD 澄清；支持默认 PRD-first 与 Prototype-first（先生成 `prototype.html`，确认后再沉淀 PRD）。
 - `fp-start`：完整阶段门禁调度入口，可以接住 `fp-prd` 产出的 PRD。
 - `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md`。
 - `fp-brainstorm`：生成后端/前端技术设计。
@@ -49,10 +56,10 @@ FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，
 
 ## 低成本使用流程
 
-FeaturePilot 的默认使用方式尽量轻量：
+FeaturePilot 的默认使用方式尽量轻量。完整用户指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)：
 
-1. **可选初始化**：运行 `/fp-init`，创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`。
-2. **需求设计**：运行 `/fp-prd <想法>`，澄清产品需求并写入 `fp-docs/changes/<slug>/prd.md`。
+1. **可选初始化**：运行 `/fp-init`，创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；如检测到 Canway/CW 项目，只有在用户确认后才可采用 `examples/canway-cw/` 示例规范作为项目 settings 草稿。
+2. **需求设计**：运行 `/fp-prd <想法>`，默认澄清产品需求并写入 `fp-docs/changes/<slug>/prd.md`；如果需求适合先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
 3. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。
 4. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
 
@@ -60,7 +67,7 @@ FeaturePilot 的默认使用方式尽量轻量：
 
 ## 项目配置
 
-FeaturePilot 是公共插件，不内置任何客户组件库、设计系统、仓库结构或审查策略。目标项目如需定制行为，可以在自己的 `fp-docs/settings/agent.md`、`fp-docs/settings/frontend.md`、`fp-docs/settings/backend.md` 中声明。
+FeaturePilot 是公共插件，不内置任何客户组件库、设计系统、仓库结构或审查策略。目标项目如需定制行为，可以在自己的 `fp-docs/settings/agent.md`、`fp-docs/settings/frontend.md`、`fp-docs/settings/backend.md`、`fp-docs/settings/prototype-style.md` 中声明。
 
 ```text
 fp-docs/
@@ -69,7 +76,8 @@ fp-docs/
     agent.md                  # 可选：轻量 FeaturePilot policy adapter
     frontend.md               # 可选：前端/UI/视觉/设计系统规则
     backend.md                # 可选：后端/API/数据/安全规则
-  intel/                      # 生成的 source-backed 项目事实
+    prototype-style.md        # 可选：原型视觉风格参考
+  intel/                      # 生成的 source-backed 但 stale-prone 的导航线索
 ```
 
 规则：
@@ -90,7 +98,8 @@ fp-docs/
     agent.md                      # 可选：轻量 FeaturePilot policy adapter
     frontend.md                   # 可选：前端/UI/视觉/设计系统规则
     backend.md                    # 可选：后端/API/数据/安全规则
-  intel/                          # 仅 fp-init 创建，source-backed 项目事实
+    prototype-style.md            # 可选：原型视觉风格参考
+  intel/                          # 仅 fp-init 创建，source-backed 但 stale-prone 的导航线索
   changes/<slug>/                 # 按需由各阶段创建
     prd.md
     proposal.md
@@ -127,25 +136,28 @@ fp-docs/
 
 ## Codex 使用方式
 
-Codex 没有 Claude Code 插件运行时，但可以读取同一套文件作为流程约束：
+Codex 没有 Claude Code 插件运行时，`/fp-*` 在 Codex 中不是可执行斜杠命令，而是映射到同名 Markdown 技能文件的流程标签。Codex 可以读取同一套文件作为流程约束：
 
 1. 将本仓库放在目标项目旁边或作为子模块。
 2. 在 Codex 会话中要求：
    - “读取 `feature-pilot/AGENTS.md`，按 `fp-start` 流程执行。”
    - 或直接指定某个技能文件，如 `feature-pilot/skills/fp-prd/SKILL.md`。
-3. Codex 执行时应遵循与 Claude Code 相同的阶段门禁：
+3. Codex 执行时应先读取匹配 skill，再遵循与 Claude Code 相同的阶段门禁：
+   - `fp-prd` 必须先完成 PRD interview gate；Prototype-first 必须先确认原型再写 PRD；
    - 提案确认后才能设计；
    - 设计确认后才能计划；
    - 计划确认后才能执行；
    - 完成后执行审查，再归档。
+4. Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`、`fp-docs/intel/`、历史 changes/archive/history；generated intel 只是导航线索，不是当前事实来源。
 
 ## 当前版本范围
 
-已包含：
+已包含（`0.3.0`）：
 
 - 初始化：`fp-init`。
-- 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-grill-me`、`fp-propose`、`fp-brainstorm`。
+- 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-grill-me`、`fp-propose`、`fp-brainstorm`；包含 PRD-first、Prototype-first、PRD interview gate、mandatory PRD template、prototype style extraction/lazy consumption。
 - 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-review`、`fp-archive`。
-- 前端设计辅助：`fp-figma`、`fp-ui-spec`、`fp-ux-spec`；客户组件库规则由目标项目的 `fp-docs/settings/agent.md` 提供。
+- 信息层规则：`fp-docs/manifest.md` 作为索引入口；settings/intel 按需最小读取；generated intel 视为 stale-prone navigation，当前事实必须用当前代码验证。
+- Claude Code / Codex 双入口：插件运行时与 Markdown 技能说明保持同一套阶段门禁。
 
 未包含独立 TypeScript CLI；第一版优先交付 Claude Code 原生插件与 Codex 可读流程文档。

@@ -9,10 +9,10 @@ Before choosing output paths, commands, UI/backend rules, or workflow behavior:
 
 1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
 2. If `fp-docs/manifest.md` exists, read it first.
-3. Read only relevant settings and intel listed by the manifest.
-4. If UI/frontend is involved and `fp-docs/settings/frontend.md` exists, read it as a required source.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read it as a required source.
-6. Treat settings/intel as navigation and constraints; verify exact implementation facts against current code.
+3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
+4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
+5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
+6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
 7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
 
 Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
@@ -45,7 +45,7 @@ Code exploration may **not** decide:
 - risk acceptance, permission policy, audit needs, or operational fallback expectations;
 - acceptance criteria, success metrics, or prototype expectations.
 
-Unless the user provided a complete PRD or explicitly authorized assumption-based generation, ask at least one PRD-blocking question before returning to `fp-prd`.
+Unless the user provided a complete PRD or explicitly authorized assumption-based generation, run Batch Confirmation Mode: Phase 1 batch-review Bucket A/B decisions, then Phase 2 ask Bucket C questions sequentially one at a time with a 3-5 question target. Do not self-answer Bucket C.
 
 ## Batch Confirmation Mode
 
@@ -76,10 +76,10 @@ For every item in the PRD Blocking Decisions list, classify it into one of three
 
 ### 已确定
 
-| # | 决策项 | 推断结果 | 依据 |
-|---|---|---|---|
-| 1 | <决策项> | <结果> | <依据> |
-| 2 | ... | ... | ... |
+| # | 桶 | 决策项 | 推断结果 | 置信度 | 依据 |
+|---|---|---|---|---|---|
+| 1 | A/B | <决策项> | <结果> | high/medium/low | <依据> |
+| 2 | ... | ... | ... | ... | ... |
 
 ### 待确认问题（接下来逐个确认）
 
@@ -126,7 +126,7 @@ When all Bucket C questions are answered, produce a brief confirmation summary o
 
 ### Special: 0 Bucket C Items
 
-If no items fall into Bucket C, still show the Phase 1 batch summary and ask for `全部确认`. After user confirmation, return to `fp-prd`.
+If no items fall into Bucket C, this is valid only when the input is already a complete PRD or the user explicitly authorized assumption-based generation. Still show the Phase 1 batch summary and ask for `全部确认`. After user confirmation, return to `fp-prd`. Otherwise, re-check the PRD Blocking Decisions and select the highest-impact unresolved decisions as Bucket C.
 
 ## PRD Blocking Decisions
 
@@ -145,16 +145,64 @@ Before `fp-prd` writes `prd.md` or `prototype.html`, confirm every decision that
 - Acceptance criteria and core test scenarios.
 - Split strategy for multi-change input.
 
+## Prototype-first Interview
+
+When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. The goal is to create a reviewable `prototype.html` before writing `prd.md`.
+
+Prototype-first still uses the same Bucket A/B/C discipline:
+
+- Bucket A/B: batch review inferred/default prototype decisions for user correction.
+- Bucket C: ask one at a time, and never self-answer.
+
+Confirm these prototype-blocking decisions before `prototype.html` is written:
+
+- Target page, dialog, wizard, dashboard, or interaction scenario.
+- Primary user and job-to-be-done for the prototype.
+- Page entry point and previous/next navigation context.
+- Key layout regions and hierarchy.
+- Key fields, filters, table columns, actions, and button states.
+- Loading, empty, success, error, disabled, and permission-denied states that must be visible or switchable.
+- Concrete interactions to simulate, such as dialog open/close, form validation, search/filter, table selection, wizard step navigation, submit success/error, and permission-disabled controls.
+- Visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, `fp-ui-spec`, `fp-ux-spec`, or neutral default.
+
+Do **not** ask backend implementation questions during the prototype-first interview unless they affect visible behavior or required user states. Backend/API/data/security details can be asked later before PRD writing.
+
+After the prototype is generated, the user must review it. If the user asks for visual or interaction changes, update the prototype and ask for review again. Only after the user explicitly confirms the prototype may `fp-prd` derive PRD requirements from it.
+
 ## Minimal Fact Exploration
 
-Explore only facts that reduce PRD questions:
+Explore only facts that reduce PRD questions. This skill is not allowed to load all project docs.
+
+Allowed default context:
+
+- Read `fp-docs/manifest.md` if present, as an index only.
+- Read at most 1-2 directly relevant settings files:
+  - `settings/prototype-style.md` only for prototype generation.
+  - `settings/frontend.md` only for UI/page/prototype decisions.
+  - `settings/backend.md` only for backend/API/data/security/permission product decisions.
+- Read `intel/unknowns-and-decisions.md` only if the manifest lists it and it is directly relevant.
+
+Do not read by default:
+
+- all `fp-docs/intel/*` files;
+- broad backend/frontend/project scan files;
+- historical `fp-docs/changes/*`, `archive/*`, or `history/*`;
+- unrelated design, task, execution, or review artifacts.
+
+Code/current-state exploration limits:
 
 - Use the current environment's best search tools; do not require a specific command.
 - Read at most 3 constraint/README files.
 - Use 3-8 high-value search terms.
 - Run at most 6 file/content searches.
 - Read at most 8 relevant files, only the relevant excerpts.
-- Stop when you can ask the next useful question. Ask 2-3 questions only when the `Question Format` rules allow a rare multi-question turn.
+- Stop when you can ask the next useful question.
+
+Stale intel rule:
+
+- Generated intel is a stale-prone hint, not proof.
+- If an intel file is stale, broad, or lacks freshness metadata, use it only to choose search terms.
+- Verify exact menus, routes, enums, APIs, permissions, components, tokens, or commands from current code before using them as confirmed facts.
 
 Code facts can explain current behavior and existing patterns; they cannot decide business goals, MVP tradeoffs, risk acceptance, or acceptance criteria for the user.
 
