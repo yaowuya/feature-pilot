@@ -1,0 +1,94 @@
+# Backend Plan Output Template
+
+Read this file only after scope, file structure, constraints, interfaces, task order, and coverage have been derived from current evidence.
+
+## Header
+
+```markdown
+# <功能名> Backend Implementation Plan
+
+> **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** <交付能力>
+
+**Architecture:** <实现策略、边界、关键依赖>
+
+**Tech Stack:** <source-backed technologies>
+
+## Global Constraints
+
+- <exact version/dependency/contract/permission/migration/security/performance constraint>
+```
+
+## Backend Interface Ledger
+
+```markdown
+## Backend Interface Ledger
+
+| Interface | Owner Task | Contract | Consumers | Verification |
+| --- | --- | --- | --- | --- |
+| `<name>` | Task N | `<signature/payload/fields/action>` | `<consumer>` | `<test::name>` |
+```
+
+## Task
+
+````markdown
+### Task N: <组件或行为名称>
+
+**Files:**
+- Create: `exact/path/to/new_file.py`
+- Modify: `exact/path/to/existing_file.py:123-145`
+- Test: `tests/exact/path/to/test_file.py`
+
+**Reasoning:**
+- <independent boundary, source requirement, observable result>
+
+**Interfaces:**
+- Consumes: <exact existing/prior contract>
+- Produces: <exact contract for later consumers>
+- Contract checks: <exact verification>
+
+- [ ] **Step 1: Write the failing test**
+
+```python
+def test_specific_behavior():
+    result = function(input)
+    assert result == expected
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
+Expected: FAIL with `<specific reason>`
+
+- [ ] **Step 3: Write minimal implementation**
+
+```python
+def function(input):
+    return expected
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add tests/path/test_file.py exact/path/to/changed_file.py
+git commit -m "feat: add specific behavior"
+```
+````
+
+## Coverage Matrix
+
+```markdown
+## Coverage Matrix
+
+| Source | Requirement / Boundary | Tasks | Verification |
+| --- | --- | --- | --- |
+| proposal.md | `<requirement>` | Task N | `<exact command/test>` |
+| design-backend.md | `<design contract>` | Task N, Task M | `<exact command/test>` |
+| Backend boundary | `<actual boundary>` | Task N | `<exact command/test>` |
+```

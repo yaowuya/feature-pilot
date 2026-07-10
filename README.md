@@ -85,6 +85,8 @@ flowchart LR
 
 两种入口共享同一套 Markdown 流程契约：Claude Code 通过命令进入，Codex 通过 `AGENTS.md` 和技能文件进入。`fp-docs/manifest.md` 是项目级信息层唯一入口，`settings/` 提供项目规则，`intel/` 只提供带新鲜度边界的导航信息；实际实现事实仍以当前代码、测试和命令输出为准。
 
+上下文效率采用三层设计：`commands/` 只做薄入口和 gate checksum；所有 skill 每条工作流只加载一次 `skills/_shared/workspace-rules.md`；PRD、proposal、design、plan、review 模板只在对应写入门禁通过后加载。运行 `scripts/measure-context.ps1` 可查看相对优化前基线的静态上下文降幅。
+
 ## 借鉴 OpenSpec 的设计
 
 FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，但把命令聚焦在 AI 功能开发流程上：

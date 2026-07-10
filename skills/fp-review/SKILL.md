@@ -4,19 +4,7 @@ description: Use when performing a final whole-branch review of an implemented F
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 ---
 
 # FeaturePilot Final Whole-Branch Review
@@ -181,94 +169,7 @@ Do not write review reports anywhere else.
 
 ## Final Review Report Template
 
-```markdown
-# Final FeaturePilot Review: <slug>
-
-**Verdict:** PASS | PASS_WITH_NOTES | FAIL | BLOCKED
-**Reviewer:** read-only fp-review
-**Review Time:** YYYY-MM-DD HH:MM
-**Base Ref:** <baseRef>
-**Head Ref:** <headRef or sha>
-**Change Path:** fp-docs/changes/<slug>
-**Review Depth:** standard | strict
-**Focus:** <focus or none>
-
-## Inputs Reviewed
-
-- Proposal: `<path>`
-- Backend design: `<path or N/A>`
-- Frontend design: `<path or N/A>`
-- Task plans: `<paths or N/A>`
-- Progress ledger: `<path or missing>`
-- Prior task reviews: `<paths or none>`
-- Project constraints: `<paths or none>`
-- Diff: `<baseRef>...<headRef>`
-
-## Branch State
-
-- Working tree: clean | dirty
-- Dirty files: <none or list>
-- Commits reviewed: <count>
-- Changed files reviewed: <count>
-
-## FeaturePilot Coverage
-
-Include an information-layer process row in the coverage table when applicable:
-
-| Source | Requirement / Task | Status | Evidence |
-| --- | --- | --- | --- |
-| `fp-docs/manifest.md` / `intel/` | Manifest, relevant settings, SDD handoff, Unknowns, and freshness evidence were consumed | Covered / Partial / Missing / N/A | `<brief/package/progress/source evidence>` |
-| proposal.md | <requirement> | Covered / Partial / Missing / Violated / N/A | <file/test/commit> |
-
-## Verification Commands
-
-| Command | Result | Notes |
-| --- | --- | --- |
-| `<command>` | PASS / FAIL / SKIPPED | <key output or reason> |
-
-## Findings Summary
-
-| Severity | Count |
-| --- | ---: |
-| Critical | 0 |
-| High | 0 |
-| Medium | 0 |
-| Low | 0 |
-
-## Findings
-
-### Critical
-- None
-
-### High
-- None
-
-### Medium
-- None
-
-### Low
-- None
-
-<!-- Finding format:
-- **[Severity] Title**
-  - Evidence: `path:line` or command output
-  - Failure scenario: <concrete input/state -> wrong result/risk>
-  - Source requirement: <proposal/design/task/progress/diff>
-  - Suggested fix: <direction, not implementation patch>
--->
-
-## Blocking Items Before Archive
-
-- None, or exact required fixes.
-
-## Residual Risks / Notes
-
-- <non-blocking risk or note>
-
-## Final Verdict Rationale
-
-<Concise explanation tying FeaturePilot coverage, diff review, verification, findings, and branch state to the verdict.>
-```
+Read `final-review-template.md` only after evidence collection is complete and immediately before writing the report. Preserve its headings and tables exactly; add coverage rows and findings without changing the schema.
 
 ## Completion Response
 

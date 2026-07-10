@@ -4,19 +4,7 @@ description: Use when generating frontend FeaturePilot task plans from proposal.
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 ---
 
 # FeaturePilot Frontend Plan
@@ -59,66 +47,11 @@ If the plan would exceed 500 lines, split it into smaller files under `fp-docs/c
 
 ## Recommended plan structure
 
-```markdown
-# <Feature> Frontend Plan
-
-## Global Constraints
-- Framework/runtime: <from settings/package/existing code>
-- Component library/design system: <from fp-docs/settings/agent.md or existing code>
-- Script/style conventions: <from settings or existing code>
-- Visual source: <Figma / screenshot / existing page / settings>
-- Verification commands: <from settings/agent.md or package scripts>
-
-## 1. Page goal and visual contract
-
-## 2. Component tree and template outline
-
-## 3. State/API/interaction design
-
-## 4. Style and responsive design
-
-## 5. Visual and UX checks
-
-## 6. Task breakdown
-```
+Use `plan-template.md`. Load it only after the plan facts and contracts are derived.
 
 ## Task format
 
-Each task must be small enough to implement and review independently.
-
-```markdown
-### Task N: <component or behavior>
-
-**Files:**
-- Create: `exact/path/to/new-file`
-- Modify: `exact/path/to/existing-file`
-- Test: `exact/path/to/test-file`
-
-**Reasoning:**
-- Why this task is independent.
-- Which proposal/design requirement it covers.
-- What observable UI or behavior changes after completion.
-
-**Interfaces:**
-- Consumes: <existing or prior task API/state/route/component/visual contract>
-- Produces: <new API/state/route/component/classes/events/visual structure>
-- Contract checks: <how to verify the contract>
-
-**Template Outline:**
-- Use the project component names from settings or existing code.
-- Include container hierarchy, slots, props, and events when relevant.
-
-**Script/State Outline:**
-- Use the project’s existing script/state pattern as observed in settings or adjacent code.
-- Define state, derived values, lifecycle/data loading, and event handlers.
-
-**Style Outline:**
-- Use project tokens/classes/mixins when configured.
-- Specify layout strategy and key spacing only when sourced.
-
-**Visual / UX Checks:**
-- [ ] <check traceable to design-frontend.md, settings, Figma, screenshot, or existing code>
-```
+Each task must be small enough to implement and review independently and must use the complete Task format in `plan-template.md`.
 
 ## Invalid plans
 

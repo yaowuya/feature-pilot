@@ -4,19 +4,7 @@ description: 为新功能变更生成并确认 proposal.md 提案文档
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 ---
 
 # FeaturePilot Propose
@@ -75,52 +63,11 @@ If `fp-start` or the user provides a PRD slug and `fp-docs/changes/<slug>/prd.md
 2. 【立即用工具执行】确认目标项目根目录，并把输出限定在项目根目录下的 `fp-docs/changes/<slug>/proposal.md`。
 3. 如果项目根目录没有 `fp-docs/manifest.md`，只提示建议运行 `/fp-init`；不要强制初始化，也不要创建 manifest/settings/intel。
 4. 【立即用工具执行】在用户确认摘要后，创建必要的 `fp-docs/changes/<slug>/` 目录。
-5. 【立即用工具执行】将下方模板填写完整后，写入 `fp-docs/changes/<slug>/proposal.md`
+5. 【立即用工具执行】读取 `proposal-template.md`，填写完整后写入 `fp-docs/changes/<slug>/proposal.md`。
 
 只生成本阶段产物 `proposal.md`。不要预创建 `design.md`、`tasks.md`、`tasks/`；这些文件/目录只能由后续对应阶段在真正需要时创建。
 
-根据问答结论和项目现状，生成填写完整的 proposal.md：
-
-```markdown
-# <功能描述>
-
-## Why
-
-<!-- 描述当前痛点、动机、用户场景。结合项目现状说明为什么现在做。 -->
-
-## What Changes
-
-<!-- 具体变更内容，每条独立小节，描述要足够让研发理解范围 -->
-
-### 1. <变更点1>
-
-<!-- 描述 -->
-
-### 2. <变更点2>（如有）
-
-<!-- 描述 -->
-
-## Capabilities
-
-### New Capabilities
-
-- `<capability-slug>`: 一句话描述新增能力
-
-### Modified Capabilities
-
-- `<existing-capability>`: 描述对现有能力的扩展
-
-## Out of Scope
-
-<!-- 明确列出本次不做的内容，防止范围蔓延 -->
--
--
-
-## Impact
-
-<!-- 受影响的文件/模块，结合项目架构填写 -->
-- `path/to/file.py` - 说明
-```
+Do not load `proposal-template.md` during exploration or questioning. Load it only after the pre-write confirmation gate, so early turns carry decisions rather than output boilerplate.
 
 ---
 
