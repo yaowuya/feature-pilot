@@ -33,6 +33,14 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 如果两个设计文件都不存在，停止并说明缺少已确认设计文件，不要生成任务计划。
 
+## Information-layer planning gate
+
+生成任务前：
+
+1. 先读取 `fp-docs/manifest.md`（如存在），再按 manifest 读取与本次后端/前端范围相关的 settings 和 intel。
+2. 将会改变接口、权限、数据安全、框架/组件选择或视觉验收的 unresolved Unknown 视为 planning blocker；先请求决策或回到设计阶段，不要把 Unknown 写成任务假设。
+3. 只把 intel 当作搜索导航和新鲜度提示；具体文件、契约、命令和当前行为必须回到当前代码或命令输出验证。
+
 ## 调度规则
 
 1. 确认 `fp-docs/changes/<slug>/tasks/` 目录存在；不存在则创建。

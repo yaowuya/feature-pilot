@@ -54,13 +54,15 @@ If `slug` is missing, list `fp-docs/changes/` directories and ask the user to ch
 ## Required Reads
 
 Immediately read the actual files that exist for the selected change:
-1. `fp-docs/changes/<slug>/proposal.md`
-2. `fp-docs/changes/<slug>/design-backend.md` if present
-3. `fp-docs/changes/<slug>/design-frontend.md` if present
-4. all `fp-docs/changes/<slug>/tasks/*.md` files if present
-5. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
-6. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
-7. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
+1. `fp-docs/manifest.md` if present
+2. relevant `fp-docs/settings/*.md` and `fp-docs/intel/*.md` listed by the manifest
+3. `fp-docs/changes/<slug>/proposal.md`
+4. `fp-docs/changes/<slug>/design-backend.md` if present
+5. `fp-docs/changes/<slug>/design-frontend.md` if present
+6. all `fp-docs/changes/<slug>/tasks/*.md` files if present
+7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
+8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
+9. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
 
 Then inspect the whole branch with read-only commands:
 - `git status --short`
@@ -84,6 +86,13 @@ Verify:
 - Working tree state is known. Dirty working tree is allowed to be reviewed, but final verdict cannot be `PASS`.
 
 If required inputs are missing so badly that review cannot proceed, write a `BLOCKED` report.
+
+Also review information-layer process compliance:
+
+- When `fp-docs/manifest.md` exists, verify the implementation phase read it and consumed only relevant settings/intel.
+- When the change is SDD-executed, verify `fp-docs/intel/sdd-handoff.md` was available and reflected in the task brief/package evidence. Missing handoff is a process blocker when it reduces review confidence.
+- Verify relevant Unknowns were resolved before planning/execution, and that stale intel was not used as proof of current behavior.
+- When the manifest is absent for a legacy or uninitialized project, report this as a process risk only when it materially limits review confidence; do not treat it as an automatic product defect.
 
 ### 2. FeaturePilot Coverage Review
 
@@ -204,8 +213,11 @@ Do not write review reports anywhere else.
 
 ## FeaturePilot Coverage
 
+Include an information-layer process row in the coverage table when applicable:
+
 | Source | Requirement / Task | Status | Evidence |
 | --- | --- | --- | --- |
+| `fp-docs/manifest.md` / `intel/` | Manifest, relevant settings, SDD handoff, Unknowns, and freshness evidence were consumed | Covered / Partial / Missing / N/A | `<brief/package/progress/source evidence>` |
 | proposal.md | <requirement> | Covered / Partial / Missing / Violated / N/A | <file/test/commit> |
 
 ## Verification Commands

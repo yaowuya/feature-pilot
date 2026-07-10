@@ -62,6 +62,16 @@ Immediately read with tools:
 
 If no task file exists, stop and report that execution cannot start without an approved plan.
 
+## Information-layer preflight
+
+Before creating any task brief or dispatching an implementer:
+
+1. If `fp-docs/manifest.md` exists, read it first and follow its read order.
+2. If a manifest exists, `fp-docs/intel/sdd-handoff.md` is required for SDD execution. Read it and the relevant settings/intel entries before dispatching. If it is missing, stop and instruct the user to run `/fp-init` or repair the information layer; do not dispatch a fresh implementer with an incomplete handoff.
+3. If no manifest exists, continue under the compatibility rule, but record the missing information layer in the progress ledger and task briefs.
+4. Check relevant Unknowns before dispatch. If an unresolved Unknown can change task scope, interfaces, permissions, data safety, or UI acceptance, stop and request the missing decision.
+5. Re-validate every referenced current source/config path before using generated intel as evidence. Generated intel is navigation, not proof of current behavior.
+
 ## State Directory
 
 Create and maintain:
@@ -90,6 +100,7 @@ The controller must:
 8. Run a serial fix loop for Critical/Important findings.
 9. Update checkbox, commit/commit-range evidence, and ledger only after review passes.
 10. Continue to the next task only when the current task is reviewed clean or explicitly blocked.
+11. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
 The controller must not implement product code inline except to repair orchestration artifacts such as a malformed brief/package. If implementation is needed, dispatch the implementer or fixer.
 
@@ -105,6 +116,7 @@ Before any implementation subagent, scan the approved plan files for contradicti
 - Backend/frontend contract names match exactly: URL, method, fields, enums, error shape, permissions, pagination/filter/sort semantics.
 - No placeholders: `TBD`, `TODO`, `按需处理`, `类似上面`, `补充样式`, `run tests`, `Add appropriate error handling`, or equivalent vague instructions.
 - No plan-mandated behavior that would obviously fail review: tests without assertions, hardcoded secrets, missing permission negative tests, unverified UI visual claims.
+- Information-layer Unknowns that affect task safety are resolved or explicitly blocked before dispatch.
 
 If conflicts exist, list all conflicts with file/line evidence and pause. Do not let implementers guess.
 

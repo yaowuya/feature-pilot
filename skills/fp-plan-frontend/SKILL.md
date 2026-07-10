@@ -27,9 +27,14 @@ Generate the frontend implementation plan from confirmed FeaturePilot design art
 
 Read:
 
+- `fp-docs/manifest.md` if present, followed by only relevant manifest-listed settings/intel
 - `fp-docs/changes/<slug>/proposal.md`
 - `fp-docs/changes/<slug>/design-frontend.md`
 - `fp-docs/settings/agent.md` if present
+- `fp-docs/settings/frontend.md` if present
+- `fp-docs/settings/prototype-style.md` if prototype/visual behavior is in scope
+
+Treat intel as navigation only; verify current routes, components, scripts, tokens, and commands from source/config files.
 
 If `design-frontend.md` does not exist, stop and explain that this change has no confirmed frontend plan. Do not create frontend placeholders.
 

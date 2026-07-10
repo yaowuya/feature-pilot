@@ -45,6 +45,46 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - `fp-review`：最终整分支审查。
 - `fp-archive`：归档变更。
 
+## 架构图
+
+```mermaid
+flowchart LR
+    subgraph Entry[运行入口]
+        CC["Claude Code\ncommands/fp-*.md"]
+        CX["Codex\nAGENTS.md + skills/"]
+    end
+
+    subgraph Workflow[共享流程契约]
+        S["FeaturePilot skills\nfp-prd → fp-propose → fp-brainstorm\n→ fp-plan → fp-execute / fp-execute-sdd"]
+        G["阶段门禁\n用户确认 · TDD · 逐任务 Review\nFix loop · Final Review"]
+    end
+
+    subgraph Context[项目上下文]
+        M["fp-docs/manifest.md\n唯一信息层入口"]
+        C["fp-docs/settings/\nagent · frontend · backend · prototype-style"]
+        I["fp-docs/intel/\nsource-backed 导航线索\n含 Unknown 与 SDD handoff"]
+    end
+
+    subgraph Artifacts[变更产物]
+        A["fp-docs/changes/<slug>/\nprd · proposal · design · tasks"]
+        E[".fp-execute/\nprogress · briefs · packages · reviews"]
+        H["fp-docs/archive/ + history/\n归档与历史"]
+    end
+
+    CC --> S
+    CX --> S
+    S --> G
+    M --> S
+    C --> S
+    I --> S
+    S --> A
+    G --> E
+    E --> H
+    I -. stale-prone .-> G
+```
+
+两种入口共享同一套 Markdown 流程契约：Claude Code 通过命令进入，Codex 通过 `AGENTS.md` 和技能文件进入。`fp-docs/manifest.md` 是项目级信息层唯一入口，`settings/` 提供项目规则，`intel/` 只提供带新鲜度边界的导航信息；实际实现事实仍以当前代码、测试和命令输出为准。
+
 ## 借鉴 OpenSpec 的设计
 
 FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，但把命令聚焦在 AI 功能开发流程上：
@@ -132,6 +172,12 @@ fp-docs/
 /fp-init
 /fp-prd 我想做一个批量审批体验优化
 /fp-start <prd-slug 或 功能描述>
+```
+
+维护者可在修改命令或技能后运行仓库一致性校验：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\validate-plugin.ps1
 ```
 
 ## Codex 使用方式

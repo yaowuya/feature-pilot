@@ -28,8 +28,11 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 ## 输入
 
 【立即用工具执行】读取：
+- `fp-docs/manifest.md`（如存在，作为信息层入口）
 - `fp-docs/changes/<slug>/proposal.md`
 - `fp-docs/changes/<slug>/design-backend.md`
+- `fp-docs/settings/backend.md`（如存在，作为后端/API/数据/安全约束）
+- manifest 列出的、与本次后端范围直接相关的 intel（仅作导航，当前事实回到代码验证）
 
 不要读取 `design-frontend.md` 来生成后端任务。
 

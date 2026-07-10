@@ -22,6 +22,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Task plans: {TASK_PLAN_PATHS}
 - Progress ledger: {PROGRESS_LEDGER_PATH_OR_MISSING}
 - Prior task reviews: {TASK_REVIEW_PATHS_OR_NONE}
+- SDD handoff: {SDD_HANDOFF_PATH_OR_MISSING}
 - Project constraints: {PROJECT_CONSTRAINT_PATHS_OR_NONE}
 - Frontend settings: {FRONTEND_SETTINGS_PATH_OR_MISSING}
 - Backend settings: {BACKEND_SETTINGS_PATH_OR_MISSING}
@@ -29,7 +30,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 ## Required Method
 
 1. Read the manifest, proposal, design files, task plans, progress ledger, prior task reviews, frontend/backend settings, and project constraints that exist.
-2. Inspect information-layer consumption: was `fp-docs/manifest.md` read? Were `settings/frontend.md` / `settings/backend.md` consulted for UI/backend work? Were relevant unknowns resolved? Was there reliance on stale intel instead of current code?
+2. Inspect information-layer consumption: was `fp-docs/manifest.md` read? For SDD changes, was `fp-docs/intel/sdd-handoff.md` available and included in brief/package evidence? Were `settings/frontend.md` / `settings/backend.md` consulted for UI/backend work? Were relevant unknowns resolved? Was there reliance on stale intel instead of current code?
 3. Inspect branch state and final diff with read-only git commands:
    - git status --short
    - git log --oneline {BASE_REF}..{HEAD_REF}
@@ -50,6 +51,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Backend correctness: model/migration/service/serializer/API/URL/IAM/provider/async/external call/tenant/error boundaries.
 - Frontend correctness: project frontend framework and script/state patterns, project-configured components, route/store/API, structure/state/style, loading/empty/error states, style tokens, Visual Checks.
 - Tests and validation: meaningful assertions, negative/boundary/permission/contract/visual coverage where applicable.
+- Information layer: manifest/settings/SDD handoff/Unknowns/freshness evidence is present when applicable; missing handoff blocks review confidence.
 - Production readiness: deploy order, compatibility, security leakage, logging, performance, rollback.
 
 ## Severity
