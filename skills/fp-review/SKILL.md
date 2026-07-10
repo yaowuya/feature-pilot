@@ -39,15 +39,32 @@ Accept these inputs when provided:
 
 If `slug` is missing, list `fp-docs/changes/` directories and ask the user to choose; if exactly one exists, use it and state the choice. If `baseRef` cannot be determined, ask the user before continuing.
 
+## Canonical design layout
+
+When `fp-docs/changes/<slug>/design/00-index.md` exists, read it first, then read every in-scope stable entrypoint and every fragment referenced by `design/backend/00-index.md` or `design/frontend/00-index.md`. Missing indexed files are review findings and may make coverage `BLOCKED`.
+
+## Legacy read compatibility
+
+For each end whose canonical entrypoint is absent, read root-level `design-backend.md` / `design-frontend.md` if present. Treat legacy paths as read-only compatibility inputs; do not recommend writing new artifacts there.
+
+## Canonical task plan resolution
+
+Resolve task plans before reviewing completion:
+
+1. Read stable entrypoints `tasks/plan-backend.md` / `tasks/plan-frontend.md` that exist and `tasks/00-overview.md` when present.
+2. If `tasks/backend/00-index.md` or `tasks/frontend/00-index.md` exists, read that index and every fragment it lists in order; those fragments, not the split stable entrypoint or indexes, own executable checkboxes. Without an end index, its small stable entrypoint owns the tasks.
+3. Do not rely on entrypoint links, recursive globs, or filesystem order. Missing or unindexed fragments, duplicate task IDs/checkboxes, a task checkbox in a summary/index, or cross-end overview gaps/cycles are review findings and may make coverage `BLOCKED` or `FAIL`.
+4. For legacy plans with no per-end index, read any root-level fragment explicitly referenced by their existing `tasks/00-overview.md`; report ambiguous or duplicated checkbox ownership rather than guessing.
+
 ## Required Reads
 
 Immediately read the actual files that exist for the selected change:
 1. `fp-docs/manifest.md` if present
 2. relevant `fp-docs/settings/*.md` and `fp-docs/intel/*.md` listed by the manifest
 3. `fp-docs/changes/<slug>/proposal.md`
-4. `fp-docs/changes/<slug>/design-backend.md` if present
-5. `fp-docs/changes/<slug>/design-frontend.md` if present
-6. all `fp-docs/changes/<slug>/tasks/*.md` files if present
+4. complete backend design resolved canonical-first, if present
+5. complete frontend design resolved canonical-first, if present
+6. the complete resolved task set: overview, stable entrypoints, per-end indexes, and every indexed or legacy-overview-referenced task-owner fragment
 7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
 8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
 9. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
@@ -71,6 +88,8 @@ Verify:
 - The change directory exists and has a proposal.
 - At least one design file, task plan, progress ledger entry, commit, or diff provides implementation evidence.
 - Task checkboxes, progress ledger, commits, and actual files do not contradict each other.
+- Every executable task ID and checkbox has exactly one owner file; progress ledger entries are recovery evidence and do not replace unchecked owner state.
+- `tasks/00-overview.md` dependency order covers every task without cycles, and its derived progress counts equal the resolved owner checkboxes.
 - Working tree state is known. Dirty working tree is allowed to be reviewed, but final verdict cannot be `PASS`.
 
 If required inputs are missing so badly that review cannot proceed, write a `BLOCKED` report.
@@ -89,7 +108,7 @@ Build a coverage table from source artifacts:
 - Every explicit `Out of Scope` item.
 - Every backend design contract, permission, migration, provider, API, and validation requirement.
 - Every frontend design contract, route/store/API, component mapping, project frontend framework and script/state pattern, project-configured components, style token, and Visual Check requirement.
-- Every completed task in task plans and progress ledger.
+- Every completed task in the resolved task-owner files, cross-checked against progress ledger evidence.
 
 For each item, mark `Covered`, `Partial`, `Missing`, `Violated`, or `N/A`, with file/test/commit evidence.
 

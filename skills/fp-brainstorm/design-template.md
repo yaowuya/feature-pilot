@@ -2,7 +2,7 @@
 
 Read this file only after the user confirms the selected approach and approves writing the reviewed design sections.
 
-Use only sections relevant to the actual backend/frontend scope. Do not create a combined `design.md` or empty endpoint placeholder.
+Use only sections relevant to the actual backend/frontend scope. Write through the canonical `design/00-index.md`, `design/backend.md`, and/or `design/frontend.md` entrypoints. When an end-specific design would exceed 500 lines, keep its stable entrypoint concise and put details in indexed numbered fragments. Do not create a combined root-level `design.md`, legacy `design-backend.md` / `design-frontend.md`, or an empty endpoint placeholder.
 
 ```markdown
 # <功能描述> — 技术方案设计

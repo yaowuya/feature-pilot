@@ -2,19 +2,21 @@
 
 FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设计 → 计划 → 执行 → 归档”的完整链路。
 
-当前版本（`0.3.0`）提供 Claude Code 原生插件能力，并提供 Codex 可读的 Markdown/AGENTS.md 流程入口；统一使用 `fp-*` 命名。
+当前版本（`0.3.0`）同时提供 Claude Code 与 Codex 插件能力，并保留 Codex 可直接读取的 Markdown/AGENTS.md fallback；统一使用 `fp-*` 命名。
 
 ## 0.3.0 发布重点
 
 - **PRD interview gate 强化**：`fp-prd` 是需求澄清入口，不是一次性 PRD 生成器；写文件前必须完成确认摘要并获得用户明确批准。Bucket A/B 已确定项必须批量输出供用户审阅；Bucket C 待确认项必须逐个提问、一问一答；助手建议不等于用户确认，禁止自问自答或替用户确认 Bucket C。
 - **Prototype-first PRD 流程**：UI-heavy 或明确要求“先看原型”的需求，可先确认 prototype-blocking 问题并生成 `prototype.html`，用户确认后再沉淀 PRD。
 - **Lazy context 与 stale intel 规则**：默认只读 `fp-docs/manifest.md` 和最小相关 settings/intel；`fp-docs/intel/*` 只作为可能过期的导航线索，涉及当前实现时必须回到当前代码验证。
+- **大型设计与任务索引化拆分**：单端设计或任务计划超过 500 行时使用稳定入口、端内 index 和编号分片；任务 checkbox 只由一个 owner file 持有，overview/ledger 不竞争完成状态。
 - **Claude Code + Codex 双入口**：Claude Code 使用插件清单、命令与 Skill tool；Codex 通过 `AGENTS.md` 和 `skills/*/SKILL.md` 读取同一套阶段门禁。
 
 ## Claude Code 插件结构
 
 - `.claude-plugin/plugin.json`：Claude Code 插件清单。
 - `.claude-plugin/marketplace.json`：本地开发插件市场。
+- `.codex-plugin/plugin.json`：Codex 插件清单，加载同一套 `skills/`。
 - `commands/`：Claude Code 斜杠命令。
 - `skills/`：FeaturePilot 流程技能。
 
@@ -145,11 +147,26 @@ fp-docs/
   changes/<slug>/                 # 按需由各阶段创建
     prd.md
     proposal.md
-    design-backend.md
-    design-frontend.md
+    design/
+      00-index.md                  # 设计总入口
+      backend.md                   # 后端稳定入口（按实际范围生成）
+      frontend.md                  # 前端稳定入口（按实际范围生成）
+      backend/                     # 后端设计 >500 行时创建
+        00-index.md
+        01-<subsystem>.md
+      frontend/                    # 前端设计 >500 行时创建
+        00-index.md
+        01-<area>.md
     tasks/
-      plan-backend.md
-      plan-frontend.md
+      00-overview.md                # 双端或任一端拆分时生成；无 task checkbox
+      plan-backend.md               # 后端稳定入口；小计划直接持有任务
+      plan-frontend.md              # 前端稳定入口；小计划直接持有任务
+      backend/                      # 后端计划 >500 行时创建
+        00-index.md
+        01-<topic>.md               # executable task checkbox 唯一 owner
+      frontend/                     # 前端计划 >500 行时创建
+        00-index.md
+        01-<topic>.md               # executable task checkbox 唯一 owner
     .fp-execute/
       progress.md
       briefs/
@@ -158,6 +175,8 @@ fp-docs/
   archive/                      # 由 fp-archive 自动创建
   history/history.md             # 由 fp-archive 自动创建
 ```
+
+任务计划采用与设计相同的稳定入口 + 索引分片原则，但完成状态更严格：每个 `backend-NNN` / `frontend-NNN` 任务只有一个真实 checkbox，位于小计划稳定文件或某一个编号分片中。overview、端内 index、拆分后的稳定入口只保存顺序、依赖、覆盖与汇总，不复制 checkbox；`.fp-execute/progress.md` 只记录恢复证据。
 
 ## 本地安装测试（Claude Code）
 
@@ -184,19 +203,18 @@ powershell -ExecutionPolicy Bypass -File .\scripts\validate-plugin.ps1
 
 ## Codex 使用方式
 
-Codex 没有 Claude Code 插件运行时，`/fp-*` 在 Codex 中不是可执行斜杠命令，而是映射到同名 Markdown 技能文件的流程标签。Codex 可以读取同一套文件作为流程约束：
+Codex 可通过 `.codex-plugin/plugin.json` 安装 FeaturePilot，并从同一仓库加载 `skills/`。本地开发安装使用 personal marketplace：把插件源同步到 `~/plugins/fp`，确保 `~/.agents/plugins/marketplace.json` 包含 `fp` 本地条目，然后执行 `codex plugin add fp@personal`；重装后新建任务以加载最新技能。
 
-1. 将本仓库放在目标项目旁边或作为子模块。
-2. 在 Codex 会话中要求：
-   - “读取 `feature-pilot/AGENTS.md`，按 `fp-start` 流程执行。”
-   - 或直接指定某个技能文件，如 `feature-pilot/skills/fp-prd/SKILL.md`。
-3. Codex 执行时应先读取匹配 skill，再遵循与 Claude Code 相同的阶段门禁：
+`/fp-*` 仍是工作流标签，不是 Claude Code 斜杠命令。安装后可直接要求 Codex 使用 `fp:fp-start`、`fp:fp-prd` 等技能；未安装插件时，也可以读取本仓库 `AGENTS.md` 和同名 skill 作为 fallback。
+
+Codex 执行时应先读取匹配 skill，再遵循与 Claude Code 相同的阶段门禁：
    - `fp-prd` 必须先完成 PRD interview gate；Prototype-first 必须先确认原型再写 PRD；
    - 提案确认后才能设计；
    - 设计确认后才能计划；
    - 计划确认后才能执行；
    - 完成后执行审查，再归档。
-4. Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`、`fp-docs/intel/`、历史 changes/archive/history；generated intel 只是导航线索，不是当前事实来源。
+
+Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`、`fp-docs/intel/`、历史 changes/archive/history；generated intel 只是导航线索，不是当前事实来源。
 
 ## 当前版本范围
 

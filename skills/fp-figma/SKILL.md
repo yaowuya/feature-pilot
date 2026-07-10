@@ -24,12 +24,20 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 - Figma 结果必须可被后续阶段延续：输出节点路径、区域拆解、项目组件映射、布局容器、token/尺寸和 Visual Checks，不只输出最终 UI 文件。
 - 如需 local viewer / browser 预览，必须等页面可运行后 just-in-time 启动；只绑定 localhost，不服务无关目录，不读取 dotfile/symlink，不把预览截图当作 Figma 源事实。
 
+## Canonical design layout
+
+处于 `fp-brainstorm` 阶段时，Figma 结果必须通过 `design/frontend.md` 可达，并由 `design/00-index.md` 列出前端入口；大型前端设计使用 `design/frontend/00-index.md` 列出全部编号分片。
+
+### No orphan fragment writes
+
+不得单独写入分片。写入或更新 `design/frontend/<number>-<area>.md` 时，必须在同一次操作中确保 `design/frontend/00-index.md` 链接该分片、`design/frontend.md` 链接端内索引、`design/00-index.md` 链接前端稳定入口。若当前 `fp-brainstorm` 尚未通过写入前内容确认，不得提前创建其中任何设计产物。
+
 ## 执行步骤
 
 1. 读取 Figma 结构与关键样式，仅关注 content 区域和用户指定节点；记录页面名、frame 名、node id、关键尺寸、颜色、字号、间距、状态和可复用组件。
 2. 分析页面结构、组件映射和布局方式，生成 `UI 组件树与 Figma 解析映射`：每个设计区域对应目标 DOM 层级、项目组件、slot、Flex/Grid 容器、关键 token、需要自封装的原因。
 3. 生成 `Visual Checks`：每项必须能在 local viewer / browser 里检查，且能追溯到具体 Figma 节点或 UI/UX 规范；避免“看起来一致”这种不可执行描述。
-4. 若当前处于 `fp-brainstorm` 设计阶段，只把步骤 1-3 的结果写入 `design-frontend.md`，不得直接写业务 UI 文件。
+4. 若当前处于 `fp-brainstorm` 设计阶段，只把步骤 1-3 的结果写入 canonical frontend design entrypoint `design/frontend.md` 或其已索引的前端分片，不得直接写业务 UI 文件。
 5. 若用户直接执行 Figma 还原或后续计划已确认实现目标，再按项目已确认的框架、组件文件类型、脚本/状态管理和样式约定生成目标文件；无法从 settings 或现有代码确认时，先向用户提问，不要猜测框架。
 6. 写入目标文件并执行 Lint 修复。
 7. 如有需要，等页面可运行后再按 `Visual Checks` 启动本地预览/浏览器截图做 just-in-time 微调；不得提前启动 local viewer，也不得把截图当作 Figma 源事实替代。

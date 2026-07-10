@@ -41,7 +41,7 @@ Record concrete values in the design or plan only when they come from settings, 
 
 ## Output requirement
 
-When used for `design-frontend.md`, include a short source note:
+When used for the canonical frontend design (`design/frontend.md` or one of its indexed fragments), include a short source note:
 
 ```markdown
 #### UI Settings Source

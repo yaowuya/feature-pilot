@@ -8,9 +8,11 @@ Use this template for `.fp-execute/briefs/<task-id>-brief.md` before dispatching
 ## Identity
 
 - Change slug: `<slug>`
-- Plan file: `<fp-docs/changes/<slug>/tasks/plan-*.md>`
+- Task owner file: `<fp-docs/changes/<slug>/tasks/plan-*.md or tasks/<end>/<number>-<topic>.md>`
+- Overview / stable plan / index context: `<resolved tasks/00-overview.md, stable entrypoint, and optional per-end index>`
 - Task heading: `<exact heading>`
 - Task checkbox line: `<exact checkbox text>`
+- Declared dependencies: `<exact task IDs or None>`
 - Controller base SHA: `<sha before task starts>`
 
 ## Status
@@ -57,7 +59,7 @@ List only interfaces already produced by completed tasks or existing code that t
 
 ## Full Task Text
 
-Paste the complete task from the approved plan here, including `Files`, `Reasoning`, `Interfaces`, TDD steps, validation commands, and commit step.
+Paste the complete task from the approved plan here, including `Files`, `Reasoning`, `Depends on`, `Interfaces`, TDD steps, validation commands, and commit step.
 
 ```text
 <full task text>

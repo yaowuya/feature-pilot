@@ -26,9 +26,11 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 借鉴 OpenSpec 的归档安全设计，归档前必须检查：
 
-1. `tasks/` 中是否仍有未完成 checkbox。
-2. `.fp-execute/progress.md` 是否存在未完成、blocked 或 failed 记录。
-3. 目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
+1. 解析完整任务集：先读存在的 `tasks/00-overview.md`、`tasks/plan-backend.md`、`tasks/plan-frontend.md`；若存在 `tasks/backend/00-index.md` 或 `tasks/frontend/00-index.md`，必须按 index 顺序读取全部 fragments。这些 fragments 是拆分端的 task-owner files；未拆分端由稳定 plan 持有任务。不得依赖递归 glob、正文链接或文件系统顺序。
+2. 校验任务完整性：indexed fragment 不得缺失，也不得存在未被 index 列出的 unindexed fragment；每个 `backend-NNN` / `frontend-NNN` task ID 和 checkbox 只能有一个 owner；`tasks/00-overview.md`、端内 index、拆分端稳定入口不得含 task checkbox；overview progress summary 必须等于 owner checkbox 派生计数。完整性失败时阻塞归档，不能用“强制归档未完成任务”绕过。
+3. 只在解析出的 task-owner files 中检查未完成 checkbox。对 legacy plan，如果没有端内 index，则读取旧 `tasks/00-overview.md` 明确引用的根级 fragments；归属不明确时阻塞，不猜测。
+4. 检查 `.fp-execute/progress.md` 是否存在未完成、blocked 或 failed 记录。ledger 只是恢复证据，不能覆盖 owner checkbox；两者不一致时先结合 git/实际文件/验证结果对账。
+5. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
 
 如果存在未完成任务或 blocked 记录，先展示摘要并询问是否继续归档；不得静默归档。
 

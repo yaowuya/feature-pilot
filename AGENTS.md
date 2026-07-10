@@ -4,11 +4,11 @@ FeaturePilot is an AI feature-development guide that runs the lifecycle:
 
 `需求 → 原型/设计 → 计划 → 执行 → 归档`
 
-This repository is a Claude Code plugin, but Codex can use the same command and skill files as plain Markdown process instructions. Current release: `0.3.0`.
+This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `0.3.0`.
 
 ## How to use in Codex
 
-Codex does not run Claude Code plugins or slash commands directly. Treat `/fp-*` names as workflow labels that map to Markdown files in `skills/` and `commands/`. When the user asks to run FeaturePilot, read the matching skill file before acting:
+Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as workflow labels that map to plugin skills in `skills/` and thin Claude adapters in `commands/`. When the user asks to run FeaturePilot, read the matching skill file before acting:
 
 | User intent | Read first |
 |---|---|
@@ -65,8 +65,8 @@ Use `fp-docs/changes/<slug>/` as the review unit for a feature. Keep artifacts t
 
 - `prd.md` — product requirement design from `/fp-prd`.
 - `proposal.md` — concise development intent, scope, and impact.
-- `design-*.md` — technical approach and architecture decisions.
-- `tasks/` — implementation checklist.
+- `design/` — `00-index.md` plus stable `backend.md` / `frontend.md` entrypoints; large per-end designs use indexed numbered fragments.
+- `tasks/` — stable backend/frontend plan entrypoints; plans over 500 lines use per-end indexed fragments. `tasks/00-overview.md` is created for cross-end/split ordering without duplicating executable checkboxes.
 - `.fp-execute/` — execution ledger, task briefs, packages, and reviews.
 
 When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and summarize the change in `fp-docs/history/history.md`.
@@ -89,8 +89,8 @@ Do not skip phases unless the selected skill explicitly allows it.
 
 1. Generate and confirm `fp-docs/changes/<slug>/prd.md` through `fp-prd` when starting from a rough idea. Use the mandatory PRD template and never write PRDs outside `fp-docs/changes/<slug>/prd.md`.
 2. Generate and confirm `fp-docs/changes/<slug>/proposal.md`.
-3. Generate and confirm design files under `fp-docs/changes/<slug>/`.
-4. Generate and confirm task plans under `fp-docs/changes/<slug>/tasks/`.
+3. Generate and confirm design files under `fp-docs/changes/<slug>/design/`; use indexed numbered fragments when an end-specific design exceeds 500 lines.
+4. Generate and confirm task plans under `fp-docs/changes/<slug>/tasks/`; split an end over 500 lines into indexed fragments, with every stable task ID and checkbox owned by exactly one file.
 5. Execute tasks using the confirmed task files, not chat summaries.
 6. Review and archive when complete, using `fp-docs/archive/`, and `fp-docs/history/history.md` as the canonical archive/spec/history locations.
 

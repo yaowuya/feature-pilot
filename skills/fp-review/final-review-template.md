@@ -15,7 +15,7 @@
 - Proposal: `<path>`
 - Backend design: `<path or N/A>`
 - Frontend design: `<path or N/A>`
-- Task plans: `<paths or N/A>`
+- Resolved task plans / owner files: `<overview, stable entrypoints, indexes, and owner paths or N/A>`
 - Progress ledger: `<path or missing>`
 - Prior task reviews: `<paths or none>`
 - Project constraints: `<paths or none>`

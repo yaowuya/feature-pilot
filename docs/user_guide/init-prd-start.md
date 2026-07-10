@@ -219,8 +219,8 @@ fp-docs/changes/<slug>/prd.md
 `/fp-start` 执行阶段：
 
 1. `fp-propose`：生成并确认 `proposal.md`。
-2. `fp-brainstorm`：生成并确认技术设计；按实际范围输出 `design-backend.md` 和/或 `design-frontend.md`。
-3. `fp-plan`：生成并确认细粒度执行计划；按实际范围输出 `tasks/plan-backend.md` 和/或 `tasks/plan-frontend.md`。
+2. `fp-brainstorm`：生成并确认技术设计；在 `design/` 下输出 `00-index.md` 及按实际范围生成的 `backend.md` 和/或 `frontend.md`，单端设计超过 500 行时按子系统/页面区域拆成带索引的编号文件。
+3. `fp-plan`：生成并确认细粒度执行计划；小计划按实际范围输出 `tasks/plan-backend.md` 和/或 `tasks/plan-frontend.md`，单端计划超过 500 行时拆到对应 `tasks/backend/` / `tasks/frontend/` 的索引化编号分片。双端或任一端拆分时生成无 checkbox 的 `tasks/00-overview.md`，统一跨端顺序和依赖；每个可执行任务的 checkbox 只存在于一个 owner file。
 4. `fp-execute` 或 `fp-execute-sdd`：按已确认任务执行。
 5. `fp-review`：最终整分支审查。
 6. 建议 `/fp-archive`：归档完成的变更。

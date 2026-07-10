@@ -7,7 +7,7 @@ Read this file only after scope, file structure, constraints, interfaces, task o
 ```markdown
 # <功能名> Backend Implementation Plan
 
-> **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Only task markers use checkbox (`- [ ] **Task backend-NNN: ...**`) syntax for tracking; substeps are plain ordered instructions.
 
 **Goal:** <交付能力>
 
@@ -27,13 +27,13 @@ Read this file only after scope, file structure, constraints, interfaces, task o
 
 | Interface | Owner Task | Contract | Consumers | Verification |
 | --- | --- | --- | --- | --- |
-| `<name>` | Task N | `<signature/payload/fields/action>` | `<consumer>` | `<test::name>` |
+| `<name>` | `backend-NNN` | `<signature/payload/fields/action>` | `<consumer>` | `<test::name>` |
 ```
 
 ## Task
 
 ````markdown
-### Task N: <组件或行为名称>
+- [ ] **Task backend-NNN: <组件或行为名称>**
 
 **Files:**
 - Create: `exact/path/to/new_file.py`
@@ -43,12 +43,14 @@ Read this file only after scope, file structure, constraints, interfaces, task o
 **Reasoning:**
 - <independent boundary, source requirement, observable result>
 
+**Depends on:** <None or exact existing task IDs>
+
 **Interfaces:**
 - Consumes: <exact existing/prior contract>
 - Produces: <exact contract for later consumers>
 - Contract checks: <exact verification>
 
-- [ ] **Step 1: Write the failing test**
+**Step 1: Write the failing test**
 
 ```python
 def test_specific_behavior():
@@ -56,24 +58,24 @@ def test_specific_behavior():
     assert result == expected
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+**Step 2: Run test to verify it fails**
 
 Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
 Expected: FAIL with `<specific reason>`
 
-- [ ] **Step 3: Write minimal implementation**
+**Step 3: Write minimal implementation**
 
 ```python
 def function(input):
     return expected
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+**Step 4: Run test to verify it passes**
 
 Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+**Step 5: Commit**
 
 ```bash
 git add tests/path/test_file.py exact/path/to/changed_file.py
@@ -88,7 +90,7 @@ git commit -m "feat: add specific behavior"
 
 | Source | Requirement / Boundary | Tasks | Verification |
 | --- | --- | --- | --- |
-| proposal.md | `<requirement>` | Task N | `<exact command/test>` |
-| design-backend.md | `<design contract>` | Task N, Task M | `<exact command/test>` |
-| Backend boundary | `<actual boundary>` | Task N | `<exact command/test>` |
+| proposal.md | `<requirement>` | `backend-NNN` | `<exact command/test>` |
+| design/backend.md or indexed fragment | `<design contract>` | `backend-NNN`, `backend-MMM` | `<exact command/test>` |
+| Backend boundary | `<actual boundary>` | `backend-NNN` | `<exact command/test>` |
 ```

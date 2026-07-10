@@ -19,7 +19,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Proposal: {PROPOSAL_PATH}
 - Backend design: {BACKEND_DESIGN_PATH_OR_NA}
 - Frontend design: {FRONTEND_DESIGN_PATH_OR_NA}
-- Task plans: {TASK_PLAN_PATHS}
+- Resolved task plans and owner files: {TASK_PLAN_PATHS}
 - Progress ledger: {PROGRESS_LEDGER_PATH_OR_MISSING}
 - Prior task reviews: {TASK_REVIEW_PATHS_OR_NONE}
 - SDD handoff: {SDD_HANDOFF_PATH_OR_MISSING}
@@ -30,7 +30,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 
 ## Required Method
 
-1. Read the manifest, proposal, design files, task plans, progress ledger, prior task reviews, frontend/backend settings, and project constraints that exist.
+1. Read the manifest, proposal, design files, and the complete resolved task set. If `tasks/backend/00-index.md` or `tasks/frontend/00-index.md` exists, read every listed fragment in order; also read progress ledger, prior task reviews, frontend/backend settings, and project constraints that exist. Do not rely on recursive glob or filesystem order.
 2. Inspect information-layer consumption: was `fp-docs/manifest.md` read? For SDD changes, was `fp-docs/intel/sdd-handoff.md` available and included in brief/package evidence? Were `settings/frontend.md` / `settings/backend.md` consulted for UI/backend work? Were relevant unknowns resolved? Was there reliance on stale intel instead of current code?
 3. Inspect branch state and final diff with read-only git commands:
    - git status --short
@@ -47,7 +47,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 
 - Proposal coverage: all What Changes and Capabilities implemented; Out of Scope not implemented.
 - Design coverage: backend/frontend contracts, permissions, migrations, provider registrations, route/store/API/component/visual requirements implemented.
-- Task completion: task checkboxes, progress ledger, commits, reviews, and files agree.
+- Task completion: every executable task ID/checkbox has one owner file; overview/index files contain no task checkbox; owner state, recovery ledger, commits, reviews, and files agree.
 - Cross-task integration: produced interfaces are consumed correctly; backend/frontend contracts match.
 - Backend correctness: model/migration/service/serializer/API/URL/IAM/provider/async/external call/tenant/error boundaries.
 - Frontend correctness: project frontend framework and script/state patterns, project-configured components, route/store/API, structure/state/style, loading/empty/error states, style tokens, Visual Checks.

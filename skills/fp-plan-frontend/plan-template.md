@@ -19,7 +19,7 @@ Read this file only after current framework/components/state conventions, design
 ## 5. Visual and UX checks
 ## 6. Task breakdown
 
-### Task N: <component or behavior>
+- [ ] **Task frontend-NNN: <component or behavior>**
 
 **Files:**
 - Create: `exact/path/to/new-file`
@@ -28,6 +28,8 @@ Read this file only after current framework/components/state conventions, design
 
 **Reasoning:**
 - <independent boundary, source requirement, observable result>
+
+**Depends on:** <None or exact existing task IDs>
 
 **Interfaces:**
 - Consumes: <existing/prior API/state/route/component/visual contract>
@@ -44,5 +46,5 @@ Read this file only after current framework/components/state conventions, design
 - <source-backed tokens/classes/layout/spacing>
 
 **Visual / UX Checks:**
-- [ ] <check traceable to design/settings/Figma/screenshot/current code>
+- <check traceable to design/settings/Figma/screenshot/current code>
 ```

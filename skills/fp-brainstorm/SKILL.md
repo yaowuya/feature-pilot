@@ -9,7 +9,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 # FeaturePilot Brainstorm
 
-你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，按实际涉及范围生成 `design-backend.md` 和/或 `design-frontend.md`。
+你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，在 `fp-docs/changes/<slug>/design/` 下按实际涉及范围生成 `backend.md` 和/或 `frontend.md`。
 
 ## 流程
 
@@ -41,7 +41,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 > - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
 > - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
 > - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
-> 生成的 `design-frontend.md` 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
+> 生成的 `design/frontend.md` 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
 >
 > **Just-in-time Visual 使用原则（只在需要时打开视觉链路）：**
 > - 只有当本次需求实际涉及 UI、Figma、截图还原、视觉走查或用户明确要求视觉验收时，才进入 Figma / browser / local viewer / 截图链路；纯后端、纯接口、纯脚本任务不得为了“完整流程”启动视觉工具。
@@ -55,16 +55,16 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
   - 选项 C：有截图，将在后续步骤中提供
 
   > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
-  > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出并写入 `design-frontend.md`：`Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用 项目组件的自封装理由、`Visual Checks`。**不得改用全局 `figma-to-vue`**。
-  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在 `design-frontend.md` 写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
-  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出并写入 `design/frontend.md`：`Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用 项目组件的自封装理由、`Visual Checks`。**不得改用全局 `figma-to-vue`**。
+  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在 `design/frontend.md` 写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
+  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design/frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
 - 组件复用：复用现有组件还是新建？是否需要参考现有页面/组件文件骨架？
 - 状态管理：沿用项目现有全局状态/数据获取方案，还是使用局部状态？
 - 路由与权限守卫
 
-**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案和设计章节都获得用户确认后，才写入 `design-backend.md` / `design-frontend.md`。
+**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案和设计章节都获得用户确认后，才写入 `design/backend.md` / `design/frontend.md`。
 
 ### 第三步：提出方案与 trade-off
 
@@ -73,10 +73,25 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 ### 第四步：展示与分离技术设计 (前后端分离)
 
 因为完整的全栈系统设计文档极易过载，涉及多个端时应拆分；但必须按实际范围生成：
-1. **涉及后端时才构建 `fp-docs/changes/<slug>/design-backend.md`**：记录 DB 模型、API 契约、底层服务逻辑。
-2. **涉及前端/UI 时才构建 `fp-docs/changes/<slug>/design-frontend.md`**：记录路由表、状态管理方案，**最重要的是：如果提供了 Figma，必须在这里用文字写清楚对应每一个设计区域准备使用的 项目组件映射和流式布局容器规划（取代绝对定位的 flex/grid 方案）**。
+1. **涉及后端时才构建 `fp-docs/changes/<slug>/design/backend.md`**：记录 DB 模型、API 契约、底层服务逻辑。
+2. **涉及前端/UI 时才构建 `fp-docs/changes/<slug>/design/frontend.md`**：记录路由表、状态管理方案；如果提供了 Figma，必须写清设计区域对应的项目组件映射和流式布局容器规划（取代绝对定位的 flex/grid 方案）。
+3. **始终创建 `fp-docs/changes/<slug>/design/00-index.md`**：列出实际存在的端、稳定入口、分片索引和未生成某端的原因。
 
-`design-frontend.md` 必须包含以下视觉连续性小节，后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-review` 都以它们为事实来源：
+#### Canonical design layout
+
+新设计产物只允许写入 `fp-docs/changes/<slug>/design/`，不得创建或更新变更根目录下的旧 `design-backend.md` / `design-frontend.md`。
+
+- 小型后端设计：完整内容写入 `design/backend.md`。
+- 小型前端设计：完整内容写入 `design/frontend.md`。
+- 若任一端设计预计 **> 500** 行：该端稳定入口保留摘要、关键契约和分片链接；详细内容分别写入 `design/backend/00-index.md` + `design/backend/01-<subsystem>.md`…，或 `design/frontend/00-index.md` + `design/frontend/01-<area>.md`…。
+- 分片按可独立阅读的子系统/页面区域划分，每个文件尽量不超过 200 行；`00-index.md` 必须列出所有分片及其覆盖范围，禁止让下游靠目录猜测文件顺序。
+- 不得在入口和分片中复制完整正文；稳定入口负责摘要与导航，分片负责细节。
+
+#### Legacy read compatibility
+
+本 skill 是生产者，不得写旧根目录路径。若当前活跃变更已有旧文件，只可读取它们作为迁移输入；得到用户写入授权后，将内容写到 canonical layout，不覆盖旧文件，并报告遗留文件供用户决定后续清理。
+
+`design/frontend.md` 必须包含以下视觉连续性小节，后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-review` 都以它们为事实来源：
 
 ```markdown
 #### Visual Source
@@ -95,7 +110,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 若没有可确认视觉来源，不得生成空泛 `Visual Checks`；必须先向用户说明缺口并提问或标记设计阻塞。
 
-如果 proposal 和代码探索都没有前端/UI 范围，不要生成 `design-frontend.md`、前端章节或空占位文件。
+如果 proposal 和代码探索都没有前端/UI 范围，不要生成 `design/frontend.md`、前端章节或空占位文件。
 
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，确认后再写入文件。
 
@@ -116,7 +131,9 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 - 设计章节已按实际涉及端逐节展示。
 - 用户已明确确认可以写入设计文件。
 
-未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
+#### Pre-write gate includes design index
+
+未满足这些条件时，不得创建或覆盖 `design/00-index.md`、`design/backend.md`、`design/frontend.md` 及任何端内分片。
 
 【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件。
 

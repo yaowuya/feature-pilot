@@ -11,7 +11,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 `fp-execute-sdd` executes an approved FeaturePilot change with Subagent-Driven Development. The controller stays in charge of sequencing, ledger updates, packages, and user-facing decisions; fresh subagents do one implementation task or one review at a time.
 
-Core rule: **implementers are serial, reviewers are per task, fixes loop until reviewed clean, and the ledger is the source of truth.**
+Core rule: **implementers are serial, reviewers are per task, fixes loop until reviewed clean, the unique task-owner checkbox owns planned completion, and the ledger is recovery evidence.**
 
 This skill is self-contained. Use only the templates in this directory:
 
@@ -29,7 +29,7 @@ skills/fp-execute-sdd/
 
 Use this skill for confirmed FeaturePilot plans when:
 - The change is medium/large, cross-module, cross-end, permission-sensitive, data-sensitive, or UI/visual-sensitive.
-- The plan has `tasks/plan-backend.md` and/or `tasks/plan-frontend.md` with explicit TDD steps.
+- The plan has `tasks/plan-backend.md` and/or `tasks/plan-frontend.md`, with explicit TDD steps in the small stable plan or indexed task fragments.
 - You want fresh-context per-task implementation and review rather than one long inline context.
 - You need recovery after compaction, restart, or a partially completed task chain.
 
@@ -39,16 +39,34 @@ Do not use it for:
 - Plans whose tasks are too vague to brief and review independently.
 - Parallel implementers writing the same worktree. This skill forbids parallel implementation in v1.
 
+## Canonical design layout
+
+Read `fp-docs/changes/<slug>/design/00-index.md` when present, then read each in-scope stable entrypoint (`design/backend.md`, `design/frontend.md`) and every numbered fragment referenced by its per-end index. Missing indexed fragments are an execution blocker.
+
+## Legacy read compatibility
+
+For each end, fall back to root-level `design-backend.md` / `design-frontend.md` only when its canonical entrypoint is absent. Legacy paths are read-only and must not be created or updated.
+
+## Canonical task plan resolution
+
+Before preflight or task selection, resolve the complete ordered task set:
+
+1. Read stable entrypoints `tasks/plan-backend.md` / `tasks/plan-frontend.md` that exist and `tasks/00-overview.md` when present.
+2. For each end, if `tasks/<end>/00-index.md` exists, read the stable entrypoint for constraints, then the index and every numbered fragment it lists in that exact order. The fragments are task-owner files. If no per-end index exists, the small stable entrypoint is the task-owner file.
+3. Block on a missing or unindexed fragment, a task checkbox in `tasks/00-overview.md`, a per-end index, or a split stable entrypoint, duplicate task IDs/checkboxes, or an overview dependency cycle. Do not discover executable tasks by entrypoint links, recursive glob, or filesystem order.
+4. Use `tasks/00-overview.md` for cross-end order when it exists. For compatible older small plans without it, retain their explicit plan order and block if cross-end dependencies are ambiguous.
+5. Track each task as `(stable backend-NNN/frontend-NNN ID, owner path, exact checkbox line)`. Update only that owner checkbox after review passes.
+
 ## Inputs
 
 Immediately read with tools:
 - `fp-docs/changes/<slug>/proposal.md`
-- Existing design files: `design-backend.md`, `design-frontend.md`
-- Existing task files: `tasks/plan-backend.md`, `tasks/plan-frontend.md`
+- Resolved complete design artifacts using the canonical-first rule above
+- Complete resolved task files: stable entrypoints, `tasks/00-overview.md` when present, any `tasks/backend/00-index.md` / `tasks/frontend/00-index.md`, and every indexed task-owner fragment
 - Project constraints if present: `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`
 - Existing `fp-docs/changes/<slug>/.fp-execute/progress.md`, if any
 
-If no task file exists, stop and report that execution cannot start without an approved plan.
+If no task-owner file exists, stop and report that execution cannot start without an approved plan.
 
 ## Information-layer preflight
 
@@ -86,7 +104,7 @@ The controller must:
 6. Create a review package from the actual diff and report.
 7. Dispatch exactly one read-only task reviewer.
 8. Run a serial fix loop for Critical/Important findings.
-9. Update checkbox, commit/commit-range evidence, and ledger only after review passes.
+9. Update the unique owner checkbox, recompute derived overview progress counts when present, and record commit/commit-range evidence in the ledger only after review passes.
 10. Continue to the next task only when the current task is reviewed clean or explicitly blocked.
 11. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
@@ -94,11 +112,12 @@ The controller must not implement product code inline except to repair orchestra
 
 ## Pre-flight Plan Review
 
-Before any implementation subagent, scan the approved plan files for contradictions:
+Before any implementation subagent, scan every resolved stable/index/task-owner file for contradictions:
 
 - Proposal/design/tasks agree on scope; out-of-scope work is not planned.
 - `Global Constraints` exist and are concrete.
 - Every task has `Files`, `Reasoning`, `Interfaces`, failure test, expected failure, minimal implementation, pass validation, and commit step.
+- Every task has `Depends on` with existing stable task IDs; per-task, per-end index, and cross-end overview dependencies agree and are acyclic.
 - Backend plans have `Backend Interface Ledger` and `Coverage Matrix` consistent with tasks.
 - Frontend page/component tasks have structure/state/style outlines appropriate to the target framework plus `Visual Checks`; tasks must follow the project’s existing frontend framework and script/state patterns.
 - Backend/frontend contract names match exactly: URL, method, fields, enums, error shape, permissions, pagination/filter/sort semantics.
@@ -110,7 +129,7 @@ If conflicts exist, list all conflicts with file/line evidence and pause. Do not
 
 ## Progress Ledger
 
-`progress.md` is the recovery source of truth. Read it before selecting the next task; create it if absent.
+`progress.md` is an append-only recovery/evidence log, not a second completion authority. Read it before selecting the next task; create it if absent.
 
 Minimum format:
 
@@ -120,11 +139,14 @@ Minimum format:
 Change: <slug>
 Base SHA: <sha at execution start>
 Plan files:
+- tasks/00-overview.md
 - tasks/plan-backend.md
+- tasks/backend/00-index.md
+- tasks/backend/01-domain.md
 - tasks/plan-frontend.md
 
-## Completed
-- <task-id>: complete; commits <base>..<head>; tests `<commands>`; review <review-path>
+## Completed Evidence
+- <task-id>; owner <task-owner-path>; checkbox reconciled; commits <base>..<head>; tests `<commands>`; review <review-path>
 
 ## In Progress
 - None
@@ -140,19 +162,20 @@ Plan files:
 ```
 
 Ledger rules:
-- Ledger complete beats unchecked checkboxes; reconcile and explain the mismatch.
-- Checkbox progress is user-visible; ledger progress is recovery truth.
+- The unique checkbox in the task-owner file is the planned completion state; ledger entries are recovery evidence and never override it.
+- `tasks/00-overview.md` progress counts are derived from owner checkboxes; recompute them on mismatch instead of treating them as another state source.
+- On any mismatch, inspect the owner file, commits, actual implementation, tests, and review evidence; reconcile both records before selecting, repeating, or declaring the task complete.
 - Append an event for task start, implementer result, package creation, review result, fix attempt, blocked state, checkbox update, and final review.
 - Do not repeat a task already marked complete unless the user explicitly asks to reopen it.
 - If a task is blocked, record blocker, attempted commands, current HEAD, report/review paths, and the exact decision needed.
 
 ## Task ID and File Naming
 
-Use stable task IDs derived from the plan file and task number:
+Use the stable task ID written in the unique checkbox marker; never derive or renumber it from a fragment filename:
 
 ```text
-backend-task-001
-frontend-task-003
+backend-001
+frontend-003
 ```
 
 Write all task artifacts:
@@ -169,7 +192,7 @@ Use `-fix-<n>` sections inside the same report for fix attempts; do not scatter 
 ## Task Brief Package
 
 Before dispatching an implementer, write a brief using `task-brief-template.md`. It must include:
-- Task ID, plan path, task heading, and task checkbox text.
+- Task ID, unique task-owner path, declared dependencies, task heading, and task checkbox text.
 - Full task text from the plan, not a summary.
 - Applicable `Global Constraints`.
 - Relevant proposal/design excerpts.
@@ -263,7 +286,7 @@ Every dispatch states a capability expectation, not a guessed model ID. Use the 
 ## Completion and Final Review
 
 After all tasks are reviewed clean:
-1. Ensure every completed task checkbox is checked.
+1. Ensure every completed task's unique owner checkbox is checked and no summary/index file contains a task checkbox.
 2. Ensure ledger has no unresolved Blocked, Critical, or Important items.
 3. Ensure Minor findings are fixed or explicitly deferred.
 4. Run a final whole-change review. If `fp-review` exists, use it. If not, create a final review package in `.fp-execute/packages/final-review-package.md` and dispatch `task-reviewer-prompt.md` at whole-change scope with the same read-only rules.
@@ -281,4 +304,4 @@ Final report must include:
 
 ## Invariant recap
 
-Serial implementers only; reviewer stays read-only; every task gets a package; completion follows review; ledger/files beat chat memory; `CANNOT VERIFY FROM DIFF` is not pass; one task never broadens scope.
+Serial implementers only; reviewer stays read-only; every task gets a package; completion follows review; owner checkbox plus verified evidence beats chat memory while the ledger supports recovery; `CANNOT VERIFY FROM DIFF` is not pass; one task never broadens scope.

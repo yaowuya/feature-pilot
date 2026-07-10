@@ -8,5 +8,5 @@ Gate checksum：
 
 - 先读取已确认 proposal，并按当前代码验证实现事实。
 - 每次只问一个架构问题；提出 2–3 个方案和 trade-off。
-- 方案和设计章节都获确认后，才按实际范围写 `design-backend.md` 和/或 `design-frontend.md`。
+- 方案和设计章节都获确认后，才在 `design/` 下按实际范围写 `00-index.md`、`backend.md` 和/或 `frontend.md`；单端设计预计超过 500 行时使用带索引的编号分片。
 - 不预建 tasks 或 execution 产物。

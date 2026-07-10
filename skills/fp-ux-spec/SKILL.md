@@ -31,7 +31,7 @@ Capture concrete project rules for:
 - Table sorting, filtering, selection, pagination, empty/loading/error states.
 - Dialog, drawer, popover, tooltip, message, and notification behavior.
 - Navigation, permissions, keyboard/accessibility, and responsive behavior.
-- UX checks to carry into `design-frontend.md`, task plans, execution, and review.
+- UX checks to carry into the canonical frontend design (`design/frontend.md` or indexed fragments), task plans, execution, and review.
 
 ## Public-plugin constraints
 

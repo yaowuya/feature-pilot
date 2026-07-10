@@ -9,7 +9,8 @@ Use this template for `.fp-execute/packages/<task-id>-review-package.md` after a
 
 - Task brief: `<.fp-execute/briefs/<task-id>-brief.md>`
 - Implementer report: `<.fp-execute/reports/<task-id>-report.md>`
-- Plan file: `<fp-docs/changes/<slug>/tasks/plan-*.md>`
+- Task owner file: `<fp-docs/changes/<slug>/tasks/plan-*.md or tasks/<end>/<number>-<topic>.md>`
+- Overview / stable plan / index context: `<resolved tasks/00-overview.md, stable entrypoint, and optional per-end index>`
 - Progress ledger: `<fp-docs/changes/<slug>/.fp-execute/progress.md>`
 
 ## Git Range
