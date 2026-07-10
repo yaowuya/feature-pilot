@@ -4,19 +4,7 @@ description: Use when executing confirmed FeaturePilot implementation plans that
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 ---
 
 # FeaturePilot Subagent-Driven Execute
@@ -265,27 +253,12 @@ Minor findings do not block the next task, but record them in ledger `Minor Find
 
 ## Model Selection
 
-Every subagent dispatch must state a model expectation. If the environment supports exact model selection, use exact IDs; if not, put the expectation in the prompt.
+Every dispatch states a capability expectation, not a guessed model ID. Use the user/project-configured default unless policy explicitly selects another available model.
 
-Safe default:
-- Default to `claude-opus-4-8` for controller-level orchestration, task review, final review, cross-end integration, security/permission/data changes, complex UI/visual work, and any uncertain task.
-
-User-approved alternatives:
-- `claude-sonnet-5`: balanced/faster implementation for well-scoped routine tasks after the user or project policy permits a non-Opus model.
-- `claude-haiku-4-5`: only for trivial read-only summarization or mechanical single-file edits after the user or project policy permits it.
-
-Do not silently downgrade for cost. Do not invent date-suffixed model IDs. Use `claude-fable-5` only if the user explicitly asks for Fable / most capable model and the environment supports it.
-
-Recommended mapping:
-
-| Work | Model expectation |
-| --- | --- |
-| Controller orchestration | `claude-opus-4-8` |
-| Complex implementer | `claude-opus-4-8` |
-| Routine implementer, user-approved faster mode | `claude-sonnet-5` |
-| Task reviewer | `claude-opus-4-8` |
-| Fixer for Critical/Important | `claude-opus-4-8` |
-| Trivial read-only package summarization, user-approved | `claude-haiku-4-5` |
+- Use the highest available reasoning/capability tier for controller decisions, uncertain or cross-end work, permissions/security/data/migrations, complex UI, task review, fixes for blocking findings, and final review.
+- A balanced tier may implement a well-scoped routine task only when user/project policy permits it.
+- A lightweight tier is limited to trivial read-only or mechanical work when policy permits it.
+- Never silently downgrade for cost, invent model IDs, or claim an unavailable model. If exact selection is unsupported, put the capability expectation in the prompt.
 
 ## Completion and Final Review
 
@@ -306,15 +279,6 @@ Final report must include:
 - Final review result.
 - Whether `/fp-archive` is recommended.
 
-## Common Mistakes
+## Invariant recap
 
-| Mistake | Correct behavior |
-| --- | --- |
-| Parallel implementers for speed | Forbidden. Serial implementers only in v1. |
-| Reviewer edits code | Reviewer is read-only; use a fixer. |
-| Mark checkbox before review | Mark complete only after review passes. |
-| Trust chat after compaction | Trust ledger, git log, reports, reviews, and files. |
-| Skip package because diff is small | Every task gets a package. |
-| Treat `CANNOT VERIFY FROM DIFF` as pass | Controller verifies or fails the review. |
-| Use vague model labels only | Use exact IDs when supported; otherwise state capability expectation. |
-| Let implementer broaden scope | Stop and ask; one task means one task. |
+Serial implementers only; reviewer stays read-only; every task gets a package; completion follows review; ledger/files beat chat memory; `CANNOT VERIFY FROM DIFF` is not pass; one task never broadens scope.

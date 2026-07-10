@@ -26,6 +26,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Project constraints: {PROJECT_CONSTRAINT_PATHS_OR_NONE}
 - Frontend settings: {FRONTEND_SETTINGS_PATH_OR_MISSING}
 - Backend settings: {BACKEND_SETTINGS_PATH_OR_MISSING}
+- Report template: {REPORT_TEMPLATE_PATH}
 
 ## Required Method
 
@@ -39,7 +40,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
    - targeted git diff / file reads for changed files
 3. Review the whole branch, not individual tasks in isolation.
 4. Run only read-only verification commands. If a command would mutate state, skip it and record why.
-5. Write exactly one report to:
+5. Read `{REPORT_TEMPLATE_PATH}` and write exactly one report to:
    {CHANGE_PATH}/.fp-execute/reviews/YYYYMMDD-HHMM-final-review.md
 
 ## Check
@@ -73,28 +74,5 @@ Choose exactly one:
 
 ## Report Format
 
-# Final FeaturePilot Review: {SLUG}
-
-**Verdict:** PASS | PASS_WITH_NOTES | FAIL | BLOCKED
-**Reviewer:** read-only fp-review
-**Review Time:** YYYY-MM-DD HH:MM
-**Base Ref:** {BASE_REF}
-**Head Ref:** {HEAD_REF}
-**Change Path:** {CHANGE_PATH}
-**Review Depth:** {REVIEW_DEPTH}
-**Focus:** {FOCUS}
-
-## Inputs Reviewed
-## Branch State
-## FeaturePilot Coverage
-## Verification Commands
-## Findings Summary
-## Findings
-### Critical
-### High
-### Medium
-### Low
-## Blocking Items Before Archive
-## Residual Risks / Notes
-## Final Verdict Rationale
+Use `{REPORT_TEMPLATE_PATH}` exactly. Add evidence rows and findings without renaming, deleting, or reordering its sections.
 ```

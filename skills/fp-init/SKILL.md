@@ -5,6 +5,7 @@ description: Use when a project is adopting FeaturePilot for the first time, nee
 
 ## FeaturePilot workspace and information layer
 
+Read `../_shared/workspace-rules.md` once before acting. For this skill, apply its `fp-init` ownership exception: only init may create or repair project-level `fp-docs/manifest.md`, settings, and intel, and existing files require explicit overwrite approval.
 
 # FeaturePilot Init
 
@@ -107,61 +108,7 @@ Note: `fp-docs/manifest.md` is always created or updated regardless of whether e
 
 ### 4. Detect labelled project-family examples
 
-After checking existing project-level docs and before offering generic optional settings, run a small read-only project-family detection pass.
-
-#### Canway / CW detection
-
-FeaturePilot may ship labelled examples for common project families. The public plugin must never treat these examples as global defaults.
-
-For Canway / CW projects, inspect only small, safe signals such as:
-
-- Repository/root names containing `canway`, `cw`, `auto-ops`, `aoc`, or similar Canway delivery names.
-- Existing docs mentioning `嘉为`, `Canway`, `CW`, `AOC`, `蓝鲸`, or `BlueKing`.
-- Package/module names such as `@canway/*`, `@canway/cw-magic-vue`, `@canway/cw-user-selector`, `auto-ops-platform`, or `cw-auto-ops`.
-- Root layout signals such as `manage.py` plus `ui/package.json` in a Canway/BlueKing-style application.
-- Existing FeaturePilot settings that already reference Canway/CW conventions.
-
-Detection rules:
-
-- Keep detection read-only.
-- Do not scan secrets, environment values, production data, or huge dependency trees.
-- If confidence is low, do nothing special and continue generic `/fp-init`.
-- A positive detection only permits asking the user; it does not permit automatic adoption.
-
-When confidence is high, ask before adopting the example:
-
-```markdown
-检测到当前项目可能是 Canway/CW 项目。是否采用 FeaturePilot 内置的 CW 示例规范作为 `fp-docs/settings/` 的初始草稿？
-
-示例来源：`examples/canway-cw/fp-docs/settings/`
-
-这些示例会写入 agent/frontend/backend/prototype-style 设置文件供你确认；不会覆盖已有文件，且你可以选择只采用部分文件。
-
-选项：
-1. 全部采用 — 创建缺失的 `agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`。
-2. 选择文件 — 只采用我指定的设置文件。
-3. 先看摘要 — 展示示例包含的后端、前端、UI、UX、原型风格要点，再决定。
-4. 跳过 — 不采用 CW 示例，继续普通 `/fp-init`。
-```
-
-If the user chooses adoption:
-
-- Copy from this plugin's labelled example path: `examples/canway-cw/fp-docs/settings/`.
-- Create missing target files only.
-- If any target file already exists, ask separately before overwriting that specific file. Default recommendation is to skip existing files.
-- Record adopted files in the final report.
-- Treat adopted files as editable target-project settings, not as public-plugin defaults.
-- Continue with the remaining `/fp-init` optional settings and lightweight discovery prompts as needed.
-
-The current CW example maps requested spec areas as follows:
-
-| Requested area | Target settings file |
-|---|---|
-| 后端规范 | `fp-docs/settings/backend.md` |
-| 前端规范 | `fp-docs/settings/frontend.md` |
-| UI 规范 | `fp-docs/settings/frontend.md` UI sections |
-| UX 规范 | `fp-docs/settings/frontend.md` UX sections |
-| 原型视觉风格 | `fp-docs/settings/prototype-style.md` |
+After checking project docs, run only a small read-only project-family signal check. If no plausible signal exists, continue generic init without loading extra context. If a signal exists, read `project-family-examples.md` and follow its confidence, consent, selective-copy, and overwrite rules.
 
 ### 5. Ask about optional settings
 

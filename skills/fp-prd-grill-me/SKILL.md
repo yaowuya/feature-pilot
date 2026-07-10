@@ -5,19 +5,7 @@ description: Use with fp-prd to grill a product idea, pain point, user story, or
 
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
 
 # FeaturePilot PRD Grill Me
@@ -208,32 +196,7 @@ Code facts can explain current behavior and existing patterns; they cannot decid
 
 ## Question Format (for Bucket C sequential questions)
 
-The Question Format defined in Phase 2 above applies for every Bucket C question: one question per turn, with options and a recommendation.
-
-For non-PRD `grill-me` use, the same one-question-per-turn format applies. Multi-question turns are not allowed in PRD grill-me.
-
-Every question must be numbered (question N of total). Every option label is scoped to the current question (A/B/C).
-
-For each Bucket C question:
-
-```markdown
-### 需确认（第 N/Total 个）
-
-已确认事实：
-- <事实>
-
-**问题：** <具体问题>
-
-选项：
-- A. <选项A> — <影响>
-- B. <选项B> — <影响>
-
-**推荐：** A，因为 <依据>。
-
-请回答 A/B/C 或给出你的方案。
-```
-
-A recommendation is not confirmation. Proceed only after the user explicitly answers.
+Reuse the exact Phase 2 format above: numbered N/Total, one question per turn, scoped A/B/C options with impacts, and a recommendation. Never bundle questions. A recommendation is not confirmation; proceed only after the user answers.
 
 ## Ambiguous Answer Handling
 
@@ -251,10 +214,7 @@ When a correction appears:
 3. If the new answer is clear, update the decision and continue with the next question.
 4. Do NOT re-ask already-answered questions unless the correction creates a contradiction with a later answer. In that case, surface the contradiction and ask how to resolve.
 
-```markdown
-收到，我更正为：问题 N 选择 B（<新含义>），不是 A（<旧含义>）。
-继续下一个问题...
-```
+Confirm briefly: `收到，我更正为：问题 N 选择 B（<新含义>），不是 A（<旧含义>）。` Then continue.
 
 For prototype requests, do not accept “make a prototype” as sufficient. Confirm the concrete interactions to demonstrate. If the user does not specify them, recommend a minimal interaction set based on the workflow and ask for approval.
 

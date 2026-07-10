@@ -4,19 +4,7 @@ description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta sp
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 ---
 
 # FeaturePilot Brainstorm
@@ -122,70 +110,13 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
 
-【立即用工具执行】按实际涉及端写入设计文件，然后输出：`✅ 设计已完成，进入计划阶段`
+【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件，然后输出：`✅ 设计已完成，进入计划阶段`。
 
 ---
 
 ## 设计文档格式
 
-以下章节是可复用模板。涉及后端/API/数据/安全范围时写入 `design-backend.md`；涉及前端/UI 范围时写入 `design-frontend.md`。不要生成合并的 `design.md`，也不要为空范围生成占位文件。
-
-```markdown
-# <功能描述> — 技术方案设计
-
-## 第一部分：架构决策
-
-> 记录 Socratic 问答过程中的关键决策。
-
-### 决策 1：[主题]
-- **选择**：[用户的选择]
-- **理由**：[用户说明的原因]
-
-### 决策 2：[主题]
-...
-
----
-
-## 第二部分：技术方案详述
-
-> 基于上述决策，展开完整的技术设计。内容和深度根据功能复杂度自由展开。
-> 通常覆盖：模块/目录结构、数据模型、API 接口、业务逻辑要点、前端设计（如涉及）。
-
-### 后端模块设计
-
-（新建/修改的 App 目录结构，精确到文件级别）
-
-### 数据模型
-
-（每个 Model 的关键字段，注明类型、用途，强调 项目现有模型基类和关联规则）
-
-### API 接口
-
-（按项目现有 API 框架记录路由/endpoint、HTTP 方法、主要请求/响应字段）
-
-### 业务逻辑要点
-
-（关键算法、状态机、联动机制、异步任务等）
-
-### 前端设计（如涉及 UI）
-
-#### 页面/视图
-（新增页面/视图路径 + 菜单入口）
-
-#### 组件
-（新建组件 + 复用现有组件清单）
-
-#### API 模块
-（按项目现有 API 客户端/请求封装位置记录文件和主要接口列表）
-
-#### 路由
-（路由定义，权限要求）
-
-#### 状态管理
-（按项目现有状态管理方案记录 store/composable/hook/context 或说明仅用局部状态）
-```
-
----
+不要在 Socratic 问答期间加载输出模板。写入门禁通过后再完整读取 `design-template.md`；前端范围还必须保留上文定义的 Visual Source、组件映射和 Visual Checks 契约。
 
 ## 提问原则
 
