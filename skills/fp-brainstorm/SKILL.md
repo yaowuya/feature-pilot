@@ -99,6 +99,14 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，确认后再写入文件。
 
+#### Pre-write content confirmation
+
+这里的确认是**写入前内容确认**：用户确认推荐方案和逐节设计内容后，当前这一次 `fp-brainstorm` 调用继续完成模板读取与设计文件写入。它不是 `fp-start` 的写入后产物确认，也不授权进入计划阶段。
+
+#### No second design finalizer
+
+`fp-brainstorm` 是设计内容生成与设计文件写入的唯一所有者；Socratic 问答结束不是返回点。不得把已确认决策交给额外的设计收尾 Agent 或 Workflow，不得再执行全仓扫描、重新起草、契约统一、重写或多轮交叉验证。确需核验时，只对当前 slug 的 proposal、已确认设计内容和目标设计文件做一次有界一致性检查；发现阻塞则向用户说明，不得自行启动递归修订流程。
+
 ### 第五步：写入设计文件
 
 写入设计文件前必须满足全部条件：
@@ -110,7 +118,11 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
 
-【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件，然后输出：`✅ 设计已完成，进入计划阶段`。
+【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件。
+
+#### Post-write handoff
+
+写入后用工具确认目标设计文件存在，报告实际写入路径，然后输出：`✅ 设计文件已写入，返回 fp-start 进行产物核验与确认`。不得输出或暗示“进入计划阶段”，不得启动 `fp-plan`；只有外层 `fp-start` 获得写入后产物确认后才能推进阶段。
 
 ---
 

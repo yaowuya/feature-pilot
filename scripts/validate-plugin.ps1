@@ -130,6 +130,17 @@ $reviewSkill = Read-Utf8 (Join-Path $root 'skills\fp-review\SKILL.md')
 Assert-Condition ($reviewSkill.Contains('stale intel')) 'fp-review is missing stale-intel review guidance'
 Assert-Condition ($reviewSkill.Contains('information-layer process')) 'fp-review is missing information-layer process review guidance'
 
+$brainstormSkill = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\SKILL.md')
+$startSkill = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
+Assert-Condition (-not ($brainstormSkill.Contains('进入计划阶段'))) 'fp-brainstorm must return written design artifacts to fp-start instead of entering planning'
+Assert-Condition ($brainstormSkill.Contains('Pre-write content confirmation')) 'fp-brainstorm is missing the pre-write content confirmation boundary'
+Assert-Condition ($brainstormSkill.Contains('No second design finalizer')) 'fp-brainstorm is missing the single-owner finalization boundary'
+Assert-Condition ($brainstormSkill.Contains('Post-write handoff')) 'fp-brainstorm is missing its post-write handoff to fp-start'
+Assert-Condition ($startSkill.Contains('Post-write artifact confirmation')) 'fp-start is missing the post-write artifact confirmation boundary'
+Assert-Condition ($startSkill.Contains('No second design finalizer')) 'fp-start is missing the no-second-finalizer boundary'
+Assert-Condition ($startSkill.Contains('Resume boundary')) 'fp-start is missing bounded resume behavior'
+Assert-Condition ($startSkill.Contains('Bookkeeping failure')) 'fp-start is missing non-authoritative bookkeeping failure handling'
+
 $commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Length } | Measure-Object -Sum).Sum
 Assert-Condition ($commandChars -le 5000) "command adapters exceed the 5000-character budget: $commandChars"
 

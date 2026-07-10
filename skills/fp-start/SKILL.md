@@ -136,18 +136,37 @@ This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, the
 
 ## 阶段 2：技术方案设计
 
-【必须先加载】`fp-brainstorm` skill，然后完成：
+【必须先加载】`fp-brainstorm` skill。一次 `fp-brainstorm` 调用必须持续执行到适用的设计文件写入并核验存在后才返回；Socratic 问答完成或方案确认都不是子 skill 的返回点。其职责包括：
 - 基于真实代码定位涉及模块、API、数据模型、组件和约定
 - Socratic 架构决策问答（后端 + 前端维度）
 - 如果包含前端需求，利用 **本插件内** 的 `fp-figma` skill 分析设计稿，完成精准的前端页面与组件映射设计；**禁止回退到全局 `figma-to-vue` skill**。
 - 按实际涉及端生成设计文档：涉及后端才生成 `design-backend.md`；涉及前端/UI 才生成 `design-frontend.md`；没有前端计划时不得生成前端设计文档或空占位文件。
 
-阶段完成检查：
+### No second design finalizer
+
+设计生成和写入完全属于当前 `fp-brainstorm` 调用。它返回后，`fp-start` 不得启动第二个设计收尾 Agent 或 Workflow，不得重复扫描代码库、重新推导决策、重写设计或发起多轮交叉验证。外层只能核验已写入文件、从文件提取摘要并请求写入后产物确认；若发现具体缺失或矛盾，返回同一 `fp-brainstorm` 上下文定点补齐或向用户报告阻塞。
+
+### Post-write artifact confirmation
+
+阶段完成检查属于**写入后产物确认**，与 `fp-brainstorm` 内部的写入前内容确认不同：
 - 用工具确认设计文件存在；若分前后端，必须确认 `design-backend.md` 和/或 `design-frontend.md`。
 - 向用户展示关键架构决策、改动模块、前端组件/布局映射（如涉及）。
 - 明确询问用户是否确认设计。
 
 等待用户确认设计后，输出 `✅ 设计确认，进入计划阶段`，然后才进入阶段 3。
+
+### Resume boundary
+
+会话中断或用户说“继续”时，以当前 slug 的实际产物和已明确完成的门禁恢复，不重新启动整段设计：
+
+- 适用的设计文件已存在：只核验文件、展示摘要并恢复写入后产物确认；除非用户明确要求修改，不得重跑 `fp-brainstorm`。
+- 写入前内容确认已经完成但设计文件尚不存在：恢复同一次 `fp-brainstorm` 的第五步，使用已确认内容直接读取模板、写文件并核验；不得重新探索、问答、起草或另建 finalization workflow。
+- 无法从当前会话确定写入前内容是否已确认：明确说明缺少哪个门禁，只补问该门禁，不得假设完成或重新做全流程。
+- 恢复判断只读取当前 slug 的 proposal、适用设计文件和当前会话中的明确确认，不读取历史 change/archive，也不创建新的 slug。
+
+### Bookkeeping failure
+
+Task/Todo 更新、进度展示或其他编排记账失败不代表阶段产物失败，也不是重新执行架构工作的依据。报告该失败后，仍以文件存在性和用户明确确认作为唯一阶段事实；不得因记账失败启动摘要、设计收尾、重写或验证 Workflow。若目标文件写入或核验本身失败，则停在当前阶段并报告，禁止进入计划阶段。
 
 ---
 
