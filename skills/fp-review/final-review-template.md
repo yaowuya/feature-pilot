@@ -1,5 +1,7 @@
 # Final FeaturePilot Review: <slug>
 
+Resolution follows `../_shared/artifact-layout.md`. This report records canonical-first Consumer evidence in manifest order and rejects every historical or dual structural conflict before review.
+
 **Verdict:** PASS | PASS_WITH_NOTES | FAIL | BLOCKED
 **Reviewer:** read-only fp-review
 **Review Time:** YYYY-MM-DD HH:MM
@@ -12,10 +14,17 @@
 ## Inputs Reviewed
 
 - Manifest/settings/intel: `<paths or N/A>`
-- Proposal: `<path>`
-- Backend design: `<path or N/A>`
-- Frontend design: `<path or N/A>`
-- Task plans: `<paths or N/A>`
+- PRD: `<small entry or split index plus ordered fragments>`
+- Proposal: `<small entry or split index plus ordered fragments>`
+- Backend design: `<small entry or split index plus ordered fragments, or N/A>`
+- Frontend design: `<small entry or split index plus ordered fragments, or N/A>`
+- Resolved task plans / owner files: <small entry or split index, manifest order, `tasks`-kind fragments, unique task owner paths>
+- Exact task-owner paths: `<exact resolved task-owner path>` (repeat for each unique owner)
+- Resolution modes: `<canonical small / canonical split>`
+- Structural conflict: `None` (otherwise review is blocked)
+- Overview applicability: `<two-end overview and derived totals, or single-end/no overview>`
+- Structural validation: `<missing index/manifest fragment, unindexed fragment, file-plus-directory conflict, duplicate content/task owner, invalid Kind/checkbox, invalid overview reference/cycle, and size-limit results>`
+- Structural gate: `PASS | FAIL | BLOCKED` — `<exact rejected path/rule; PASS_WITH_NOTES is forbidden on any shared-contract rejection>`
 - Progress ledger: `<path or missing>`
 - Prior task reviews: `<paths or none>`
 - Project constraints: `<paths or none>`

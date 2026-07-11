@@ -5,6 +5,7 @@ description: Use when performing a final whole-branch review of an implemented F
 ## FeaturePilot workspace and information layer
 
 Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `../_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
 ---
 
 # FeaturePilot Final Whole-Branch Review
@@ -39,15 +40,42 @@ Accept these inputs when provided:
 
 If `slug` is missing, list `fp-docs/changes/` directories and ask the user to choose; if exactly one exists, use it and state the choice. If `baseRef` cannot be determined, ask the user before continuing.
 
+## Shared canonical artifact resolution
+
+Resolve the approved artifact graph canonical-first before reviewing scope or completion:
+
+1. Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; and `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`.
+2. Producer output must contain one canonical form. This read-only Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility; migration must finish before review.
+3. A split `00-index.md` is the sole canonical entry. Parse its manifest and read all listed fragments in exact manifest order. Missing/duplicate entries, duplicate owners, or an unindexed fragment are structural findings; never rely on body links, recursive globs, or filesystem order.
+4. In split plans, only manifest Kind=`tasks` rows produce `tasks`-kind task-owner files. Each stable ID/checkbox has one unique task owner. Reject forbidden checkbox locations, duplicate IDs/checkboxes, missing references, and dependency cycles rather than guessing coverage.
+5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. Only a valid two-end overview owns cross-end edges/stages and derived totals; recompute those totals from owner checkboxes before judging completion.
+
+Record each logical artifact's resolved mode, canonical entry, manifest-ordered fragments, task owners, and structural conflicts in the final report. Inspect both alternatives before reading either; use a small plan file only when its corresponding split directory is absent.
+
+## Blocking structural validity gate
+
+Any structural rejection from `../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible. Use `BLOCKED` when invalid structure prevents complete, trustworthy input resolution; use `FAIL` when the complete evidence can still be resolved and the structural defect is concrete. The reviewer may continue collecting findings after detecting a rejection, but those additional findings cannot clear the structural gate.
+
+Treat every shared-contract rejection as blocking, including:
+
+- missing split index or missing manifest fragment;
+- unindexed fragment, duplicate manifest order/file entry, or any file-plus-directory conflict;
+- duplicate content owner, duplicate task owner, duplicate task ID, or duplicate checkbox;
+- invalid manifest Kind, a task checkbox outside a small plan or `tasks`-kind fragment, or any other forbidden checkbox location;
+- invalid overview condition, invalid overview reference, missing task reference, or dependency cycle;
+- any per-file size-limit violation over 500 lines or 30,000 characters.
+
+Record the exact rejected path/rule under structural validation and continue collecting findings when safe. Never reinterpret a structural conflict as a Low/Medium note.
+
 ## Required Reads
 
 Immediately read the actual files that exist for the selected change:
 1. `fp-docs/manifest.md` if present
 2. relevant `fp-docs/settings/*.md` and `fp-docs/intel/*.md` listed by the manifest
-3. `fp-docs/changes/<slug>/proposal.md`
-4. `fp-docs/changes/<slug>/design-backend.md` if present
-5. `fp-docs/changes/<slug>/design-frontend.md` if present
-6. all `fp-docs/changes/<slug>/tasks/*.md` files if present
+3. complete resolved PRD and proposal logical content, whether small files or split manifests/fragments
+4. complete backend design resolved canonical-first, if present
+5. complete frontend design resolved canonical-first, if present
+6. the complete resolved task set: each selected small plan or split index plus all manifest-ordered owner fragments, and the two-end overview only when applicable
 7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
 8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
 9. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
@@ -68,9 +96,11 @@ Do not paste full diffs into chat. Use the diff to drive findings and coverage.
 ### 1. State and Input Validation
 
 Verify:
-- The change directory exists and has a proposal.
+- The change directory exists and has a structurally valid resolved proposal.
 - At least one design file, task plan, progress ledger entry, commit, or diff provides implementation evidence.
 - Task checkboxes, progress ledger, commits, and actual files do not contradict each other.
+- Every executable task ID and checkbox has exactly one owner file; progress ledger entries are recovery evidence and do not replace unchecked owner state.
+- When and only when both ends exist, `tasks/00-overview.md` cross-end edges are acyclic and its derived progress counts equal the resolved owner checkboxes.
 - Working tree state is known. Dirty working tree is allowed to be reviewed, but final verdict cannot be `PASS`.
 
 If required inputs are missing so badly that review cannot proceed, write a `BLOCKED` report.
@@ -85,11 +115,11 @@ Also review information-layer process compliance:
 ### 2. FeaturePilot Coverage Review
 
 Build a coverage table from source artifacts:
-- Every `proposal.md` `What Changes` and `Capabilities` item.
+- Every resolved proposal logical `What Changes` and `Capabilities` item, across its small file or manifest-ordered fragments.
 - Every explicit `Out of Scope` item.
 - Every backend design contract, permission, migration, provider, API, and validation requirement.
 - Every frontend design contract, route/store/API, component mapping, project frontend framework and script/state pattern, project-configured components, style token, and Visual Check requirement.
-- Every completed task in task plans and progress ledger.
+- Every completed task in the resolved task-owner files, cross-checked against progress ledger evidence.
 
 For each item, mark `Covered`, `Partial`, `Missing`, `Violated`, or `N/A`, with file/test/commit evidence.
 
@@ -138,10 +168,10 @@ Each finding must include:
 
 Choose exactly one:
 
-- `PASS`: no Critical/High/Medium findings; working tree clean; required verification passed; FeaturePilot scope is fully covered.
-- `PASS_WITH_NOTES`: no Critical/High findings; only Low or explicitly acceptable Medium findings; working tree clean; core verification passed; archive/merge may proceed with notes.
-- `FAIL`: any Critical/High finding, blocking Medium risk, failed key verification, dirty working tree, implemented Out of Scope behavior, or missing core FeaturePilot scope.
-- `BLOCKED`: review cannot complete because required inputs, base ref, diff, or safe verification are unavailable.
+- `PASS`: structural gate passed; no Critical/High/Medium findings; working tree clean; required verification passed; FeaturePilot scope is fully covered.
+- `PASS_WITH_NOTES`: structural gate passed; no Critical/High findings; only Low or explicitly acceptable Medium findings; working tree clean; core verification passed; archive/merge may proceed with notes.
+- `FAIL`: a resolvable shared-contract structural rejection, any Critical/High finding, blocking Medium risk, failed key verification, dirty working tree, implemented Out of Scope behavior, or missing core FeaturePilot scope.
+- `BLOCKED`: an unresolved structural rejection prevents trustworthy artifact resolution, or review cannot complete because required inputs, base ref, diff, or safe verification are unavailable.
 
 If verdict is not `PASS`, list exact blocking items before archive.
 

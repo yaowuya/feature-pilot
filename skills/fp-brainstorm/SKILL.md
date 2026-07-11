@@ -4,19 +4,19 @@ description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta sp
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `../_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection.
 ---
 
 # FeaturePilot Brainstorm
 
-你正在帮助用户做技术方案设计。基于已确认的 `proposal.md`，以及可选的 delta spec，通过 Socratic 问答和方案探索，按实际涉及范围生成 `design-backend.md` 和/或 `design-frontend.md`。
+你正在帮助用户做技术方案设计。基于已确认的 proposal，以及可选的 delta spec，通过 Socratic 问答和方案探索，在 `fp-docs/changes/<slug>/design/` 下为每个实际涉及端生成一种互斥（mutually exclusive）形式：`backend.md` 或 `backend/00-index.md`，`frontend.md` 或 `frontend/00-index.md`。
 
 ## 流程
 
 ### 第一步：读取上下文
 
 【立即用工具执行】读取以下文件，理解功能范围与行为契约：
-- `fp-docs/changes/<slug>/proposal.md`
+- 按 `../_shared/artifact-layout.md` 解析已确认 proposal：检查 `fp-docs/changes/<slug>/proposal.md` 与 `proposal/00-index.md`；双形式直接阻塞，split form 严格按 manifest 顺序读取全部已列分片
 - 读取与本次需求相关的真实代码、测试、路由、模型、组件和 API；以当前代码为准
 
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为设计依据。当前代码仍是最终实现事实来源。
@@ -41,7 +41,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 > - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
 > - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
 > - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
-> 生成的 `design-frontend.md` 中的前端设计章节，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
+> canonical frontend design 的详细内容所有者中，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
 >
 > **Just-in-time Visual 使用原则（只在需要时打开视觉链路）：**
 > - 只有当本次需求实际涉及 UI、Figma、截图还原、视觉走查或用户明确要求视觉验收时，才进入 Figma / browser / local viewer / 截图链路；纯后端、纯接口、纯脚本任务不得为了“完整流程”启动视觉工具。
@@ -55,16 +55,16 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
   - 选项 C：有截图，将在后续步骤中提供
 
   > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
-  > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出并写入 `design-frontend.md`：`Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用 项目组件的自封装理由、`Visual Checks`。**不得改用全局 `figma-to-vue`**。
-  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在 `design-frontend.md` 写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
-  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在 `design-frontend.md` 写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出 `Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用项目组件的自封装理由、`Visual Checks`。这些详细小节只写入选定 frontend form 的一个详细内容所有者。**不得改用全局 `figma-to-vue`**。
+  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在选定 frontend form 的一个详细内容所有者中写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
+  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在选定 frontend form 的一个详细内容所有者中写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
 - 组件复用：复用现有组件还是新建？是否需要参考现有页面/组件文件骨架？
 - 状态管理：沿用项目现有全局状态/数据获取方案，还是使用局部状态？
 - 路由与权限守卫
 
-**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案和设计章节都获得用户确认后，才写入 `design-backend.md` / `design-frontend.md`。
+**用户每次回答后**，先在会话中的“待确认架构决策摘要”记录该决策；不要立刻写文件。只有在方案、设计章节和所选 small/split form 都获得用户确认后，才写入设计文件。
 
 ### 第三步：提出方案与 trade-off
 
@@ -73,10 +73,32 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 ### 第四步：展示与分离技术设计 (前后端分离)
 
 因为完整的全栈系统设计文档极易过载，涉及多个端时应拆分；但必须按实际范围生成：
-1. **涉及后端时才构建 `fp-docs/changes/<slug>/design-backend.md`**：记录 DB 模型、API 契约、底层服务逻辑。
-2. **涉及前端/UI 时才构建 `fp-docs/changes/<slug>/design-frontend.md`**：记录路由表、状态管理方案，**最重要的是：如果提供了 Figma，必须在这里用文字写清楚对应每一个设计区域准备使用的 项目组件映射和流式布局容器规划（取代绝对定位的 flex/grid 方案）**。
+1. **涉及后端时才构建 backend design**：记录 DB 模型、API 契约、底层服务逻辑，并选择 `design/backend.md` 或 `design/backend/00-index.md`。
+2. **涉及前端/UI 时才构建 frontend design**：记录路由表、状态管理方案，并选择 `design/frontend.md` 或 `design/frontend/00-index.md`；如果提供了 Figma，必须写清设计区域对应的项目组件映射和流式布局容器规划（取代绝对定位的 flex/grid 方案）。
+3. **始终创建 `fp-docs/changes/<slug>/design/00-index.md`**：只列出实际存在的端，并直接链接该端选定的 canonical entry；不得让 change index 经由另一份摘要文件间接跳转。
 
-`design-frontend.md` 必须包含以下视觉连续性小节，后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-review` 都以它们为事实来源：
+#### Canonical design layout
+
+新设计产物只允许写入 `fp-docs/changes/<slug>/design/`，不得创建或更新变更根目录下的旧 `design-backend.md` / `design-frontend.md`。
+
+- 写入前选择 form。内容有多个可独立阅读的 feature、subsystem、page area 或 ownership domain 时直接选择 split form；否则选择 small form。不要先生成 monolith 再机械切割。
+- Small form：后端完整内容只写入 `design/backend.md`；前端完整内容只写入 `design/frontend.md`，且不得同时创建同名目录。
+- Split form：后端只写 `design/backend/00-index.md` 和 manifest 列出的编号分片，不写 `design/backend.md`；前端只写 `design/frontend/00-index.md` 和 manifest 列出的编号分片，不写 `design/frontend.md`。
+- 每个文件（包括 index 和 fragment）不得超过 **500 lines** 或 **30,000 characters**；任一硬限制将被越过时必须按语义边界继续拆分。这是 fallback limit，不是拆分目标。
+- 每个 end-local `00-index.md` 使用 `| Order | File | Kind | Owns |` manifest，列出每个 sibling Markdown fragment 恰好一次；index 只负责导航和 ownership metadata，禁止让下游靠 glob、目录顺序或正文链接猜测顺序。
+- 详细 contract、mapping、acceptance check 各有一个 owner；其他文件只链接，不复制正文。
+
+#### Historical layout blocker
+
+本 skill 是 Producer，不得产出旧根目录路径或 stable-file-plus-directory 组合。创建或续写前，只检查当前 slug、当前端的 exact paths：small file、split `00-index.md`、旧根目录 `design-backend.md` / `design-frontend.md` 和任何 historical dual structure；不得递归扫描历史 change/archive。
+
+Historical checks inspect the current slug at exact paths only. Historical files and dual structures are structural conflicts in Producer and Consumer modes; there is no compatibility read. Migration requires explicit approval, validates all transferred content, and removes every obsolete path before work continues.
+
+- 已有单一 canonical form 时保持该 form，除非已确认内容要求转换。
+- historical file 或 dual structure 立即阻塞，不读取其正文、不猜测 ownership。
+- 转换或迁移必须得到 explicit approval，把全部 unique content 转入一种 canonical form，验证后移除 obsolete path；不得在原 historical dual structure 上继续更新。
+
+Frontend design 必须让以下三个视觉连续性小节各出现恰好一次，并共同归属于一个 detailed owner：small form 时归 `design/frontend.md`；split form 时归 manifest 中一个明确的 detail fragment。`design/frontend/00-index.md` 只记录该 fragment 的 ownership，不复制正文。后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-review` 都以该唯一 owner 为事实来源：
 
 ```markdown
 #### Visual Source
@@ -95,7 +117,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 若没有可确认视觉来源，不得生成空泛 `Visual Checks`；必须先向用户说明缺口并提问或标记设计阻塞。
 
-如果 proposal 和代码探索都没有前端/UI 范围，不要生成 `design-frontend.md`、前端章节或空占位文件。
+如果 proposal 和代码探索都没有前端/UI 范围，不要生成任何 frontend design form、前端章节或空占位文件。
 
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，确认后再写入文件。
 
@@ -114,15 +136,25 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 - 已提出 2-3 个方案和 trade-off。
 - 用户已明确确认推荐方案或给出替代方案。
 - 设计章节已按实际涉及端逐节展示。
-- 用户已明确确认可以写入设计文件。
+- 用户已明确确认可以写入列出的设计文件、选定的 small/split form，以及转换时要移除的 obsolete path。
 
-未满足这些条件时，不得创建或覆盖 `design-backend.md` / `design-frontend.md`。
+#### Pre-write gate includes design index
+
+The explicit pre-write gate covers the selected form, exact target paths, `design/00-index.md` direct entries, and any obsolete path approved for removal.
+
+未满足这些条件时，不得创建、覆盖或移除 `design/00-index.md`、任一 end small file、split index、fragment 或 obsolete path。
 
 【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件。
 
 #### Post-write handoff
 
-写入后用工具确认目标设计文件存在，报告实际写入路径，然后输出：`✅ 设计文件已写入，返回 fp-start 进行产物核验与确认`。不得输出或暗示“进入计划阶段”，不得启动 `fp-plan`；只有外层 `fp-start` 获得写入后产物确认后才能推进阶段。
+Post-write verification rejects dual forms, indirect change-index links, incomplete manifests, duplicate visual ownership, hard-limit violations, and residual obsolete paths.
+
+写入后用工具做一次有界核验：`design/00-index.md` 直接链接每个实际端的选定 entry；每端恰有 small 或 split 一种 form；split manifest 中每个 listed fragment 存在且每个 sibling Markdown 被列出一次；所有文件满足 500 lines 与 30,000 characters；视觉三小节各有唯一 owner；转换时 obsolete path 已移除。然后报告实际写入路径并输出：`✅ 设计文件已写入，返回 fp-start 进行产物核验与确认`。不得输出或暗示“进入计划阶段”，不得启动 `fp-plan`；只有外层 `fp-start` 获得写入后产物确认后才能推进阶段。
+
+#### Resume boundary
+
+恢复中断的 brainstorm 时，只解析当前 slug 的 proposal、`design/00-index.md`、每端 exact small/split path 和已确认的会话决策。若已有 canonical form，先验证其结构并继续该 form；若发现未获确认的 dual form、historical path 或 partial conversion，停止写入并请求用户确认迁移，不通过递归扫描或重写来“修复”。
 
 ---
 

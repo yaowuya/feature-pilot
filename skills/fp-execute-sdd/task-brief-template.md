@@ -1,6 +1,7 @@
 # FeaturePilot SDD Task Brief Template
 
 Use this template for `.fp-execute/briefs/<task-id>-brief.md` before dispatching an implementer.
+Resolve inputs under `../_shared/artifact-layout.md` first. The controller is a canonical-first Consumer: preserve manifest order and block every historical or dual structural conflict before creating a task brief.
 
 ```markdown
 # Task Brief: <task-id>
@@ -8,10 +9,30 @@ Use this template for `.fp-execute/briefs/<task-id>-brief.md` before dispatching
 ## Identity
 
 - Change slug: `<slug>`
-- Plan file: `<fp-docs/changes/<slug>/tasks/plan-*.md>`
+- Task owner file: `<exact resolved task-owner path>`
+- Resolved plan context: `<selected small plan OR split index plus manifest-ordered fragments; two-end overview only when applicable>`
 - Task heading: `<exact heading>`
 - Task checkbox line: `<exact checkbox text>`
+- Declared dependencies: `<exact task IDs or None>`
 - Controller base SHA: `<sha before task starts>`
+
+## Resolved Artifact Contract
+
+Record each logical artifact independently so mixed small/split changes remain explicit.
+
+| Logical artifact | Canonical entry | Resolution mode | Ordered fragments |
+| --- | --- | --- | --- |
+| PRD | `<prd.md OR prd/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+| Proposal | `<proposal.md OR proposal/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+| Backend design | `<design/backend.md OR design/backend/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+| Frontend design | `<design/frontend.md OR design/frontend/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+| Backend plan | `<tasks/plan-backend.md OR tasks/backend/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+| Frontend plan | `<tasks/plan-frontend.md OR tasks/frontend/00-index.md>` | `small | split | N/A` | `<manifest-ordered paths or N/A>` |
+
+- Structural conflict: `None` (otherwise no brief may be dispatched)
+- Task ownership proof: <manifest Kind=`tasks` row; `tasks`-kind owner; unique task owner path and checkbox>
+- Overview applicability: `<two-end overview path and derived totals, or single-end/no overview>`
+- Structural validation: `<missing/unindexed fragment, duplicate owner/ID/checkbox, forbidden checkbox, dependency/cycle checks>`
 
 ## Status
 
@@ -57,7 +78,7 @@ List only interfaces already produced by completed tasks or existing code that t
 
 ## Full Task Text
 
-Paste the complete task from the approved plan here, including `Files`, `Reasoning`, `Interfaces`, TDD steps, validation commands, and commit step.
+Paste the complete task from the approved plan here, including `Files`, `Reasoning`, `Depends on`, `Interfaces`, TDD steps, validation commands, and commit step.
 
 ```text
 <full task text>

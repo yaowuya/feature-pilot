@@ -57,9 +57,18 @@ fp-docs/
   changes/<slug>/            # Created by later phases only
     context.md               # Per-change context packet, created by propose/brainstorm
     proposal.md
-    design-backend.md
-    design-frontend.md
+    design/
+      00-index.md
+      backend.md
+      frontend.md
+      backend/              # Optional indexed fragments for large backend designs
+      frontend/             # Optional indexed fragments for large frontend designs
     tasks/
+      00-overview.md         # Both ends or any split; no executable checkboxes
+      plan-backend.md        # Stable backend entrypoint
+      plan-frontend.md       # Stable frontend entrypoint
+      backend/               # Optional indexed fragments for large backend plans
+      frontend/              # Optional indexed fragments for large frontend plans
     .fp-execute/
 ```
 
@@ -530,14 +539,14 @@ Replace “read any settings files that exist” with:
 | `fp-start` | manifest, relevant settings/intel | active change artifacts | no | Orchestrates read order for the full chain. |
 | `fp-quick` | manifest, relevant settings/intel, unknowns, `settings/frontend.md` for UI work, `settings/backend.md` for backend/API/data/security work | product code only after user approval; no `changes/` artifacts | no | Uses intel as discovery pointers, still verifies current code and obeys required domain settings. |
 | `fp-propose` | manifest, workspace map, architecture, contracts, frontend/backend settings, unknowns | `changes/<slug>/proposal.md`, optional `context.md` | no | Turns relevant unknowns into proposal questions or assumptions. |
-| `fp-brainstorm` | manifest, architecture, contracts, security/data, frontend/backend settings as relevant | `design-backend.md`, `design-frontend.md`, optional context updates | no by default | Project-level decisions require explicit user approval. |
+| `fp-brainstorm` | manifest, architecture, contracts, security/data, frontend/backend settings as relevant | `design/00-index.md`, applicable `design/backend.md` / `design/frontend.md`, optional indexed fragments and context updates | no by default | Project-level decisions require explicit user approval; large end-specific designs are split into indexed fragments. |
 | `fp-grill-me` | manifest, relevant settings/intel, unknowns, frontend/backend settings as relevant | design/assumption critique output or artifact updates with approval | no | Pressure-tests design assumptions against current-state facts, target requirements, and unknowns. |
 | `fp-ui-spec` | manifest, `settings/frontend.md`, UI-related intel | UI spec artifacts only when invoked | no | Must not ignore generated frontend settings. |
 | `fp-ux-spec` | manifest, `settings/frontend.md`, UX-related intel | UX spec artifacts only when invoked | no | Must not invent UX rules when settings say Unknown. |
 | `fp-figma` | manifest, `settings/frontend.md`, workspace map, command gates | design excerpts or UI files depending on phase | no | Must verify current framework and file conventions. |
-| `fp-plan` | manifest, relevant settings/intel, active proposal/design | task plans | no | Blocks on unknowns that affect exact tasks. |
-| `fp-plan-backend` | manifest, `settings/backend.md`, backend architecture/contracts/security/commands | `tasks/plan-backend.md` | no | Exact contracts must be reverified from current code. |
-| `fp-plan-frontend` | manifest, `settings/frontend.md`, frontend architecture/contracts/commands | `tasks/plan-frontend.md` | no | UI tokens/components must be source-backed. |
+| `fp-plan` | manifest, relevant settings/intel, active proposal/design | stable task entrypoints; `tasks/00-overview.md` for both ends or any split | no | Blocks on unknowns that affect exact tasks; overview owns cross-end order but no checkbox. |
+| `fp-plan-backend` | manifest, `settings/backend.md`, backend architecture/contracts/security/commands | `tasks/plan-backend.md`; indexed `tasks/backend/` fragments over 500 lines | no | Exact contracts must be reverified from current code; every task checkbox has one owner. |
+| `fp-plan-frontend` | manifest, `settings/frontend.md`, frontend architecture/contracts/commands | `tasks/plan-frontend.md`; indexed `tasks/frontend/` fragments over 500 lines | no | UI tokens/components must be source-backed; every task checkbox has one owner. |
 | `fp-execute` | manifest, relevant settings/intel, task plan | code, progress ledger if applicable | no | Inline execution still respects info-layer gates. |
 | `fp-execute-sdd` | manifest, `sdd-handoff.md`, relevant settings/intel, task plan | `.fp-execute/*`, code via subagents | no | Must brief fresh subagents with relevant info-layer excerpts. |
 | `fp-review` | manifest, relevant settings/intel, active artifacts, diff | review report | no | Reviews product correctness and process drift. |

@@ -4,17 +4,17 @@ FeaturePilot is an AI feature-development guide that runs the lifecycle:
 
 `需求 → 原型/设计 → 计划 → 执行 → 归档`
 
-This repository is a Claude Code plugin, but Codex can use the same command and skill files as plain Markdown process instructions. Current release: `0.3.0`.
+This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `0.3.0`.
 
 ## How to use in Codex
 
-Codex does not run Claude Code plugins or slash commands directly. Treat `/fp-*` names as workflow labels that map to Markdown files in `skills/` and `commands/`. When the user asks to run FeaturePilot, read the matching skill file before acting:
+Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as workflow labels that map to plugin skills in `skills/` and thin Claude adapters in `commands/`. When the user asks to run FeaturePilot, read the matching skill file before acting:
 
 | User intent | Read first |
 |---|---|
 | Initialize workspace/config | `skills/fp-init/SKILL.md` |
 | Full feature workflow | `skills/fp-start/SKILL.md` |
-| PRD from rough idea | `skills/fp-prd/SKILL.md` |
+| Explicit `/fp-prd`, `$fp-prd`, or explicit request to create, write, revise, or complete a PRD or product requirements document | `skills/fp-prd/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
 | Technical design | `skills/fp-brainstorm/SKILL.md` |
 | Implementation plan | `skills/fp-plan/SKILL.md` |
@@ -26,9 +26,11 @@ Codex does not run Claude Code plugins or slash commands directly. Treat `/fp-*`
 
 This release documents the current FeaturePilot gates for both Claude Code and Codex:
 
+- Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
+- An ordinary idea, feature request, user story, pain point, or rough requirement does not trigger PRD authoring by itself.
 - `fp-prd` is an interview workflow, not a one-shot PRD generator: Bucket A/B confirmed items are reviewed in one batch, Bucket C unresolved decisions are asked sequentially one at a time, assistant recommendations are not user confirmation, and the assistant must never self-answer Bucket C.
-- PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing `fp-docs/changes/<slug>/prd.md`.
-- Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write `prd.md`.
+- PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing the resolved PRD small or split form.
+- Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write the resolved PRD small or split form.
 - Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
 
@@ -61,13 +63,22 @@ fp-docs/
 
 ## OpenSpec-inspired artifact model
 
-Use `fp-docs/changes/<slug>/` as the review unit for a feature. Keep artifacts together:
+Use `fp-docs/changes/<slug>/` as the review unit for a feature. Every logical artifact uses exactly one mutually exclusive canonical form:
 
-- `prd.md` — product requirement design from `/fp-prd`.
-- `proposal.md` — concise development intent, scope, and impact.
-- `design-*.md` — technical approach and architecture decisions.
-- `tasks/` — implementation checklist.
-- `.fp-execute/` — execution ledger, task briefs, packages, and reviews.
+| Logical artifact | Small form | Split form |
+|---|---|---|
+| PRD | `prd.md` | `prd/00-index.md` plus indexed fragments |
+| Proposal | `proposal.md` | `proposal/00-index.md` plus indexed fragments |
+| Backend design | `design/backend.md` | `design/backend/00-index.md` plus indexed fragments |
+| Frontend design | `design/frontend.md` | `design/frontend/00-index.md` plus indexed fragments |
+| Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` plus indexed fragments |
+| Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` plus indexed fragments |
+
+Choose split form before writing when confirmed content has independently readable features, subsystems, page areas, task groups, or ownership domains. This is semantic-first selection: split directly on those semantic boundaries; do not first generate a monolith and mechanically cut it. Every produced Markdown file, including indexes and fragments, has hard limits of 500 lines and 30,000 characters. Exceeding either limit requires another semantic split.
+
+`design/00-index.md` maps only the design ends that exist to their direct canonical entrypoints. `tasks/00-overview.md` is a two-end-only overview: it exists exactly when both backend and frontend plans exist; a single-end plan never has an overview. It contains only the two canonical end entrypoints, cross-end dependencies or stages, and progress totals derived from unique owner checkboxes. `.fp-execute/` holds execution ledgers, task briefs, packages, and reviews, but never becomes a second completion authority.
+
+Consumers resolve canonical small and split paths before reading. There is no read-only compatibility for root-level `design-backend.md` / `design-frontend.md` or former stable-file-plus-directory pairs. Producer and Consumer modes reject every dual structure; migration must merge or transfer required content into one canonical form and delete obsolete paths before work continues.
 
 When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and summarize the change in `fp-docs/history/history.md`.
 
@@ -87,10 +98,10 @@ For the user-facing init/prd/start guide, see `docs/user_guide/init-prd-start.md
 
 Do not skip phases unless the selected skill explicitly allows it.
 
-1. Generate and confirm `fp-docs/changes/<slug>/prd.md` through `fp-prd` when starting from a rough idea. Use the mandatory PRD template and never write PRDs outside `fp-docs/changes/<slug>/prd.md`.
-2. Generate and confirm `fp-docs/changes/<slug>/proposal.md`.
-3. Generate and confirm design files under `fp-docs/changes/<slug>/`.
-4. Generate and confirm task plans under `fp-docs/changes/<slug>/tasks/`.
+1. Run and confirm `fp-prd` only under the exact public trigger contract above. Use the mandatory logical PRD template and write exactly one canonical form: `fp-docs/changes/<slug>/prd.md` or `fp-docs/changes/<slug>/prd/00-index.md` plus its manifest-ordered fragments.
+2. Generate and confirm exactly one proposal form: `proposal.md` or `proposal/00-index.md` plus its manifest-ordered fragments.
+3. Generate and confirm the direct canonical design entrypoints under `design/`, choosing the small file or split directory form before writing.
+4. Generate and confirm the direct canonical task-plan entrypoints under `tasks/`, choosing the small file or split directory form before writing, with every stable task ID and checkbox owned by exactly one file.
 5. Execute tasks using the confirmed task files, not chat summaries.
 6. Review and archive when complete, using `fp-docs/archive/`, and `fp-docs/history/history.md` as the canonical archive/spec/history locations.
 

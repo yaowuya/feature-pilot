@@ -9,7 +9,7 @@ This public plugin does not ship customer-specific interaction rules. UX behavio
 
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy UX settings, stale-intel evidence, precedence, and public-plugin neutrality.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy UX settings, stale-intel evidence, precedence, and public-plugin neutrality. Read `../_shared/artifact-layout.md` before resolving or contributing to a frontend design; it owns exclusive forms, split manifests, hard limits, and historical structural-conflict rejection. There is no compatibility fallback.
 
 ## Required source of truth
 
@@ -31,7 +31,7 @@ Capture concrete project rules for:
 - Table sorting, filtering, selection, pagination, empty/loading/error states.
 - Dialog, drawer, popover, tooltip, message, and notification behavior.
 - Navigation, permissions, keyboard/accessibility, and responsive behavior.
-- UX checks to carry into `design-frontend.md`, task plans, execution, and review.
+- UX checks to carry into the canonical frontend design (`design/frontend.md` or indexed fragments), task plans, execution, and review.
 
 ## Public-plugin constraints
 
@@ -42,7 +42,11 @@ Capture concrete project rules for:
 
 ## Output requirement
 
-When used for frontend design or planning, include:
+Resolve the chosen canonical frontend representation before contributing design content. When used for canonical frontend design, preserve the form selected by `fp-brainstorm`: small form is only `design/frontend.md`; split form is only `design/frontend/00-index.md` plus manifest-listed fragments. `design/00-index.md` points directly to the selected entry. Do not create both forms.
+
+Producer dual-form input is a structural conflict and must be rejected; this helper must not choose one side or continue writing. Place this source note with the single detailed owner of `Visual Source`, component mapping, and `Visual Checks`: in `design/frontend.md` for small form, or in one manifest-listed detail fragment for split form. Each visual section has exactly one detailed owner, forming the unique visual/interaction owner; indexes contain only navigation and ownership metadata. Every design file, including indexes and fragments, must stay within **500 lines** and **30,000 characters**; crossing either hard fallback limit requires another semantic split.
+
+When used for planning instead, include the source note in the plan's relevant detailed owner and follow that plan's artifact-layout rules; do not create or revise design files from the planning helper call.
 
 ```markdown
 #### UX Settings Source
