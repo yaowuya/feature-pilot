@@ -1,6 +1,22 @@
 # PRD Output Contract
 
-Read this file only after the final PRD confirmation summary is approved and immediately before writing or validating `prd.md`.
+Read this file only after the final PRD confirmation summary is approved and immediately before writing or validating `prd.md` or `prd/00-index.md` plus its fragments.
+
+## Representation rules
+
+- Small form is `fp-docs/changes/<slug>/prd.md`; split form is `fp-docs/changes/<slug>/prd/00-index.md` plus indexed fragments. `prd.md` and `prd/` are mutually exclusive.
+- Select the form before writing. Use split form for multiple independently readable features, page areas, subsystems, or ownership domains, or whenever one Markdown file would exceed 500 lines or 30,000 characters.
+- In split form, `00-index.md` contains navigation and the authoritative fragment manifest only. Every sibling Markdown fragment is listed exactly once using this schema:
+
+```markdown
+| Order | File | Kind | Owns |
+| ---: | --- | --- | --- |
+| 1 | `01-user-stories-and-goals.md` | requirements | sections 一 and related goals |
+| 2 | `10-feature-example.md` | feature | complete section 3.1 |
+```
+
+- Write fragments directly on semantic boundaries. Logical concatenation in fragment manifest order must pass logical template validation against the mandatory structure below: each required heading/table has exactly one owner and appears in the same order.
+- Keep each complete `3.N` feature block, including its five subsections, in one fragment. The owner of `3.N.5 原型` uniquely references `prototype.html`; indexes and other fragments do not duplicate that detail.
 
 ## Structure rules
 
@@ -103,8 +119,11 @@ flowchart TD
 
 ## Structure self-review
 
-- Path is exactly `fp-docs/changes/<slug>/prd.md`.
+- Exactly one canonical form exists: `fp-docs/changes/<slug>/prd.md` or `fp-docs/changes/<slug>/prd/00-index.md` plus indexed fragments; the mutually exclusive pair never coexists.
+- For split form, the fragment manifest lists every sibling Markdown fragment exactly once with unique Order/File values and unique detailed ownership; every listed file exists and no unindexed fragment exists.
+- Every Markdown file, including `00-index.md`, has at most 500 lines and 30,000 characters.
 - All six required sections and required nested headings remain in order; no extra top-level section exists.
+- Split-form logical template validation reads every fragment in manifest order and checks the same mandatory heading/table sequence as small form.
 - Every feature block has 功能说明 / 交互逻辑 / 异常处理 / 页面元素 / 原型.
 - Required tables retain their exact columns.
 - User story, goal, requirements, exceptions, permissions, logs, and tests align.

@@ -1,6 +1,6 @@
 # FeaturePilot 用户指南：/fp-init、/fp-prd、/fp-start
 
-本指南说明 FeaturePilot 的低成本主线：先用 `/fp-init` 建立项目级信息层，再用 `/fp-prd` 把想法澄清为 PRD，最后用 `/fp-start` 接住 PRD 进入提案、设计、计划、执行。
+本指南说明 FeaturePilot 的低成本主线：先用 `/fp-init` 建立项目级信息层；只有确实要编写 PRD 时才显式调用 `/fp-prd`；最后可用 `/fp-start` 接住已确认 PRD，或直接从清晰功能描述进入提案、设计、计划、执行。
 
 > 推荐路径：`/fp-init`（一次） → `/fp-prd <想法>` → `/fp-start <slug>`。
 
@@ -99,7 +99,11 @@ examples/canway-cw/fp-docs/settings/
 
 ### 什么时候用
 
-当你有一个产品想法、用户故事、痛点或半成品需求时运行：
+普通产品想法、功能请求、用户故事、痛点或半成品需求本身不会自动触发 PRD 编写。
+
+Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
+
+需要 PRD 时可运行：
 
 ```text
 /fp-prd 我想给告警列表增加负责人筛选
@@ -107,12 +111,15 @@ examples/canway-cw/fp-docs/settings/
 
 ### 输出位置
 
-`/fp-prd` 只创建需求产物：
+`/fp-prd` 只创建需求产物。PRD 根据已确认内容选择且只选择一种互斥形式：
 
 ```text
-fp-docs/changes/<slug>/prd.md
+fp-docs/changes/<slug>/prd.md                    # 小型形式
+fp-docs/changes/<slug>/prd/00-index.md           # 拆分形式的唯一入口
 fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 ```
+
+上面两个 PRD 路径是二选一，不允许并存；拆分形式还包含 `00-index.md` manifest 列出的编号分片。
 
 禁止把 PRD 写到 `fp-docs/prd-*.md` 或 `fp-docs/*.prd.md`。
 
@@ -124,7 +131,7 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 2. 批量展示 Bucket A/B 已确定项，给用户一次性审阅和纠错。
 3. Bucket C 待确认项必须一问一答逐个提问；助手不能自问自答。
 4. 输出确认摘要：已确认决策、假设、非阻塞问题、是否生成原型、目标路径。
-5. 等用户明确批准后，才创建目录和写入 `prd.md` / `prototype.html`。
+5. 等用户明确批准后，才创建目录和写入 PRD 的小型或拆分形式，以及获批的 `prototype.html`。
 
 例外只有三类：
 
@@ -136,14 +143,14 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 
 | 模式 | 适用场景 | 产物顺序 |
 |---|---|---|
-| PRD-first（默认） | 普通需求、后端/API/流程需求、已有明确业务目标 | 先确认 PRD 决策 → 写 `prd.md` → 如需要再写 `prototype.html` |
-| Prototype-first | 用户说“先看原型/先出页面/先做交互稿”，或需求 UI-heavy | 先确认 prototype-blocking 决策 → 写 `prototype.html` → 用户确认原型 → 补齐 PRD 决策 → 写 `prd.md` |
+| PRD-first（默认） | 普通需求、后端/API/流程需求、已有明确业务目标 | 先确认 PRD 决策 → 写入 PRD 的 canonical 小型或拆分形式 → 如需要再写 `prototype.html` |
+| Prototype-first | 用户说“先看原型/先出页面/先做交互稿”，或需求 UI-heavy | 先确认 prototype-blocking 决策 → 写 `prototype.html` → 用户确认原型 → 补齐 PRD 决策 → 写入 PRD 的 canonical 小型或拆分形式 |
 
 生成原型时，如果存在 `fp-docs/settings/prototype-style.md`，必须先读取并应用；没有则使用中性默认样式，并建议在首个原型确认后提取项目原型风格。
 
 ### PRD 模板要求
 
-`prd.md` 必须使用 `fp-prd` skill 的 Mandatory PRD Structure，保留固定章节：
+逻辑 PRD 必须使用 `fp-prd` skill 的 Mandatory PRD Structure；无论小型文件还是 manifest 顺序拼接后的拆分分片，都要保留固定章节：
 
 1. 用户故事
 2. 核心业务流程
@@ -172,7 +179,7 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 /fp-start <slug>
 ```
 
-其中 `<slug>` 对应 `fp-docs/changes/<slug>/prd.md`。
+其中 `<slug>` 对应 `fp-docs/changes/<slug>/prd.md` 或 `fp-docs/changes/<slug>/prd/00-index.md`，但不能同时对应两者。
 
 ## 3. `/fp-start`：接住 PRD 进入开发链路
 
@@ -200,27 +207,47 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 - 不因此停止。
 - 不自动运行 `/fp-init`。
 - 不从 `/fp-start` 创建 `manifest.md`、`settings/` 或 `intel/`。
-- 如果用户继续，只能按需创建本次变更产物，例如 `fp-docs/changes/<slug>/proposal.md`。
+- 如果用户继续，只能按需创建本次变更产物，例如 proposal 的小型 `fp-docs/changes/<slug>/proposal.md` 或拆分 `fp-docs/changes/<slug>/proposal/00-index.md` form。
 
 ### PRD handoff
 
-如果参数 `<slug>` 能匹配：
+如果参数 `<slug>` 能唯一解析到下列一种 canonical PRD form：
 
 ```text
 fp-docs/changes/<slug>/prd.md
+fp-docs/changes/<slug>/prd/00-index.md
 ```
 
-`/fp-start` 必须读取该 PRD，并把它作为需求来源交给后续 `fp-propose`，避免重复访谈已确认的 PRD 决策。
+`/fp-start` 必须读取小型文件，或严格按 split manifest 顺序读取全部 PRD 分片，并把解析后的逻辑 PRD 作为需求来源交给后续 `fp-propose`，避免重复访谈已确认的 PRD 决策。
 
 如果参数是功能描述，且存在唯一明显相关的近期 PRD，应询问用户是否使用该 PRD，或从当前描述重新开始。
+
+### 产物布局契约
+
+PRD、proposal、单端 design 与单端 plan 都采用 semantic-first、mutually exclusive 的小型/拆分二选一规则：
+
+| 逻辑产物 | 小型形式 | 拆分形式 |
+|---|---|---|
+| PRD | `prd.md` | `prd/00-index.md` 加 manifest 中列出的分片 |
+| Proposal | `proposal.md` | `proposal/00-index.md` 加 manifest 中列出的分片 |
+| Backend design | `design/backend.md` | `design/backend/00-index.md` 加 manifest 中列出的分片 |
+| Frontend design | `design/frontend.md` | `design/frontend/00-index.md` 加 manifest 中列出的分片 |
+| Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` 加 manifest 中列出的分片 |
+| Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` 加 manifest 中列出的分片 |
+
+Producer 在写入前根据已确认内容选择形式。存在可独立阅读的功能、子系统、页面区域、任务组或 owner domain 时，直接按这些语义边界选择拆分形式；不能先生成单体文件再机械切割。每个 Markdown 文件（包括 `00-index.md` 和分片）最多 500 行且最多 30,000 字符，越过任一硬限制就继续按语义拆分。
+
+`design/00-index.md` 只列实际存在的端及其 canonical entrypoint。`tasks/00-overview.md` 是 two-end-only overview：只在 backend 和 frontend 两端计划都存在时生成；任何单端计划都不能生成 overview。双端 overview 只保存两端 canonical entrypoint、跨端依赖/执行阶段和从唯一 owner checkbox 派生的进度，不复制 task body 或 checkbox。
+
+Consumer 先检测 canonical small file 与 split directory 的 `00-index.md`，再按 manifest 顺序读取，不能从 recursive glob、文件系统顺序或正文链接猜测分片。There is no read-only compatibility：根级 `design-backend.md` / `design-frontend.md`、任何 design/task stable-file-plus-directory pair、`prd.md` 与 `prd/` 并存、`proposal.md` 与 `proposal/` 并存，在 Producer 和 Consumer 中都直接阻塞。继续前必须明确批准迁移、合并或转移必要内容到唯一 canonical form，并删除 obsolete paths。
 
 ### 完整开发链路
 
 `/fp-start` 执行阶段：
 
-1. `fp-propose`：生成并确认 `proposal.md`。
-2. `fp-brainstorm`：生成并确认技术设计；在 `design/` 下输出 `00-index.md` 及按实际范围生成的 `backend.md` 和/或 `frontend.md`，单端设计超过 500 行时按子系统/页面区域拆成带索引的编号文件。
-3. `fp-plan`：生成并确认细粒度执行计划；小计划按实际范围输出 `tasks/plan-backend.md` 和/或 `tasks/plan-frontend.md`，单端计划超过 500 行时拆到对应 `tasks/backend/` / `tasks/frontend/` 的索引化编号分片。双端或任一端拆分时生成无 checkbox 的 `tasks/00-overview.md`，统一跨端顺序和依赖；每个可执行任务的 checkbox 只存在于一个 owner file。
+1. `fp-propose`：生成并确认 proposal 的小型 `proposal.md` 或拆分 `proposal/00-index.md` form。
+2. `fp-brainstorm`：生成并确认技术设计；`design/00-index.md` 映射实际存在的端，每端直接选择 `design/<end>.md` 或 `design/<end>/00-index.md`。
+3. `fp-plan`：生成并确认细粒度执行计划；每端直接选择 `tasks/plan-<end>.md` 或 `tasks/<end>/00-index.md`。只有双端计划才生成无 checkbox 的 `tasks/00-overview.md`；每个可执行任务的 checkbox 只存在于一个 owner file。
 4. `fp-execute` 或 `fp-execute-sdd`：按已确认任务执行。
 5. `fp-review`：最终整分支审查。
 6. 建议 `/fp-archive`：归档完成的变更。

@@ -5,6 +5,7 @@ description: 归档已完成的变更：移动变更目录，更新 history.md
 ## FeaturePilot workspace and information layer
 
 Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, stale-intel evidence, compatibility, and the archive-only ownership boundary.
+Read `../_shared/artifact-layout.md` once before resolving the archive candidate; it is the normative layout and validation contract.
 ---
 
 # fp-archive — 变更归档
@@ -26,11 +27,13 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 借鉴 OpenSpec 的归档安全设计，归档前必须检查：
 
-1. 解析完整任务集：先读存在的 `tasks/00-overview.md`、`tasks/plan-backend.md`、`tasks/plan-frontend.md`；若存在 `tasks/backend/00-index.md` 或 `tasks/frontend/00-index.md`，必须按 index 顺序读取全部 fragments。这些 fragments 是拆分端的 task-owner files；未拆分端由稳定 plan 持有任务。不得依赖递归 glob、正文链接或文件系统顺序。
-2. 校验任务完整性：indexed fragment 不得缺失，也不得存在未被 index 列出的 unindexed fragment；每个 `backend-NNN` / `frontend-NNN` task ID 和 checkbox 只能有一个 owner；`tasks/00-overview.md`、端内 index、拆分端稳定入口不得含 task checkbox；overview progress summary 必须等于 owner checkbox 派生计数。完整性失败时阻塞归档，不能用“强制归档未完成任务”绕过。
-3. 只在解析出的 task-owner files 中检查未完成 checkbox。对 legacy plan，如果没有端内 index，则读取旧 `tasks/00-overview.md` 明确引用的根级 fragments；归属不明确时阻塞，不猜测。
-4. 检查 `.fp-execute/progress.md` 是否存在未完成、blocked 或 failed 记录。ledger 只是恢复证据，不能覆盖 owner checkbox；两者不一致时先结合 git/实际文件/验证结果对账。
-5. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
+1. canonical-first Consumer: Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`。
+2. Producer output 应只有一种 canonical form。归档 Consumer 把 indexless split、任何 historical path 和任何 dual form 都作为 structural conflict 阻塞。There is no read-only compatibility；必须先迁移为唯一 canonical form 并删除 obsolete paths。
+3. Split `00-index.md` 是 sole canonical entry；解析 manifest 并按 exact manifest order 读取所有 listed fragments。缺失/重复 entry、duplicate owner 或 unindexed fragment 都阻塞；不得使用 recursive glob、正文链接或文件系统顺序。
+4. Split plan 只有 manifest Kind=`tasks` 的 `tasks`-kind fragments 是 task-owner files。每个 ID/checkbox 必须有一个 unique task owner；index、context/interface/coverage 和 overview 禁止 executable checkbox。Missing reference、duplicate ID/checkbox 或 dependency cycle 都阻塞。
+5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. 仅两端 overview 才校验 cross-end edges/cycles，并从 owner checkbox 重算 derived progress；single-end 不创建、不要求、不重算 overview。
+6. 只在解析出的 task-owner files 中检查未完成 checkbox；再检查 `.fp-execute/progress.md` 的 unfinished/blocked/failed 记录。ledger 只是恢复证据，冲突时结合 git、实际文件和验证结果对账。
+7. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
 
 如果存在未完成任务或 blocked 记录，先展示摘要并询问是否继续归档；不得静默归档。
 
@@ -49,10 +52,12 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 ## YYYY-MM-DD: <slug>
 
-**目标：** （来自 proposal.md 的 Why 章节，1-2 句话）
+**目标：** （来自 resolved proposal logical content 的 Why 章节，可能在 `proposal.md` 或 manifest-ordered split fragment，1-2 句话）
 
 **变更点：**
-- （来自 proposal.md 的 What Changes 列表）
+- （来自 resolved proposal logical content 的 What Changes 列表）
+
+**结构冲突：** （canonical resolution 拒绝的 exact historical/dual paths；没有则写 None）
 
 **归档路径：** `fp-docs/archive/YYYY-MM-DD-<slug>/`
 ```

@@ -2,7 +2,25 @@
 
 Read this file only after the user confirms the selected approach and approves writing the reviewed design sections.
 
-Use only sections relevant to the actual backend/frontend scope. Write through the canonical `design/00-index.md`, `design/backend.md`, and/or `design/frontend.md` entrypoints. When an end-specific design would exceed 500 lines, keep its stable entrypoint concise and put details in indexed numbered fragments. Do not create a combined root-level `design.md`, legacy `design-backend.md` / `design-frontend.md`, or an empty endpoint placeholder.
+Apply `../_shared/artifact-layout.md` as the normative layout contract. Use only sections relevant to the actual backend/frontend scope, and select each end's mutually exclusive form before writing:
+
+- Small: `design/backend.md` or `design/frontend.md` owns the complete end design; do not create the corresponding end directory.
+- Split: `design/backend/00-index.md` or `design/frontend/00-index.md` owns the `| Order | File | Kind | Owns |` manifest and links semantically divided numbered fragments; do not create the corresponding end `.md` file.
+
+Choose split form for multiple independently readable features, subsystems, page areas, or ownership domains. Every index and fragment must stay within both hard fallback limits: **500 lines** and **30,000 characters**. `design/00-index.md` links directly to the form selected for each actual end. The chosen end entry directly owns either the complete small design or the split fragment manifest; no stable summary sits beside a split directory. Do not create a combined root-level `design.md`, legacy `design-backend.md` / `design-frontend.md`, an empty endpoint placeholder, or both forms for one end.
+
+Keep `design/00-index.md` metadata-only and use this exact end-map section/table. The optional navigation lines may only link to the listed canonical entries; requirements, contracts, decisions, or design body sections belong in the selected end artifact.
+
+```markdown
+# <功能描述> Design Index
+
+## Canonical End Entrypoints
+
+| End | Canonical entrypoint | Mode |
+| --- | --- | --- |
+| Backend | `design/backend.md` | small |
+| Frontend | `design/frontend/00-index.md` | split |
+```
 
 ```markdown
 # <功能描述> — 技术方案设计
@@ -53,4 +71,4 @@ Use only sections relevant to the actual backend/frontend scope. Write through t
 （沿用当前项目的 store/composable/hook/context 或局部状态。）
 ```
 
-Append the exact Visual Source / component mapping / Visual Checks sections required by `SKILL.md` for frontend work.
+For frontend work, place the exact Visual Source / component mapping / Visual Checks sections required by `SKILL.md` together in exactly one detailed owner: `design/frontend.md` in small form or one manifest-listed detail fragment in split form. The split index records ownership only and does not duplicate those sections.

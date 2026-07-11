@@ -6,10 +6,11 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 
 ## 0.3.0 发布重点
 
-- **PRD interview gate 强化**：`fp-prd` 是需求澄清入口，不是一次性 PRD 生成器；写文件前必须完成确认摘要并获得用户明确批准。Bucket A/B 已确定项必须批量输出供用户审阅；Bucket C 待确认项必须逐个提问、一问一答；助手建议不等于用户确认，禁止自问自答或替用户确认 Bucket C。
+- **PRD interview gate 强化**：普通想法、功能请求、用户故事、痛点或粗略需求本身不会自动触发 PRD 编写。写文件前必须完成确认摘要并获得用户明确批准；Bucket A/B 已确定项批量审阅，Bucket C 待确认项逐个问答，助手建议不等于用户确认。
+- Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
 - **Prototype-first PRD 流程**：UI-heavy 或明确要求“先看原型”的需求，可先确认 prototype-blocking 问题并生成 `prototype.html`，用户确认后再沉淀 PRD。
 - **Lazy context 与 stale intel 规则**：默认只读 `fp-docs/manifest.md` 和最小相关 settings/intel；`fp-docs/intel/*` 只作为可能过期的导航线索，涉及当前实现时必须回到当前代码验证。
-- **大型设计与任务索引化拆分**：单端设计或任务计划超过 500 行时使用稳定入口、端内 index 和编号分片；任务 checkbox 只由一个 owner file 持有，overview/ledger 不竞争完成状态。
+- **语义优先（semantic-first）的互斥（mutually exclusive）产物形式**：PRD、proposal、单端 design 与单端 plan 在写入前直接选择小型文件或 split directory，两者不能并存；按功能、子系统、页面区域、任务组或 owner domain 拆分，每个 Markdown 文件受 500 行与 30,000 字符双重硬限制。
 - **Claude Code + Codex 双入口**：Claude Code 使用插件清单、命令与 Skill tool；Codex 通过 `AGENTS.md` 和 `skills/*/SKILL.md` 读取同一套阶段门禁。
 
 ## Claude Code 插件结构
@@ -25,9 +26,9 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 | 命令文件 | 用途 |
 |---|---|
 | `commands/fp-init.md` | 初始化 `fp-docs/` 信息层（`manifest.md`、可选 `settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`、`intel/`）；检测到 Canway/CW 项目且用户确认时，可采用标注示例规范 |
-| `commands/fp-prd.md` | 将想法、用户故事或痛点澄清为 PRD；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
+| `commands/fp-prd.md` | 仅在明确调用或明确要求编写 PRD 时启动访谈；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
 | `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路 |
-| `commands/fp-propose.md` | 仅生成并确认开发提案 `proposal.md` |
+| `commands/fp-propose.md` | 仅生成并确认开发提案的逻辑形式：小型 `proposal.md` 或拆分 `proposal/00-index.md` 及其 manifest 分片 |
 | `commands/fp-brainstorm.md` | 基于已确认提案生成技术设计 |
 | `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
 | `commands/fp-review.md` | 归档前最终整分支只读审查 |
@@ -37,9 +38,9 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 ## 核心技能
 
 - `fp-init`：初始化 `fp-docs/` 信息层，并可选引导生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；检测到 Canway/CW 项目且用户确认时，可采用 `examples/canway-cw/fp-docs/settings/` 标注示例。
-- `fp-prd` / `fp-prd-grill-me`：需求与 PRD 澄清；支持默认 PRD-first 与 Prototype-first（先生成 `prototype.html`，确认后再沉淀 PRD）。
+- `fp-prd` / `fp-prd-grill-me`：显式 PRD 编写意图下的需求澄清；支持默认 PRD-first 与 Prototype-first（先生成 `prototype.html`，确认后再沉淀 PRD）。
 - `fp-start`：完整阶段门禁调度入口，可以接住 `fp-prd` 产出的 PRD。
-- `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md`。
+- `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md` 及其 manifest 分片，两种形式互斥。
 - `fp-brainstorm`：生成后端/前端技术设计。
 - `fp-plan` / `fp-plan-backend` / `fp-plan-frontend`：生成细粒度 TDD 执行计划。
 - `fp-execute`：按已确认计划执行任务。
@@ -103,7 +104,7 @@ FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，
 FeaturePilot 的默认使用方式尽量轻量。完整用户指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)：
 
 1. **可选初始化**：运行 `/fp-init`，创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；如检测到 Canway/CW 项目，只有在用户确认后才可采用 `examples/canway-cw/` 示例规范作为项目 settings 草稿。
-2. **需求设计**：运行 `/fp-prd <想法>`，默认澄清产品需求并写入 `fp-docs/changes/<slug>/prd.md`；如果需求适合先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
+2. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
 3. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。
 4. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
 
@@ -133,7 +134,20 @@ fp-docs/
 
 ## 输出目录
 
-FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。核心位置包括 `fp-docs/changes/<slug>/`，以及归档后生成的 `fp-docs/archive/` 和 `fp-docs/history/history.md`（由 `fp-archive` 自动创建）：
+FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。`fp-docs/changes/<slug>/` 中每个逻辑产物只能选择一种 canonical form：
+
+| 逻辑产物 | 小型形式 | 拆分形式 |
+|---|---|---|
+| PRD | `prd.md` | `prd/00-index.md` 加 manifest 中列出的分片 |
+| Proposal | `proposal.md` | `proposal/00-index.md` 加 manifest 中列出的分片 |
+| Backend design | `design/backend.md` | `design/backend/00-index.md` 加 manifest 中列出的分片 |
+| Frontend design | `design/frontend.md` | `design/frontend/00-index.md` 加 manifest 中列出的分片 |
+| Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` 加 manifest 中列出的分片 |
+| Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` 加 manifest 中列出的分片 |
+
+小型形式与拆分形式互斥。确认内容存在可独立阅读的功能、子系统、页面区域、任务组或 owner domain 时，应在写入前按语义边界直接选择拆分形式，不能先生成单体文件再机械切割。每个 Markdown 文件（包括 index 与 fragment）不得超过 500 行或 30,000 字符；超过任一硬限制就继续按语义拆分。
+
+整体目录如下；竖线表示二选一，不允许同时生成：
 
 ```text
 fp-docs/
@@ -145,28 +159,16 @@ fp-docs/
     prototype-style.md            # 可选：原型视觉风格参考
   intel/                          # 仅 fp-init 创建，source-backed 但 stale-prone 的导航线索
   changes/<slug>/                 # 按需由各阶段创建
-    prd.md
-    proposal.md
+    prd.md | prd/00-index.md
+    proposal.md | proposal/00-index.md
     design/
-      00-index.md                  # 设计总入口
-      backend.md                   # 后端稳定入口（按实际范围生成）
-      frontend.md                  # 前端稳定入口（按实际范围生成）
-      backend/                     # 后端设计 >500 行时创建
-        00-index.md
-        01-<subsystem>.md
-      frontend/                    # 前端设计 >500 行时创建
-        00-index.md
-        01-<area>.md
+      00-index.md                  # 只列实际存在的端及其 canonical entrypoint
+      backend.md | backend/00-index.md
+      frontend.md | frontend/00-index.md
     tasks/
-      00-overview.md                # 双端或任一端拆分时生成；无 task checkbox
-      plan-backend.md               # 后端稳定入口；小计划直接持有任务
-      plan-frontend.md              # 前端稳定入口；小计划直接持有任务
-      backend/                      # 后端计划 >500 行时创建
-        00-index.md
-        01-<topic>.md               # executable task checkbox 唯一 owner
-      frontend/                     # 前端计划 >500 行时创建
-        00-index.md
-        01-<topic>.md               # executable task checkbox 唯一 owner
+      00-overview.md                # 仅当前后端与前端计划都存在时生成；无 task checkbox
+      plan-backend.md | backend/00-index.md
+      plan-frontend.md | frontend/00-index.md
     .fp-execute/
       progress.md
       briefs/
@@ -176,7 +178,9 @@ fp-docs/
   history/history.md             # 由 fp-archive 自动创建
 ```
 
-任务计划采用与设计相同的稳定入口 + 索引分片原则，但完成状态更严格：每个 `backend-NNN` / `frontend-NNN` 任务只有一个真实 checkbox，位于小计划稳定文件或某一个编号分片中。overview、端内 index、拆分后的稳定入口只保存顺序、依赖、覆盖与汇总，不复制 checkbox；`.fp-execute/progress.md` 只记录恢复证据。
+`design/00-index.md` 只是 change-level 端映射。`tasks/00-overview.md` 是 two-end-only overview：只在后端和前端计划同时存在时生成；单端计划无论小型还是拆分都不能有 overview。双端 overview 只保存两端 canonical entrypoint、跨端依赖/阶段，以及从唯一 owner checkbox 派生的进度总数。每个 `backend-NNN` / `frontend-NNN` 任务只有一个真实 checkbox，位于小计划文件或一个 `tasks` kind 分片中；端内 index、context/interface/coverage 分片和 `.fp-execute/progress.md` 都不是第二份完成状态。
+
+Consumer 先检测 canonical 小型文件与 split directory 的 `00-index.md`，再按 manifest 顺序读取，不能依赖递归 glob、文件系统顺序或正文链接。There is no read-only compatibility：根级 `design-backend.md` / `design-frontend.md`、任何 design/task stable-file-plus-directory pair、`prd.md` 与 `prd/` 并存、`proposal.md` 与 `proposal/` 并存，在 Producer 和 Consumer 中都属于结构冲突。继续前必须经明确批准迁移到唯一 canonical form 并删除 obsolete paths。
 
 ## 本地安装测试（Claude Code）
 

@@ -2,6 +2,13 @@
 
 Read this file only after scope, file structure, constraints, interfaces, task order, and coverage have been derived from current evidence.
 
+Read `../_shared/artifact-layout.md` before writing. Select one mutually exclusive output representation:
+
+- **Small form:** `tasks/plan-backend.md` owns the complete logical template below in section order.
+- **Split form:** `tasks/backend/00-index.md` owns only the `Order / File / Kind / Owns` manifest. A `context` fragment owns Header, Global Constraints, and file structure; an `interface` fragment owns Backend Interface Ledger; one or more `tasks` fragments own the executable TDD tasks; a `coverage` fragment owns Coverage Matrix. Do not create `tasks/plan-backend.md` in split form.
+
+Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-kind fragment may contain the task checkbox from the Task section; index, context, interface, and coverage files never contain executable task checkboxes. Across task fragments, `backend-NNN` IDs remain unique and continue without resetting.
+
 ## Header
 
 ```markdown
@@ -18,6 +25,12 @@ Read this file only after scope, file structure, constraints, interfaces, task o
 ## Global Constraints
 
 - <exact version/dependency/contract/permission/migration/security/performance constraint>
+
+## File Structure
+
+| Path | Action | Responsibility |
+| --- | --- | --- |
+| `<exact/path>` | create / modify / test | `<single responsibility in this change>` |
 ```
 
 ## Backend Interface Ledger
@@ -94,3 +107,5 @@ git commit -m "feat: add specific behavior"
 | design/backend.md or indexed fragment | `<design contract>` | `backend-NNN`, `backend-MMM` | `<exact command/test>` |
 | Backend boundary | `<actual boundary>` | `backend-NNN` | `<exact command/test>` |
 ```
+
+The logical order is Header and Global Constraints → File Structure → Backend Interface Ledger → Task bodies → Coverage Matrix. Splitting changes file ownership, not this content order or the TDD detail required by each task.

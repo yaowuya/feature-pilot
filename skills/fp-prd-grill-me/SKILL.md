@@ -1,11 +1,13 @@
 ---
 name: fp-prd-grill-me
-description: Use with fp-prd to grill a product idea, pain point, user story, or rough requirement until PRD-blocking decisions are confirmed.
+description: Use only after fp-prd has been explicitly selected, when PRD-blocking product decisions still need confirmation.
 ---
 
 ## FeaturePilot workspace and information layer
 
 Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+
+Read `../_shared/artifact-layout.md` when classifying PRD form, semantic split boundaries, existing-artifact conflicts, or conversions. This dependency skill does not independently broaden `fp-prd` discovery.
 
 
 # FeaturePilot PRD Grill Me
@@ -110,7 +112,7 @@ After the user answers, briefly confirm (`收到，确认为 A：<摘要>`) and 
 
 ### After Phase 2
 
-When all Bucket C questions are answered, produce a brief confirmation summary of all Bucket C decisions, then immediately return to `fp-prd` to write the PRD.
+When all Bucket C questions are answered, produce a brief confirmation summary of all Bucket C decisions, then return to `fp-prd` for canonical-form selection, the final output-path summary, and explicit pre-write approval. Do not treat interview completion as write approval.
 
 ### Special: 0 Bucket C Items
 
@@ -118,7 +120,7 @@ If no items fall into Bucket C, this is valid only when the input is already a c
 
 ## PRD Blocking Decisions
 
-Before `fp-prd` writes `prd.md` or `prototype.html`, confirm every decision that can change product scope, user value, risk, or acceptance criteria:
+Before `fp-prd` writes either PRD form or `prototype.html`, confirm every decision that can change product scope, user value, risk, or acceptance criteria:
 
 - Target users, roles, and user stories.
 - Business problem, pain point, and expected outcome.
@@ -131,11 +133,12 @@ Before `fp-prd` writes `prd.md` or `prototype.html`, confirm every decision that
 - High-risk error handling and fallback behavior.
 - Whether an HTML prototype is needed; what source it should follow; and which simple interactions `prototype.html` must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
 - Acceptance criteria and core test scenarios.
-- Split strategy for multi-change input.
+- PRD form and split strategy for multi-change input: compact `prd.md` or mutually exclusive `prd/00-index.md` plus a fragment manifest, with complete feature blocks kept together on semantic boundaries.
+- Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
 
 ## Prototype-first Interview
 
-When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. The goal is to create a reviewable `prototype.html` before writing `prd.md`.
+When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. The goal is to create a reviewable `prototype.html` before writing either PRD Markdown form.
 
 Prototype-first still uses the same Bucket A/B/C discipline:
 
@@ -228,3 +231,4 @@ When all PRD-blocking decisions are confirmed, return to `fp-prd` with:
 - Confirmed prototype interactions, if `prototype.html` will be generated.
 - Confirmed non-functional requirements.
 - Non-blocking open questions, each with why it is non-blocking.
+- Recommended small or split PRD form, semantic fragment ownership when split, and any existing-artifact conflict or proposed conversion. `fp-prd` owns the final selection and approval gate.

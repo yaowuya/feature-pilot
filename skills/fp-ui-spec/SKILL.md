@@ -9,7 +9,7 @@ This public plugin does not ship customer-specific UI tokens or component-librar
 
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy UI settings, stale-intel evidence, precedence, and public-plugin neutrality.
+Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy UI settings, stale-intel evidence, precedence, and public-plugin neutrality. Read `../_shared/artifact-layout.md` before resolving or contributing to a frontend design; it owns exclusive forms, split manifests, hard limits, and historical structural-conflict rejection. There is no compatibility fallback.
 
 ## Required source of truth
 
@@ -41,7 +41,9 @@ Record concrete values in the design or plan only when they come from settings, 
 
 ## Output requirement
 
-When used for the canonical frontend design (`design/frontend.md` or one of its indexed fragments), include a short source note:
+Resolve the chosen canonical frontend representation before contributing design content. When used for the canonical frontend design, preserve the form selected by `fp-brainstorm`: small form is only `design/frontend.md`; split form is only `design/frontend/00-index.md` plus manifest-listed fragments. `design/00-index.md` points directly to the selected entry. Do not create both forms.
+
+Producer dual-form input is a structural conflict and must be rejected; this helper must not choose one side or continue writing. Place this source note with the single detailed owner of `Visual Source`, component mapping, and `Visual Checks`: in `design/frontend.md` for small form, or in one manifest-listed detail fragment for split form. Each visual section has exactly one detailed owner, forming the unique visual owner; indexes contain only navigation and ownership metadata. Every design file, including indexes and fragments, must stay within **500 lines** and **30,000 characters**; crossing either hard fallback limit requires another semantic split.
 
 ```markdown
 #### UI Settings Source
