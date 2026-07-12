@@ -34,6 +34,29 @@ Before writing any PRD file, load and follow `fp-prd-grill-me`.
 
 `fp-prd-grill-me` is responsible for questioning, code-fact exploration limits, blocking decisions, recommended answers, answer-format instructions, ambiguity handling, correction handling, and confirmation gates. `fp-prd` is responsible only for the PRD path, template, prototype rules, self-review, and handoff.
 
+### Shared code-fact exploration
+
+Before either PRD-first or Prototype-first interviewing, load `fp-explore` and invoke `prd-facts` only when the input is non-empty, concerns an existing product/page/API/model/permission/compatibility behavior, current repository facts can reduce technical uncertainty, and the idea is not purely greenfield. Empty input keeps the existing immediate-stop rule and performs no exploration.
+
+<!-- fp-explore-invoke
+profile: prd-facts
+objective: Establish existing user-visible behavior, implementation entrypoints, interface/data facts, adjacent product patterns, and technical constraints relevant to this PRD input without deciding requirements, scope, acceptance criteria, or prototype expectations.
+caller: fp-prd
+active-slug:
+caller-owned-context:
+  - current non-empty user input and already confirmed product facts
+scope-include:
+  - user-named pages, routes, APIs, models, permissions, components, and tests
+scope-exclude:
+  - unrelated fp-docs/changes, archive, and history
+budget-profile: small
+return-shape: profile-default
+external-research: not-authorized
+approved-research-boundary:
+-->
+
+Consume `verified-facts`, `prd-existing-behavior`, and `prd-technical-constraints` only as code facts for `fp-prd-grill-me`. Keep every `prd-product-decisions` item unanswered for Bucket C or the confirmation summary. Existing UI, enums, routes, APIs, permissions, and adjacent patterns do not imply that the user wants to preserve them. `fp-prd-grill-me` remains the only interview and confirmation authority, and `fp-prd` must never self-answer Bucket C.
+
 ### Hard interview gate
 
 `fp-prd` is a requirements-interview workflow, not a one-shot PRD generator.
@@ -100,11 +123,12 @@ At the start, choose one of two modes from user intent:
 
 ### PRD-first mode
 
-1. Load `fp-prd-grill-me`.
-2. Perform only minimal fact exploration allowed by `fp-prd-grill-me`, then stop as soon as the next useful product question is known.
-3. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
-4. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
-5. Select the final PRD form before writing:
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp-explore`, run the `prd-facts` invocation above, and pass only its verified facts and unanswered product decisions into `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+2. Load `fp-prd-grill-me`; it owns the interview even when `prd-facts` ran.
+3. Stop code-fact investigation as soon as the next useful product question is known.
+4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
+5. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
+6. Select the final PRD form before writing:
    - use `prd.md` for a compact logical PRD;
    - use `prd/00-index.md` plus a fragment manifest and indexed fragments when confirmed content has multiple independently readable features, page areas, subsystems, or ownership domains, or when any output file would exceed 500 lines or 30,000 characters;
    - preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
@@ -119,9 +143,10 @@ At the start, choose one of two modes from user intent:
 
 Use this mode to make the prototype the primary clarification artifact before PRD writing.
 
-1. Load `fp-prd-grill-me`.
-2. Generate a kebab-case slug early for artifact paths and resolve any existing `prd.md`, `prd/00-index.md`, `prd/`, and `prototype.html`, but do not write files yet. Block structural conflicts before prototype work.
-3. Use `fp-prd-grill-me` Prototype-first interview to confirm only prototype-blocking decisions first:
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp-explore`, run `prd-facts`, and pass only verified facts and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+2. Load `fp-prd-grill-me`; it owns the Prototype-first interview even when `prd-facts` ran.
+3. Generate a kebab-case slug early for artifact paths and resolve any existing `prd.md`, `prd/00-index.md`, `prd/`, and `prototype.html`, but do not write files yet. Block structural conflicts before prototype work.
+4. Use `fp-prd-grill-me` Prototype-first interview to confirm only prototype-blocking decisions first:
    - target page or interaction scenario;
    - primary user and job-to-be-done;
    - page entry and core workflow;

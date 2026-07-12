@@ -1,8 +1,14 @@
-# FeaturePilot 用户指南：/fp-init、/fp-prd、/fp-start
+# FeaturePilot 用户指南：/fp-explore、/fp-init、/fp-prd、/fp-start
 
-本指南说明 FeaturePilot 的低成本主线：先用 `/fp-init` 建立项目级信息层；只有确实要编写 PRD 时才显式调用 `/fp-prd`；最后可用 `/fp-start` 接住已确认 PRD，或直接从清晰功能描述进入提案、设计、计划、执行。
+本指南说明 FeaturePilot 的低成本主线：可先用 `/fp-explore` 只读调查；再按需用 `/fp-init` 建立项目级信息层；只有确实要编写 PRD 时才显式调用 `/fp-prd`；最后可用 `/fp-start` 接住已确认 PRD，或直接从清晰功能描述进入提案、设计、计划、执行。
 
-> 推荐路径：`/fp-init`（一次） → `/fp-prd <想法>` → `/fp-start <slug>`。
+> 推荐路径：`/fp-explore <问题>`（可选） → `/fp-init`（一次，可选） → `/fp-prd <想法>` → `/fp-start <slug>`。
+
+## 可选：先用 `/fp-explore` 调查
+
+`/fp-explore <问题>` 用于只读调查当前代码、测试、接口、行为、约束、风险和可选方案。空输入只做有界项目概览，然后询问你想深入的方向。它不会创建 PRD/proposal/design/tasks，不会修改代码，也不会自动切换到其他流程。
+
+`fp-prd`、`fp-start` 和 `fp-quick` 会在内部复用相同探索能力：PRD 只消费代码事实且仍由 `fp-prd-grill-me` 确认产品决策；start 仍由用户选择 quick/full；quick 仍须先确认内联计划才能实现。
 
 ## 1. `/fp-init`：初始化项目信息层
 

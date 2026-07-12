@@ -78,56 +78,40 @@ Dependencies are enablers, not busywork:
 
 ---
 
-## PRD handoff mode
+## Shared start-routing exploration
 
-`fp-start` is the development handoff after `fp-prd`.
+After the non-empty-input and init-availability checks, load `fp-explore` once before phase 1. `fp-start` remains responsible for canonical artifact resolution, the final active slug, the quick/full choice, and every stage gate.
 
-Before deciding whether to ask broad requirement questions:
+<!-- fp-explore-invoke
+profile: start-routing
+objective: Establish current PRD and stage evidence, quick-versus-full routing evidence, implementation boundaries, and the minimum verified context reusable by the next phase for this request.
+caller: fp-start
+active-slug: <caller-resolved exact slug or empty>
+caller-owned-context:
+  - current user argument, explicit continuation facts, and already confirmed PRD facts
+scope-include:
+  - fp-docs/manifest.md when present
+  - the exact candidate change directory only when fp-start already resolved one
+  - requirement-related source, routes, interfaces, models, components, and tests
+scope-exclude:
+  - unrelated fp-docs/changes, archive, and history
+budget-profile: standard
+return-shape: profile-default
+external-research: not-authorized
+approved-research-boundary:
+-->
 
-1. If the user argument matches an active slug, resolve `prd.md` or `prd/00-index.md` canonical-first and use its complete manifest-ordered content as the requirement source.
-2. If the user argument is a feature description and there is exactly one recent active PRD under `fp-docs/changes/`, ask whether to use that PRD or start from the description.
-3. If a PRD is used, pass its complete resolved logical PRD content to `fp-propose` with minimal additional questions. `fp-propose` preserves the resolved proposal form when revising one, or selects small file OR split index/fragments before creating one; downstream design and planning consume the complete resolved logical proposal content. Do not re-interview already confirmed PRD decisions.
-4. If no PRD exists, proceed from the feature description as usual.
+Consume `start-active-stage`, advisory `start-route-assessment`, and `start-reusable-context`. `fp-explore` may report exact paths and candidate matches but never generates or normalizes the slug. When evidence supports `quick`, explain why and wait for an explicit user choice between `fp-quick` and the full `fp-start` flow. Only after the user chooses quick may `fp-start` load `fp-quick`; otherwise continue to phase 1.
 
-This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, then `/fp-start <slug>` picks it up for design, planning, and development.
-
----
-
-## 小需求分流
-
-在前置检查和阶段 1 之前，先根据用户需求文本做一次轻量判断。
-
-若需求明显符合以下特征，先暂停并询问用户是否改走 `fp-quick`：
-- 局部页面/组件调整
-- 小型接口、字段、校验、状态或文案变更
-- 明确范围内的 bugfix
-- 单一模块内的轻量能力补充
-- 不需要 FeaturePilot 留痕、跨团队评审或长期规范沉淀
-
-询问格式必须包含：
-- 为什么判断为小需求
-- `fp-quick` 会如何执行：加载 `fp-propose` 做探索与澄清、不生成 FeaturePilot 文档、输出内联计划、确认后实现
-- 让用户在“确认走 fp-quick”或“继续完整 fp-start”之间选择
-
-用户确认走 `fp-quick` 后：
-1. 显式加载 `fp-quick` skill。
-2. 完全按 `fp-quick` 流程执行。
-3. 不再创建 `fp-docs/changes/` 产物。
-
-如果用户要求继续完整流程，或需求复杂度不确定，则继续执行下面的 `fp-start` 全流程。
-
----
-
-## 前置检查：代码上下文
-
-不检查、不生成项目索引。进入阶段 1 前，先读取 `fp-docs/settings/` 中存在的相关配置，再根据需求关键词用 `rg` / `rg --files` 轻量定位真实代码、测试、路由、模型、组件和 API；如果暂时无法定位，继续由 `fp-propose` 做代码探索和澄清。
+For the full flow, pass `start-reusable-context` to `fp-propose` together with the exploration objective, inspected scope, evidence paths/lines, budget state, relevant observed worktree state, uninspected areas, and separately labeled inferences. When the request resolves to existing PRD content, pass the complete resolved logical PRD content in manifest order. `fp-propose` preserves the resolved proposal form when revising one, or selects small file OR split index/fragments before writing; downstream phases consume the complete resolved logical proposal content. Exploration does not advance a stage and does not count as proposal confirmation.
 
 ---
 
 ## 阶段 1：理解需求 & 生成变更提案
 
 【必须先加载】`fp-propose` skill，然后完成：
-- 探索项目现状（读取 `fp-docs/settings/` 的客户配置，并以真实代码、测试、路由、模型、组件和 API 为实现事实依据）
+- 复用 fresh `start-reusable-context` 中范围仍匹配、相关工作树内容未变化的 verified facts，并把推断继续作为推断；不要把探索建议当作用户确认。
+- 只对未覆盖、已变化或不足以判断 proposal 范围/影响/交付策略的缺口继续探索真实代码、测试、路由、模型、组件和 API。
 - Socratic 需求澄清（如需要）
 - Generate one resolved proposal form: small `fp-docs/changes/<slug>/proposal.md` or split `fp-docs/changes/<slug>/proposal/00-index.md` plus its manifest-listed fragments.
 

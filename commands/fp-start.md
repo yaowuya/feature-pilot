@@ -8,7 +8,7 @@ description: 启动全流程开发向导 (propose → brainstorm → plan → ex
 
 Gate checksum：
 
-- 复用匹配 PRD；小需求只有用户确认后才切换 `fp-quick`。
+- 用一次 `fp-explore start-routing` 复用匹配 PRD、判断阶段并提供 quick/full 证据；只有用户确认后才切换 `fp-quick`。
 - 依次加载 `fp-propose` → `fp-brainstorm` → `fp-plan`，每阶段产物核验并等待明确确认。
 - 计划确认前不得修改业务代码；执行必须读取已确认 task 文件并先做 pre-flight review。
 - 执行前必须由用户明确选择直接执行或 SDD，不得仅根据任务规模自动选择；每个选项必须说明执行方式、暂停条件和适用场景。
