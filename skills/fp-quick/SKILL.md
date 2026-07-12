@@ -1,6 +1,6 @@
 ---
 name: fp-quick
-description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-propose 并复用其项目探索与需求澄清规则，但不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则向用户提问，如无疑问则直接输出内联实现计划并等待用户确认，确认后按计划实现与验证。
+description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-explore 的 quick profile 获取候选文件、复用模式、验证路径、风险和范围证据，不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则每轮最多问一个实质性问题，如无疑问则输出内联实现计划并等待用户确认，确认后按计划实现与验证。
 ---
 ## FeaturePilot workspace and information layer
 
@@ -23,27 +23,32 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 ## 工作流
 
-### 1. 用 fp-propose 探索项目背景
+### 1. 用 fp-explore quick 探索项目背景
 
-不要先要求用户补充项目上下文。Claude Code 运行时立即加载本插件内 `fp-propose` skill；Codex/Markdown agents 读取 `skills/fp-propose/SKILL.md`。只复用它的“探索项目现状”和“Socratic 需求澄清”规则来完成背景检索。
+Load `fp-explore` once and invoke its `quick` profile. Do not load the full `fp-propose` skill for exploration.
 
-重要边界：
-- 只使用 `fp-propose` 的探索和澄清部分。
-- 不执行 `fp-propose` 的 proposal 生成阶段。
-- 不创建 `fp-docs/changes/<slug>/`、`proposal.md`、`design.md` 或 `tasks.md`。
+<!-- fp-explore-invoke
+profile: quick
+objective: Locate candidate files, module boundaries, reusable code and test patterns, verification paths, implementation blockers, and quick-flow suitability evidence for this requested small change.
+caller: fp-quick
+active-slug:
+caller-owned-context:
+  - current user request and already confirmed constraints
+scope-include:
+  - user-named files, symbols, routes, APIs, models, components, and tests
+scope-exclude:
+  - fp-docs/changes/, archive/, and history/
+budget-profile: small
+return-shape: profile-default
+external-research: not-authorized
+approved-research-boundary:
+-->
 
-探索时至少完成：
-1. 不检查、不生成项目索引；先读取 `fp-docs/settings/` 中存在的相关配置，小需求也必须以当前代码为实现事实来源。
-2. 读取项目根目录或 `.claude/`、`.codex/`、`.agents/` 中的工程约束文件，例如 `CLAUDE.md`、`AGENTS.md`、`README.md`。
-3. 使用 `rg` / `rg --files` 搜索需求关键词、页面文案、接口名、路由名、组件名、模型名、测试名。
-4. 读取最可能相关的实现文件、测试文件和相邻同类代码，提炼现有模式。
+Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification` to build the inline plan. Treat `quick-scope-assessment` as advisory evidence only; `fp-quick` retains the final suitability decision. Keep current source and tests as the implementation truth and preserve the no-FeaturePilot-artifact boundary.
 
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为上下文依据。小需求必须以当前代码、测试和接口实现为准；若配置与代码冲突，以代码为准并向用户说明。
 
-检索要聚焦，不要为了小需求全量阅读仓库。优先形成这些结论：
-- 可能改动的文件和模块边界
-- 已有可复用模式、组件、API 或测试写法
-- 需求中仍不明确或可能有风险的点
+检索必须聚焦，搜索优先于整文件读取，不要为了小需求全量阅读仓库。
 
 ### 2. 判断是否需要澄清
 
@@ -54,7 +59,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 - 现有代码存在互相冲突的模式
 
 提问规则：
-- 每次最多问 1-3 个关键问题。
+- Ask at most one substantive question per turn. If multiple decisions are genuinely inseparable, express them as one structured choice rather than a list of separate questions.
 - 给出推荐选项和影响说明。
 - 不问可以在实现中按现有模式自然决定的细节。
 

@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -333,6 +333,11 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains('../_shared/workspace-rules.md')) "$($skill.Name)/SKILL.md does not load the shared workspace contract"
 }
 
+$exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
+Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-explore contract validator failed'
+
 $prdSkillPath = Join-Path $root 'skills\fp-prd\SKILL.md'
 $prdSkillText = Read-Utf8 $prdSkillPath
 $prdFrontmatter = [regex]::Match($prdSkillText, '(?s)\A---\r?\n(?<body>.*?)\r?\n---')
@@ -340,6 +345,43 @@ $prdDescriptionMatch = [regex]::Match($prdFrontmatter.Groups['body'].Value, '(?m
 $expectedPrdDescription = 'Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.'
 Assert-Condition ($prdDescriptionMatch.Success -and $prdDescriptionMatch.Groups['value'].Value -ceq $expectedPrdDescription) 'fp-prd discovery description must be the explicit-only trigger contract'
 Assert-Condition (-not ($prdFrontmatter.Groups['body'].Value.Contains('provides a product idea, feature request, user story, pain point, rough requirement'))) 'fp-prd discovery metadata still advertises ordinary rough requirements as triggers'
+$prdOutputContract = [regex]::Match($prdSkillText, '(?s)## Output\s*(?<body>.*)\z').Groups['body'].Value
+Assert-Condition ($prdOutputContract -match '(?i)every successful.*(?:MUST|required|always)') 'fp-prd output contract must require the next-step prompt after every successful completion'
+Assert-Condition ($prdOutputContract.Contains('`/fp-start <slug>`')) 'fp-prd output contract must include the exact copyable /fp-start <slug> command'
+
+$startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
+$sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
+$startCommandText = Read-Utf8 (Join-Path $root 'commands\fp-start.md')
+
+foreach ($anchor in @(
+    'Execution strategy gate'
+    'Direct task execution (non-SDD)'
+    'SDD execution'
+    'recommendation is not selection'
+    'wait for the user''s explicit choice'
+    'SDD continuation mode gate'
+    'Step-confirmation SDD'
+    'Automatic-continuation SDD'
+)) {
+    Assert-Condition ($startSkillText.Contains($anchor)) "fp-start is missing explicit execution gate contract: $anchor"
+}
+Assert-Condition ($startSkillText.Contains('Ask this gate only after the user explicitly selects SDD')) 'fp-start must not ask the SDD continuation gate before SDD is selected'
+Assert-Condition (-not ($startSkillText.Contains('根据计划规模选择执行 skill'))) 'fp-start must not auto-select an executor from plan size'
+
+foreach ($anchor in @(
+    'Step-confirmation SDD'
+    'Automatic-continuation SDD'
+    'progress updates, not return points'
+    'immediately select and dispatch the next eligible task'
+    'Execution strategy: SDD'
+    'SDD continuation mode:'
+    'Never silently switch modes'
+)) {
+    Assert-Condition ($sddSkillText.Contains($anchor)) "fp-execute-sdd is missing continuation contract: $anchor"
+}
+
+Assert-Condition ($startCommandText.Contains('必须由用户明确选择直接执行或 SDD')) 'fp-start command checksum is missing explicit executor selection'
+Assert-Condition ($startCommandText.Contains('SDD 逐项确认或自动连续')) 'fp-start command checksum is missing SDD continuation selection'
 
 $requirementProducerContracts = @{
     'skills\fp-prd\SKILL.md' = @('prd.md', 'prd/00-index.md', 'fragment manifest', 'logical template', 'mutually exclusive')
@@ -489,7 +531,8 @@ $skillAnchors = @{
     'fp-start' = @('fp-propose', 'fp-brainstorm', 'fp-plan', 'fp-execute-sdd', 'fp-review')
     'fp-execute-sdd' = @('No parallel implementers', 'progress.md', 'task-brief-template.md', 'task-reviewer-prompt.md', 'Fix Loop')
     'fp-review' = @('read-only final reviewer', 'PASS_WITH_NOTES', 'stale intel', 'final-review-template.md')
-    'fp-quick' = @('fp-propose', 'proposal.md', 'fp-docs/changes/', 'rg --files')
+    'fp-explore' = @('mode: standalone', 'prd-facts', 'start-routing', 'quick', 'fp-explore-invoke', 'fp-explore-return', 'read-only')
+    'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/')
     'fp-archive' = @('history/history.md', 'blocked', 'proposal.md')
     'fp-figma' = @('Figma', 'Flex / Grid', 'Visual Checks', 'settings/frontend.md')
     'fp-ui-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')
@@ -503,6 +546,17 @@ foreach ($entry in $skillAnchors.GetEnumerator()) {
         Assert-Condition ($skillText.Contains($anchor)) "$($entry.Key) lost capability anchor: $anchor"
     }
 }
+
+$quickSkillText = Read-Utf8 (Join-Path $root 'skills\fp-quick\SKILL.md')
+Assert-Condition (-not $quickSkillText.Contains('用 fp-propose 探索项目背景')) 'fp-quick still uses fp-propose as exploration authority'
+Assert-Condition (-not $quickSkillText.Contains('每次最多问 1-3 个关键问题')) 'fp-quick still batches separate clarification questions'
+
+$prdExploreText = Read-Utf8 (Join-Path $root 'skills\fp-prd\SKILL.md')
+Assert-Condition ($prdExploreText.Contains('fp-prd-grill-me') -and $prdExploreText.Contains('must never self-answer Bucket C')) 'prd-facts weakened the PRD interview gate'
+
+$startExploreText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
+Assert-Condition ($startExploreText.Contains('profile: start-routing') -and $startExploreText.Contains('explicit user choice')) 'start-routing lacks caller-owned routing choice'
+Assert-Condition ($startExploreText.Contains('Execution strategy gate') -and $startExploreText.Contains('SDD continuation mode gate')) 'start-routing edit removed protected execution gates'
 
 $sddSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
 Assert-Condition ($sddSkill.Contains('intel/sdd-handoff.md')) 'fp-execute-sdd is missing the SDD handoff preflight contract'

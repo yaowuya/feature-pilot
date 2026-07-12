@@ -19,6 +19,12 @@ Read `../_shared/artifact-layout.md` before resolving PRD input or creating/revi
 
 If `fp-start` or the user provides a PRD slug, resolve `fp-docs/changes/<slug>/prd.md` or the mutually exclusive `fp-docs/changes/<slug>/prd/00-index.md` before asking requirement questions. For split form, parse the fragment manifest and read every listed fragment in exact order; reject a missing index, unindexed/missing fragment, duplicate owner, or simultaneous `prd.md` plus `prd/`. Use the confirmed logical PRD as the primary requirement source and generate a concise logical proposal. Ask only about gaps that block proposal scope, impact, or delivery strategy.
 
+### Upstream start-routing context
+
+When `fp-start` supplies `start-reusable-context`, reuse only its verified facts whose inspected scope still covers the proposal question and whose relevant files/worktree state have not changed. Preserve evidence paths, budget state, and uninspected areas. Treat inferences as inferences, never as reusable facts or user confirmation.
+
+Perform gap-only exploration: inspect areas that were not covered, facts invalidated by relevant worktree changes, or evidence insufficient for proposal scope, impact, or delivery strategy. Direct `fp-propose` use without upstream context keeps the normal exploration phase.
+
 ## Proposal forms
 
 One logical proposal selects exactly one form before writing:
@@ -32,7 +38,7 @@ One logical proposal selects exactly one form before writing:
 
 ## 阶段 1：探索项目现状
 
-必须以代码为最终事实来源：
+必须以代码为最终事实来源。没有可复用的 `start-reusable-context` 时执行完整的本阶段探索；存在可复用上下文时，只执行上文定义的 gap-only 补查：
 - 读取 `CLAUDE.md`（项目根目录或 `.claude/`）：了解架构、技术栈、代码规范
 - 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为功能背景；当前代码仍是最终实现事实来源
 - 使用 `rg` / `rg --files` 搜索需求关键词、接口、模型、组件、路由、测试和相邻实现

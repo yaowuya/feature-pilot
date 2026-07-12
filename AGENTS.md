@@ -13,6 +13,7 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | User intent | Read first |
 |---|---|
 | Initialize workspace/config | `skills/fp-init/SKILL.md` |
+| Read-only exploration of repository facts, behavior, constraints, risks, or options | `skills/fp-explore/SKILL.md` |
 | Full feature workflow | `skills/fp-start/SKILL.md` |
 | Explicit `/fp-prd`, `$fp-prd`, or explicit request to create, write, revise, or complete a PRD or product requirements document | `skills/fp-prd/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
@@ -32,6 +33,7 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 - PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing the resolved PRD small or split form.
 - Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write the resolved PRD small or split form.
 - Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
+- `fp-explore` accepts natural-language public input and remains read-only: it never writes artifacts, implements changes, or automatically dispatches another workflow. Its internal structured profiles may be invoked only by `fp-prd`, `fp-start`, and `fp-quick`, which retain their own product, routing, approval, and implementation gates.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
 
 ## Workspace and settings
@@ -86,11 +88,12 @@ When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and 
 
 Preferred path:
 
-1. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`, `fp-docs/intel/`).
-2. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
-3. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
-4. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
-5. If `fp-init` detects a likely Canway/CW project, it may only ask whether to adopt labelled examples from `examples/canway-cw/fp-docs/settings/` as editable target-project settings. It must not auto-copy them, overwrite existing files, or treat them as public defaults.
+1. `/fp-explore <question>` when the user wants read-only investigation or option comparison before choosing a workflow; empty input performs bounded orientation only.
+2. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`, `fp-docs/intel/`).
+3. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
+4. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
+5. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
+6. If `fp-init` detects a likely Canway/CW project, it may only ask whether to adopt labelled examples from `examples/canway-cw/fp-docs/settings/` as editable target-project settings. It must not auto-copy them, overwrite existing files, or treat them as public defaults.
 
 For the user-facing init/prd/start guide, see `docs/user_guide/init-prd-start.md`.
 
