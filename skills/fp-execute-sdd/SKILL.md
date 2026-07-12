@@ -14,6 +14,22 @@ Read `../_shared/artifact-layout.md` once before resolving execution inputs; it 
 
 Core rule: **implementers are serial, reviewers are per task, fixes loop until reviewed clean, the unique task-owner checkbox owns planned completion, and the ledger is recovery evidence.**
 
+## SDD Continuation Mode
+
+Before dispatching the first implementer, exactly one SDD continuation mode must be selected explicitly by the user or restored from `progress.md`. Never infer the mode from task count, plan complexity, risk, or a recommendation. If this skill is invoked directly and no valid mode is recorded, explain both choices below and wait for the user's explicit selection.
+
+### Step-confirmation SDD
+
+Complete exactly one task through implementation, review and any fix loop, checkbox reconciliation, derived overview update when applicable, and ledger update. Then report the task's files, commits, validation, report/review paths, and risks, and wait for explicit user confirmation before selecting or dispatching the next task. When the user replies “继续” or otherwise confirms, resume with the next eligible task without repeating completed work.
+
+Choose this mode when the user wants to inspect every increment or control each task/commit boundary.
+
+### Automatic-continuation SDD
+
+Run the same complete per-task implementation, review/fix, checkbox, overview, and ledger cycle. After a task is reviewed clean and checkbox/overview/ledger state is synchronized, per-task reports are progress updates, not return points. The controller must immediately select and dispatch the next eligible task in the same run. Do not ask “continue to the next task?” and do not return merely because one task completed. Continue until every task and the final whole-change review complete.
+
+Pause only for a genuine blocker that requires user input: a pre-flight or plan conflict; an unresolved product, architecture, security, scope, or data-safety decision; implementer status `BLOCKED` or `NEEDS_CONTEXT` that cannot be resolved from approved artifacts; or the same blocking review finding surviving three fix attempts. Choose this mode for unattended execution without giving up SDD review rigor.
+
 This skill is self-contained. Use only the templates in this directory:
 
 ```text
@@ -100,7 +116,7 @@ The controller must:
 7. Dispatch exactly one read-only task reviewer.
 8. Run a serial fix loop for Critical/Important findings.
 9. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes.
-10. Continue to the next task only when the current task is reviewed clean or explicitly blocked.
+10. After a reviewed-clean task, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
 11. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
 The controller must not implement product code inline except to repair orchestration artifacts such as a malformed brief/package. If implementation is needed, dispatch the implementer or fixer.
@@ -132,6 +148,8 @@ Minimum format:
 # fp-execute-sdd progress
 
 Change: <slug>
+Execution strategy: SDD
+SDD continuation mode: step-confirmation | automatic-continuation
 Base SHA: <sha at execution start>
 Plan files:
 - <tasks/00-overview.md only for a two-end plan>
@@ -155,6 +173,8 @@ Plan files:
 ```
 
 Ledger rules:
+- Persist `Execution strategy: SDD` and exactly one `SDD continuation mode:` value: `step-confirmation` or `automatic-continuation`.
+- On resume, reuse a valid recorded mode without asking again. If no mode is recorded or it is ambiguous, explain both modes and ask before dispatching. If a new explicit selection conflicts with the recorded mode, ask whether to switch and append that decision before continuing. Never silently switch modes.
 - The unique checkbox in the task-owner file is the planned completion state; ledger entries are recovery evidence and never override it.
 - When both ends exist, `tasks/00-overview.md` progress counts are derived from owner checkboxes; recompute them on mismatch instead of treating them as another state source. Never create or expect it for a single-end plan.
 - On any mismatch, inspect the owner file, commits, actual implementation, tests, and review evidence; reconcile both records before selecting, repeating, or declaring the task complete.
@@ -294,6 +314,8 @@ Final report must include:
 - Minor findings fixed or deferred.
 - Final review result.
 - Whether `/fp-archive` is recommended.
+
+Only `step-confirmation` produces a user confirmation prompt after a clean individual task. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.
 
 ## Invariant recap
 

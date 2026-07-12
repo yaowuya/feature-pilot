@@ -213,6 +213,14 @@ If self-review finds structural drift, do not report completion. Rewrite the sel
 
 ## Output
 
+Every successful PRD completion response MUST end with a clearly labeled next-step prompt containing this exact copyable command:
+
+```text
+/fp-start <slug>
+```
+
+Replace `<slug>` with the completed change slug when it is known. This prompt is required, not optional: never omit it when summarizing, keeping the response concise, reporting a prototype, or reporting non-blocking open questions.
+
 Report:
 
 - PRD canonical entrypoint: `prd.md` or `prd/00-index.md`.
@@ -220,4 +228,4 @@ Report:
 - If this is the project's first prototype, recommend extracting visual style to `fp-docs/settings/prototype-style.md`.
 - Confirmed key requirements.
 - Non-blocking open questions.
-- Suggested next step: run `fp-start <slug>` to resolve the PRD through the shared artifact-layout contract, read split fragments in manifest order when present, and continue into design, planning, and development.
+- Required next step: explicitly tell the user they can run `/fp-start <slug>` to resolve the PRD through the shared artifact-layout contract, read split fragments in manifest order when present, and continue into design, planning, and development.

@@ -340,6 +340,43 @@ $prdDescriptionMatch = [regex]::Match($prdFrontmatter.Groups['body'].Value, '(?m
 $expectedPrdDescription = 'Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.'
 Assert-Condition ($prdDescriptionMatch.Success -and $prdDescriptionMatch.Groups['value'].Value -ceq $expectedPrdDescription) 'fp-prd discovery description must be the explicit-only trigger contract'
 Assert-Condition (-not ($prdFrontmatter.Groups['body'].Value.Contains('provides a product idea, feature request, user story, pain point, rough requirement'))) 'fp-prd discovery metadata still advertises ordinary rough requirements as triggers'
+$prdOutputContract = [regex]::Match($prdSkillText, '(?s)## Output\s*(?<body>.*)\z').Groups['body'].Value
+Assert-Condition ($prdOutputContract -match '(?i)every successful.*(?:MUST|required|always)') 'fp-prd output contract must require the next-step prompt after every successful completion'
+Assert-Condition ($prdOutputContract.Contains('`/fp-start <slug>`')) 'fp-prd output contract must include the exact copyable /fp-start <slug> command'
+
+$startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
+$sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
+$startCommandText = Read-Utf8 (Join-Path $root 'commands\fp-start.md')
+
+foreach ($anchor in @(
+    'Execution strategy gate'
+    'Direct task execution (non-SDD)'
+    'SDD execution'
+    'recommendation is not selection'
+    'wait for the user''s explicit choice'
+    'SDD continuation mode gate'
+    'Step-confirmation SDD'
+    'Automatic-continuation SDD'
+)) {
+    Assert-Condition ($startSkillText.Contains($anchor)) "fp-start is missing explicit execution gate contract: $anchor"
+}
+Assert-Condition ($startSkillText.Contains('Ask this gate only after the user explicitly selects SDD')) 'fp-start must not ask the SDD continuation gate before SDD is selected'
+Assert-Condition (-not ($startSkillText.Contains('根据计划规模选择执行 skill'))) 'fp-start must not auto-select an executor from plan size'
+
+foreach ($anchor in @(
+    'Step-confirmation SDD'
+    'Automatic-continuation SDD'
+    'progress updates, not return points'
+    'immediately select and dispatch the next eligible task'
+    'Execution strategy: SDD'
+    'SDD continuation mode:'
+    'Never silently switch modes'
+)) {
+    Assert-Condition ($sddSkillText.Contains($anchor)) "fp-execute-sdd is missing continuation contract: $anchor"
+}
+
+Assert-Condition ($startCommandText.Contains('必须由用户明确选择直接执行或 SDD')) 'fp-start command checksum is missing explicit executor selection'
+Assert-Condition ($startCommandText.Contains('SDD 逐项确认或自动连续')) 'fp-start command checksum is missing SDD continuation selection'
 
 $requirementProducerContracts = @{
     'skills\fp-prd\SKILL.md' = @('prd.md', 'prd/00-index.md', 'fragment manifest', 'logical template', 'mutually exclusive')
