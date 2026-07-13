@@ -119,6 +119,7 @@ Base SHA: <执行开始时的 git sha>
 - 单个任务步骤最多执行 3 次 review，首次 review 计为第 1 次。
 - 第 1 或第 2 次 review 未通过时，先把 Critical / Important 未通过点追加到 ledger，再做一次定向修复并进入下一次 review。
 - 第 3 次 review 仍未通过时，停止该任务的 review/fix 循环，不得执行第 4 次 review，也不得再自动派生一次未验证的修复。
+- 每个 non-pass 在 attempt 1 或 2 都必须追加原始 verdict、findings 和缺失证据，修复代码、验证证据或 review 输入，必要时重新生成 review 上下文，然后让同一 scope 的 attempt 恰好加 1 再 review；`CANNOT VERIFY FROM DIFF`、只有 Minor 却要求修复、没有 severity finding 的 FAIL 以及其他格式错误都适用，不得重复同一 attempt 或猜测 PASS。
 - 达到上限后，把所有未通过点、严重级别、review 路径和处理结论记录为 review debt；不影响主流程时允许同步 task-owner checkbox，并按当前 semi/full 模式继续。
 - Critical、核心验收不可用、安全/权限/数据风险、阻断下游的外部契约、必需构建或核心测试失败、需要修改批准范围或新增产品/架构/安全决策，均属于主流程阻断；此时记录 `BLOCKED`，不勾选 checkbox，并暂停请求用户决策。
 - `CANNOT VERIFY FROM DIFF` 或缺少验证证据按未通过处理；第 3 次时依据缺失证据是否影响主流程进入 review debt 或 `BLOCKED`。
@@ -140,11 +141,14 @@ Base SHA: <执行开始时的 git sha>
 ## Final Review Scope
 
 - 全部 task-owner checkbox 已按任务 review 结果对账后，加载 `fp-review`，创建独立于各任务的 final review scope；final review scope 最多执行 3 次 review，首次 final review 计为第 1 次。
+- 每次 final review attempt 前执行 clean-snapshot checkpoint：先追加待执行 attempt 事件，提交已授权的实现与执行状态产物（task-owner checkbox、有效 overview、ledger 和既有 review 证据），不得混入用户无关修改，并确认 `git status --short` 为空。checkpoint 失败不消耗 review attempt；记录并解决该 preflight blocker 后再运行 review。
 - verdict 映射：`PASS` 成功结束；`PASS_WITH_NOTES` 结束 final review scope并记录非阻断 review debt；`FAIL` 是一次未通过；`BLOCKED` 作为主流程阻断立即暂停，直到缺失决定或不安全前置条件解决。
+- `BLOCKED` verdict 消耗当前 final review attempt。阻断条件解决后恢复该已完成 attempt：attempt 小于 3 时先完成 clean-snapshot checkpoint，再让 attempt 恰好加 1 后 review；attempt 为 3 时保持阻断，同一 scope 不得再 review。只有用户明确授权开启新的 final review scope 才能重新审查，并把该决定追加到 ledger；不得伪装成第 4 次 review。
 - severity 映射：`Critical` 保持 Critical；`High` 映射为 Important 且属于主流程阻断；`Medium` 映射为 Important；`Low` 映射为 Minor。Medium 只有符合上方主流程阻断条件时才阻塞，否则可以记录为 final review debt；Low 单独不阻塞。
 - attempt 1 或 2 为 `FAIL` 时，把精确 finding、review 路径和映射结果追加到 ledger，只在当前上下文中修复这些 finding，重跑要求的验证，记录修复证据，将同一 final scope 的 attempt 加 1 后重新运行 `fp-review`。
 - attempt 3 仍为 `FAIL` 时停止自动修复：非主流程 finding 逐项进入 final review debt；任何主流程阻断保持 `BLOCKED` 并阻止完成或归档；不得执行第 4 次 final review。
 - 恢复执行时从 ledger 恢复已有 final review attempt、最新 review 路径、verdict/severity 映射和未解决 findings；换 finding、reviewer、fix commit、会话、compaction 或 restart 都不能重置 final scope。
+- `PASS` 或 `PASS_WITH_NOTES` 后追加结果，并提交 final review report 和 ledger 证据，不再重跑 review；该 evidence-only commit 不得包含实现、task checkbox、overview、需求、设计或计划变更，否则 verdict 已失效，必须按有限 non-pass 转移处理。
 - final review 不会仅因再次报告已有 task review debt 就重置或重开对应 task review scope。
 
 ## 项目约束

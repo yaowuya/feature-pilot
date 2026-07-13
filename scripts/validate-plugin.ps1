@@ -452,14 +452,17 @@ foreach ($anchor in @(
     'review debt'
     'main-flow blocker'
     'restore the recorded review attempt'
-    'Every non-pass result at attempt 1 or 2 must transition to the next attempt'
+    'Every non-pass result at attempt 1 or 2 must transition through exactly one table row to the next attempt'
     'repair the code, review package, or missing evidence'
     'regenerate the package'
-    "increment the same scope's attempt"
     'dispatch the next reviewer'
     'must not repeat the same attempt'
     'Combined task review verdict'
-    '`NEEDS FIXES` with only Minor findings is an invalid reviewer combination'
+    'Task non-pass transition table'
+    '`Spec Compliance: FAIL` with no severity-bucket finding'
+    'Malformed or unclassified combination'
+    'append the raw verdict'
+    'increment exactly once'
     'dispatch a corrected fresh reviewer without a fixer'
 )) {
     Assert-Condition ($sddFixLoopSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd is missing an evidence-only failure transition: $anchor"
@@ -511,6 +514,14 @@ foreach ($anchor in @(
     'Review scope: final'
     '`BRIEF_PATH=N/A`'
     'fp-review is required for final review scope'
+    'clean-snapshot checkpoint before consuming each final review attempt'
+    'commit authorized implementation and execution artifacts'
+    '`git status --short` is empty'
+    'A failed clean-snapshot checkpoint does not consume a review attempt'
+    'commit the final review report and ledger evidence without rerunning review'
+    'A final `BLOCKED` verdict consumes its current attempt'
+    'increment exactly once before the next final review'
+    'explicit user authorization may open a new final review scope'
 )) {
     Assert-Condition ($sddFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd final review mapping is incomplete: $anchor"
 }
@@ -972,6 +983,10 @@ foreach ($anchor in @(
     'review debt'
     '主流程阻断'
     '恢复已有 review attempt'
+    '每个 non-pass 在 attempt 1 或 2'
+    '修复代码、验证证据或 review 输入'
+    'attempt 恰好加 1'
+    '不得重复同一 attempt'
 )) {
     Assert-Condition ($executeReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute task review section is missing bounded contract: $anchor"
 }
@@ -984,6 +999,14 @@ foreach ($anchor in @(
     '`Critical` 保持 Critical；`High` 映射为 Important 且属于主流程阻断；`Medium` 映射为 Important；`Low` 映射为 Minor'
     '不得执行第 4 次 final review'
     '恢复已有 final review attempt'
+    '每次 final review attempt 前执行 clean-snapshot checkpoint'
+    '提交已授权的实现与执行状态产物'
+    '`git status --short` 为空'
+    'checkpoint 失败不消耗 review attempt'
+    '提交 final review report 和 ledger 证据，不再重跑 review'
+    '`BLOCKED` verdict 消耗当前 final review attempt'
+    'attempt 小于 3 时先完成 clean-snapshot checkpoint，再让 attempt 恰好加 1'
+    '用户明确授权开启新的 final review scope'
 )) {
     Assert-Condition ($executeFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute final review contract is incomplete: $anchor"
 }
