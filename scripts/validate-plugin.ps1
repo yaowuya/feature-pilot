@@ -143,12 +143,15 @@ function Test-MalformedTasksKindInlineCode([string]$text) {
 
 function Test-SemanticAutoSplitTrigger([string]$text) {
     $plain = [regex]::Replace($text, '[`*_]', '')
-    $semanticScope = '(?i)(?:\b(?:multiple|several|independently\s+readable)\s+(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?)\b|\bmulti[- ](?:feature|module|component|subsystem|page|area|task|domain|scope)s?\b|(?:多个|多项|若干|两个以上)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,32}(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?|功能|模块|组件|子系统|页面区域|任务组|所有权域|变更范围))'
-    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|(?:自动|直接|立即|必须|需要|就|则)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:拆分|分片))'
+    $semanticScope = '(?i)(?:\b(?:(?:multiple|several|independently\s+readable|more\s+than\s+one)|(?:(?:two|three|four|five|six|seven|eight|nine|\d+)(?:\s+or\s+more)?))\s+(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?)\b|\bmulti[- ](?:feature|module|component|subsystem|page|area|task|domain|scope)s?\b|(?:多个|多项|若干|两个以上)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,32}(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?|功能|模块|组件|子系统|页面区域|任务组|所有权域|变更范围))'
+    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|\b(?:should|must|needs?\s+to|has\s+to)\s+be\s+split\b|\bsplit\b(?=\s*(?:$|,|\b(?:whenever|when|if|the|this|that|into|across)\b))|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|拆分|分片)'
+    $allowedCondition = '(?i)(?:(?:the\s+)?user\s+explicitly\s+approves(?:\s+(?:it|split\s+form))?|(?:an\s+)?applicable\s+target-project\s+setting\s+explicitly\s+requires(?:\s+(?:it|split\s+form))?|(?:the\s+)?small\s+(?:form|plan)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,80}(?:exceed(?:s)?\s+(?:either\s+(?:hard\s+)?limit|500\s+lines[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}30,000\s+characters)))'
+    $allowedSplitGate = "(?i)\b(?:can\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\s+only\s+(?:when|if)\s+$allowedCondition"
     $negatedSplit = '(?i)(?:\b(?:do\s+not|does\s+not|must\s+not|never)\b[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,100}(?:split\s+form|trigger|force|require|select|choose|use)|\bonly\s+after\s+split\s+form\s+has\s+been\s+selected\b|(?:不|不会|不得|不能|无需|不应)[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:触发|强制|要求|选择|使用|拆分|分片)|仅用于[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:已选\s*split\s+form|分片边界))'
 
     foreach ($clause in [regex]::Split($plain, '(?:\r?\n|[;.!?\u3002\uFF1B\uFF01\uFF1F])')) {
-        $affirmativeClause = [regex]::Replace($clause, $negatedSplit, ' NEGATED_SPLIT_CLAUSE ')
+        $affirmativeClause = [regex]::Replace($clause, $allowedSplitGate, ' ALLOWED_SPLIT_GATE ')
+        $affirmativeClause = [regex]::Replace($affirmativeClause, $negatedSplit, ' NEGATED_SPLIT_CLAUSE ')
         if ($affirmativeClause -match $semanticScope -and $affirmativeClause -match $affirmativeSplit) {
             return $true
         }
@@ -463,8 +466,16 @@ $obsoleteAutoSplitPatterns = @(
 )
 $plausibleAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Automatically select split form whenever multiple modules are present.'
 Assert-Condition (Test-SemanticAutoSplitTrigger $plausibleAutoSplitMutation) 'semantic auto-split detector accepts a differently worded multi-module mutation'
+$completeContractAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Use split form only when the small form exceeds either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features do not trigger split form by themselves. Split whenever there are two features.'
+Assert-Condition (Test-SemanticAutoSplitTrigger $completeContractAutoSplitMutation) 'semantic auto-split detector accepts a complete contract with an appended two-feature split rule'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple page areas mean the document should be split.') 'semantic auto-split detector accepts a should-be-split page-area mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'More than one subsystem means the document should be split.') 'semantic auto-split detector accepts a more-than-one subsystem mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger '多个模块时拆分。') 'semantic auto-split detector accepts a plain Chinese split mutation'
 Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules do not trigger split form by themselves.')) 'semantic auto-split detector rejects valid negative trigger wording'
 Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Task groups define fragments only after split form has been selected.')) 'semantic auto-split detector rejects valid post-selection fragment wording'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the user explicitly approves it.')) 'semantic auto-split detector rejects the explicit user-approval gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when an applicable target-project setting explicitly requires it.')) 'semantic auto-split detector rejects the explicit target-project-setting gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the small form is expected to exceed 500 lines or 30,000 characters.')) 'semantic auto-split detector rejects the hard-limit overflow gate'
 
 foreach ($relativePath in $compactFirstFiles) {
     $text = Read-Utf8 (Join-Path $root $relativePath)
