@@ -12,7 +12,7 @@ Read `../_shared/artifact-layout.md` once before resolving execution inputs; it 
 
 `fp-execute-sdd` executes an approved FeaturePilot change with Subagent-Driven Development. The controller stays in charge of sequencing, ledger updates, packages, and user-facing decisions; fresh subagents do one implementation task or one review at a time.
 
-Core rule: **implementers are serial, reviewers are per task, fixes loop until reviewed clean, the unique task-owner checkbox owns planned completion, and the ledger is recovery evidence.**
+Core rule: **implementers are serial, reviewers are per task, every review scope is capped, the unique task-owner checkbox owns planned completion, and the ledger is recovery evidence.**
 
 ## SDD Continuation Mode
 
@@ -26,9 +26,9 @@ Choose this mode when the user wants to inspect every increment or control each 
 
 ### Automatic-continuation SDD
 
-Run the same complete per-task implementation, review/fix, checkbox, overview, and ledger cycle. After a task is reviewed clean and checkbox/overview/ledger state is synchronized, per-task reports are progress updates, not return points. The controller must immediately select and dispatch the next eligible task in the same run. Do not ask “continue to the next task?” and do not return merely because one task completed. Continue until every task and the final whole-change review complete.
+Run the same complete per-task implementation, bounded review/fix, checkbox, overview, and ledger cycle. After a task passes review or reaches attempt 3 with only non-blocking review debt, and checkbox/overview/ledger state is synchronized, per-task reports are progress updates, not return points. The controller must immediately select and dispatch the next eligible task in the same run. Do not ask “continue to the next task?” and do not return merely because one task completed. Continue until every task and the final whole-change review complete.
 
-Pause only for a genuine blocker that requires user input: a pre-flight or plan conflict; an unresolved product, architecture, security, scope, or data-safety decision; implementer status `BLOCKED` or `NEEDS_CONTEXT` that cannot be resolved from approved artifacts; or the same blocking review finding surviving three fix attempts. Choose this mode for unattended execution without giving up SDD review rigor.
+Pause only for a genuine blocker that requires user input: a pre-flight or plan conflict; an unresolved product, architecture, security, scope, or data-safety decision; implementer status `BLOCKED` or `NEEDS_CONTEXT` that cannot be resolved from approved artifacts; or a main-flow blocker remaining after review attempt 3. Choose this mode for unattended execution without giving up SDD review rigor.
 
 This skill is self-contained. Use only the templates in this directory:
 
@@ -114,9 +114,9 @@ The controller must:
 5. Wait for the implementer to finish.
 6. Create a review package from the actual diff and report.
 7. Dispatch exactly one read-only task reviewer.
-8. Run a serial fix loop for Critical/Important findings.
-9. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes.
-10. After a reviewed-clean task, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
+8. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
+9. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes or attempt 3 leaves only non-blocking review debt.
+10. After a task passes review or is accepted with non-blocking review debt at attempt 3, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
 11. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
 The controller must not implement product code inline except to repair orchestration artifacts such as a malformed brief/package. If implementation is needed, dispatch the implementer or fixer.
@@ -168,8 +168,12 @@ Plan files:
 ## Minor Findings
 - None
 
+## Review Debt
+- None
+
 ## Events
 - <ISO time> plan_review pass
+- <ISO time> review_attempt task=<task-id> attempt=1/3 verdict=PASS critical=0 important=0 minor=0 review=<review-path>
 ```
 
 Ledger rules:
@@ -179,8 +183,11 @@ Ledger rules:
 - When both ends exist, `tasks/00-overview.md` progress counts are derived from owner checkboxes; recompute them on mismatch instead of treating them as another state source. Never create or expect it for a single-end plan.
 - On any mismatch, inspect the owner file, commits, actual implementation, tests, and review evidence; reconcile both records before selecting, repeating, or declaring the task complete.
 - Append an event for task start, implementer result, package creation, review result, fix attempt, blocked state, checkbox update, and final review.
+- Append one `review_attempt` event after every review with scope/task, attempt, verdict, Critical/Important/Minor counts, review path, exact findings, and disposition. Counts alone are insufficient evidence.
+- On resume, restore the recorded review attempt for each task review scope and final review scope. A different finding, reviewer, fixer, commit, session, compaction, or restart never resets that scope's counter.
 - Do not repeat a task already marked complete unless the user explicitly asks to reopen it.
 - If a task is blocked, record blocker, attempted commands, current HEAD, report/review paths, and the exact decision needed.
+- If attempt 3 leaves only non-blocking findings, record them under `Review Debt`, reconcile the owner checkbox, and prevent task selection from reopening the task automatically.
 
 ## Task ID and File Naming
 
@@ -268,24 +275,30 @@ Reviewer rules:
 - Read-only only. No edits, no commits, no index changes, no generated artifacts.
 - Do not suppress findings because the plan asked for bad behavior. Report plan-mandated defects as plan-mandated.
 - `CANNOT VERIFY FROM DIFF` is not a pass. The controller must inspect the relevant files/evidence and either resolve it or treat it as failed.
+- The reviewer reports finding severity and main-flow impact evidence; the controller owns continuation and blocker classification and must not rely only on `Ready for next task`.
 
 ## Fix Loop
 
-If reviewer reports any Critical or Important finding:
-1. Append ledger event `review_failed` with finding count and review path.
-2. Dispatch a fresh serial fixer with `fix-prompt.md`.
-3. Fixer reads the brief, report, package, review, and exact findings.
-4. Fixer edits only files needed for the findings, runs required tests, commits the fix if appropriate, and appends a fix section to the same report file.
-5. Controller regenerates the review package from the new diff/HEAD.
-6. Dispatch a fresh read-only reviewer with the same task-reviewer template.
-7. Repeat until `Spec Compliance: PASS`, `Code Quality: APPROVED`, and no Critical/Important findings remain.
+Each task review scope has a maximum of three reviews. The initial review is attempt 1. A failed attempt 1 or 2 may dispatch one fresh serial fixer followed by the next review. After failed attempt 3, the controller must not dispatch a fourth review or another automatic fixer.
 
-Escalate to the user and mark `BLOCKED` if:
-- The same Critical/Important finding survives three fix attempts.
-- Fixing requires changing approved proposal/design/plan scope.
-- Fixing requires a product/architecture/security decision not present in the brief.
+For attempt 1 or 2 with any Critical or Important finding:
+1. Append a ledger `review_attempt` event with the exact findings, counts, review path, and failed disposition.
+2. Dispatch one fresh serial fixer with `fix-prompt.md` for only those findings.
+3. Fixer reads the brief, report, package, review, and exact findings; edits only files needed for them; runs required tests; commits when appropriate; and appends a numbered fix section to the same report.
+4. Controller regenerates the review package from the new diff/HEAD.
+5. Increment the same scope's attempt and dispatch one fresh read-only reviewer with the same task-reviewer template.
 
-Minor findings do not block the next task, but record them in ledger `Minor Findings` with review path and whether deferred or fixed.
+At failed attempt 3, record every remaining finding and classify it with evidence. If no finding is a main-flow blocker, record review debt, reconcile the task-owner checkbox, and continue according to the selected continuation mode. If any finding is a main-flow blocker, record `BLOCKED`, leave the checkbox unchecked, and pause for the exact user decision required.
+
+A finding is a main-flow blocker when any of these observable conditions holds:
+- It is Critical, including data loss, a security issue, permission bypass, destructive production behavior, or migration risk that can corrupt data.
+- The approved core acceptance behavior is unavailable or the task has not delivered its primary goal.
+- A required build, core test, or required alternative validation fails, leaving this delivery unusable or preventing reliable downstream work.
+- An external API, field, route, event, permission action, or other declared interface contract is broken and blocks a dependent task.
+- Fixing it requires changing approved proposal/design/plan scope.
+- Fixing it requires a product, architecture, security, permission, or data-safety decision absent from the brief.
+
+`CANNOT VERIFY FROM DIFF` is a failed attempt. At attempt 3, classify whether the missing evidence meets a main-flow blocker condition. Important or Minor findings that meet none of the conditions become review debt; record each with review path, classification rationale, and whether deferred or fixed. The controller must restore the recorded review attempt after interruption and must not reset it for a new finding, reviewer, fixer, commit, session, compaction, or restart.
 
 ## Model Selection
 
@@ -298,25 +311,26 @@ Every dispatch states a capability expectation, not a guessed model ID. Use the 
 
 ## Completion and Final Review
 
-After all tasks are reviewed clean:
+After every task has either passed review or reached attempt 3 with only recorded non-blocking review debt:
 1. Ensure every completed task's unique owner checkbox is checked and no summary/index file contains a task checkbox.
-2. Ensure ledger has no unresolved Blocked, Critical, or Important items.
+2. Ensure ledger has no unresolved `BLOCKED` or main-flow blocker; every other unresolved finding must appear under `Review Debt`.
 3. Ensure Minor findings are fixed or explicitly deferred.
-4. Run a final whole-change review. If `fp-review` exists, use it. If not, create a final review package in `.fp-execute/packages/final-review-package.md` and dispatch `task-reviewer-prompt.md` at whole-change scope with the same read-only rules.
-5. If final review has Critical/Important findings, run the same serial fix loop. Do not dispatch parallel fixers.
-6. Only then produce the final execution report.
+4. Start an independent final review scope at attempt 1. If `fp-review` exists, use it. If not, create a final review package in `.fp-execute/packages/final-review-package.md` and dispatch `task-reviewer-prompt.md` at whole-change scope with the same read-only rules.
+5. The final review scope also has a maximum of three reviews. The initial review is attempt 1; failed attempt 1 or 2 may run one serial fix then the next review. At failed attempt 3, record non-blocking findings as final review debt, but keep any main-flow blocker `BLOCKED` and prevent completion or archive. The controller must not dispatch a fourth review.
+6. Final review never resets or reopens a completed task review scope merely because it reports an existing review debt item.
+7. Only then produce the final execution report.
 
 Final report must include:
 - Completed tasks.
 - Key commits / commit ranges.
 - Validation commands and results.
 - Brief/report/review/package paths.
-- Minor findings fixed or deferred.
+- Minor findings and review debt fixed or deferred, with exact findings and rationale.
 - Final review result.
 - Whether `/fp-archive` is recommended.
 
-Only `step-confirmation` produces a user confirmation prompt after a clean individual task. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.
+Only `step-confirmation` produces a user confirmation prompt after an individual task passes review or is accepted with non-blocking review debt at attempt 3. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.
 
 ## Invariant recap
 
-Serial implementers only; reviewer stays read-only; every task gets a package; completion follows review; owner checkbox plus verified evidence beats chat memory while the ledger supports recovery; `CANNOT VERIFY FROM DIFF` is not pass; one task never broadens scope.
+Serial implementers only; reviewer stays read-only; every task gets a package; each task and final review scope has a maximum of three reviews per review scope; owner checkbox plus verified evidence beats chat memory while the ledger supports recovery; `CANNOT VERIFY FROM DIFF` is not pass; one task never broadens scope; no controller may dispatch review attempt 4.

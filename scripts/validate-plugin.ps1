@@ -441,6 +441,21 @@ $startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
 $sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
 $startCommandText = Read-Utf8 (Join-Path $root 'commands\fp-start.md')
 
+$sddReviewAnchors = @(
+    'maximum of three reviews per review scope'
+    'The initial review is attempt 1'
+    'must not dispatch a fourth review'
+    'review debt'
+    'main-flow blocker'
+    'restore the recorded review attempt'
+    'final review scope'
+)
+foreach ($anchor in $sddReviewAnchors) {
+    Assert-Condition ($sddSkillText.Contains($anchor)) "fp-execute-sdd is missing bounded review contract: $anchor"
+}
+Assert-Condition (-not $sddSkillText.Contains('fixes loop until reviewed clean')) 'fp-execute-sdd still promises an unbounded clean-review loop'
+Assert-Condition (-not $sddSkillText.Contains('Repeat until `Spec Compliance: PASS`')) 'fp-execute-sdd still repeats review until clean without a total cap'
+
 foreach ($anchor in @(
     'Execution strategy gate'
     'Direct task execution (non-SDD)'
