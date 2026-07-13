@@ -159,6 +159,19 @@ function Test-SemanticAutoSplitTrigger([string]$text) {
     return $false
 }
 
+function Test-ContainsEveryAnchor([string]$text, [string[]]$anchors) {
+    foreach ($anchor in $anchors) {
+        if (-not $text.Contains($anchor)) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Test-ObsoleteSemanticFirstGuidance([string]$text) {
+    return $text -match '(?i)semantic-first' -or $text.Contains('语义优先')
+}
+
 function Test-ForbiddenBroadPrdAutoTrigger([string]$text) {
     $plain = [regex]::Replace($text, '[`*_]', '')
     $broadIntent = '(?i)(?:rough\s+(?:idea|requirement)|product\s+idea|pain\s+point|feature\s+request|user\s+story|\u4EA7\u54C1\u60F3\u6CD5|\u529F\u80FD\u8BF7\u6C42|\u7528\u6237\u6545\u4E8B|\u75DB\u70B9|\u7C97\u7565\u9700\u6C42|\u534A\u6210\u54C1\u9700\u6C42)'
@@ -248,10 +261,38 @@ $publicSurfaces = @(
     [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
     [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = [string]$codexPlugin.interface.longDescription }
 )
-foreach ($surface in $publicSurfaces) {
-    Assert-Condition ($surface.Text.Contains('compact-first') -or $surface.Text.Contains('紧凑优先')) "$($surface.Name) is missing compact-first artifact guidance"
-    Assert-Condition ($surface.Text.Contains('Chinese by default') -or $surface.Text.Contains('默认使用中文')) "$($surface.Name) is missing default Chinese process-document guidance"
-    Assert-Condition (-not $surface.Text.Contains('semantic-first')) "$($surface.Name) retains obsolete semantic-first public guidance"
+$publicContractExpectations = @{
+    'AGENTS.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    'README.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    'docs\user_guide\init-prd-start.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    '.codex-plugin\plugin.json interface.longDescription' = @(
+        'small is the default within 500 lines and 30,000 characters'
+        'split requires an expected hard-limit overflow, explicit user approval, or an explicit target-project setting'
+        'Process-document prose is Chinese by default'
+        'necessary code and exact technical/schema terms'
+        'A current explicit user language instruction overrides the target-project setting'
+    )
 }
 $publicArtifactAnchors = @(
     'compact-first'
@@ -267,6 +308,21 @@ $publicArtifactAnchors = @(
     'two-end-only'
     'no read-only compatibility'
 )
+$fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split."
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) 'public auto-split mutation fixture lost a shared public artifact anchor'
+Assert-Condition (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation) 'semantic auto-split detector accepts a full-anchor public surface with an appended multi-subsystem split rule'
+$missingSemanticScopesMutation = $publicSurfaces[0].Text.Replace('功能、子系统、页面区域、任务组或 ', '')
+Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['AGENTS.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`n语义优先")) 'obsolete guidance detector misses Chinese 语义优先 wording'
+foreach ($surface in $publicSurfaces) {
+    foreach ($anchor in $publicContractExpectations[$surface.Name]) {
+        Assert-Condition ($surface.Text.Contains($anchor)) "$($surface.Name) is missing the public compact-first/process-language contract: $anchor"
+    }
+    Assert-Condition (-not (Test-SemanticAutoSplitTrigger $surface.Text)) "$($surface.Name) retains a semantic auto-split trigger"
+    Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $surface.Text)) "$($surface.Name) retains obsolete semantic-first/语义优先 public guidance"
+}
 Assert-Condition (Test-ForbiddenBroadPrdAutoTrigger 'A rough idea automatically triggers fp-prd.') 'broad PRD auto-trigger detector misses rough ideas'
 Assert-Condition (Test-ForbiddenBroadPrdAutoTrigger 'Use fp-prd whenever the user provides a product idea, pain point, or feature request.') 'broad PRD auto-trigger detector misses product/pain/feature intent'
 Assert-Condition (-not (Test-ForbiddenBroadPrdAutoTrigger 'An ordinary product idea or pain point does not automatically trigger fp-prd; use it only for explicit PRD-authoring intent.')) 'broad PRD auto-trigger detector rejects an explicit negative contract'
@@ -532,9 +588,28 @@ foreach ($entry in @(
         Assert-Condition ($entry.Text.Contains($anchor)) "$($entry.Name) is missing its canonical frontend resolution or unique-owner contract: $anchor"
     }
 }
-foreach ($anchor in @('mutually exclusive form', 'backend.md', 'backend/00-index.md', 'frontend.md', 'frontend/00-index.md', '500 lines', '30,000 characters')) {
+$brainstormCommandContractAnchors = @(
+    'mutually exclusive form'
+    'backend.md'
+    'backend/00-index.md'
+    'frontend.md'
+    'frontend/00-index.md'
+    '默认预选 small form'
+    '500 lines'
+    '30,000 characters'
+    '用户明确批准'
+    '目标项目设置明确要求'
+    '语义边界仅用于拆分后的分片'
+    '过程文档叙述性内容默认使用中文'
+    '保留必要英文'
+)
+foreach ($anchor in $brainstormCommandContractAnchors) {
     Assert-Condition ($brainstormCommand.Contains($anchor)) "fp-brainstorm command checksum is missing: $anchor"
 }
+$regressedBrainstormCommand = $brainstormCommand.Replace('用户明确批准', '')
+Assert-Condition (-not (Test-ContainsEveryAnchor $regressedBrainstormCommand $brainstormCommandContractAnchors)) 'fp-brainstorm regression fixture without the explicit user split gate still satisfies the command contract'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger $brainstormCommand)) 'fp-brainstorm command retains a semantic auto-split trigger'
+Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $brainstormCommand)) 'fp-brainstorm command retains obsolete semantic-first/语义优先 guidance'
 
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'Keep the stable entrypoint summary and write details to design/frontend/00-index.md.') 'dual-form recipe detector misses the former stable-summary split recipe'
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'design/frontend/00-index.md lists fragments; design/frontend.md links the end-local index.') 'dual-form recipe detector misses the former index-linking recipe'
