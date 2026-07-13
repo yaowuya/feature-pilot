@@ -47,7 +47,7 @@ Small form: fp-docs/changes/<slug>/tasks/plan-frontend.md
 Split form: fp-docs/changes/<slug>/tasks/frontend/00-index.md plus indexed fragments
 ```
 
-The two forms are mutually exclusive. Small form keeps the complete logical plan and all executable tasks in `plan-frontend.md`; it does not create `tasks/frontend/`. Split form writes only the end directory and must not create or retain `plan-frontend.md`. Select split form directly when independently readable page areas, task groups, or ownership domains exist, or when any proposed Markdown file exceeds 500 lines or 30,000 characters. Every produced file must stay within both hard limits.
+The two forms are mutually exclusive. Small form keeps the complete logical plan and all executable tasks in `plan-frontend.md`; it does not create `tasks/frontend/`. Split form writes only the end directory and must not create or retain `plan-frontend.md`. For this end-local plan, default to the small form while the complete plan is expected to fit within 500 lines and 30,000 characters. Select split form only when the small plan is expected to exceed either limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Task groups, page areas, and ownership domains define fragments only after split form has been selected. A representation in which any produced Markdown file exceeds 500 lines or 30,000 characters is invalid; every produced file must stay within both hard limits.
 
 For split form, use semantic task-kind fragments rather than mechanically cutting a monolith:
 

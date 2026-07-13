@@ -133,7 +133,7 @@ Before `fp-prd` writes either PRD form or `prototype.html`, confirm every decisi
 - High-risk error handling and fallback behavior.
 - Whether an HTML prototype is needed; what source it should follow; and which simple interactions `prototype.html` must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
 - Acceptance criteria and core test scenarios.
-- PRD form and split strategy for multi-change input: compact `prd.md` or mutually exclusive `prd/00-index.md` plus a fragment manifest, with complete feature blocks kept together on semantic boundaries.
+- PRD form and split strategy for multi-change input: for form selection, default to the small form in compact `prd.md` when the complete logical artifact is expected to stay within 500 lines and 30,000 characters. Use mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves, and complete feature blocks stay together on semantic boundaries.
 - Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
 
 ## Prototype-first Interview

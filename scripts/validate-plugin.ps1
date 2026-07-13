@@ -403,6 +403,51 @@ foreach ($entry in $requirementProducerContracts.GetEnumerator()) {
     }
 }
 
+$compactFirstFiles = @(
+    'skills\fp-prd\SKILL.md',
+    'skills\fp-prd\prd-template.md',
+    'skills\fp-prd-grill-me\SKILL.md',
+    'skills\fp-propose\SKILL.md',
+    'skills\fp-propose\proposal-template.md',
+    'skills\fp-brainstorm\SKILL.md',
+    'skills\fp-brainstorm\design-template.md',
+    'skills\fp-figma\SKILL.md',
+    'skills\fp-plan\SKILL.md',
+    'skills\fp-plan-backend\SKILL.md',
+    'skills\fp-plan-frontend\SKILL.md'
+)
+foreach ($relativePath in $compactFirstFiles) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    Assert-Condition ($text.Contains('default to the small form') -or $text.Contains('默认选择 small form')) "$relativePath is missing compact-first form selection"
+}
+
+$chineseProcessFiles = @(
+    'skills\fp-prd\prd-template.md',
+    'skills\fp-propose\proposal-template.md',
+    'skills\fp-brainstorm\design-template.md',
+    'skills\fp-plan-backend\plan-template.md',
+    'skills\fp-plan-frontend\plan-template.md',
+    'skills\fp-review\final-review-template.md',
+    'skills\fp-archive\SKILL.md'
+)
+foreach ($relativePath in $chineseProcessFiles) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    Assert-Condition ($text.Contains('叙述性内容默认使用中文')) "$relativePath is missing the default Chinese output reminder"
+}
+
+$obsoleteAutoSplitPatterns = @(
+    'Use split form for multiple independently readable',
+    'Select split form directly when independently readable',
+    '内容有多个可独立阅读的 feature',
+    'confirmed content has multiple independently readable'
+)
+foreach ($relativePath in $compactFirstFiles) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    foreach ($pattern in $obsoleteAutoSplitPatterns) {
+        Assert-Condition (-not $text.Contains($pattern)) "$relativePath retains obsolete semantic auto-split wording: $pattern"
+    }
+}
+
 $designArtifactContracts = @{
     'skills\fp-brainstorm\SKILL.md' = '../_shared/artifact-layout.md'
     'skills\fp-brainstorm\design-template.md' = '../_shared/artifact-layout.md'

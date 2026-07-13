@@ -30,7 +30,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 Figma writes the chosen frontend file OR the frontend directory fragments and index, never both representations.
 
-写入前沿用 `fp-brainstorm` 已确认的 form；若尚未选择，内容有多个可独立阅读的 page area 或 ownership domain 时选择 split，否则选择 small。任何 index 或 fragment 不得超过 **500 lines** 或 **30,000 characters**，越过任一 hard fallback limit 都必须继续按语义拆分，不得先写 monolith 再机械切割。
+写入前沿用 `fp-brainstorm` 已确认的 form；若尚未选择，默认选择 small form。只有预计 small form 超过 500 行或 30,000 字符、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分；多个 feature、subsystem、page area 或 ownership domain 仅用于已选 split form 的分片边界，不单独触发拆分。任何 index 或 fragment 不得超过 **500 lines** 或 **30,000 characters**，越过任一 hard fallback limit 都必须继续按语义拆分，不得先写 monolith 再机械切割。
 
 ### No orphan fragment writes
 

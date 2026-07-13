@@ -7,6 +7,8 @@ Read `../_shared/artifact-layout.md` before writing. Select one mutually exclusi
 - **Small form:** `tasks/plan-backend.md` owns the complete logical template below in section order.
 - **Split form:** `tasks/backend/00-index.md` owns only the `Order / File / Kind / Owns` manifest. A `context` fragment owns Header, Global Constraints, and file structure; an `interface` fragment owns Backend Interface Ledger; one or more `tasks` fragments own the executable TDD tasks; a `coverage` fragment owns Coverage Matrix. Do not create `tasks/plan-backend.md` in split form.
 
+叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段以及本模板要求精确匹配的英文 schema 标题保留必要英文。若用户或目标项目设置明确指定其他语言，按共享优先级执行。
+
 Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-kind fragment may contain the task checkbox from the Task section; index, context, interface, and coverage files never contain executable task checkboxes. Across task fragments, `backend-NNN` IDs remain unique and continue without resetting.
 
 ## Header
