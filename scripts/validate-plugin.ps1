@@ -456,6 +456,23 @@ foreach ($anchor in $sddReviewAnchors) {
 Assert-Condition (-not $sddSkillText.Contains('fixes loop until reviewed clean')) 'fp-execute-sdd still promises an unbounded clean-review loop'
 Assert-Condition (-not $sddSkillText.Contains('Repeat until `Spec Compliance: PASS`')) 'fp-execute-sdd still repeats review until clean without a total cap'
 
+$taskReviewerPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\task-reviewer-prompt.md')
+$fixPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\fix-prompt.md')
+foreach ($anchor in @(
+    'Review attempt: {REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}'
+    'Potential main-flow impact evidence'
+    'The controller, not the reviewer, decides whether a failed finding blocks the main flow'
+)) {
+    Assert-Condition ($taskReviewerPrompt.Contains($anchor)) "task reviewer prompt is missing bounded review context: $anchor"
+}
+foreach ($anchor in @(
+    'Review attempt that produced these findings: {LAST_COMPLETED_REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}'
+    'A fixer may be dispatched only after review attempt 1 or 2 of 3'
+    'Do not request or imply a fourth review'
+)) {
+    Assert-Condition ($fixPrompt.Contains($anchor)) "fix prompt is missing bounded review context: $anchor"
+}
+
 foreach ($anchor in @(
     'Execution strategy gate'
     'Direct task execution (non-SDD)'
