@@ -43,7 +43,7 @@ Record the resolved canonical entries, ordered fragments, task owners, and struc
 3. 按顺序为每个任务执行（TDD 流程）。
 4. 测试失败时：最多重试 3 次。
 5. 重试 3 次仍失败：**降级为半自动**，通知用户："任务 <task-id> 需要人工介入"，并在 ledger 中记录 BLOCKED。
-6. 全部完成后：输出执行报告，提示运行 `fp archive` 或 `/fp-archive`。
+6. 全部任务完成后：先完成下方 final review scope；final review 通过或第 3 次后只剩已记录的非阻断 review debt，才输出执行报告并提示运行 `fp archive` 或 `/fp-archive`。
 
 ## 执行状态目录
 
@@ -136,6 +136,16 @@ Base SHA: <执行开始时的 git sha>
 8. **更新 checkbox**：review 通过，或第 3 次后仅剩非阻断 review debt 时，标记任务为完成；存在主流程阻断时保持未勾选。
 9. **提交代码**：按任务提交；提交信息与任务交付行为一致。
 10. **更新 ledger**：追加任务完成记录，包含 commit 范围、验证命令、结果和残余风险。
+
+## Final Review Scope
+
+- 全部 task-owner checkbox 已按任务 review 结果对账后，加载 `fp-review`，创建独立于各任务的 final review scope；final review scope 最多执行 3 次 review，首次 final review 计为第 1 次。
+- verdict 映射：`PASS` 成功结束；`PASS_WITH_NOTES` 结束 final review scope并记录非阻断 review debt；`FAIL` 是一次未通过；`BLOCKED` 作为主流程阻断立即暂停，直到缺失决定或不安全前置条件解决。
+- severity 映射：`Critical` 保持 Critical；`High` 映射为 Important 且属于主流程阻断；`Medium` 映射为 Important；`Low` 映射为 Minor。Medium 只有符合上方主流程阻断条件时才阻塞，否则可以记录为 final review debt；Low 单独不阻塞。
+- attempt 1 或 2 为 `FAIL` 时，把精确 finding、review 路径和映射结果追加到 ledger，只在当前上下文中修复这些 finding，重跑要求的验证，记录修复证据，将同一 final scope 的 attempt 加 1 后重新运行 `fp-review`。
+- attempt 3 仍为 `FAIL` 时停止自动修复：非主流程 finding 逐项进入 final review debt；任何主流程阻断保持 `BLOCKED` 并阻止完成或归档；不得执行第 4 次 final review。
+- 恢复执行时从 ledger 恢复已有 final review attempt、最新 review 路径、verdict/severity 映射和未解决 findings；换 finding、reviewer、fix commit、会话、compaction 或 restart 都不能重置 final scope。
+- final review 不会仅因再次报告已有 task review debt 就重置或重开对应 task review scope。
 
 ## 项目约束
 

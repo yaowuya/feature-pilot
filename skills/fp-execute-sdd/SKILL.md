@@ -281,6 +281,8 @@ Reviewer rules:
 
 Each task review scope has a maximum of three reviews. The initial review is attempt 1. A failed attempt 1 or 2 may dispatch one fresh serial fixer followed by the next review. After failed attempt 3, the controller must not dispatch a fourth review or another automatic fixer.
 
+Every non-pass result at attempt 1 or 2 must transition to the next attempt. If the reviewer reports `CANNOT VERIFY FROM DIFF` without a Critical/Important code finding, the controller must append the exact missing evidence to the ledger, repair the code, review package, or missing evidence as applicable, regenerate the package, increment the same scope's attempt, and dispatch the next reviewer. Use a fixer only when source or test changes are required; controller-owned package/evidence repair does not need a fixer. The controller must not repeat the same attempt, accept the task prematurely, or defer an evidence-only failure as review debt before attempt 3.
+
 For attempt 1 or 2 with any Critical or Important finding:
 1. Append a ledger `review_attempt` event with the exact findings, counts, review path, and failed disposition.
 2. Dispatch one fresh serial fixer with `fix-prompt.md` for only those findings.
@@ -315,10 +317,14 @@ After every task has either passed review or reached attempt 3 with only recorde
 1. Ensure every completed task's unique owner checkbox is checked and no summary/index file contains a task checkbox.
 2. Ensure ledger has no unresolved `BLOCKED` or main-flow blocker; every other unresolved finding must appear under `Review Debt`.
 3. Ensure Minor findings are fixed or explicitly deferred.
-4. Start an independent final review scope at attempt 1. If `fp-review` exists, use it. If not, create a final review package in `.fp-execute/packages/final-review-package.md` and dispatch `task-reviewer-prompt.md` at whole-change scope with the same read-only rules.
-5. The final review scope also has a maximum of three reviews. The initial review is attempt 1; failed attempt 1 or 2 may run one serial fix then the next review. At failed attempt 3, record non-blocking findings as final review debt, but keep any main-flow blocker `BLOCKED` and prevent completion or archive. The controller must not dispatch a fourth review.
-6. Final review never resets or reopens a completed task review scope merely because it reports an existing review debt item.
-7. Only then produce the final execution report.
+4. Create or refresh `.fp-execute/packages/final-review-package.md`, then start an independent final review scope at attempt 1. If `fp-review` exists, use it with the package and resolved artifacts as inputs. Otherwise dispatch `task-reviewer-prompt.md` at whole-change scope with the same read-only rules. Persist every final review result and path in the ledger.
+5. Final verdict mapping: `PASS` ends the scope successfully. `PASS_WITH_NOTES` ends the final review scope with non-blocking review debt and requires every note to be recorded. `FAIL` is a failed final review attempt. `BLOCKED` is a main-flow blocker and pauses without another automatic fixer/reviewer until its missing decision or unsafe prerequisite is resolved.
+6. Final severity mapping: `Critical` stays Critical; `High` maps to Important and is a main-flow blocker; `Medium` maps to Important; `Low` maps to Minor. A mapped Medium is blocking only when it meets the same observable main-flow conditions used for task review; otherwise it may become final review debt. A mapped Low never blocks alone.
+7. After `FAIL` at attempt 1 or 2, dispatch `fix-prompt.md` with `Review scope: final`, the completed attempt, final package, final review report, resolved proposal/design/plan context, exact mapped findings, and `.fp-execute/reports/final-review-fixes.md`. For final review scope the fixer may touch multiple completed-task files only when required by those exact findings. Regenerate the final package, increment the same final scope's attempt, and run the next final review.
+8. The final review scope has a maximum of three reviews. The initial review is attempt 1. At failed attempt 3, record mapped non-blocking findings as final review debt, but keep any main-flow blocker `BLOCKED` and prevent completion or archive. The controller must not dispatch a fourth review.
+9. On resume, restore the recorded final review attempt, latest package/review paths, verdict mapping, and unresolved findings from the ledger. A new reviewer, finding, fix commit, session, compaction, or restart does not reset the final scope.
+10. Final review never resets or reopens a completed task review scope merely because it reports an existing review debt item.
+11. Only then produce the final execution report.
 
 Final report must include:
 - Completed tasks.

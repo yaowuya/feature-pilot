@@ -455,6 +455,15 @@ foreach ($anchor in $sddReviewAnchors) {
 }
 Assert-Condition (-not $sddSkillText.Contains('fixes loop until reviewed clean')) 'fp-execute-sdd still promises an unbounded clean-review loop'
 Assert-Condition (-not $sddSkillText.Contains('Repeat until `Spec Compliance: PASS`')) 'fp-execute-sdd still repeats review until clean without a total cap'
+$sddFixLoopSection = [regex]::Match($sddSkillText, '(?s)## Fix Loop\s*(?<body>.*?)\s*## Model Selection')
+Assert-Condition ($sddFixLoopSection.Success) 'fp-execute-sdd Fix Loop section is missing'
+foreach ($anchor in @(
+    'Every non-pass result at attempt 1 or 2 must transition to the next attempt'
+    'repair the code, review package, or missing evidence'
+    'must not repeat the same attempt'
+)) {
+    Assert-Condition ($sddFixLoopSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd is missing an evidence-only failure transition: $anchor"
+}
 
 $taskReviewerPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\task-reviewer-prompt.md')
 $fixPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\fix-prompt.md')
@@ -469,8 +478,26 @@ foreach ($anchor in @(
     'Review attempt that produced these findings: {LAST_COMPLETED_REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}'
     'A fixer may be dispatched only after review attempt 1 or 2 of 3'
     'Do not request or imply a fourth review'
+    'Review scope: {REVIEW_SCOPE}'
+    'For final review scope'
+    'may touch multiple completed-task files'
 )) {
     Assert-Condition ($fixPrompt.Contains($anchor)) "fix prompt is missing bounded review context: $anchor"
+}
+
+$sddFinalReviewSection = [regex]::Match($sddSkillText, '(?s)## Completion and Final Review\s*(?<body>.*?)\s*## Invariant recap')
+Assert-Condition ($sddFinalReviewSection.Success) 'fp-execute-sdd final review section is missing'
+foreach ($anchor in @(
+    'Final verdict mapping'
+    '`PASS_WITH_NOTES` ends the final review scope with non-blocking review debt'
+    '`FAIL` is a failed final review attempt'
+    '`BLOCKED` is a main-flow blocker'
+    'Final severity mapping'
+    '`Critical` stays Critical; `High` maps to Important and is a main-flow blocker; `Medium` maps to Important; `Low` maps to Minor'
+    'restore the recorded final review attempt'
+    'Review scope: final'
+)) {
+    Assert-Condition ($sddFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd final review mapping is incomplete: $anchor"
 }
 
 foreach ($anchor in @(
@@ -487,6 +514,17 @@ foreach ($anchor in @(
 }
 Assert-Condition ($startSkillText.Contains('Ask this gate only after the user explicitly selects SDD')) 'fp-start must not ask the SDD continuation gate before SDD is selected'
 Assert-Condition (-not ($startSkillText.Contains('根据计划规模选择执行 skill'))) 'fp-start must not auto-select an executor from plan size'
+$startExecutionSection = [regex]::Match($startSkillText, '(?s)## 阶段 4：执行任务\s*(?<body>.*?)\s*## 最终汇报')
+Assert-Condition ($startExecutionSection.Success) 'fp-start execution section is missing'
+foreach ($anchor in @(
+    'after a task passes review or reaches attempt 3 with only non-blocking review debt'
+    'a main-flow blocker remains after review attempt 3'
+    'selected executor owns a final review scope with a maximum of three reviews'
+)) {
+    Assert-Condition ($startExecutionSection.Groups['body'].Value.Contains($anchor)) "fp-start is missing bounded review integration: $anchor"
+}
+Assert-Condition (-not $startExecutionSection.Groups['body'].Value.Contains('after a clean task')) 'fp-start still requires an unbounded clean task before automatic continuation'
+Assert-Condition (-not $startExecutionSection.Groups['body'].Value.Contains('review 发现 Critical/Important、')) 'fp-start still pauses on every Critical/Important review before the bounded controller classifies it'
 
 foreach ($anchor in @(
     'Step-confirmation SDD'
@@ -919,6 +957,18 @@ $executeReviewAnchors = @(
 )
 foreach ($anchor in $executeReviewAnchors) {
     Assert-Condition ($executeSkill.Contains($anchor)) "fp-execute is missing bounded review contract: $anchor"
+}
+$executeFinalReviewSection = [regex]::Match($executeSkill, '(?s)## Final Review Scope\s*(?<body>.*?)\s*## 项目约束')
+Assert-Condition ($executeFinalReviewSection.Success) 'fp-execute final review scope is missing'
+foreach ($anchor in @(
+    'final review scope 最多执行 3 次 review'
+    '首次 final review 计为第 1 次'
+    '`PASS_WITH_NOTES` 结束 final review scope并记录非阻断 review debt'
+    '`Critical` 保持 Critical；`High` 映射为 Important 且属于主流程阻断；`Medium` 映射为 Important；`Low` 映射为 Minor'
+    '不得执行第 4 次 final review'
+    '恢复已有 final review attempt'
+)) {
+    Assert-Condition ($executeFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute final review contract is incomplete: $anchor"
 }
 Assert-Condition ($backendPlanSkill.Contains('tasks/backend/00-index.md') -and $backendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-backend is missing indexed large-plan splitting'
 Assert-Condition ($frontendPlanSkill.Contains('tasks/frontend/00-index.md') -and $frontendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-frontend is missing indexed large-plan splitting'
