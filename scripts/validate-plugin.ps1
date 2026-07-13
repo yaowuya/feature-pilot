@@ -877,6 +877,17 @@ foreach ($consumer in @('fp-start', 'fp-plan', 'fp-execute', 'fp-execute-sdd', '
 
 $executeSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute\SKILL.md')
 $archiveSkill = Read-Utf8 (Join-Path $root 'skills\fp-archive\SKILL.md')
+$executeReviewAnchors = @(
+    '单个任务步骤最多执行 3 次 review'
+    '首次 review 计为第 1 次'
+    '不得执行第 4 次 review'
+    'review debt'
+    '主流程阻断'
+    '恢复已有 review attempt'
+)
+foreach ($anchor in $executeReviewAnchors) {
+    Assert-Condition ($executeSkill.Contains($anchor)) "fp-execute is missing bounded review contract: $anchor"
+}
 Assert-Condition ($backendPlanSkill.Contains('tasks/backend/00-index.md') -and $backendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-backend is missing indexed large-plan splitting'
 Assert-Condition ($frontendPlanSkill.Contains('tasks/frontend/00-index.md') -and $frontendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-frontend is missing indexed large-plan splitting'
 Assert-Condition ($backendPlanSkill.Contains('exactly once') -and $frontendPlanSkill.Contains('exactly once')) 'task plan producers must own each executable task checkbox exactly once'

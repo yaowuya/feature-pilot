@@ -74,8 +74,14 @@ Base SHA: <执行开始时的 git sha>
 ## Blocked
 - None
 
+## Review Debt
+- None
+
 ## Notes
 - <Minor findings or follow-up notes>
+
+## Events
+- <ISO time> review_attempt task=<task-id> attempt=1/3 verdict=PASS critical=0 important=0 minor=0 review=inline
 ```
 
 规则：
@@ -84,6 +90,8 @@ Base SHA: <执行开始时的 git sha>
 - ledger 显示 complete 但 checkbox 未勾选时，不要盲目重做，也不得直接宣告完成；检查 owner file、`git log`、实际文件和验证结果，确认已完成则补勾 checkbox，未完成则修正 ledger 并继续任务。反向冲突同样先核验。
 - 每完成一个任务，必须在同一次收尾中更新 checkbox、追加 ledger、记录验证命令和 commit 范围；仅当两端都存在时从 owner files 重算 overview progress counts。overview 计数与 owner 冲突时直接重算，不把计数当独立状态。
 - 如果任务 BLOCKED，记录阻塞原因、已尝试命令和下一步需要的人工决策。
+- 每次 review 后追加 `review_attempt` event，记录 task、attempt、verdict、Critical / Important / Minor 数量、review 路径或 `inline` 以及处理结论；未通过点必须逐项保留，不能只记录数量。
+- 恢复执行时从 ledger 恢复已有 review attempt；换 finding、reviewer、fixer、commit、会话或中断恢复都不能重置同一任务的计数。
 
 ## Resolved requirement and design context
 
@@ -106,6 +114,16 @@ Base SHA: <执行开始时的 git sha>
 
 如果扫描通过，继续执行；如果发现冲突，必须一次性汇总所有冲突，等待用户决策或先修正计划后再执行。
 
+## Review 次数与上限（每个任务）
+
+- 单个任务步骤最多执行 3 次 review，首次 review 计为第 1 次。
+- 第 1 或第 2 次 review 未通过时，先把 Critical / Important 未通过点追加到 ledger，再做一次定向修复并进入下一次 review。
+- 第 3 次 review 仍未通过时，停止该任务的 review/fix 循环，不得执行第 4 次 review，也不得再自动派生一次未验证的修复。
+- 达到上限后，把所有未通过点、严重级别、review 路径和处理结论记录为 review debt；不影响主流程时允许同步 task-owner checkbox，并按当前 semi/full 模式继续。
+- Critical、核心验收不可用、安全/权限/数据风险、阻断下游的外部契约、必需构建或核心测试失败、需要修改批准范围或新增产品/架构/安全决策，均属于主流程阻断；此时记录 `BLOCKED`，不勾选 checkbox，并暂停请求用户决策。
+- `CANNOT VERIFY FROM DIFF` 或缺少验证证据按未通过处理；第 3 次时依据缺失证据是否影响主流程进入 review debt 或 `BLOCKED`。
+- 从 `progress.md` 恢复已有 review attempt；不得因换 finding、reviewer、fixer、commit、会话或恢复执行而重置计数。
+
 ## TDD 执行流程（每个任务）
 
 1. **读取任务**：从解析出的唯一 task-owner file 获取任务描述、`Files`、`Reasoning`、`Depends on`、`Interfaces` 和验收标准；如果是前端任务，必须同时读取并严格兑现任务中的 `Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`。
@@ -114,8 +132,8 @@ Base SHA: <执行开始时的 git sha>
 4. **运行测试**：验证测试确实失败，并记录命令和关键失败输出。
 5. **写最小实现**：让测试通过的最少代码，不顺手重构无关内容。
 6. **运行测试**：验证目标测试通过；必要时运行相关 lint/build/类型检查/浏览器视觉验证。
-7. **代码审查**：做 inline 自审，检查命名、结构、代码风格、契约一致性、前端视觉约束；发现 Critical/Important 问题必须先修复。
-8. **更新 checkbox**：标记任务为完成。
+7. **代码审查**：做 inline 自审，检查命名、结构、代码风格、契约一致性、前端视觉约束；按上方 review attempt 规则记录、定向修复或在第 3 次后分类，不得无限重审。
+8. **更新 checkbox**：review 通过，或第 3 次后仅剩非阻断 review debt 时，标记任务为完成；存在主流程阻断时保持未勾选。
 9. **提交代码**：按任务提交；提交信息与任务交付行为一致。
 10. **更新 ledger**：追加任务完成记录，包含 commit 范围、验证命令、结果和残余风险。
 
@@ -140,6 +158,7 @@ Base SHA: <执行开始时的 git sha>
 - 测试或验证命令及结果。
 - commit sha 或 commit 范围。
 - ledger 路径。
+- review attempts，以及已记录的 review debt 或主流程阻断。
 - 是否有未解决风险。
 
 全自动模式全部完成后汇报：
@@ -147,4 +166,5 @@ Base SHA: <执行开始时的 git sha>
 - 未执行/跳过任务及原因。
 - 所有验证命令及结果。
 - progress ledger 路径。
+- review debt、主流程阻断及其处理结论。
 - 是否建议运行 `/fp-archive`。
