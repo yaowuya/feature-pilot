@@ -81,7 +81,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 
 新设计产物只允许写入 `fp-docs/changes/<slug>/design/`，不得创建或更新变更根目录下的旧 `design-backend.md` / `design-frontend.md`。
 
-- 写入前选择 form。内容有多个可独立阅读的 feature、subsystem、page area 或 ownership domain 时直接选择 split form；否则选择 small form。不要先生成 monolith 再机械切割。
+- 写入前选择 form。默认选择 small form。只有预计 small form 超过 500 行或 30,000 字符、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分；多个 feature、subsystem、page area 或 ownership domain 仅用于已选 split form 的分片边界，不单独触发拆分。不要先生成 monolith 再机械切割。
 - Small form：后端完整内容只写入 `design/backend.md`；前端完整内容只写入 `design/frontend.md`，且不得同时创建同名目录。
 - Split form：后端只写 `design/backend/00-index.md` 和 manifest 列出的编号分片，不写 `design/backend.md`；前端只写 `design/frontend/00-index.md` 和 manifest 列出的编号分片，不写 `design/frontend.md`。
 - 每个文件（包括 index 和 fragment）不得超过 **500 lines** 或 **30,000 characters**；任一硬限制将被越过时必须按语义边界继续拆分。这是 fallback limit，不是拆分目标。

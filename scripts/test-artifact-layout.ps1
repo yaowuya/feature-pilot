@@ -91,7 +91,7 @@ function New-ValidPrd {
     $pageElements = U '\u9875\u9762\u5143\u7d20'
     $prototype = U '\u539f\u578b'
     $nonFunctional = U '\u975e\u529f\u80fd\u9700\u6c42'
-    $performance = U '\u6027\u80fd\u9700\u6c42'
+    $performance = U '\u6027\u80fd\u8981\u6c42'
     $security = U '\u5b89\u5168\u9700\u6c42'
     $audit = U '\u64cd\u4f5c\u65e5\u5fd7\u8bb0\u5f55'
     $tests = U '\u6d4b\u8bd5\u5efa\u8bae'

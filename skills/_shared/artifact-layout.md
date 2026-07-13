@@ -42,10 +42,15 @@ The vertical bar above means “one form or the other”; it does not permit bot
 
 ## Split selection and safety limits
 
-A Producer selects split form before writing when confirmed content contains
-multiple independently readable features, subsystems, page areas, task groups,
-or ownership domains. Split on those semantic boundaries and write the final
-structure directly; do not generate a monolith and mechanically cut it later.
+A Producer selects one form before writing. Default to the small form whenever the complete logical artifact is expected to fit within both hard limits below.
+
+Select split form only when at least one of these conditions is true:
+
+1. the complete small form is expected to exceed 500 lines or 30,000 characters;
+2. the user explicitly approves split form; or
+3. an applicable target-project setting explicitly requires split form.
+
+The presence of multiple features, subsystems, page areas, task groups, or ownership domains does not by itself trigger split form. Once split form is selected, use those semantic boundaries to define fragments and write the final structure directly; do not generate a monolith and mechanically cut it later.
 
 Every produced Markdown file, including an index or fragment, must contain no
 more than 500 lines and no more than 30,000 characters. Crossing either limit

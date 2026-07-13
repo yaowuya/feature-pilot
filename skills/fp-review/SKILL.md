@@ -6,6 +6,7 @@ description: Use when performing a final whole-branch review of an implemented F
 
 Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `../_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
+Apply the shared `Process document language` contract when writing the final review report. This reminder does not alter the exact `PASS`, `PASS_WITH_NOTES`, `FAIL`, or `BLOCKED` verdict semantics.
 ---
 
 # FeaturePilot Final Whole-Branch Review

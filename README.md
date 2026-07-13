@@ -10,7 +10,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
 - **Prototype-first PRD 流程**：UI-heavy 或明确要求“先看原型”的需求，可先确认 prototype-blocking 问题并生成 `prototype.html`，用户确认后再沉淀 PRD。
 - **Lazy context 与 stale intel 规则**：默认只读 `fp-docs/manifest.md` 和最小相关 settings/intel；`fp-docs/intel/*` 只作为可能过期的导航线索，涉及当前实现时必须回到当前代码验证。
-- **语义优先（semantic-first）的互斥（mutually exclusive）产物形式**：PRD、proposal、单端 design 与单端 plan 在写入前直接选择小型文件或 split directory，两者不能并存；按功能、子系统、页面区域、任务组或 owner domain 拆分，每个 Markdown 文件受 500 行与 30,000 字符双重硬限制。
+- **紧凑优先（compact-first）的互斥（mutually exclusive）产物形式**：PRD、proposal、单端 design 与单端 plan 默认使用 small form；只有预计越过 500 行或 30,000 字符硬限制、用户明确批准或目标项目设置明确要求时才使用 split form。
+- **过程文档默认中文**：叙述性内容默认使用中文，代码、命令、路径、技术标识符、API 字段及精确 schema 关键词保留必要英文；当前用户明确语言指令优先于目标项目设置。
 - **Claude Code + Codex 双入口**：Claude Code 使用插件清单、命令与 Skill tool；Codex 通过 `AGENTS.md` 和 `skills/*/SKILL.md` 读取同一套阶段门禁。
 
 ## Claude Code 插件结构
@@ -148,7 +149,11 @@ FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。`fp-doc
 | Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` 加 manifest 中列出的分片 |
 | Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` 加 manifest 中列出的分片 |
 
-小型形式与拆分形式互斥。确认内容存在可独立阅读的功能、子系统、页面区域、任务组或 owner domain 时，应在写入前按语义边界直接选择拆分形式，不能先生成单体文件再机械切割。每个 Markdown 文件（包括 index 与 fragment）不得超过 500 行或 30,000 字符；超过任一硬限制就继续按语义拆分。
+产物形式采用紧凑优先（compact-first）且 small/split 互斥：预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form；只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分。功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。
+
+FeaturePilot 过程文档的叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段和契约要求精确匹配的 schema 关键词保留必要英文。当前用户明确语言指令优先于目标项目设置。
+
+每个 Markdown 文件（包括 index 与 fragment）继续执行 500 行和 30,000 字符双重硬上限；超过任一硬限制就继续按语义拆分。
 
 整体目录如下；竖线表示二选一，不允许同时生成：
 

@@ -141,6 +141,39 @@ function Test-MalformedTasksKindInlineCode([string]$text) {
     return $text -match '(?m)`<[^\r\n`]*tasks`-kind[^\r\n]*>`'
 }
 
+function Test-SemanticAutoSplitTrigger([string]$text) {
+    $plain = [regex]::Replace($text, '[`*_]', '')
+    $semanticScope = '(?i)(?:\b(?:(?:multiple|several|independently\s+readable|more\s+than\s+one)|(?:(?:two|three|four|five|six|seven|eight|nine|\d+)(?:\s+or\s+more)?))\s+(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?)\b|\bmulti[- ](?:feature|module|component|subsystem|page|area|task|domain|scope)s?\b|(?:多个|多项|若干|两个以上)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,32}(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?|功能|模块|组件|子系统|页面区域|任务组|所有权域|变更范围))'
+    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\bdefault(?:s|ed|ing)?\s+to\s+(?:the\s+)?split\s+(?:form|mode)\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|\b(?:should|must|needs?\s+to|has\s+to)\s+be\s+split\b|\bsplit\b(?=\s*(?:$|,|\b(?:whenever|when|if|the|this|that|into|across)\b))|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|拆分|分片)'
+    $allowedCondition = '(?i)(?:(?:the\s+)?user\s+explicitly\s+approves(?:\s+(?:it|split\s+form))?|(?:an\s+)?applicable\s+target-project\s+setting\s+explicitly\s+requires(?:\s+(?:it|split\s+form))?|(?:the\s+)?small\s+(?:form|plan)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,80}(?:exceed(?:s)?\s+(?:either\s+(?:hard\s+)?limit|500\s+lines[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}30,000\s+characters)))'
+    $allowedSplitGate = "(?i)\b(?:can\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\s+only\s+(?:when|if)\s+$allowedCondition"
+    $negatedSplit = '(?i)(?:\b(?:do\s+not|does\s+not|must\s+not|never)\b[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,100}(?:split\s+form|trigger|force|require|select|choose|use)|\bonly\s+after\s+split\s+form\s+has\s+been\s+selected\b|(?:不|不会|不得|不能|无需|不应)[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:触发|强制|要求|选择|使用|拆分|分片)|仅用于[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:已选\s*split\s+form|分片边界))'
+    $chinesePostSplitNonTrigger = '(?:多个)?功能、子系统、页面区域、任务组或\s+ownership\s+domain\s+只用于拆分后的语义边界[，,]\s*不单独触发拆分'
+    $plain = [regex]::Replace($plain, $chinesePostSplitNonTrigger, ' NEGATED_SPLIT_CLAUSE ')
+
+    foreach ($clause in [regex]::Split($plain, '(?:\r?\n|[;.!?\u3002\uFF1B\uFF01\uFF1F])')) {
+        $affirmativeClause = [regex]::Replace($clause, $allowedSplitGate, ' ALLOWED_SPLIT_GATE ')
+        $affirmativeClause = [regex]::Replace($affirmativeClause, $negatedSplit, ' NEGATED_SPLIT_CLAUSE ')
+        if ($affirmativeClause -match $semanticScope -and $affirmativeClause -match $affirmativeSplit) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Test-ContainsEveryAnchor([string]$text, [string[]]$anchors) {
+    foreach ($anchor in $anchors) {
+        if (-not $text.Contains($anchor)) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Test-ObsoleteSemanticFirstGuidance([string]$text) {
+    return $text -match '(?i)semantic-first' -or $text.Contains('语义优先')
+}
+
 function Test-ForbiddenBroadPrdAutoTrigger([string]$text) {
     $plain = [regex]::Replace($text, '[`*_]', '')
     $broadIntent = '(?i)(?:rough\s+(?:idea|requirement)|product\s+idea|pain\s+point|feature\s+request|user\s+story|\u4EA7\u54C1\u60F3\u6CD5|\u529F\u80FD\u8BF7\u6C42|\u7528\u6237\u6545\u4E8B|\u75DB\u70B9|\u7C97\u7565\u9700\u6C42|\u534A\u6210\u54C1\u9700\u6C42)'
@@ -206,11 +239,17 @@ $sharedText = Read-Utf8 $sharedPath
 foreach ($anchor in @('target repository root', 'fp-docs/manifest.md', 'smallest relevant', 'stale-prone', 'Current code', 'Approved PRD', 'Only `fp-init`', '`fp-archive`')) {
     Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing: $anchor"
 }
+foreach ($anchor in @('Process document language', 'Chinese by default', 'current explicit user instruction', 'target-project setting', 'necessary English')) {
+    Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing process-document language rule: $anchor"
+}
 
 Assert-Condition (Test-Path $artifactLayoutPath) 'shared artifact-layout contract is missing'
 $artifactLayoutText = Read-Utf8 $artifactLayoutPath
 foreach ($anchor in @('500 lines', '30,000 characters', 'mutually exclusive', '| Order | File | Kind | Owns |', 'prd/00-index.md', 'proposal/00-index.md', 'design/backend/00-index.md', 'design/frontend/00-index.md', 'tasks/backend/00-index.md', 'tasks/frontend/00-index.md', 'Producer', 'Consumer')) {
     Assert-Condition ($artifactLayoutText.Contains($anchor)) "shared artifact-layout contract is missing: $anchor"
+}
+foreach ($anchor in @('Default to the small form', 'user explicitly approves split form', 'target-project setting explicitly requires split form', 'does not by itself trigger split form')) {
+    Assert-Condition ($artifactLayoutText.Contains($anchor)) "shared artifact-layout contract is missing compact-first selection rule: $anchor"
 }
 Assert-Condition ($artifactLayoutText.Contains('Reject every dual-form combination')) 'shared artifact-layout contract is missing absolute dual-form rejection'
 Assert-Condition ($artifactLayoutText.Contains('There is no read-only compatibility mode')) 'shared artifact-layout contract must reject historical compatibility reads'
@@ -224,8 +263,41 @@ $publicSurfaces = @(
     [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
     [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = [string]$codexPlugin.interface.longDescription }
 )
+$publicContractExpectations = @{
+    'AGENTS.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    'README.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    'docs\user_guide\init-prd-start.md' = @(
+        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
+        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
+        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
+        '过程文档的叙述性内容默认使用中文'
+        '保留必要英文'
+        '当前用户明确语言指令优先于目标项目设置'
+    )
+    '.codex-plugin\plugin.json interface.longDescription' = @(
+        'small is the default within 500 lines and 30,000 characters'
+        'split requires an expected hard-limit overflow, explicit user approval, or an explicit target-project setting'
+        'Process-document prose is Chinese by default'
+        'necessary code and exact technical/schema terms'
+        'A current explicit user language instruction overrides the target-project setting'
+    )
+}
 $publicArtifactAnchors = @(
-    'semantic-first'
+    'compact-first'
     'mutually exclusive'
     '500'
     '30,000'
@@ -238,6 +310,22 @@ $publicArtifactAnchors = @(
     'two-end-only'
     'no read-only compatibility'
 )
+$fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split form."
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) 'public auto-split mutation fixture lost a shared public artifact anchor'
+$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
+Assert-Condition (-not $fullAnchorPublicContractAccepted) 'public validation predicate accepts a full-anchor surface with appended `Multiple subsystems default to split form.`'
+$missingSemanticScopesMutation = $publicSurfaces[0].Text.Replace('功能、子系统、页面区域、任务组或 ', '')
+Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['AGENTS.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`n语义优先")) 'obsolete guidance detector misses Chinese 语义优先 wording'
+foreach ($surface in $publicSurfaces) {
+    foreach ($anchor in $publicContractExpectations[$surface.Name]) {
+        Assert-Condition ($surface.Text.Contains($anchor)) "$($surface.Name) is missing the public compact-first/process-language contract: $anchor"
+    }
+    Assert-Condition (-not (Test-SemanticAutoSplitTrigger $surface.Text)) "$($surface.Name) retains a semantic auto-split trigger"
+    Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $surface.Text)) "$($surface.Name) retains obsolete semantic-first/语义优先 public guidance"
+}
 Assert-Condition (Test-ForbiddenBroadPrdAutoTrigger 'A rough idea automatically triggers fp-prd.') 'broad PRD auto-trigger detector misses rough ideas'
 Assert-Condition (Test-ForbiddenBroadPrdAutoTrigger 'Use fp-prd whenever the user provides a product idea, pain point, or feature request.') 'broad PRD auto-trigger detector misses product/pain/feature intent'
 Assert-Condition (-not (Test-ForbiddenBroadPrdAutoTrigger 'An ordinary product idea or pain point does not automatically trigger fp-prd; use it only for explicit PRD-authoring intent.')) 'broad PRD auto-trigger detector rejects an explicit negative contract'
@@ -397,6 +485,73 @@ foreach ($entry in $requirementProducerContracts.GetEnumerator()) {
     }
 }
 
+$compactFirstContracts = @{
+    'skills\fp-prd\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd\prd-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd-grill-me\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-propose\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-propose\proposal-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-brainstorm\SKILL.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-brainstorm\design-template.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-figma\SKILL.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-plan\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+    'skills\fp-plan-backend\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+    'skills\fp-plan-frontend\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+}
+$compactFirstFiles = @($compactFirstContracts.Keys)
+foreach ($relativePath in $compactFirstFiles) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    foreach ($anchor in $compactFirstContracts[$relativePath]) {
+        Assert-Condition ($text.Contains($anchor)) "$relativePath is missing compact-first contract anchor: $anchor"
+    }
+}
+
+$processLanguageContracts = @{
+    'skills\fp-prd\prd-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-propose\proposal-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-brainstorm\design-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-plan-backend\plan-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-plan-frontend\plan-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-review\SKILL.md' = 'Process document language'
+    'skills\fp-review\final-review-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-archive\SKILL.md' = '叙述性内容默认使用中文'
+}
+foreach ($relativePath in $processLanguageContracts.Keys) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    $anchor = $processLanguageContracts[$relativePath]
+    Assert-Condition ($text.Contains($anchor)) "$relativePath is missing the shared process-language reminder: $anchor"
+}
+
+$obsoleteAutoSplitPatterns = @(
+    'Use split form for multiple independently readable',
+    'Select split form directly when independently readable',
+    '内容有多个可独立阅读的 feature',
+    'confirmed content has multiple independently readable'
+)
+$plausibleAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Automatically select split form whenever multiple modules are present.'
+Assert-Condition (Test-SemanticAutoSplitTrigger $plausibleAutoSplitMutation) 'semantic auto-split detector accepts a differently worded multi-module mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple subsystems default to split form.') 'semantic auto-split detector misses exact default-to-split-form mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple subsystems default to split mode.') 'semantic auto-split detector misses exact default-to-split-mode mutation'
+$completeContractAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Use split form only when the small form exceeds either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features do not trigger split form by themselves. Split whenever there are two features.'
+Assert-Condition (Test-SemanticAutoSplitTrigger $completeContractAutoSplitMutation) 'semantic auto-split detector accepts a complete contract with an appended two-feature split rule'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple page areas mean the document should be split.') 'semantic auto-split detector accepts a should-be-split page-area mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'More than one subsystem means the document should be split.') 'semantic auto-split detector accepts a more-than-one subsystem mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger '多个模块时拆分。') 'semantic auto-split detector accepts a plain Chinese split mutation'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules do not trigger split form by themselves.')) 'semantic auto-split detector rejects valid negative trigger wording'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Task groups define fragments only after split form has been selected.')) 'semantic auto-split detector rejects valid post-selection fragment wording'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the user explicitly approves it.')) 'semantic auto-split detector rejects the explicit user-approval gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when an applicable target-project setting explicitly requires it.')) 'semantic auto-split detector rejects the explicit target-project-setting gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the small form is expected to exceed 500 lines or 30,000 characters.')) 'semantic auto-split detector rejects the hard-limit overflow gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger '多个功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。')) 'semantic auto-split detector rejects the complete Chinese post-split/non-trigger control'
+
+foreach ($relativePath in $compactFirstFiles) {
+    $text = Read-Utf8 (Join-Path $root $relativePath)
+    foreach ($pattern in $obsoleteAutoSplitPatterns) {
+        Assert-Condition (-not $text.Contains($pattern)) "$relativePath retains obsolete semantic auto-split wording: $pattern"
+    }
+    Assert-Condition (-not (Test-SemanticAutoSplitTrigger $text)) "$relativePath retains a semantic auto-split trigger"
+}
+
 $designArtifactContracts = @{
     'skills\fp-brainstorm\SKILL.md' = '../_shared/artifact-layout.md'
     'skills\fp-brainstorm\design-template.md' = '../_shared/artifact-layout.md'
@@ -439,9 +594,28 @@ foreach ($entry in @(
         Assert-Condition ($entry.Text.Contains($anchor)) "$($entry.Name) is missing its canonical frontend resolution or unique-owner contract: $anchor"
     }
 }
-foreach ($anchor in @('mutually exclusive form', 'backend.md', 'backend/00-index.md', 'frontend.md', 'frontend/00-index.md', '500 lines', '30,000 characters')) {
+$brainstormCommandContractAnchors = @(
+    'mutually exclusive form'
+    'backend.md'
+    'backend/00-index.md'
+    'frontend.md'
+    'frontend/00-index.md'
+    '默认预选 small form'
+    '500 lines'
+    '30,000 characters'
+    '用户明确批准'
+    '目标项目设置明确要求'
+    '语义边界仅用于拆分后的分片'
+    '过程文档叙述性内容默认使用中文'
+    '保留必要英文'
+)
+foreach ($anchor in $brainstormCommandContractAnchors) {
     Assert-Condition ($brainstormCommand.Contains($anchor)) "fp-brainstorm command checksum is missing: $anchor"
 }
+$regressedBrainstormCommand = $brainstormCommand.Replace('用户明确批准', '')
+Assert-Condition (-not (Test-ContainsEveryAnchor $regressedBrainstormCommand $brainstormCommandContractAnchors)) 'fp-brainstorm regression fixture without the explicit user split gate still satisfies the command contract'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger $brainstormCommand)) 'fp-brainstorm command retains a semantic auto-split trigger'
+Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $brainstormCommand)) 'fp-brainstorm command retains obsolete semantic-first/语义优先 guidance'
 
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'Keep the stable entrypoint summary and write details to design/frontend/00-index.md.') 'dual-form recipe detector misses the former stable-summary split recipe'
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'design/frontend/00-index.md lists fragments; design/frontend.md links the end-local index.') 'dual-form recipe detector misses the former index-linking recipe'

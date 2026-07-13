@@ -32,7 +32,7 @@ One logical proposal selects exactly one form before writing:
 - small: `fp-docs/changes/<slug>/proposal.md`;
 - split: `fp-docs/changes/<slug>/proposal/00-index.md` plus indexed fragments.
 
-`proposal.md` and `proposal/00-index.md` are mutually exclusive. Use split form when confirmed content has multiple independently readable change scopes, subsystems, or ownership domains, or when any Markdown file would exceed 500 lines or 30,000 characters. The split index owns only navigation and the authoritative `| Order | File | Kind | Owns |` fragment manifest. Logical concatenation in manifest order must pass logical template validation against the exact Why / What Changes / Capabilities / Out of Scope / Impact order.
+`proposal.md` and `proposal/00-index.md` are mutually exclusive. For form selection, default to the small form when the complete logical artifact is expected to stay within 500 lines and 30,000 characters. Use split form only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves. The split index owns only navigation and the authoritative `| Order | File | Kind | Owns |` fragment manifest. Logical concatenation in manifest order must pass logical template validation against the exact Why / What Changes / Capabilities / Out of Scope / Impact order.
 
 ---
 

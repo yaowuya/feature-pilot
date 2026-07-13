@@ -276,7 +276,7 @@ function Test-PrdLogicalTemplate([string]$Text) {
         ('## ' + (U '\u4e8c\u3001\u6838\u5fc3\u4e1a\u52a1\u6d41\u7a0b'))
         ('## ' + (U '\u4e09\u3001\u529f\u80fd\u9700\u6c42'))
         ('## ' + (U '\u56db\u3001\u975e\u529f\u80fd\u9700\u6c42'))
-        ('### 4.1 ' + (U '\u6027\u80fd\u9700\u6c42'))
+        ('### 4.1 ' + (U '\u6027\u80fd\u8981\u6c42'))
         ('### 4.2 ' + (U '\u5b89\u5168\u9700\u6c42'))
         ('### 4.3 ' + (U '\u64cd\u4f5c\u65e5\u5fd7\u8bb0\u5f55'))
         ('## ' + (U '\u4e94\u3001\u6d4b\u8bd5\u5efa\u8bae'))

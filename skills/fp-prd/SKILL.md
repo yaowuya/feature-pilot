@@ -129,8 +129,8 @@ At the start, choose one of two modes from user intent:
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
 5. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
 6. Select the final PRD form before writing:
-   - use `prd.md` for a compact logical PRD;
-   - use `prd/00-index.md` plus a fragment manifest and indexed fragments when confirmed content has multiple independently readable features, page areas, subsystems, or ownership domains, or when any output file would exceed 500 lines or 30,000 characters;
+   - for form selection, default to the small form in `prd.md` when the complete logical artifact is expected to stay within 500 lines and 30,000 characters;
+   - use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves;
    - preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
 6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
 7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
