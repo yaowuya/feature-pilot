@@ -206,11 +206,17 @@ $sharedText = Read-Utf8 $sharedPath
 foreach ($anchor in @('target repository root', 'fp-docs/manifest.md', 'smallest relevant', 'stale-prone', 'Current code', 'Approved PRD', 'Only `fp-init`', '`fp-archive`')) {
     Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing: $anchor"
 }
+foreach ($anchor in @('Process document language', 'Chinese by default', 'current explicit user instruction', 'target-project setting', 'necessary English')) {
+    Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing process-document language rule: $anchor"
+}
 
 Assert-Condition (Test-Path $artifactLayoutPath) 'shared artifact-layout contract is missing'
 $artifactLayoutText = Read-Utf8 $artifactLayoutPath
 foreach ($anchor in @('500 lines', '30,000 characters', 'mutually exclusive', '| Order | File | Kind | Owns |', 'prd/00-index.md', 'proposal/00-index.md', 'design/backend/00-index.md', 'design/frontend/00-index.md', 'tasks/backend/00-index.md', 'tasks/frontend/00-index.md', 'Producer', 'Consumer')) {
     Assert-Condition ($artifactLayoutText.Contains($anchor)) "shared artifact-layout contract is missing: $anchor"
+}
+foreach ($anchor in @('Default to the small form', 'user explicitly approves split form', 'target-project setting explicitly requires split form', 'does not by itself trigger split form')) {
+    Assert-Condition ($artifactLayoutText.Contains($anchor)) "shared artifact-layout contract is missing compact-first selection rule: $anchor"
 }
 Assert-Condition ($artifactLayoutText.Contains('Reject every dual-form combination')) 'shared artifact-layout contract is missing absolute dual-form rejection'
 Assert-Condition ($artifactLayoutText.Contains('There is no read-only compatibility mode')) 'shared artifact-layout contract must reject historical compatibility reads'

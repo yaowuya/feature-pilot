@@ -10,6 +10,12 @@ Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills
 4. For UI/frontend/prototype work, read relevant sections of `settings/frontend.md` and, when generating prototypes, `settings/prototype-style.md` if present.
 5. For backend/API/data/security work, read relevant sections of `settings/backend.md` if present.
 
+## Process document language
+
+- Write FeaturePilot-generated process-document prose in Chinese by default, including titles, explanations, decisions, requirements, task descriptions, acceptance text, review findings, and archive/history summaries.
+- Language precedence is: current explicit user instruction, then an explicit target-project setting, then Chinese by default. A project setting never overrides the current user's explicit language request.
+- Preserve necessary English for code, commands, file paths, package/class/function/variable names, API fields, protocol terms, standard technical terms, and schema headings or enum values that another contract requires to match exactly.
+
 ## Evidence and precedence
 
 - Generated intel is stale-prone navigation, never proof of current behavior. Revalidate exact files, contracts, commands, components, routes, permissions, and schemas from current source/config/command output.
