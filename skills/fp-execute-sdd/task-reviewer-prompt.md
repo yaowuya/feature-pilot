@@ -125,6 +125,7 @@ Your final chat response must include only:
 - Critical: data loss, security issue, broken core behavior, severe contract break, migration risk that can corrupt production state.
 - Important: missing required behavior, inadequate test proof, broken interface/contract, scope creep, frontend visual requirement not implemented, permission negative path missing.
 - Minor: naming, local maintainability, small polish, non-blocking follow-up.
+- Minor findings alone require `Code Quality: APPROVED`; do not emit `NEEDS FIXES` unless at least one Critical or Important finding justifies it. Minor findings may still be listed and `Ready for next task` may be `YES` when all other gates pass.
 
 Do not pre-dismiss an issue because the plan appears to require it. If plan-mandated behavior is defective, report it as plan-mandated.
 ```

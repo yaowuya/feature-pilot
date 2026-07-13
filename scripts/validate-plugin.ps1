@@ -441,48 +441,61 @@ $startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
 $sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
 $startCommandText = Read-Utf8 (Join-Path $root 'commands\fp-start.md')
 
-$sddReviewAnchors = @(
-    'maximum of three reviews per review scope'
-    'The initial review is attempt 1'
-    'must not dispatch a fourth review'
-    'review debt'
-    'main-flow blocker'
-    'restore the recorded review attempt'
-    'final review scope'
-)
-foreach ($anchor in $sddReviewAnchors) {
-    Assert-Condition ($sddSkillText.Contains($anchor)) "fp-execute-sdd is missing bounded review contract: $anchor"
-}
 Assert-Condition (-not $sddSkillText.Contains('fixes loop until reviewed clean')) 'fp-execute-sdd still promises an unbounded clean-review loop'
 Assert-Condition (-not $sddSkillText.Contains('Repeat until `Spec Compliance: PASS`')) 'fp-execute-sdd still repeats review until clean without a total cap'
 $sddFixLoopSection = [regex]::Match($sddSkillText, '(?s)## Fix Loop\s*(?<body>.*?)\s*## Model Selection')
 Assert-Condition ($sddFixLoopSection.Success) 'fp-execute-sdd Fix Loop section is missing'
 foreach ($anchor in @(
+    'Each task review scope has a maximum of three reviews'
+    'The initial review is attempt 1'
+    'must not dispatch a fourth review'
+    'review debt'
+    'main-flow blocker'
+    'restore the recorded review attempt'
     'Every non-pass result at attempt 1 or 2 must transition to the next attempt'
     'repair the code, review package, or missing evidence'
+    'regenerate the package'
+    "increment the same scope's attempt"
+    'dispatch the next reviewer'
     'must not repeat the same attempt'
+    'Combined task review verdict'
+    '`NEEDS FIXES` with only Minor findings is an invalid reviewer combination'
+    'dispatch a corrected fresh reviewer without a fixer'
 )) {
     Assert-Condition ($sddFixLoopSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd is missing an evidence-only failure transition: $anchor"
 }
 
 $taskReviewerPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\task-reviewer-prompt.md')
 $fixPrompt = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\fix-prompt.md')
+$taskReviewerInputs = [regex]::Match($taskReviewerPrompt, '(?s)## Inputs\s*(?<body>.*?)\s*## Review Method')
+$taskReviewerMethodAndRules = [regex]::Match($taskReviewerPrompt, '(?s)## Review Method\s*(?<body>.*?)\s*## Required Output File Format')
+$taskReviewerSeverity = [regex]::Match($taskReviewerPrompt, '(?s)## Severity Calibration\s*(?<body>.*?)\s*Do not pre-dismiss')
+Assert-Condition ($taskReviewerInputs.Success -and $taskReviewerMethodAndRules.Success -and $taskReviewerSeverity.Success) 'task reviewer prompt sections are missing'
+Assert-Condition ($taskReviewerInputs.Groups['body'].Value.Contains('Review attempt: {REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}')) 'task reviewer inputs are missing bounded review attempt context'
 foreach ($anchor in @(
-    'Review attempt: {REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}'
     'Potential main-flow impact evidence'
     'The controller, not the reviewer, decides whether a failed finding blocks the main flow'
 )) {
-    Assert-Condition ($taskReviewerPrompt.Contains($anchor)) "task reviewer prompt is missing bounded review context: $anchor"
+    Assert-Condition ($taskReviewerMethodAndRules.Groups['body'].Value.Contains($anchor)) "task reviewer method/rules are missing bounded review context: $anchor"
 }
-foreach ($anchor in @(
-    'Review attempt that produced these findings: {LAST_COMPLETED_REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}'
-    'A fixer may be dispatched only after review attempt 1 or 2 of 3'
-    'Do not request or imply a fourth review'
-    'Review scope: {REVIEW_SCOPE}'
-    'For final review scope'
-    'may touch multiple completed-task files'
-)) {
-    Assert-Condition ($fixPrompt.Contains($anchor)) "fix prompt is missing bounded review context: $anchor"
+Assert-Condition ($taskReviewerSeverity.Groups['body'].Value.Contains('Minor findings alone require `Code Quality: APPROVED`')) 'task reviewer severity section allows Minor-only NEEDS FIXES'
+
+$fixPromptContext = [regex]::Match($fixPrompt, '(?s)Model expectation:.*?(?<body>.*?)\s*## Mission')
+$fixPromptMission = [regex]::Match($fixPrompt, '(?s)## Mission\s*(?<body>.*?)\s*## Required Reading')
+$fixPromptReading = [regex]::Match($fixPrompt, '(?s)## Required Reading\s*(?<body>.*?)\s*## Required Behavior')
+$fixPromptBehavior = [regex]::Match($fixPrompt, '(?s)## Required Behavior\s*(?<body>.*?)\s*## Report Append Format')
+Assert-Condition ($fixPromptContext.Success -and $fixPromptMission.Success -and $fixPromptReading.Success -and $fixPromptBehavior.Success) 'fix prompt bounded-review sections are missing'
+foreach ($anchor in @('Review scope: {REVIEW_SCOPE}', 'Review attempt that produced these findings: {LAST_COMPLETED_REVIEW_ATTEMPT} of {MAX_REVIEW_ATTEMPTS}')) {
+    Assert-Condition ($fixPromptContext.Groups['body'].Value.Contains($anchor)) "fix prompt context is missing bounded review value: $anchor"
+}
+foreach ($anchor in @('For final review scope', 'may touch multiple completed-task files')) {
+    Assert-Condition ($fixPromptMission.Groups['body'].Value.Contains($anchor)) "fix prompt mission is missing final-scope behavior: $anchor"
+}
+foreach ($anchor in @('Task brief (task scope; controller must pass `N/A` for final scope):', 'Latest task/final review:')) {
+    Assert-Condition ($fixPromptReading.Groups['body'].Value.Contains($anchor)) "fix prompt reading section is incomplete: $anchor"
+}
+foreach ($anchor in @('A fixer may be dispatched only after review attempt 1 or 2 of 3', 'Do not request or imply a fourth review')) {
+    Assert-Condition ($fixPromptBehavior.Groups['body'].Value.Contains($anchor)) "fix prompt behavior is missing bounded review guard: $anchor"
 }
 
 $sddFinalReviewSection = [regex]::Match($sddSkillText, '(?s)## Completion and Final Review\s*(?<body>.*?)\s*## Invariant recap')
@@ -496,9 +509,12 @@ foreach ($anchor in @(
     '`Critical` stays Critical; `High` maps to Important and is a main-flow blocker; `Medium` maps to Important; `Low` maps to Minor'
     'restore the recorded final review attempt'
     'Review scope: final'
+    '`BRIEF_PATH=N/A`'
+    'fp-review is required for final review scope'
 )) {
     Assert-Condition ($sddFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd final review mapping is incomplete: $anchor"
 }
+Assert-Condition (-not $sddFinalReviewSection.Groups['body'].Value.Contains('Otherwise dispatch `task-reviewer-prompt.md` at whole-change scope')) 'fp-execute-sdd still uses a task-schema fallback for final review'
 
 foreach ($anchor in @(
     'Execution strategy gate'
@@ -947,16 +963,17 @@ foreach ($consumer in @('fp-start', 'fp-plan', 'fp-execute', 'fp-execute-sdd', '
 
 $executeSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute\SKILL.md')
 $archiveSkill = Read-Utf8 (Join-Path $root 'skills\fp-archive\SKILL.md')
-$executeReviewAnchors = @(
+$executeReviewSection = [regex]::Match($executeSkill, '(?s)## Review 次数与上限（每个任务）\s*(?<body>.*?)\s*## TDD 执行流程（每个任务）')
+Assert-Condition ($executeReviewSection.Success) 'fp-execute task review section is missing'
+foreach ($anchor in @(
     '单个任务步骤最多执行 3 次 review'
     '首次 review 计为第 1 次'
     '不得执行第 4 次 review'
     'review debt'
     '主流程阻断'
     '恢复已有 review attempt'
-)
-foreach ($anchor in $executeReviewAnchors) {
-    Assert-Condition ($executeSkill.Contains($anchor)) "fp-execute is missing bounded review contract: $anchor"
+)) {
+    Assert-Condition ($executeReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute task review section is missing bounded contract: $anchor"
 }
 $executeFinalReviewSection = [regex]::Match($executeSkill, '(?s)## Final Review Scope\s*(?<body>.*?)\s*## 项目约束')
 Assert-Condition ($executeFinalReviewSection.Success) 'fp-execute final review scope is missing'

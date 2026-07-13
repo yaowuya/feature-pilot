@@ -17,7 +17,7 @@ For task review scope, fix only the reviewer-confirmed Critical/Important findin
 
 ## Required Reading
 
-Task brief:
+Task brief (task scope; controller must pass `N/A` for final scope):
 {BRIEF_PATH}
 
 Final review resolved proposal/design/plan context (use `N/A` for task scope):
@@ -29,7 +29,7 @@ Current implementer report to append:
 Latest review package:
 {REVIEW_PACKAGE_PATH}
 
-Latest task review:
+Latest task/final review:
 {REVIEW_OUTPUT_PATH}
 
 Findings to fix:
