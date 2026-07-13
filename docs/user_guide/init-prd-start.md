@@ -230,7 +230,7 @@ fp-docs/changes/<slug>/prd/00-index.md
 
 ### 产物布局契约
 
-PRD、proposal、单端 design 与单端 plan 都采用 semantic-first、mutually exclusive 的小型/拆分二选一规则：
+PRD、proposal、单端 design 与单端 plan 都采用 compact-first、mutually exclusive 的小型/拆分二选一规则：
 
 | 逻辑产物 | 小型形式 | 拆分形式 |
 |---|---|---|
@@ -241,7 +241,11 @@ PRD、proposal、单端 design 与单端 plan 都采用 semantic-first、mutuall
 | Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` 加 manifest 中列出的分片 |
 | Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` 加 manifest 中列出的分片 |
 
-Producer 在写入前根据已确认内容选择形式。存在可独立阅读的功能、子系统、页面区域、任务组或 owner domain 时，直接按这些语义边界选择拆分形式；不能先生成单体文件再机械切割。每个 Markdown 文件（包括 `00-index.md` 和分片）最多 500 行且最多 30,000 字符，越过任一硬限制就继续按语义拆分。
+产物形式采用紧凑优先（compact-first）且 small/split 互斥：预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form；只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分。功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。
+
+FeaturePilot 过程文档的叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段和契约要求精确匹配的 schema 关键词保留必要英文。当前用户明确语言指令优先于目标项目设置。
+
+每个 Markdown 文件（包括 `00-index.md` 和分片）继续执行 500 行和 30,000 字符双重硬上限；超过任一硬限制就继续按语义拆分。
 
 `design/00-index.md` 只列实际存在的端及其 canonical entrypoint。`tasks/00-overview.md` 是 two-end-only overview：只在 backend 和 frontend 两端计划都存在时生成；任何单端计划都不能生成 overview。双端 overview 只保存两端 canonical entrypoint、跨端依赖/执行阶段和从唯一 owner checkbox 派生的进度，不复制 task body 或 checkbox。
 

@@ -248,8 +248,13 @@ $publicSurfaces = @(
     [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
     [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = [string]$codexPlugin.interface.longDescription }
 )
+foreach ($surface in $publicSurfaces) {
+    Assert-Condition ($surface.Text.Contains('compact-first') -or $surface.Text.Contains('紧凑优先')) "$($surface.Name) is missing compact-first artifact guidance"
+    Assert-Condition ($surface.Text.Contains('Chinese by default') -or $surface.Text.Contains('默认使用中文')) "$($surface.Name) is missing default Chinese process-document guidance"
+    Assert-Condition (-not $surface.Text.Contains('semantic-first')) "$($surface.Name) retains obsolete semantic-first public guidance"
+}
 $publicArtifactAnchors = @(
-    'semantic-first'
+    'compact-first'
     'mutually exclusive'
     '500'
     '30,000'

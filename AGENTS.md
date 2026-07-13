@@ -76,7 +76,11 @@ Use `fp-docs/changes/<slug>/` as the review unit for a feature. Every logical ar
 | Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` plus indexed fragments |
 | Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` plus indexed fragments |
 
-Choose split form before writing when confirmed content has independently readable features, subsystems, page areas, task groups, or ownership domains. This is semantic-first selection: split directly on those semantic boundaries; do not first generate a monolith and mechanically cut it. Every produced Markdown file, including indexes and fragments, has hard limits of 500 lines and 30,000 characters. Exceeding either limit requires another semantic split.
+产物形式采用紧凑优先（compact-first）且 small/split 互斥：预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form；只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分。功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。
+
+FeaturePilot 过程文档的叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段和契约要求精确匹配的 schema 关键词保留必要英文。当前用户明确语言指令优先于目标项目设置。
+
+Every produced Markdown file, including indexes and fragments, continues to have hard limits of 500 lines and 30,000 characters; exceeding either limit requires another semantic split.
 
 `design/00-index.md` maps only the design ends that exist to their direct canonical entrypoints. `tasks/00-overview.md` is a two-end-only overview: it exists exactly when both backend and frontend plans exist; a single-end plan never has an overview. It contains only the two canonical end entrypoints, cross-end dependencies or stages, and progress totals derived from unique owner checkboxes. `.fp-execute/` holds execution ledgers, task briefs, packages, and reviews, but never becomes a second completion authority.
 
