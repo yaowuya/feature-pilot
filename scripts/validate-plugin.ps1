@@ -144,10 +144,12 @@ function Test-MalformedTasksKindInlineCode([string]$text) {
 function Test-SemanticAutoSplitTrigger([string]$text) {
     $plain = [regex]::Replace($text, '[`*_]', '')
     $semanticScope = '(?i)(?:\b(?:(?:multiple|several|independently\s+readable|more\s+than\s+one)|(?:(?:two|three|four|five|six|seven|eight|nine|\d+)(?:\s+or\s+more)?))\s+(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?)\b|\bmulti[- ](?:feature|module|component|subsystem|page|area|task|domain|scope)s?\b|(?:多个|多项|若干|两个以上)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,32}(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?|功能|模块|组件|子系统|页面区域|任务组|所有权域|变更范围))'
-    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|\b(?:should|must|needs?\s+to|has\s+to)\s+be\s+split\b|\bsplit\b(?=\s*(?:$|,|\b(?:whenever|when|if|the|this|that|into|across)\b))|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|拆分|分片)'
+    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\bdefault(?:s|ed|ing)?\s+to\s+(?:the\s+)?split\s+(?:form|mode)\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|\b(?:should|must|needs?\s+to|has\s+to)\s+be\s+split\b|\bsplit\b(?=\s*(?:$|,|\b(?:whenever|when|if|the|this|that|into|across)\b))|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|拆分|分片)'
     $allowedCondition = '(?i)(?:(?:the\s+)?user\s+explicitly\s+approves(?:\s+(?:it|split\s+form))?|(?:an\s+)?applicable\s+target-project\s+setting\s+explicitly\s+requires(?:\s+(?:it|split\s+form))?|(?:the\s+)?small\s+(?:form|plan)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,80}(?:exceed(?:s)?\s+(?:either\s+(?:hard\s+)?limit|500\s+lines[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}30,000\s+characters)))'
     $allowedSplitGate = "(?i)\b(?:can\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\s+only\s+(?:when|if)\s+$allowedCondition"
     $negatedSplit = '(?i)(?:\b(?:do\s+not|does\s+not|must\s+not|never)\b[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,100}(?:split\s+form|trigger|force|require|select|choose|use)|\bonly\s+after\s+split\s+form\s+has\s+been\s+selected\b|(?:不|不会|不得|不能|无需|不应)[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:触发|强制|要求|选择|使用|拆分|分片)|仅用于[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:已选\s*split\s+form|分片边界))'
+    $chinesePostSplitNonTrigger = '(?:多个)?功能、子系统、页面区域、任务组或\s+ownership\s+domain\s+只用于拆分后的语义边界[，,]\s*不单独触发拆分'
+    $plain = [regex]::Replace($plain, $chinesePostSplitNonTrigger, ' NEGATED_SPLIT_CLAUSE ')
 
     foreach ($clause in [regex]::Split($plain, '(?:\r?\n|[;.!?\u3002\uFF1B\uFF01\uFF1F])')) {
         $affirmativeClause = [regex]::Replace($clause, $allowedSplitGate, ' ALLOWED_SPLIT_GATE ')
@@ -308,10 +310,11 @@ $publicArtifactAnchors = @(
     'two-end-only'
     'no read-only compatibility'
 )
-$fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split."
+$fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split form."
 Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
 Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) 'public auto-split mutation fixture lost a shared public artifact anchor'
-Assert-Condition (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation) 'semantic auto-split detector accepts a full-anchor public surface with an appended multi-subsystem split rule'
+$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
+Assert-Condition (-not $fullAnchorPublicContractAccepted) 'public validation predicate accepts a full-anchor surface with appended `Multiple subsystems default to split form.`'
 $missingSemanticScopesMutation = $publicSurfaces[0].Text.Replace('功能、子系统、页面区域、任务组或 ', '')
 Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['AGENTS.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
 Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
@@ -527,6 +530,8 @@ $obsoleteAutoSplitPatterns = @(
 )
 $plausibleAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Automatically select split form whenever multiple modules are present.'
 Assert-Condition (Test-SemanticAutoSplitTrigger $plausibleAutoSplitMutation) 'semantic auto-split detector accepts a differently worded multi-module mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple subsystems default to split form.') 'semantic auto-split detector misses exact default-to-split-form mutation'
+Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple subsystems default to split mode.') 'semantic auto-split detector misses exact default-to-split-mode mutation'
 $completeContractAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Use split form only when the small form exceeds either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features do not trigger split form by themselves. Split whenever there are two features.'
 Assert-Condition (Test-SemanticAutoSplitTrigger $completeContractAutoSplitMutation) 'semantic auto-split detector accepts a complete contract with an appended two-feature split rule'
 Assert-Condition (Test-SemanticAutoSplitTrigger 'Multiple page areas mean the document should be split.') 'semantic auto-split detector accepts a should-be-split page-area mutation'
@@ -537,6 +542,7 @@ Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Task groups define fragme
 Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the user explicitly approves it.')) 'semantic auto-split detector rejects the explicit user-approval gate'
 Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when an applicable target-project setting explicitly requires it.')) 'semantic auto-split detector rejects the explicit target-project-setting gate'
 Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules can use split form only when the small form is expected to exceed 500 lines or 30,000 characters.')) 'semantic auto-split detector rejects the hard-limit overflow gate'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger '多个功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。')) 'semantic auto-split detector rejects the complete Chinese post-split/non-trigger control'
 
 foreach ($relativePath in $compactFirstFiles) {
     $text = Read-Utf8 (Join-Path $root $relativePath)
