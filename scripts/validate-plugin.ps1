@@ -141,6 +141,21 @@ function Test-MalformedTasksKindInlineCode([string]$text) {
     return $text -match '(?m)`<[^\r\n`]*tasks`-kind[^\r\n]*>`'
 }
 
+function Test-SemanticAutoSplitTrigger([string]$text) {
+    $plain = [regex]::Replace($text, '[`*_]', '')
+    $semanticScope = '(?i)(?:\b(?:multiple|several|independently\s+readable)\s+(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?)\b|\bmulti[- ](?:feature|module|component|subsystem|page|area|task|domain|scope)s?\b|(?:多个|多项|若干|两个以上)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,32}(?:features?|modules?|components?|subsystems?|page\s+areas?|task\s+groups?|ownership\s+domains?|change\s+scopes?|功能|模块|组件|子系统|页面区域|任务组|所有权域|变更范围))'
+    $affirmativeSplit = '(?i)(?:\b(?:automatically\s+|directly\s+)?(?:select|choose|use|adopt|switch\s+to|require)\s+(?:the\s+)?split\s+form\b|\b(?:triggers?|forces?|requires?)\b[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,40}\bsplit\s+form\b|(?:自动|直接|立即)?(?:选择|使用|采用|切换到)\s*split\s+form|(?:触发|强制|要求)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:split\s+form|拆分|分片)|(?:自动|直接|立即|必须|需要|就|则)[^;.!?\u3002\uFF1B\uFF01\uFF1F]{0,20}(?:拆分|分片))'
+    $negatedSplit = '(?i)(?:\b(?:do\s+not|does\s+not|must\s+not|never)\b[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,100}(?:split\s+form|trigger|force|require|select|choose|use)|\bonly\s+after\s+split\s+form\s+has\s+been\s+selected\b|(?:不|不会|不得|不能|无需|不应)[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:触发|强制|要求|选择|使用|拆分|分片)|仅用于[^,;.!?\u3002\uFF0C\uFF1B\uFF01\uFF1F]{0,40}(?:已选\s*split\s+form|分片边界))'
+
+    foreach ($clause in [regex]::Split($plain, '(?:\r?\n|[;.!?\u3002\uFF1B\uFF01\uFF1F])')) {
+        $affirmativeClause = [regex]::Replace($clause, $negatedSplit, ' NEGATED_SPLIT_CLAUSE ')
+        if ($affirmativeClause -match $semanticScope -and $affirmativeClause -match $affirmativeSplit) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Test-ForbiddenBroadPrdAutoTrigger([string]$text) {
     $plain = [regex]::Replace($text, '[`*_]', '')
     $broadIntent = '(?i)(?:rough\s+(?:idea|requirement)|product\s+idea|pain\s+point|feature\s+request|user\s+story|\u4EA7\u54C1\u60F3\u6CD5|\u529F\u80FD\u8BF7\u6C42|\u7528\u6237\u6545\u4E8B|\u75DB\u70B9|\u7C97\u7565\u9700\u6C42|\u534A\u6210\u54C1\u9700\u6C42)'
@@ -403,36 +418,41 @@ foreach ($entry in $requirementProducerContracts.GetEnumerator()) {
     }
 }
 
-$compactFirstFiles = @(
-    'skills\fp-prd\SKILL.md',
-    'skills\fp-prd\prd-template.md',
-    'skills\fp-prd-grill-me\SKILL.md',
-    'skills\fp-propose\SKILL.md',
-    'skills\fp-propose\proposal-template.md',
-    'skills\fp-brainstorm\SKILL.md',
-    'skills\fp-brainstorm\design-template.md',
-    'skills\fp-figma\SKILL.md',
-    'skills\fp-plan\SKILL.md',
-    'skills\fp-plan-backend\SKILL.md',
-    'skills\fp-plan-frontend\SKILL.md'
-)
+$compactFirstContracts = @{
+    'skills\fp-prd\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd\prd-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd-grill-me\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-propose\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-propose\proposal-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-brainstorm\SKILL.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-brainstorm\design-template.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-figma\SKILL.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
+    'skills\fp-plan\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+    'skills\fp-plan-backend\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+    'skills\fp-plan-frontend\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'only after split form has been selected')
+}
+$compactFirstFiles = @($compactFirstContracts.Keys)
 foreach ($relativePath in $compactFirstFiles) {
     $text = Read-Utf8 (Join-Path $root $relativePath)
-    Assert-Condition ($text.Contains('default to the small form') -or $text.Contains('默认选择 small form')) "$relativePath is missing compact-first form selection"
+    foreach ($anchor in $compactFirstContracts[$relativePath]) {
+        Assert-Condition ($text.Contains($anchor)) "$relativePath is missing compact-first contract anchor: $anchor"
+    }
 }
 
-$chineseProcessFiles = @(
-    'skills\fp-prd\prd-template.md',
-    'skills\fp-propose\proposal-template.md',
-    'skills\fp-brainstorm\design-template.md',
-    'skills\fp-plan-backend\plan-template.md',
-    'skills\fp-plan-frontend\plan-template.md',
-    'skills\fp-review\final-review-template.md',
-    'skills\fp-archive\SKILL.md'
-)
-foreach ($relativePath in $chineseProcessFiles) {
+$processLanguageContracts = @{
+    'skills\fp-prd\prd-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-propose\proposal-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-brainstorm\design-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-plan-backend\plan-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-plan-frontend\plan-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-review\SKILL.md' = 'Process document language'
+    'skills\fp-review\final-review-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-archive\SKILL.md' = '叙述性内容默认使用中文'
+}
+foreach ($relativePath in $processLanguageContracts.Keys) {
     $text = Read-Utf8 (Join-Path $root $relativePath)
-    Assert-Condition ($text.Contains('叙述性内容默认使用中文')) "$relativePath is missing the default Chinese output reminder"
+    $anchor = $processLanguageContracts[$relativePath]
+    Assert-Condition ($text.Contains($anchor)) "$relativePath is missing the shared process-language reminder: $anchor"
 }
 
 $obsoleteAutoSplitPatterns = @(
@@ -441,11 +461,17 @@ $obsoleteAutoSplitPatterns = @(
     '内容有多个可独立阅读的 feature',
     'confirmed content has multiple independently readable'
 )
+$plausibleAutoSplitMutation = 'For form selection, default to the small form within 500 lines and 30,000 characters. Automatically select split form whenever multiple modules are present.'
+Assert-Condition (Test-SemanticAutoSplitTrigger $plausibleAutoSplitMutation) 'semantic auto-split detector accepts a differently worded multi-module mutation'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Multiple modules do not trigger split form by themselves.')) 'semantic auto-split detector rejects valid negative trigger wording'
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger 'Task groups define fragments only after split form has been selected.')) 'semantic auto-split detector rejects valid post-selection fragment wording'
+
 foreach ($relativePath in $compactFirstFiles) {
     $text = Read-Utf8 (Join-Path $root $relativePath)
     foreach ($pattern in $obsoleteAutoSplitPatterns) {
         Assert-Condition (-not $text.Contains($pattern)) "$relativePath retains obsolete semantic auto-split wording: $pattern"
     }
+    Assert-Condition (-not (Test-SemanticAutoSplitTrigger $text)) "$relativePath retains a semantic auto-split trigger"
 }
 
 $designArtifactContracts = @{
