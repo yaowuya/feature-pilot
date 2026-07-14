@@ -46,8 +46,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md` 及其 manifest 分片，两种形式互斥。
 - `fp-brainstorm`：生成后端/前端技术设计。
 - `fp-plan` / `fp-plan-backend` / `fp-plan-frontend`：生成细粒度 TDD 执行计划。
-- `fp-execute`：按已确认计划执行任务。
-- `fp-execute-sdd`：适合中大型或高风险计划的 SDD 执行模式。
+- `fp-execute`：默认执行入口，在当前上下文按 TDD 直接完成已确认计划，每个任务只做一次 inline 自审。
+- `fp-execute-sdd`：用户明确需要 fresh implementer/reviewer、任务隔离和多轮审查时使用的 SDD 执行模式。
 - `fp-review`：最终整分支审查。
 - `fp-archive`：归档变更。
 
@@ -61,8 +61,9 @@ flowchart LR
     end
 
     subgraph Workflow[共享流程契约]
-        S["FeaturePilot skills\nfp-prd → fp-propose → fp-brainstorm\n→ fp-plan → fp-execute / fp-execute-sdd"]
-        G["阶段门禁\n用户确认 · TDD · 逐任务 Review\nFix loop · Final Review"]
+        S["FeaturePilot skills\nfp-prd → fp-propose → fp-brainstorm\n→ fp-plan → fp-execute（默认）"]
+        G["执行契约\n直接 TDD · inline 自审\n独立 fp-review"]
+        SDD["显式选择\nfp-execute-sdd\nbrief · reviewer · fix loop"]
     end
 
     subgraph Context[项目上下文]
@@ -73,18 +74,20 @@ flowchart LR
 
     subgraph Artifacts[变更产物]
         A["fp-docs/changes/<slug>/\nprd · proposal · design · tasks"]
-        E[".fp-execute/\nprogress · briefs · packages · reviews"]
+        E[".fp-execute/\n直接执行：progress\nSDD：briefs · packages · reviews"]
         H["fp-docs/archive/ + history/\n归档与历史"]
     end
 
     CC --> S
     CX --> S
     S --> G
+    S -. 用户明确要求 SDD .-> SDD
     M --> S
     C --> S
     I --> S
     S --> A
     G --> E
+    SDD --> E
     E --> H
     I -. stale-prone .-> G
 ```
@@ -109,10 +112,10 @@ FeaturePilot 的默认使用方式尽量轻量。完整用户指南见 [`docs/us
 1. **可选探索**：运行 `/fp-explore <问题>` 调查当前实现或比较方案；空输入只做有界项目概览。探索不创建 FeaturePilot 产物，也不修改代码。
 2. **可选初始化**：运行 `/fp-init`，创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；如检测到 Canway/CW 项目，只有在用户确认后才可采用 `examples/canway-cw/` 示例规范作为项目 settings 草稿。
 3. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
-4. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。
+4. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
 5. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
 
-当计划较大、跨模块、涉及权限/数据/接口/UI 契约或风险较高时，`fp-start` 可以转入 `fp-execute-sdd`。该模式会使用任务说明、全新上下文实现代理、逐任务审查、修复循环和最终整分支审查。
+只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，`fp-start` 才进入复杂模式；不会仅根据计划规模或风险自动切换。该模式会使用任务说明、全新上下文实现代理、逐任务审查、修复循环和最终整分支审查。
 
 ## 项目配置
 
@@ -178,10 +181,10 @@ fp-docs/
       plan-backend.md | backend/00-index.md
       plan-frontend.md | frontend/00-index.md
     .fp-execute/
-      progress.md
-      briefs/
-      packages/
-      reviews/
+      progress.md                  # 直接执行与 SDD 共用的恢复证据
+      briefs/                      # 仅 SDD
+      packages/                    # 仅 SDD
+      reviews/                     # 独立 fp-review 或 SDD review
   archive/                      # 由 fp-archive 自动创建
   history/history.md             # 由 fp-archive 自动创建
 ```

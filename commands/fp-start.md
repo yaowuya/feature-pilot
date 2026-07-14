@@ -11,8 +11,8 @@ Gate checksum：
 - 用一次 `fp-explore start-routing` 复用匹配 PRD、判断阶段并提供 quick/full 证据；只有用户确认后才切换 `fp-quick`。
 - 依次加载 `fp-propose` → `fp-brainstorm` → `fp-plan`，每阶段产物核验并等待明确确认。
 - 计划确认前不得修改业务代码；执行必须读取已确认 task 文件并先做 pre-flight review。
-- 执行前必须由用户明确选择直接执行或 SDD，不得仅根据任务规模自动选择；每个选项必须说明执行方式、暂停条件和适用场景。
-- 仅当用户选择 SDD 后，再让用户选择 SDD 逐项确认或自动连续；自动连续模式在正常任务边界不得停住。
-- 完成后运行 `fp-review`，再建议归档。
+- 计划确认后默认加载 `fp-execute`，在当前上下文直接连续执行；用户明确要求逐任务确认时才使用 semi。
+- 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时才进入复杂模式，不根据任务规模自动切换。
+- 仅当用户选择 SDD 后，再让用户选择 SDD 逐项确认或自动连续；直接执行完成后运行一次独立 `fp-review`，再建议归档。
 
 现在根据功能描述「$ARGUMENTS」启动流程。

@@ -14,6 +14,8 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 ````markdown
 # <Feature> Frontend Plan
 
+> **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Only task markers use checkbox (`- [ ] **Task frontend-NNN: ...**`) syntax for tracking; substeps are plain ordered instructions.
+
 ## Global Constraints
 - Framework/runtime: <source>
 - Component library/design system: <source>
