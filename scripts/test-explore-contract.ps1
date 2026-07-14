@@ -155,7 +155,8 @@ foreach ($anchor in @('start-reusable-context', 'verified facts', 'inspected sco
     Assert-Condition ($proposeSkill.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "fp-propose reuse contract is missing $anchor"
 }
 Assert-Condition ($startCommand.Contains('fp-explore') -and $startCommand.Contains('用户确认')) 'fp-start command lacks explore routing and user choice'
-Assert-Condition ($startSkill.Contains('Execution strategy gate')) 'protected direct-versus-SDD gate was lost'
+Assert-Condition ($startSkill.Contains('Default execution path')) 'protected default direct-execution routing was lost'
+Assert-Condition (-not $startSkill.Contains('Execution strategy gate')) 'fp-start still forces a direct-versus-SDD choice'
 Assert-Condition ($startSkill.Contains('SDD continuation mode gate')) 'protected SDD continuation gate was lost'
 
 $quickSkill = Read-Utf8 (Join-Path $root 'skills\fp-quick\SKILL.md')

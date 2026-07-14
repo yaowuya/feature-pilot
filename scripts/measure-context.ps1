@@ -25,11 +25,11 @@ $commandPaths = @(Get-ChildItem (Join-Path $root 'commands') -Filter 'fp-*.md' |
 $current = @{
     Core = $shared + (Get-Chars ($skillPaths + $commandPaths))
     Prd = $shared + (Get-Chars @('commands\fp-prd.md', 'skills\fp-prd\SKILL.md', 'skills\fp-prd-grill-me\SKILL.md', 'skills\fp-grill-me\SKILL.md'))
-    Start = $shared + (Get-Chars @('commands\fp-start.md', 'skills\fp-start\SKILL.md', 'skills\fp-propose\SKILL.md', 'skills\fp-brainstorm\SKILL.md', 'skills\fp-plan\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md', 'skills\fp-execute-sdd\SKILL.md', 'skills\fp-review\SKILL.md'))
+    Start = $shared + (Get-Chars @('commands\fp-start.md', 'skills\fp-start\SKILL.md', 'skills\fp-propose\SKILL.md', 'skills\fp-brainstorm\SKILL.md', 'skills\fp-plan\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md', 'skills\fp-execute\SKILL.md', 'skills\fp-review\SKILL.md'))
     Review = $shared + (Get-Chars @('commands\fp-review.md', 'skills\fp-review\SKILL.md', 'skills\fp-review\final-reviewer.md'))
     ExplorePublic = $shared + (Get-Chars @('commands\fp-explore.md', 'skills\fp-explore\SKILL.md'))
     PrdWithExplore = $shared + (Get-Chars @('commands\fp-prd.md', 'skills\fp-prd\SKILL.md', 'skills\fp-prd-grill-me\SKILL.md', 'skills\fp-grill-me\SKILL.md', 'skills\fp-explore\SKILL.md'))
-    StartWithExplore = $shared + (Get-Chars @('commands\fp-start.md', 'skills\fp-start\SKILL.md', 'skills\fp-explore\SKILL.md', 'skills\fp-propose\SKILL.md', 'skills\fp-brainstorm\SKILL.md', 'skills\fp-plan\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md', 'skills\fp-execute-sdd\SKILL.md', 'skills\fp-review\SKILL.md'))
+    StartWithExplore = $shared + (Get-Chars @('commands\fp-start.md', 'skills\fp-start\SKILL.md', 'skills\fp-explore\SKILL.md', 'skills\fp-propose\SKILL.md', 'skills\fp-brainstorm\SKILL.md', 'skills\fp-plan\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md', 'skills\fp-execute\SKILL.md', 'skills\fp-review\SKILL.md'))
     QuickWithExplore = $shared + (Get-Chars @('commands\fp-quick.md', 'skills\fp-quick\SKILL.md', 'skills\fp-explore\SKILL.md'))
     QuickLegacyWithPropose = $shared + (Get-Chars @('commands\fp-quick.md', 'skills\fp-quick\SKILL.md', 'skills\fp-propose\SKILL.md'))
 }

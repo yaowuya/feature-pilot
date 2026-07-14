@@ -528,30 +528,26 @@ foreach ($anchor in @(
 Assert-Condition (-not $sddFinalReviewSection.Groups['body'].Value.Contains('Otherwise dispatch `task-reviewer-prompt.md` at whole-change scope')) 'fp-execute-sdd still uses a task-schema fallback for final review'
 
 foreach ($anchor in @(
-    'Execution strategy gate'
-    'Direct task execution (non-SDD)'
-    'SDD execution'
-    'recommendation is not selection'
-    'wait for the user''s explicit choice'
+    'Default execution path'
+    'Load `fp-execute` by default'
+    'Only use `fp-execute-sdd` when the user explicitly requests it'
     'SDD continuation mode gate'
     'Step-confirmation SDD'
     'Automatic-continuation SDD'
 )) {
-    Assert-Condition ($startSkillText.Contains($anchor)) "fp-start is missing explicit execution gate contract: $anchor"
+    Assert-Condition ($startSkillText.Contains($anchor)) "fp-start is missing default direct-execution contract: $anchor"
 }
-Assert-Condition ($startSkillText.Contains('Ask this gate only after the user explicitly selects SDD')) 'fp-start must not ask the SDD continuation gate before SDD is selected'
-Assert-Condition (-not ($startSkillText.Contains('根据计划规模选择执行 skill'))) 'fp-start must not auto-select an executor from plan size'
+Assert-Condition (-not $startSkillText.Contains('Execution strategy gate')) 'fp-start must not force a direct-versus-SDD choice after plan confirmation'
+Assert-Condition ($startSkillText.Contains('Ask this gate only after the user explicitly requests SDD')) 'fp-start must not ask the SDD continuation gate before SDD is explicitly requested'
 $startExecutionSection = [regex]::Match($startSkillText, '(?s)## 阶段 4：执行任务\s*(?<body>.*?)\s*## 最终汇报')
 Assert-Condition ($startExecutionSection.Success) 'fp-start execution section is missing'
 foreach ($anchor in @(
-    'after a task passes review or reaches attempt 3 with only non-blocking review debt'
-    'a main-flow blocker remains after review attempt 3'
-    'selected executor owns a final review scope with a maximum of three reviews'
+    '一次 inline 自审'
+    'Direct execution does not own a final review scope'
+    'load `fp-review` once after `fp-execute` returns'
 )) {
-    Assert-Condition ($startExecutionSection.Groups['body'].Value.Contains($anchor)) "fp-start is missing bounded review integration: $anchor"
+    Assert-Condition ($startExecutionSection.Groups['body'].Value.Contains($anchor)) "fp-start is missing lightweight direct-execution integration: $anchor"
 }
-Assert-Condition (-not $startExecutionSection.Groups['body'].Value.Contains('after a clean task')) 'fp-start still requires an unbounded clean task before automatic continuation'
-Assert-Condition (-not $startExecutionSection.Groups['body'].Value.Contains('review 发现 Critical/Important、')) 'fp-start still pauses on every Critical/Important review before the bounded controller classifies it'
 
 foreach ($anchor in @(
     'Step-confirmation SDD'
@@ -565,8 +561,17 @@ foreach ($anchor in @(
     Assert-Condition ($sddSkillText.Contains($anchor)) "fp-execute-sdd is missing continuation contract: $anchor"
 }
 
-Assert-Condition ($startCommandText.Contains('必须由用户明确选择直接执行或 SDD')) 'fp-start command checksum is missing explicit executor selection'
+Assert-Condition ($startCommandText.Contains('默认加载 `fp-execute`')) 'fp-start command checksum is missing default direct execution'
+Assert-Condition ($startCommandText.Contains('只有用户明确要求 `fp-execute-sdd`')) 'fp-start command checksum is missing explicit SDD opt-in'
 Assert-Condition ($startCommandText.Contains('SDD 逐项确认或自动连续')) 'fp-start command checksum is missing SDD continuation selection'
+
+foreach ($publicExecutionDoc in @(
+    @{ Path = 'README.md'; Text = Read-Utf8 (Join-Path $root 'README.md') }
+    @{ Path = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
+)) {
+    Assert-Condition ($publicExecutionDoc.Text.Contains('默认执行入口是 `fp-execute`')) "$($publicExecutionDoc.Path) is missing the default direct executor"
+    Assert-Condition ($publicExecutionDoc.Text.Contains('只有用户明确要求 `fp-execute-sdd`')) "$($publicExecutionDoc.Path) is missing explicit SDD opt-in"
+}
 
 $requirementProducerContracts = @{
     'skills\fp-prd\SKILL.md' = @('prd.md', 'prd/00-index.md', 'fragment manifest', 'logical template', 'mutually exclusive')
@@ -827,7 +832,7 @@ Assert-Condition ($prdExploreText.Contains('fp-prd-grill-me') -and $prdExploreTe
 
 $startExploreText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
 Assert-Condition ($startExploreText.Contains('profile: start-routing') -and $startExploreText.Contains('explicit user choice')) 'start-routing lacks caller-owned routing choice'
-Assert-Condition ($startExploreText.Contains('Execution strategy gate') -and $startExploreText.Contains('SDD continuation mode gate')) 'start-routing edit removed protected execution gates'
+Assert-Condition ($startExploreText.Contains('Default execution path') -and $startExploreText.Contains('SDD continuation mode gate')) 'start-routing edit removed protected execution routing'
 
 $sddSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
 Assert-Condition ($sddSkill.Contains('intel/sdd-handoff.md')) 'fp-execute-sdd is missing the SDD handoff preflight contract'
@@ -974,41 +979,39 @@ foreach ($consumer in @('fp-start', 'fp-plan', 'fp-execute', 'fp-execute-sdd', '
 
 $executeSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute\SKILL.md')
 $archiveSkill = Read-Utf8 (Join-Path $root 'skills\fp-archive\SKILL.md')
-$executeReviewSection = [regex]::Match($executeSkill, '(?s)## Review 次数与上限（每个任务）\s*(?<body>.*?)\s*## TDD 执行流程（每个任务）')
-Assert-Condition ($executeReviewSection.Success) 'fp-execute task review section is missing'
+$executeDirectSection = [regex]::Match($executeSkill, '(?s)## 直接执行契约\s*(?<body>.*?)\s*## 执行模式')
+Assert-Condition ($executeDirectSection.Success) 'fp-execute direct execution contract is missing'
 foreach ($anchor in @(
-    '单个任务步骤最多执行 3 次 review'
-    '首次 review 计为第 1 次'
-    '不得执行第 4 次 review'
-    'review debt'
-    '主流程阻断'
-    '恢复已有 review attempt'
-    '每个 non-pass 在 attempt 1 或 2'
-    '修复代码、验证证据或 review 输入'
-    'attempt 恰好加 1'
-    '不得重复同一 attempt'
+    '当前执行上下文直接完成'
+    '过程产物集合仅包含'
+    '一次 inline 自审'
+    '不拥有 final review scope'
+    '只提示运行独立的 `fp-review`'
 )) {
-    Assert-Condition ($executeReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute task review section is missing bounded contract: $anchor"
+    Assert-Condition ($executeDirectSection.Groups['body'].Value.Contains($anchor)) "fp-execute direct execution contract is incomplete: $anchor"
 }
-$executeFinalReviewSection = [regex]::Match($executeSkill, '(?s)## Final Review Scope\s*(?<body>.*?)\s*## 项目约束')
-Assert-Condition ($executeFinalReviewSection.Success) 'fp-execute final review scope is missing'
-foreach ($anchor in @(
-    'final review scope 最多执行 3 次 review'
-    '首次 final review 计为第 1 次'
-    '`PASS_WITH_NOTES` 结束 final review scope并记录非阻断 review debt'
-    '`Critical` 保持 Critical；`High` 映射为 Important 且属于主流程阻断；`Medium` 映射为 Important；`Low` 映射为 Minor'
-    '不得执行第 4 次 final review'
-    '恢复已有 final review attempt'
-    '每次 final review attempt 前执行 clean-snapshot checkpoint'
-    '提交已授权的实现与执行状态产物'
-    '`git status --short` 为空'
-    'checkpoint 失败不消耗 review attempt'
-    '提交 final review report 和 ledger 证据，不再重跑 review'
-    '`BLOCKED` verdict 消耗当前 final review attempt'
-    'attempt 小于 3 时先完成 clean-snapshot checkpoint，再让 attempt 恰好加 1'
-    '用户明确授权开启新的 final review scope'
+foreach ($forbidden in @(
+    '## Review 次数与上限'
+    '## Final Review Scope'
+    'review attempt'
+    'review debt'
+    'clean-snapshot checkpoint'
+    'task-reviewer-prompt.md'
+    'review-package-template.md'
 )) {
-    Assert-Condition ($executeFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute final review contract is incomplete: $anchor"
+    Assert-Condition (-not $executeSkill.Contains($forbidden)) "fp-execute still contains SDD-style review orchestration: $forbidden"
+}
+$executeLines = @($executeSkill -split "`r?`n").Count
+Assert-Condition ($executeLines -le 150) "fp-execute should stay lightweight (found $executeLines lines, maximum 150)"
+$planSkill = Read-Utf8 (Join-Path $root 'skills\fp-plan\SKILL.md')
+Assert-Condition ($planSkill.Contains('推荐使用 `fp-execute`') -and $planSkill.Contains('只有用户明确要求 `fp-execute-sdd`')) 'fp-plan must recommend direct execution and keep SDD opt-in'
+$backendPlanTemplate = Read-Utf8 (Join-Path $root 'skills\fp-plan-backend\plan-template.md')
+$frontendPlanTemplate = Read-Utf8 (Join-Path $root 'skills\fp-plan-frontend\plan-template.md')
+foreach ($planTemplate in @(
+    @{ Name = 'backend'; Text = $backendPlanTemplate }
+    @{ Name = 'frontend'; Text = $frontendPlanTemplate }
+)) {
+    Assert-Condition ($planTemplate.Text.Contains('Use `fp-execute` to implement this plan task-by-task')) "fp-plan-$($planTemplate.Name) template must hand off to fp-execute"
 }
 Assert-Condition ($backendPlanSkill.Contains('tasks/backend/00-index.md') -and $backendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-backend is missing indexed large-plan splitting'
 Assert-Condition ($frontendPlanSkill.Contains('tasks/frontend/00-index.md') -and $frontendPlanSkill.Contains('exceeds 500 lines')) 'fp-plan-frontend is missing indexed large-plan splitting'
