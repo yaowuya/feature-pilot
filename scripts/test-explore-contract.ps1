@@ -48,6 +48,40 @@ function Test-UnsafeExploreText([string]$text) {
     return $false
 }
 
+function Test-UnsafeProgressiveReadingText([string]$text) {
+    foreach ($rawPattern in @(
+        '(?i)(?:ranged|local|partial)[- ]read[^\r\n]{0,50}(?:does not|need not)[^\r\n]{0,20}(?:count|consume)[^\r\n]{0,20}(?:budget|limit)',
+        '(?:局部|范围)读取[^\r\n]{0,40}(?:不计入|无需计入)[^\r\n]{0,20}预算'
+    )) {
+        if ($text -match $rawPattern) { return $true }
+    }
+
+    $classified = $text
+    $englishNegative = '(?i)\b(?:must not|do not|does not|never|cannot|is forbidden)\b[^\r\n;.!?。；！？]*'
+    $chineseNegative = '(?:不得|不能|不要|不允许|禁止)[^\r\n;.!?。；！？]*'
+    $classified = [regex]::Replace($classified, $englishNegative, ' NEGATED_PROGRESSIVE_READING_CLAUSE ')
+    $classified = [regex]::Replace($classified, $chineseNegative, ' NEGATED_PROGRESSIVE_READING_CLAUSE ')
+    $patterns = @(
+        '(?i)(?:after|following)[^\r\n]{0,60}search[^\r\n]{0,80}(?:full|whole|unbounded)[- ]file read[^\r\n]{0,50}(?:all|every)[^\r\n]{0,30}(?:match|candidate)'
+        '(?i)(?:large|over\s+300\s+lines?)[^\r\n]{0,80}(?:may|can|should)[^\r\n]{0,30}(?:full|whole|unbounded)[- ]file read[^\r\n]{0,50}(?:complete|important|context)'
+        '(?i)quick[^\r\n]{0,80}(?:may|can|should)[^\r\n]{0,30}(?:exceed|bypass|ignore)[^\r\n]{0,40}(?:window|candidate|full[- ]file|unbounded)[^\r\n]{0,20}(?:limit|budget)'
+        '(?i)(?:ranged|local|partial)[- ]read[^\r\n]{0,50}(?:does not|need not|without)[^\r\n]{0,20}(?:count|budget)'
+        '(?i)bash[^\r\n]{0,70}(?:dump|output|print)[^\r\n]{0,40}(?:full|whole|entire)[^\r\n]{0,20}file[^\r\n]{0,40}(?:bypass|avoid|instead)'
+        '(?i)quick[^\r\n]{0,80}(?:default|normally|should)[^\r\n]{0,30}(?:spawn|use|launch)[^\r\n]{0,30}(?:multiple\s+)?sub[- ]?agents?[^\r\n]{0,40}(?:single|one)[^\r\n]{0,20}search'
+        '(?:搜索后|检索后)[^\r\n]{0,60}(?:整读|完整读取)[^\r\n]{0,30}(?:所有|全部)(?:命中|候选)文件'
+        '(?:大文件|超过\s*300\s*行)[^\r\n]{0,50}(?:可以|可|应当)[^\r\n]{0,30}(?:完整理解|重要|上下文)[^\r\n]{0,20}(?:直接整读|完整读取)'
+        '(?:大文件|超过\s*300\s*行)[^\r\n]{0,50}(?:可以|可|应当)[^\r\n]{0,20}(?:直接整读|完整读取)[^\r\n]{0,30}(?:完整理解|重要|上下文)'
+        'quick[^\r\n]{0,60}(?:可以|可|应当)[^\r\n]{0,20}(?:突破|绕过|忽略)[^\r\n]{0,30}(?:窗口|候选|整读)[^\r\n]{0,20}(?:上限|预算)'
+        '(?:局部|范围)读取[^\r\n]{0,40}(?:不计入|无需计入)[^\r\n]{0,20}预算'
+        'Bash[^\r\n]{0,50}(?:输出|打印|转储)[^\r\n]{0,30}(?:整个|完整)文件[^\r\n]{0,30}(?:绕过|替代)'
+        'quick[^\r\n]{0,60}(?:默认|通常|应当)[^\r\n]{0,20}(?:启动|使用)[^\r\n]{0,20}(?:多个)?子\s*Agent[^\r\n]{0,30}(?:单一|一个)搜索'
+    )
+    foreach ($pattern in $patterns) {
+        if ($classified -match $pattern) { return $true }
+    }
+    return $false
+}
+
 $skillPath = Join-Path $root 'skills\fp-explore\SKILL.md'
 $commandPath = Join-Path $root 'commands\fp-explore.md'
 Assert-Condition (Test-Path $skillPath) 'skills/fp-explore/SKILL.md is missing'
@@ -90,6 +124,89 @@ foreach ($anchor in @(
     'never invoke', 'not a technical sandbox'
 )) {
     Assert-Condition ($skillText.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "skill is missing $anchor"
+}
+
+$progressiveOrder = @(
+    'Stage A - Glob candidate paths',
+    'Stage B - Grep symbols and hit lines',
+    'Stage C - ranged Read around evidence',
+    'Stage D - justified full-file Read'
+)
+$lastProgressiveStage = -1
+foreach ($stage in $progressiveOrder) {
+    $stageIndex = $skillText.IndexOf($stage, [System.StringComparison]::Ordinal)
+    Assert-Condition ($stageIndex -ge 0) "progressive reading contract is missing $stage"
+    Assert-Condition ($stageIndex -gt $lastProgressiveStage) "progressive reading stage is out of order: $stage"
+    $lastProgressiveStage = $stageIndex
+}
+foreach ($anchor in @(
+    'Progressive low-context inspection',
+    '80-160 lines',
+    'over 300 lines',
+    'candidate paths',
+    'local read windows',
+    'unbounded application-file reads',
+    'quick-local-read-windows',
+    'Non-empty standalone uses `standard` as its default budget',
+    'not an explicit request for comprehensive full-file review',
+    'Any tool that returns application-file content follows the same accounting by semantic effect',
+    'use the precedence `quick-local-read-windows`',
+    'Do not use Bash to dump a whole file',
+    'quick does not spawn subagents for a single search problem'
+)) {
+    Assert-Condition ($skillText.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "progressive reading contract is missing $anchor"
+}
+foreach ($anchor in @(
+    'initial candidate paths: 8',
+    'local read windows: 8',
+    'unbounded application-file reads: 1'
+)) {
+    Assert-Condition ($skillText.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "quick progressive budget is missing $anchor"
+}
+Assert-Condition ($skillText.Contains('The unbounded read is not a quota')) 'quick unbounded-read limit is being presented as a quota'
+Assert-Condition ($skillText.Contains('state the missing evidence')) 'full-file escalation does not require a concrete evidence gap'
+Assert-Condition ($skillText.Contains('why search or ranged windows cannot resolve it')) 'full-file escalation does not explain why targeted inspection is insufficient'
+Assert-Condition ($skillText.Contains('complete`, `partial`, or `blocked')) 'quick limit exhaustion does not preserve deterministic statuses'
+
+foreach ($mutation in @(
+    'After a broad search, full-file read all matching candidates.',
+    'A large file can use a full-file read for complete context.',
+    'Quick may exceed the local read window limit when needed.',
+    'Ranged-read does not count against the budget.',
+    'Use Bash to dump the whole file instead and bypass the Read threshold.',
+    'Quick should spawn multiple subagents for a single search problem.',
+    '搜索后完整读取所有命中文件。',
+    '超过 300 行的大文件可以为了完整理解直接整读。',
+    'quick 可以按需突破窗口上限。',
+    '局部读取不计入预算。',
+    'Bash 输出整个文件可以绕过 Read 门槛。',
+    'quick 默认启动多个子 Agent 处理一个搜索。'
+)) {
+    Assert-Condition (Test-UnsafeProgressiveReadingText $mutation) "unsafe progressive-reading mutation was not detected: $mutation"
+}
+foreach ($negativeControl in @(
+    'Never full-file read every search match.',
+    'Files over 300 lines must not use unbounded Read by default.',
+    'Do not use Bash to dump a whole file and bypass the Read threshold.',
+    'Quick does not spawn subagents for a single search problem.',
+    '禁止搜索后整读全部候选文件。'
+)) {
+    Assert-Condition (-not (Test-UnsafeProgressiveReadingText $negativeControl)) "safe progressive-reading control was rejected: $negativeControl"
+}
+
+foreach ($budgetRow in @(
+    '| `tiny` | 6 | 4 | 1 | 0 unless approved |',
+    '| `small` | 12 | 8 | 2 | 0 unless approved |',
+    '| `standard` | 24 | 14 | 3 | 0 unless approved |',
+    '| `max` | 40 | 20 | 5 | 0 unless approved |'
+)) {
+    Assert-Condition ($skillText.Contains($budgetRow)) "existing total budget changed or disappeared: $budgetRow"
+}
+foreach ($schemaLeak in @(
+    'candidate-paths:', 'local-read-windows:', 'unbounded-application-file-reads:', 'read-policy:'
+)) {
+    Assert-Condition (-not $invokeBody.Contains($schemaLeak)) "progressive counters leaked into invoke schema: $schemaLeak"
+    Assert-Condition (-not $returnBody.Contains($schemaLeak)) "progressive counters leaked into return schema: $schemaLeak"
 }
 
 $commandLines = @($commandText -split "`r?`n").Count
