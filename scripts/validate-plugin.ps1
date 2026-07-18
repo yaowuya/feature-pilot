@@ -418,7 +418,8 @@ foreach ($skill in $skills) {
     $lineCount = @($skillText -split "`r?`n").Count
     Assert-Condition ($lineCount -le 500) "$($skill.Name)/SKILL.md has $lineCount lines (limit: 500)"
     Assert-Condition ($skillText -match "(?m)^name:\s*$([regex]::Escape($skill.Name))\s*$") "$($skill.Name)/SKILL.md frontmatter name does not match its directory"
-    Assert-Condition ($skillText.Contains('../_shared/workspace-rules.md')) "$($skill.Name)/SKILL.md does not load the shared workspace contract"
+    $anchoredWorkspaceContract = '`${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md`'
+    Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
@@ -655,17 +656,17 @@ foreach ($relativePath in $compactFirstFiles) {
 }
 
 $designArtifactContracts = @{
-    'skills\fp-brainstorm\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-brainstorm\design-template.md' = '../_shared/artifact-layout.md'
-    'skills\fp-figma\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-ui-spec\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-ux-spec\SKILL.md' = '../_shared/artifact-layout.md'
+    'skills\fp-brainstorm\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-brainstorm\design-template.md' = 'artifact-layout contract already loaded by `fp-brainstorm`'
+    'skills\fp-figma\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-ui-spec\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-ux-spec\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
     'commands\fp-brainstorm.md' = '../skills/_shared/artifact-layout.md'
 }
 
 foreach ($entry in $designArtifactContracts.GetEnumerator()) {
     $designArtifactText = Read-Utf8 (Join-Path $root $entry.Key)
-    Assert-Condition ($designArtifactText.Contains($entry.Value)) "$($entry.Key) does not load the shared artifact-layout contract through $($entry.Value)"
+    Assert-Condition ($designArtifactText.Contains($entry.Value)) "$($entry.Key) is missing its artifact-layout contract anchor: $($entry.Value)"
     Assert-Condition ($designArtifactText.Contains('500') -and $designArtifactText.Contains('30,000')) "$($entry.Key) must select design form before writing and enforce both hard file limits"
 }
 
@@ -1032,15 +1033,15 @@ Assert-Condition (Test-UnconditionalStablePlanFirstRead 'Read stable entrypoints
 Assert-Condition (-not (Test-UnconditionalStablePlanFirstRead 'Only when tasks/backend/00-index.md is absent, read tasks/plan-backend.md as the small form.')) 'stable-plan-first detector rejects a canonical-first conditional read'
 
 $artifactConsumerContracts = @{
-    'skills\fp-start\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-execute\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-execute-sdd\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-review\SKILL.md' = '../_shared/artifact-layout.md'
-    'skills\fp-archive\SKILL.md' = '../_shared/artifact-layout.md'
+    'skills\fp-start\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-execute\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-execute-sdd\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-review\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-archive\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
 }
 foreach ($entry in $artifactConsumerContracts.GetEnumerator()) {
     $consumerText = Read-Utf8 (Join-Path $root $entry.Key)
-    Assert-Condition ($consumerText.Contains($entry.Value)) "$($entry.Key) does not load the shared artifact-layout contract through $($entry.Value)"
+    Assert-Condition ($consumerText.Contains($entry.Value)) "$($entry.Key) is missing its anchored artifact-layout contract: $($entry.Value)"
     foreach ($anchor in @(
         'canonical-first'
         'prd.md'
@@ -1074,15 +1075,16 @@ foreach ($entry in $artifactConsumerContracts.GetEnumerator()) {
     Assert-Condition (-not (Test-ForbiddenDesignDualRecipe $consumerText)) "$($entry.Key) contains a Producer-like stable-design-plus-split rewrite recipe"
 }
 
-$artifactHandoffContracts = @(
-    'skills\fp-execute-sdd\task-brief-template.md'
-    'skills\fp-execute-sdd\review-package-template.md'
-    'skills\fp-review\final-reviewer.md'
-    'skills\fp-review\final-review-template.md'
-)
-foreach ($handoffPath in $artifactHandoffContracts) {
+$artifactHandoffContracts = @{
+    'skills\fp-execute-sdd\task-brief-template.md' = 'artifact-layout contract already loaded by the owning `fp-execute-sdd` controller'
+    'skills\fp-execute-sdd\review-package-template.md' = 'artifact-layout contract already loaded by the owning `fp-execute-sdd` controller'
+    'skills\fp-review\final-reviewer.md' = 'artifact-layout contract already loaded by `fp-review`'
+    'skills\fp-review\final-review-template.md' = 'artifact-layout contract already loaded by `fp-review`'
+}
+foreach ($entry in $artifactHandoffContracts.GetEnumerator()) {
+    $handoffPath = $entry.Key
     $handoffText = Read-Utf8 (Join-Path $root $handoffPath)
-    foreach ($anchor in @('../_shared/artifact-layout.md', 'canonical-first', 'manifest order', 'Consumer', 'structural conflict', 'unique task owner', 'tasks`-kind', 'two-end overview')) {
+    foreach ($anchor in @($entry.Value, 'canonical-first', 'manifest order', 'Consumer', 'structural conflict', 'unique task owner', 'tasks`-kind', 'two-end overview')) {
         Assert-Condition ($handoffText.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "$handoffPath is missing resolved artifact handoff evidence: $anchor"
     }
     Assert-Condition (-not (Test-UnconditionalStablePlanFirstRead $handoffText)) "$handoffPath instructs an unconditional stable-plan-first read"
@@ -1108,7 +1110,7 @@ foreach ($anchor in @('resolved logical PRD content', 'resolved logical proposal
 Assert-Condition (-not ($startSkill.Contains('summarize from the PRD into `proposal.md`'))) 'fp-start still steers fp-propose back to the stable proposal file'
 
 $structuralReviewBlockers = @(
-    'Any structural rejection from `../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible'
+    'Any structural rejection from `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible'
     'missing split index'
     'missing manifest fragment'
     'unindexed fragment'

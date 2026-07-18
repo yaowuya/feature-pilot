@@ -4,9 +4,11 @@ description: Use when coordinating FeaturePilot task plan generation after propo
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
 
-Read `../_shared/artifact-layout.md` before resolving or writing task plans. Its mutually exclusive canonical forms, semantic split rules, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving or writing task plans. Its mutually exclusive canonical forms, semantic split rules, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
 ---
 
 # FeaturePilot Plan
@@ -36,7 +38,7 @@ Each split end uses the authoritative `| Order | File | Kind | Owns |` manifest.
 
 Every executable task checkbox must appear exactly once in either the small plan or one `tasks`-kind fragment, using a stable `backend-NNN` or `frontend-NNN` ID that continues across fragments. Index, context, interface, coverage, and overview files contain no executable task checkboxes.
 
-Read `task-layout-template.md` only after the planned ends and their selected forms are known, and only when an end is split or both ends exist. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview, whether its form is small or split. The overview owns only canonical end entrypoints, cross-end dependency edges or execution stages, and progress totals derived from the unique owner checkboxes; it does not copy end-local navigation, constraints, interfaces, coverage, task bodies, or checkboxes.
+Read `${CLAUDE_SKILL_DIR}/task-layout-template.md` only after the planned ends and their selected forms are known, and only when an end is split or both ends exist. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview, whether its form is small or split. The overview owns only canonical end entrypoints, cross-end dependency edges or execution stages, and progress totals derived from the unique owner checkboxes; it does not copy end-local navigation, constraints, interfaces, coverage, task bodies, or checkboxes.
 
 ## 输入
 
@@ -66,7 +68,7 @@ Read `task-layout-template.md` only after the planned ends and their selected fo
    - 传入已解析的 proposal 与前端 design logical content、canonical entrypoint、mode 和 ordered fragment paths。
    - 选择并仅输出 `fp-docs/changes/<slug>/tasks/plan-frontend.md`，或 `fp-docs/changes/<slug>/tasks/frontend/00-index.md` 及其 manifest 列出的 fragments。
 4. 如果不存在某一端设计文件，视为该端不在本次范围内；不要生成空计划或占位文件。
-5. 仅当两端都生成计划时，使用 `task-layout-template.md` 写入 `tasks/00-overview.md`；记录真实的跨端依赖边或执行阶段。任何单端计划都不生成该文件。
+5. 仅当两端都生成计划时，使用 `${CLAUDE_SKILL_DIR}/task-layout-template.md` 写入 `tasks/00-overview.md`；记录真实的跨端依赖边或执行阶段。任何单端计划都不生成该文件。
 
 Pass the resolved logical proposal content, resolved logical design content, canonical entrypoint, mode, and ordered fragment paths to each child planner. Children must verify this resolution against disk before planning and must not reopen a guessed stable path first.
 

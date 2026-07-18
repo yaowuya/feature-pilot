@@ -4,8 +4,10 @@ description: Use when performing a final whole-branch review of an implemented F
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
-Read `../_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
 Apply the shared `Process document language` contract when writing the final review report. This reminder does not alter the exact `PASS`, `PASS_WITH_NOTES`, `FAIL`, or `BLOCKED` verdict semantics.
 ---
 
@@ -55,7 +57,7 @@ Record each logical artifact's resolved mode, canonical entry, manifest-ordered 
 
 ## Blocking structural validity gate
 
-Any structural rejection from `../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible. Use `BLOCKED` when invalid structure prevents complete, trustworthy input resolution; use `FAIL` when the complete evidence can still be resolved and the structural defect is concrete. The reviewer may continue collecting findings after detecting a rejection, but those additional findings cannot clear the structural gate.
+Any structural rejection from `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible. Use `BLOCKED` when invalid structure prevents complete, trustworthy input resolution; use `FAIL` when the complete evidence can still be resolved and the structural defect is concrete. The reviewer may continue collecting findings after detecting a rejection, but those additional findings cannot clear the structural gate.
 
 Treat every shared-contract rejection as blocking, including:
 
@@ -200,7 +202,7 @@ Do not write review reports anywhere else.
 
 ## Final Review Report Template
 
-Read `final-review-template.md` only after evidence collection is complete and immediately before writing the report. Preserve its headings and tables exactly; add coverage rows and findings without changing the schema.
+Read `${CLAUDE_SKILL_DIR}/final-review-template.md` only after evidence collection is complete and immediately before writing the report. Preserve its headings and tables exactly; add coverage rows and findings without changing the schema.
 
 ## Completion Response
 

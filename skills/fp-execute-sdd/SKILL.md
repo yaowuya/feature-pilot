@@ -4,8 +4,10 @@ description: Use when executing confirmed FeaturePilot implementation plans that
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
-Read `../_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
 ---
 
 # FeaturePilot Subagent-Driven Execute
@@ -211,7 +213,7 @@ Use `-fix-<n>` sections inside the same report for fix attempts; do not scatter 
 
 ## Task Brief Package
 
-Before dispatching an implementer, write a brief using `task-brief-template.md`. It must include:
+Before dispatching an implementer, write a brief using `${CLAUDE_SKILL_DIR}/task-brief-template.md`. It must include:
 - Task ID, unique task-owner path, declared dependencies, task heading, and task checkbox text.
 - Full task text from the plan, not a summary.
 - Applicable `Global Constraints`.
@@ -226,7 +228,7 @@ The implementer receives the brief path, not the full controller chat.
 
 ## Implementer Dispatch
 
-Use `implementer-prompt.md` for each task.
+Use `${CLAUDE_SKILL_DIR}/implementer-prompt.md` for each task.
 
 Rules:
 - One fresh implementer subagent per task.
@@ -243,7 +245,7 @@ Allowed implementer statuses:
 
 ## Review Package
 
-After `DONE` or `DONE_WITH_CONCERNS`, create a package using `review-package-template.md`:
+After `DONE` or `DONE_WITH_CONCERNS`, create a package using `${CLAUDE_SKILL_DIR}/review-package-template.md`:
 - brief path
 - implementer report path
 - base/head SHA for this task
@@ -257,7 +259,7 @@ Write it to `.fp-execute/packages/<task-id>-review-package.md`. Do not paste lar
 
 ## Per-task Reviewer
 
-Use `task-reviewer-prompt.md` for a fresh read-only reviewer after every implemented task.
+Use `${CLAUDE_SKILL_DIR}/task-reviewer-prompt.md` for a fresh read-only reviewer after every implemented task.
 
 Reviewer must verify two gates:
 1. **Spec Compliance:** task brief, interfaces, constraints, visual checks, and validation evidence.
@@ -293,7 +295,7 @@ Every non-pass result at attempt 1 or 2 must transition through exactly one tabl
 
 For attempt 1 or 2 with any Critical or Important finding:
 1. Append a ledger `review_attempt` event with the exact findings, counts, review path, and failed disposition.
-2. Dispatch one fresh serial fixer with `fix-prompt.md` for only those findings.
+2. Dispatch one fresh serial fixer with `${CLAUDE_SKILL_DIR}/fix-prompt.md` for only those findings.
 3. Fixer reads the brief, report, package, review, and exact findings; edits only files needed for them; runs required tests; commits when appropriate; and appends a numbered fix section to the same report.
 4. Controller regenerates the review package from the new diff/HEAD.
 5. Increment the same scope's attempt and dispatch one fresh read-only reviewer with the same task-reviewer template.
@@ -330,7 +332,7 @@ After every task has either passed review or reached attempt 3 with only recorde
 6. Final verdict mapping: `PASS` ends the scope successfully. `PASS_WITH_NOTES` ends the final review scope with non-blocking review debt and requires every note to be recorded. `FAIL` is a failed final review attempt. `BLOCKED` is a main-flow blocker and pauses without another automatic fixer/reviewer until its missing decision or unsafe prerequisite is resolved.
    A final `BLOCKED` verdict consumes its current attempt. After its prerequisite is resolved, restore that completed attempt: when it is below 3, run the clean-snapshot checkpoint, increment exactly once before the next final review, and continue; at attempt 3, remain `BLOCKED` because the same scope cannot review again. Only explicit user authorization may open a new final review scope after the blocker is resolved, and that decision must be appended to the ledger; never disguise it as attempt 4.
 7. Final severity mapping: `Critical` stays Critical; `High` maps to Important and is a main-flow blocker; `Medium` maps to Important; `Low` maps to Minor. A mapped Medium is blocking only when it meets the same observable main-flow conditions used for task review; otherwise it may become final review debt. A mapped Low never blocks alone.
-8. After `FAIL` at attempt 1 or 2, dispatch `fix-prompt.md` with `Review scope: final`, `BRIEF_PATH=N/A`, the completed attempt, final package, final review report, resolved proposal/design/plan context, exact mapped findings, and `.fp-execute/reports/final-review-fixes.md`. For final review scope the fixer may touch multiple completed-task files only when required by those exact findings. Regenerate the final package, increment the same final scope's attempt, then repeat the clean-snapshot checkpoint before the next final review.
+8. After `FAIL` at attempt 1 or 2, dispatch `${CLAUDE_SKILL_DIR}/fix-prompt.md` with `Review scope: final`, `BRIEF_PATH=N/A`, the completed attempt, final package, final review report, resolved proposal/design/plan context, exact mapped findings, and `.fp-execute/reports/final-review-fixes.md`. For final review scope the fixer may touch multiple completed-task files only when required by those exact findings. Regenerate the final package, increment the same final scope's attempt, then repeat the clean-snapshot checkpoint before the next final review.
 9. The final review scope has a maximum of three reviews. The initial review is attempt 1. At failed attempt 3, record mapped non-blocking findings as final review debt, but keep any main-flow blocker `BLOCKED` and prevent completion or archive. The controller must not dispatch a fourth review.
 10. On resume, restore the recorded final review attempt, latest package/review paths, verdict mapping, and unresolved findings from the ledger. A new reviewer, finding, fix commit, session, compaction, or restart does not reset the final scope.
 11. After `PASS` or `PASS_WITH_NOTES`, append the result and commit the final review report and ledger evidence without rerunning review. This evidence-only commit must not contain implementation, task checkbox, overview, requirement, design, or plan changes; if it does, the verdict is stale and must follow the bounded non-pass transition.

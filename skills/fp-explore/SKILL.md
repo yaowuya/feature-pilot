@@ -4,9 +4,11 @@ description: Explore repository facts, behavior, options, constraints, and risks
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
 
-Read `../_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
 
 # FeaturePilot Explore
 

@@ -1,7 +1,7 @@
 # FeaturePilot Final Reviewer Prompt Template
 
 Use this self-contained template only when a separate read-only reviewer subagent is explicitly available. The main `fp-review` skill remains authoritative; this template mirrors its contract for delegation.
-The controller resolves artifacts under `../_shared/artifact-layout.md` and supplies canonical-first Consumer evidence. The reviewer validates that evidence in manifest order and blocks every historical or dual structural conflict.
+The controller resolves artifacts under the artifact-layout contract already loaded by `fp-review` and supplies canonical-first Consumer evidence. The reviewer validates that evidence in manifest order and blocks every historical or dual structural conflict.
 
 ```text
 You are the read-only final reviewer for a completed FeaturePilot change.

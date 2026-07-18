@@ -2,7 +2,7 @@
 
 Read this file only after current framework/components/state conventions, design contracts, and source-backed Visual Checks are known.
 
-Read `../_shared/artifact-layout.md` before writing. Select one mutually exclusive output representation:
+Apply the artifact-layout contract already loaded by `fp-plan-frontend` before writing. Select one mutually exclusive output representation:
 
 - **Small form:** `tasks/plan-frontend.md` owns the complete logical template below in section order.
 - **Split form:** `tasks/frontend/00-index.md` owns only the `Order / File / Kind / Owns` manifest. A `context` fragment owns the header, Global Constraints, file structure, and page goal; an `interface` fragment owns component/state/API/route/interaction/style/visual contracts; one or more `tasks` fragments own the executable TDD tasks; a `coverage` fragment owns proposal/design/visual coverage and verification mapping. Do not create `tasks/plan-frontend.md` in split form.

@@ -1,7 +1,7 @@
 # FeaturePilot SDD Task Brief Template
 
 Use this template for `.fp-execute/briefs/<task-id>-brief.md` before dispatching an implementer.
-Resolve inputs under `../_shared/artifact-layout.md` first. The controller is a canonical-first Consumer: preserve manifest order and block every historical or dual structural conflict before creating a task brief.
+Apply the artifact-layout contract already loaded by the owning `fp-execute-sdd` controller. The controller is a canonical-first Consumer: preserve manifest order and block every historical or dual structural conflict before creating a task brief.
 
 ```markdown
 # Task Brief: <task-id>
