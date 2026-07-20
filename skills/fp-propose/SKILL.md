@@ -5,10 +5,11 @@ description: 为新功能变更生成并确认 proposal.md 提案文档
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving PRD input or creating/revising the proposal. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving PRD input or creating/revising the proposal. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
 ---
 
 # FeaturePilot Propose
@@ -83,7 +84,7 @@ One logical proposal selects exactly one form before writing:
 2. 【立即用工具执行】确认目标项目根目录，并把输出限定在项目根目录下的 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md`。
 3. 如果项目根目录没有 `fp-docs/manifest.md`，只提示建议运行 `/fp-init`；不要强制初始化，也不要创建 manifest/settings/intel。
 4. 【立即用工具执行】在用户确认摘要后，只创建已批准 form 所需的目录。
-5. 【立即用工具执行】读取 `${CLAUDE_SKILL_DIR}/proposal-template.md`，填写完整后直接写入批准的最终结构；不要先生成 monolith 再机械拆分。
+5. 【立即用工具执行】读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md`，填写完整后直接写入批准的最终结构；不要先生成 monolith 再机械拆分。
 
 Split form requirements:
 
@@ -101,7 +102,7 @@ Existing artifact handling:
 
 只生成本阶段的一种 proposal form。不要预创建 `design.md`、`tasks.md`、`tasks/`；这些文件/目录只能由后续对应阶段在真正需要时创建。
 
-Do not load `${CLAUDE_SKILL_DIR}/proposal-template.md` during exploration or questioning. Load it only after the pre-write confirmation gate, so early turns carry decisions rather than output boilerplate.
+Do not load `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md` during exploration or questioning. Load it only after the pre-write confirmation gate, so early turns carry decisions rather than output boilerplate.
 
 ---
 

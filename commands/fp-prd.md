@@ -2,7 +2,7 @@
 description: Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
 ---
 
-根据「$ARGUMENTS」调用并严格执行 `fp-prd` skill（Codex fallback：读取 `skills/fp-prd/SKILL.md`），再按其要求加载 `fp-prd-grill-me`；skill 链及共享 workspace contract 是完整事实源。
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/SKILL.md`，将「$ARGUMENTS」作为输入，再按其要求加载 `fp-prd-grill-me`；skill 链及共享 workspace contract 是完整事实源。
 
 Gate checksum：
 

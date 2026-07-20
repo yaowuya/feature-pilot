@@ -5,10 +5,11 @@ description: Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitl
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving, creating, or revising the PRD. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving, creating, or revising the PRD. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
 ---
 
 # FeaturePilot PRD
@@ -137,7 +138,7 @@ At the start, choose one of two modes from user intent:
 6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
 7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
 8. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
-9. Write the selected form from `${CLAUDE_SKILL_DIR}/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
+9. Write the selected form from `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
 10. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html` and reference it from the unique fragment that owns the complete `3.N` feature block and its `3.N.5 原型` subsection.
 11. Run PRD self-review and report the canonical entrypoint and prototype path.
 
@@ -183,7 +184,7 @@ A conversion must transfer all unique content, validate the new logical artifact
 
 ## PRD output contract
 
-Do not load the output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `${CLAUDE_SKILL_DIR}/prd-template.md` completely.
+Do not load the output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md` completely.
 
 - Small form writes only `prd.md`.
 - Split form writes only `prd/00-index.md` and its listed Markdown fragments. Its authoritative fragment manifest uses `| Order | File | Kind | Owns |`; every sibling fragment is listed exactly once, and the index owns navigation/ownership metadata only.
@@ -232,7 +233,7 @@ Before generating a new `prototype.html`:
 
 ## Self-Review
 
-Run the checklist in `${CLAUDE_SKILL_DIR}/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. If any check fails, fix the PRD/prototype before reporting completion.
+Run the checklist in `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. If any check fails, fix the PRD/prototype before reporting completion.
 
 ## Invalid Output Recovery
 

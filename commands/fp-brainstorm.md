@@ -2,7 +2,7 @@
 description: 基于已确认的 PRD 或 proposal，通过苏格拉底式提问生成技术设计方案
 ---
 
-根据「$ARGUMENTS」调用并严格执行 `fp-brainstorm` skill（Codex fallback：读取 `skills/fp-brainstorm/SKILL.md`）；该 skill、共享 workspace contract 与 `../skills/_shared/artifact-layout.md` 是完整事实源。
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-brainstorm/SKILL.md`，将「$ARGUMENTS」作为输入；该 skill、共享 workspace contract 与 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 是完整事实源。
 
 Gate checksum：
 

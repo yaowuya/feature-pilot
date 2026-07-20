@@ -2,7 +2,7 @@
 description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化
 ---
 
-根据「$ARGUMENTS」调用并严格执行 `fp-quick` skill（Codex fallback：读取 `skills/fp-quick/SKILL.md`）；该 skill 及其共享 workspace contract 是完整事实源。
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-quick/SKILL.md`，将「$ARGUMENTS」作为输入；该 skill 及其共享 workspace contract 是完整事实源。
 
 Gate checksum：
 

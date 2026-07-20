@@ -2,7 +2,7 @@
 description: 初始化 fp-docs 信息层（单一 manifest、可选 settings/intel 与项目族示例）
 ---
 
-根据「$ARGUMENTS」调用并严格执行 `fp-init` skill（Codex fallback：读取 `skills/fp-init/SKILL.md`）；该 skill 及其共享 workspace contract 是完整事实源。
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/SKILL.md`，将「$ARGUMENTS」作为输入；该 skill 及其共享 workspace contract 是完整事实源。
 
 Gate checksum：
 

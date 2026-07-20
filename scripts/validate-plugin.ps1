@@ -402,6 +402,14 @@ foreach ($command in $commands) {
     Assert-Condition ($commandFrontmatter.Success) "$($command.Name) has invalid frontmatter boundaries"
     Assert-Condition ($commandFrontmatter.Groups['body'].Value -match '(?m)^description:\s*\S') "$($command.Name) has no description"
     Assert-Condition ($commandText -match [regex]::Escape($skillName)) "$($command.Name) does not invoke or identify $skillName"
+    $expectedCommandSkillAnchor = '`${CLAUDE_PLUGIN_ROOT}/skills/' + $skillName + '/SKILL.md`'
+    Assert-Condition ($commandText.Contains($expectedCommandSkillAnchor)) "$($command.Name) does not load its matching skill from the official Claude plugin root"
+    $backtick = [char]96
+    $recursiveShortName = "调用并严格执行 $backtick$skillName$backtick skill"
+    $recursiveNamespacedName = "调用并严格执行 $backtick" + 'fp:' + "$skillName$backtick skill"
+    Assert-Condition (-not ($commandText.Contains($recursiveShortName) -or $commandText.Contains($recursiveNamespacedName))) "$($command.Name) recursively invokes its own registered command/skill name"
+    $consumerRelativeFallback = 'Codex fallback：读取 `skills/' + $skillName + '/SKILL.md`'
+    Assert-Condition (-not $commandText.Contains($consumerRelativeFallback)) "$($command.Name) retains a consumer-relative Codex fallback"
     Assert-Condition ($commandText.Contains('Gate checksum')) "$($command.Name) is missing its gate checksum"
     $commandLines = @($commandText -split "`r?`n").Count
     Assert-Condition ($commandLines -le 20) "$($command.Name) is no longer a thin adapter ($commandLines lines)"
@@ -418,7 +426,9 @@ foreach ($skill in $skills) {
     $lineCount = @($skillText -split "`r?`n").Count
     Assert-Condition ($lineCount -le 500) "$($skill.Name)/SKILL.md has $lineCount lines (limit: 500)"
     Assert-Condition ($skillText -match "(?m)^name:\s*$([regex]::Escape($skill.Name))\s*$") "$($skill.Name)/SKILL.md frontmatter name does not match its directory"
-    $anchoredWorkspaceContract = '`${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md`'
+    Assert-Condition (-not $skillText.Contains('${CLAUDE_SKILL_DIR}')) "$($skill.Name)/SKILL.md uses unsupported CLAUDE_SKILL_DIR instead of an official plugin root"
+    Assert-Condition ($skillText.Contains('在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径')) "$($skill.Name)/SKILL.md lacks the Codex installed-skill path mapping"
+    $anchoredWorkspaceContract = '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`'
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
@@ -656,12 +666,12 @@ foreach ($relativePath in $compactFirstFiles) {
 }
 
 $designArtifactContracts = @{
-    'skills\fp-brainstorm\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-brainstorm\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-brainstorm\design-template.md' = 'artifact-layout contract already loaded by `fp-brainstorm`'
-    'skills\fp-figma\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-ui-spec\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-ux-spec\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'commands\fp-brainstorm.md' = '../skills/_shared/artifact-layout.md'
+    'skills\fp-figma\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-ui-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-ux-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'commands\fp-brainstorm.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
 }
 
 foreach ($entry in $designArtifactContracts.GetEnumerator()) {
@@ -1033,11 +1043,11 @@ Assert-Condition (Test-UnconditionalStablePlanFirstRead 'Read stable entrypoints
 Assert-Condition (-not (Test-UnconditionalStablePlanFirstRead 'Only when tasks/backend/00-index.md is absent, read tasks/plan-backend.md as the small form.')) 'stable-plan-first detector rejects a canonical-first conditional read'
 
 $artifactConsumerContracts = @{
-    'skills\fp-start\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-execute\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-execute-sdd\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-review\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
-    'skills\fp-archive\SKILL.md' = '${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md'
+    'skills\fp-start\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-execute\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-execute-sdd\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-review\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-archive\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
 }
 foreach ($entry in $artifactConsumerContracts.GetEnumerator()) {
     $consumerText = Read-Utf8 (Join-Path $root $entry.Key)
@@ -1102,7 +1112,7 @@ foreach ($templatePath in $sddArtifactResolutionTemplates) {
 }
 
 $startCommand = Read-Utf8 (Join-Path $root 'commands\fp-start.md')
-Assert-Condition ($startCommand.Contains('../skills/_shared/artifact-layout.md') -and $startCommand.Contains('canonical-first Consumer')) 'fp-start command adapter must delegate canonical artifact resolution to the shared contract'
+Assert-Condition ($startCommand.Contains('${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md') -and $startCommand.Contains('canonical-first Consumer')) 'fp-start command adapter must delegate canonical artifact resolution to the shared contract'
 
 foreach ($anchor in @('resolved logical PRD content', 'resolved logical proposal content', 'small file OR split index/fragments', '`fp-propose` preserves the resolved proposal form')) {
     Assert-Condition ($startSkill.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "fp-start is missing split requirement handoff wording: $anchor"
@@ -1110,7 +1120,7 @@ foreach ($anchor in @('resolved logical PRD content', 'resolved logical proposal
 Assert-Condition (-not ($startSkill.Contains('summarize from the PRD into `proposal.md`'))) 'fp-start still steers fp-propose back to the stable proposal file'
 
 $structuralReviewBlockers = @(
-    'Any structural rejection from `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible'
+    'Any structural rejection from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` makes `PASS` and `PASS_WITH_NOTES` impossible'
     'missing split index'
     'missing manifest fragment'
     'unindexed fragment'

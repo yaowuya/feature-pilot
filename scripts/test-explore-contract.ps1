@@ -211,8 +211,9 @@ foreach ($schemaLeak in @(
 
 $commandLines = @($commandText -split "`r?`n").Count
 Assert-Condition ($commandLines -le 20) "fp-explore command exceeds 20 lines: $commandLines"
-Assert-Condition ($commandText.Contains('fp:fp-explore')) 'command does not delegate to fp:fp-explore'
-Assert-Condition ($commandText.Contains('skills/fp-explore/SKILL.md')) 'command lacks Markdown-agent fallback'
+Assert-Condition ($commandText.Contains('`${CLAUDE_PLUGIN_ROOT}/skills/fp-explore/SKILL.md`')) 'command does not load fp-explore from the official Claude plugin root'
+Assert-Condition (-not $commandText.Contains('调用并严格执行 `fp:fp-explore` skill')) 'command recursively invokes its own registered fp:fp-explore name'
+Assert-Condition (-not $commandText.Contains('Codex/Markdown fallback 读取 `skills/fp-explore/SKILL.md`')) 'command retains a consumer-relative fp-explore fallback'
 Assert-Condition ($commandText.Contains('Gate checksum')) 'command lacks gate checksum'
 foreach ($forbidden in @('budget-profile: tiny', 'quick-candidate-files:', 'approved-research-boundary:', 'External research request:')) {
     Assert-Condition (-not $commandText.Contains($forbidden)) "command copied authoritative policy: $forbidden"
@@ -290,6 +291,14 @@ Assert-Condition (-not $quickCommand.Contains('复用 `fp-propose`')) 'fp-quick 
 Assert-Condition ($quickCommand.Contains('fp-explore')) 'fp-quick command lacks fp-explore routing'
 foreach ($gate in @('fp-docs/changes/', '等待明确确认', '验证')) {
     Assert-Condition ($quickSkill.Contains($gate)) "fp-quick lost caller-owned gate $gate"
+}
+
+Assert-Condition (-not $skillText.Contains('${CLAUDE_SKILL_DIR}')) 'fp-explore uses unsupported CLAUDE_SKILL_DIR'
+foreach ($pluginResource in @(
+    '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`',
+    '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md`'
+)) {
+    Assert-Condition ($skillText.Contains($pluginResource)) "fp-explore lacks official Claude plugin resource anchor: $pluginResource"
 }
 
 foreach ($callerSkill in @(
