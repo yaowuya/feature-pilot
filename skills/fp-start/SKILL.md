@@ -5,9 +5,10 @@ description: 启动并严格执行全流程开发向导（propose → brainstorm
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
-Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
 ---
 
 # FeaturePilot Start
@@ -82,7 +83,7 @@ Dependencies are enablers, not busywork:
 
 ## Shared start-routing exploration
 
-After the non-empty-input and init-availability checks, invoke the Skill tool once with `fp:fp-explore`, then supply the structured `start-routing` block below before phase 1. Do not search for or directly read `skills/fp-explore/SKILL.md`. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop before phase 1 without searching the consumer project for a fallback. `fp-start` remains responsible for canonical artifact resolution, the final active slug, the quick/full choice, and every stage gate.
+完成非空输入和 init 可用性检查后，在阶段 1 前使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `start-routing` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在阶段 1 前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。`fp-start` 仍负责 canonical artifact 解析、最终 active slug、quick/full 选择以及所有阶段门禁。
 
 <!-- fp-explore-invoke
 profile: start-routing

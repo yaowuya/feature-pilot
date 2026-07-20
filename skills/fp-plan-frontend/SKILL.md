@@ -5,10 +5,11 @@ description: Use when generating frontend FeaturePilot task plans from the resol
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving or writing the frontend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing the frontend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
 ---
 
 # FeaturePilot Frontend Plan
@@ -61,7 +62,7 @@ fp-docs/changes/<slug>/tasks/frontend/10-<topic>-tasks.md
 fp-docs/changes/<slug>/tasks/frontend/90-coverage.md
 ```
 
-Read `${CLAUDE_SKILL_DIR}/../fp-plan/task-layout-template.md` when splitting and use its authoritative `Order / File / Kind / Owns` manifest. The `context` fragment uniquely owns the header, goal, Global Constraints, file structure, page goal, and visual context. The `interface` fragment uniquely owns component, state, API, route, interaction, style, responsive, and Visual / UX contracts. One or more `tasks` fragments uniquely own the logical TDD task bodies. The `coverage` fragment uniquely owns proposal/design/visual coverage and verification mapping. The index contains navigation and ownership metadata only; every sibling Markdown fragment is listed exactly once.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan/task-layout-template.md` when splitting and use its authoritative `Order / File / Kind / Owns` manifest. The `context` fragment uniquely owns the header, goal, Global Constraints, file structure, page goal, and visual context. The `interface` fragment uniquely owns component, state, API, route, interaction, style, responsive, and Visual / UX contracts. One or more `tasks` fragments uniquely own the logical TDD task bodies. The `coverage` fragment uniquely owns proposal/design/visual coverage and verification mapping. The index contains navigation and ownership metadata only; every sibling Markdown fragment is listed exactly once.
 
 Each executable task checkbox exists exactly once: in `plan-frontend.md` for small form or one `tasks`-kind fragment for split form. Split `00-index.md`, `context`, `interface`, and `coverage` fragments contain no executable checkbox. When converting an existing canonical form, transfer all unique content, validate the new representation, and remove the obsolete form. Never produce the historical stable-file-plus-directory combination.
 
@@ -80,11 +81,11 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 
 ## Recommended plan structure
 
-Use `${CLAUDE_SKILL_DIR}/plan-template.md`. Load it only after the plan facts and contracts are derived.
+Use `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-frontend/plan-template.md`. Load it only after the plan facts and contracts are derived.
 
 ## Task format
 
-Each task must be small enough to implement and review independently and must use the complete Task format in `${CLAUDE_SKILL_DIR}/plan-template.md`, including the unique task-level `- [ ] **Task frontend-NNN: ...**` marker plus `Depends on`. Subsections such as Visual / UX Checks must not use checkbox syntax.
+Each task must be small enough to implement and review independently and must use the complete Task format in `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-frontend/plan-template.md`, including the unique task-level `- [ ] **Task frontend-NNN: ...**` marker plus `Depends on`. Subsections such as Visual / UX Checks must not use checkbox syntax.
 
 ## Invalid plans
 

@@ -5,10 +5,11 @@ description: Explore repository facts, behavior, options, constraints, and risks
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
 
-Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
 
 # FeaturePilot Explore
 

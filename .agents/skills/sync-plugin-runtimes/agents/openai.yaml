@@ -1,0 +1,6 @@
+interface:
+  display_name: "Sync Plugin Runtimes"
+  short_description: "同步当前插件到本机 Codex 与 Claude Code 运行时"
+  default_prompt: "Use $sync-plugin-runtimes to synchronize this repository's plugin to Codex and Claude Code."
+policy:
+  allow_implicit_invocation: true

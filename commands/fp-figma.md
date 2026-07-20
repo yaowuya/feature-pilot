@@ -2,7 +2,7 @@
 description: 根据 Figma 链接生成或完善项目当前前端框架的 UI 实现，遵循项目本地前端/UI/UX 配置
 ---
 
-根据「$ARGUMENTS」调用并严格执行 `fp-figma` skill（Codex fallback：读取 `skills/fp-figma/SKILL.md`）；该 skill 及其共享 workspace contract 是完整事实源。
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-figma/SKILL.md`，将「$ARGUMENTS」作为输入；该 skill 及其共享 workspace contract 是完整事实源。
 
 Gate checksum：
 
