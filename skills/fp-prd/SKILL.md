@@ -38,7 +38,7 @@ Before writing any PRD file, load and follow `fp-prd-grill-me`.
 
 ### Shared code-fact exploration
 
-Before either PRD-first or Prototype-first interviewing, invoke the Skill tool with `fp:fp-explore` and supply the structured `prd-facts` block below only when the input is non-empty, concerns an existing product/page/API/model/permission/compatibility behavior, current repository facts can reduce technical uncertainty, and the idea is not purely greenfield. Do not search for or directly read `skills/fp-explore/SKILL.md`. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop before interviewing or writing; do not search the consumer project for a fallback. Empty input keeps the existing immediate-stop rule and performs no exploration.
+在进入 PRD-first 或 Prototype-first 访谈前，仅当输入非空、涉及现有产品/页面/API/模型/权限/兼容行为、当前仓库事实能够降低技术不确定性，且需求并非纯绿地场景时，才使用当前运行时原生技能机制加载一次 `fp:fp-explore`，并向其 `prd-facts` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在访谈和写入前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。空输入仍按既有规则立即停止，不执行探索。
 
 <!-- fp-explore-invoke
 profile: prd-facts

@@ -82,7 +82,7 @@ Dependencies are enablers, not busywork:
 
 ## Shared start-routing exploration
 
-After the non-empty-input and init-availability checks, invoke the Skill tool once with `fp:fp-explore`, then supply the structured `start-routing` block below before phase 1. Do not search for or directly read `skills/fp-explore/SKILL.md`. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop before phase 1 without searching the consumer project for a fallback. `fp-start` remains responsible for canonical artifact resolution, the final active slug, the quick/full choice, and every stage gate.
+完成非空输入和 init 可用性检查后，在阶段 1 前使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `start-routing` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在阶段 1 前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。`fp-start` 仍负责 canonical artifact 解析、最终 active slug、quick/full 选择以及所有阶段门禁。
 
 <!-- fp-explore-invoke
 profile: start-routing

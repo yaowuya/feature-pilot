@@ -292,6 +292,24 @@ foreach ($gate in @('fp-docs/changes/', '等待明确确认', '验证')) {
     Assert-Condition ($quickSkill.Contains($gate)) "fp-quick lost caller-owned gate $gate"
 }
 
+foreach ($callerSkill in @(
+    @{ Name = 'fp-prd'; Text = $prdSkill },
+    @{ Name = 'fp-start'; Text = $startSkill },
+    @{ Name = 'fp-quick'; Text = $quickSkill }
+)) {
+    foreach ($anchor in @(
+        '运行时原生技能机制',
+        '可调用的 `Skill` tool',
+        '`available skills` 元数据',
+        '已安装的 FeaturePilot 分发目录',
+        '只有两种机制都无法',
+        '不得搜索消费者项目'
+    )) {
+        Assert-Condition ($callerSkill.Text.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "$($callerSkill.Name) lacks cross-runtime fp-explore loading contract: $anchor"
+    }
+    Assert-Condition (-not $callerSkill.Text.Contains('If the Skill tool cannot invoke `fp:fp-explore`')) "$($callerSkill.Name) still stops solely because the Skill tool cannot invoke fp-explore"
+}
+
 $fullValidator = Read-Utf8 (Join-Path $root 'scripts\validate-plugin.ps1')
 Assert-Condition ($fullValidator.Contains('test-explore-contract.ps1')) 'validate-plugin.ps1 does not invoke the focused explore suite'
 Assert-Condition ($fullValidator.Contains("'fp-explore'")) 'validate-plugin.ps1 lacks the fp-explore skill anchor set'

@@ -27,7 +27,7 @@ Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it 
 
 ### 1. 用 fp-explore quick 探索项目背景
 
-Invoke the Skill tool once with `fp:fp-explore`, then supply the structured block below to its `quick` profile. Do not search for or directly read `skills/fp-explore/SKILL.md`. Do not load the full `fp-propose` skill for exploration. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop this quick flow without searching the consumer project for a fallback; preserve the no-artifact and pre-implementation approval gates.
+使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `quick` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并停止 quick 流程。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`；不要为了探索而加载完整的 `fp-propose` skill；无产物和实现前确认门禁保持不变。
 
 <!-- fp-explore-invoke
 profile: quick
