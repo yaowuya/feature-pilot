@@ -5,8 +5,10 @@ description: Use when an approved FeaturePilot task plan should be implemented d
 
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
-Read `../_shared/artifact-layout.md` once before resolving execution inputs; it owns canonical small/split paths, manifests, task ownership, historical-layout rejection, and Consumer validation.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` once before resolving execution inputs; it owns canonical small/split paths, manifests, task ownership, historical-layout rejection, and Consumer validation.
 
 ---
 

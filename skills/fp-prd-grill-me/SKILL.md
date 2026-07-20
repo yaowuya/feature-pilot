@@ -5,9 +5,11 @@ description: Use only after fp-prd has been explicitly selected, when PRD-blocki
 
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
 
-Read `../_shared/artifact-layout.md` when classifying PRD form, semantic split boundaries, existing-artifact conflicts, or conversions. This dependency skill does not independently broaden `fp-prd` discovery.
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` when classifying PRD form, semantic split boundaries, existing-artifact conflicts, or conversions. This dependency skill does not independently broaden `fp-prd` discovery.
 
 
 # FeaturePilot PRD Grill Me

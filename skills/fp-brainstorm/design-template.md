@@ -2,7 +2,7 @@
 
 Read this file only after the user confirms the selected approach and approves writing the reviewed design sections.
 
-Apply `../_shared/artifact-layout.md` as the normative layout contract. Use only sections relevant to the actual backend/frontend scope, and select each end's mutually exclusive form before writing:
+Apply the artifact-layout contract already loaded by `fp-brainstorm` as the normative layout contract. Use only sections relevant to the actual backend/frontend scope, and select each end's mutually exclusive form before writing:
 
 - Small: `design/backend.md` or `design/frontend.md` owns the complete end design; do not create the corresponding end directory.
 - Split: `design/backend/00-index.md` or `design/frontend/00-index.md` owns the `| Order | File | Kind | Owns |` manifest and links semantically divided numbered fragments; do not create the corresponding end `.md` file.

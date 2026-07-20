@@ -2,7 +2,7 @@
 
 Read this file only after scope, file structure, constraints, interfaces, task order, and coverage have been derived from current evidence.
 
-Read `../_shared/artifact-layout.md` before writing. Select one mutually exclusive output representation:
+Apply the artifact-layout contract already loaded by `fp-plan-backend` before writing. Select one mutually exclusive output representation:
 
 - **Small form:** `tasks/plan-backend.md` owns the complete logical template below in section order.
 - **Split form:** `tasks/backend/00-index.md` owns only the `Order / File / Kind / Owns` manifest. A `context` fragment owns Header, Global Constraints, and file structure; an `interface` fragment owns Backend Interface Ledger; one or more `tasks` fragments own the executable TDD tasks; a `coverage` fragment owns Coverage Matrix. Do not create `tasks/plan-backend.md` in split form.

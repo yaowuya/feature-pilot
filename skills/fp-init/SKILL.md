@@ -5,7 +5,9 @@ description: Use when a project is adopting FeaturePilot for the first time, nee
 
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting. For this skill, apply its `fp-init` ownership exception: only init may create or repair project-level `fp-docs/manifest.md`, settings, and intel, and existing files require explicit overwrite approval.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting. For this skill, apply its `fp-init` ownership exception: only init may create or repair project-level `fp-docs/manifest.md`, settings, and intel, and existing files require explicit overwrite approval.
 
 # FeaturePilot Init
 
@@ -80,7 +82,7 @@ Do **not** create `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/` o
 
 If missing, create the skeleton files below. Existing files are never overwritten without explicit approval.
 
-Use the exact skeleton templates in `templates.md`:
+Use the exact skeleton templates in `${CLAUDE_SKILL_DIR}/templates.md`:
 
 | Target file | Template section |
 | --- | --- |
@@ -108,7 +110,7 @@ Note: `fp-docs/manifest.md` is always created or updated regardless of whether e
 
 ### 4. Detect labelled project-family examples
 
-After checking project docs, run only a small read-only project-family signal check. If no plausible signal exists, continue generic init without loading extra context. If a signal exists, read `project-family-examples.md` and follow its confidence, consent, selective-copy, and overwrite rules.
+After checking project docs, run only a small read-only project-family signal check. If no plausible signal exists, continue generic init without loading extra context. If a signal exists, read `${CLAUDE_SKILL_DIR}/project-family-examples.md` and follow its confidence, consent, selective-copy, and overwrite rules.
 
 ### 5. Ask about optional settings
 
@@ -135,7 +137,7 @@ Ask:
 2. 跳过 — 后续从当前代码和 manifest 推断即可。
 ```
 
-If the user chooses to generate, write the `FeaturePilot Agent Settings` template from `templates.md`.
+If the user chooses to generate, write the `FeaturePilot Agent Settings` template from `${CLAUDE_SKILL_DIR}/templates.md`.
 
 #### 5-b. Offer `settings/frontend.md`
 
@@ -158,7 +160,7 @@ Ask:
 2. 跳过 — 后续前端设计步骤会从当前代码推断。
 ```
 
-If the user chooses to generate, read lightweight project frontend facts and write the `FeaturePilot Frontend Settings` template from `templates.md`.
+If the user chooses to generate, read lightweight project frontend facts and write the `FeaturePilot Frontend Settings` template from `${CLAUDE_SKILL_DIR}/templates.md`.
 
 #### 5-c. Offer `settings/backend.md`
 
@@ -180,7 +182,7 @@ Ask:
 2. 跳过 — 后续后端设计步骤会从当前代码推断。
 ```
 
-If the user chooses to generate, write the `FeaturePilot Backend Settings` template from `templates.md`.
+If the user chooses to generate, write the `FeaturePilot Backend Settings` template from `${CLAUDE_SKILL_DIR}/templates.md`.
 
 #### 5-d. Offer `settings/prototype-style.md`
 
@@ -201,7 +203,7 @@ Ask:
 2. 跳过 — 后续首个原型确认后再提取。
 ```
 
-If the user chooses to generate, write the `FeaturePilot Prototype Style` template from `templates.md`.
+If the user chooses to generate, write the `FeaturePilot Prototype Style` template from `${CLAUDE_SKILL_DIR}/templates.md`.
 
 ### 6. Ask about lightweight discovery
 

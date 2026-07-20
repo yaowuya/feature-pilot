@@ -4,9 +4,11 @@ description: Explore repository facts, behavior, options, constraints, and risks
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
 
-Read `../_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting. It owns root resolution, manifest-first lazy context, stale-intel handling, evidence precedence, neutrality, compatibility, and artifact ownership.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` only when the objective names or depends on a current FeaturePilot artifact, change slug, stage, or canonical artifact path. Consume that contract only to resolve existing artifacts; never create, migrate, repair, split, finalize, or archive them.
 
 # FeaturePilot Explore
 
@@ -119,6 +121,77 @@ Use the bounded orientation defined under public mode. Do not scan the whole rep
 4. Emit one deterministic return and stop.
 
 A caller may reinvoke with a narrower objective and still-valid verified facts. Do not silently broaden the current call.
+
+## Progressive low-context inspection
+
+Apply this contract to every non-empty standalone exploration and every internal profile. Empty standalone orientation keeps its existing bounded scope and reads only the smallest necessary range; it does not inherit the `quick` numeric limits below. Non-empty standalone uses `standard` as its default budget unless the user explicitly narrows the investigation. Broad permission such as “read whatever you need” permits relevant local inspection but is not an explicit request for comprehensive full-file review.
+
+### Stage A - Glob candidate paths
+
+1. Translate the objective into exact filenames, directories, symbols, routes, APIs, models, components, configuration keys, error text, and test names.
+2. Use `Glob` or an equivalent path search before reading application files. Rank candidate paths by direct relevance instead of promoting every match into the read set.
+3. Exclude dependencies, generated files, caches, build output, binaries, large fixtures, historical archives, and unauthorized sensitive scope.
+4. When path evidence already answers whether or where something exists, cite the path and stop; do not open the file to repeat the same fact.
+
+### Stage B - Grep symbols and hit lines
+
+1. Use `Grep` or an equivalent content/symbol search within candidate paths or a bounded directory before opening application files.
+2. Search exact symbols, imports, call sites, routes, fields, component names, and test names before broadening keywords. If an exact search has no result, make at most one evidence-based expansion by synonym, naming convention, or path.
+3. Prefer results that include paths, line numbers, and only the context needed to choose a read window.
+4. When search evidence is sufficient, cite it directly. Never full-file read every file returned by a broad search.
+
+### Stage C - ranged Read around evidence
+
+1. After a relevant hit, use `Read(offset, limit)` or an equivalent range read. The default window is **80-160 lines**.
+2. Align a window to a complete function, class, component section, serializer, route group, configuration block, or test case rather than mechanically centering a fixed number of lines.
+3. A hit near a file boundary may use a shorter window. A semantic unit slightly larger than 160 lines may use one adjacent focused window.
+4. Do not reread an already covered range without new evidence. Record each actual range in `inspected-scope`.
+5. If a window ends inside the relevant semantic unit, read one adjacent window; do not jump directly to an unbounded read.
+
+### Stage D - justified full-file Read
+
+Escalate in this order: read the adjacent portion of the same semantic unit, search the missing definition/reference/test, read a second directly relevant local window, and only then consider an unbounded full-file Read.
+
+For application source, test, or configuration files known or state-neutrally confirmed to be **over 300 lines**, an unbounded Read is prohibited by default. A line-count or structure check counts as a search/static inspection; do not full-read first and justify it afterward.
+
+An unbounded Read is allowed only when at least one observable condition holds:
+
+- the file is at most 300 lines and its whole structure is directly relevant;
+- control flow or data flow spans multiple non-adjacent regions that focused windows cannot reconstruct reliably;
+- registration, import side effects, lifecycle behavior, route aggregation, or configuration precedence requires global ordering;
+- a single-file component has tightly coupled template, script, state, and methods that lose a material interaction when separated;
+- two directly relevant local windows still expose conflicting patterns or a conclusion-changing evidence gap;
+- the user explicitly requests a comprehensive review of that file, within all safety and budget boundaries.
+
+Before any unbounded Read, state the missing evidence, why search or ranged windows cannot resolve it, and why that file's global structure is directly relevant. “Need more context,” “the file is important,” and “for complete understanding” are not sufficient reasons.
+
+Do not use Bash to dump a whole file or otherwise bypass the ranged-Read threshold. When the available tool cannot read a range safely, use a dedicated search/structure tool or report the limitation.
+
+### Supplemental read counters
+
+Every non-empty exploration tracks these counters in addition to the existing budget profile:
+
+- `candidate paths`: paths promoted from search results into further content investigation;
+- `local read windows`: explicit ranged reads;
+- `unbounded application-file reads`: unbounded reads of application source, tests, or configuration.
+
+Different ranges in one file are separate local read windows. Overlapping ranges without new evidence are forbidden. A ranged read followed by an unbounded read increments both supplemental counters. Any tool that returns application-file content follows the same accounting by semantic effect: a bounded excerpt is a local read window and a whole-file dump is an unbounded application-file read. Root instructions, a short manifest/index, and an explicitly short FeaturePilot contract do not increment `unbounded application-file reads`, but still count under the existing distinct-file budget and follow smallest-necessary reading. Any ranged read also makes that file count once under the existing distinct-file budget.
+
+The `quick` profile has these additional hard maxima:
+
+- initial candidate paths: 8
+- local read windows: 8
+- unbounded application-file reads: 1
+
+Keep only the eight most directly relevant initial candidates and list the remainder as uninspected. The unbounded read is not a quota; it still requires the Stage D conditions and reason. At any `quick` supplemental maximum, return `complete`, `partial`, or `blocked` from the available evidence instead of widening the search or bypassing the counter. When multiple supplemental maxima are reached, report the counter that blocks the immediate next evidence-gathering action; use the precedence `quick-local-read-windows`, then `quick-candidate-paths`, then `quick-unbounded-application-file-reads` when more than one would block that same action. Use the existing `budget-exhausted:<counter>` form, including `budget-exhausted:quick-candidate-paths`, `budget-exhausted:quick-local-read-windows`, or `budget-exhausted:quick-unbounded-application-file-reads`, and list uninspected areas for the caller.
+
+Other profiles and non-empty standalone follow the same stages, threshold, and counters without the fixed `8 / 8 / 1` maxima. They remain bounded by their current budget and stop as soon as sufficient evidence exists; a budget is never a quota to consume.
+
+### Parallelism and boundaries
+
+Known-scope, independent `Glob`, `Grep`, and ranged `Read` operations may run in parallel. Never parallelize multiple unknown-scope unbounded reads. A standalone cross-module investigation may use read-only subagents only for genuinely independent scopes; each subagent follows this same contract and returns a summary, paths, lines, ranges, counters, and uninspected areas. The rule is: quick does not spawn subagents for a single search problem. Evident independent workstreams are scope evidence for `fp-quick`, not permission to expand the quick investigation.
+
+If candidates conflict, search callers and tests before widening reads. If targeted evidence remains insufficient, return the uncertainty, risk, or caller-owned question rather than guessing.
 
 ## Budget profiles
 

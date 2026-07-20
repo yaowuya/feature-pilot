@@ -4,7 +4,9 @@ description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta sp
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `../_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection.
 ---
 
 # FeaturePilot Brainstorm
@@ -16,7 +18,7 @@ Read `../_shared/workspace-rules.md` once before acting; it owns root resolution
 ### 第一步：读取上下文
 
 【立即用工具执行】读取以下文件，理解功能范围与行为契约：
-- 按 `../_shared/artifact-layout.md` 解析已确认 proposal：检查 `fp-docs/changes/<slug>/proposal.md` 与 `proposal/00-index.md`；双形式直接阻塞，split form 严格按 manifest 顺序读取全部已列分片
+- 按 `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` 解析已确认 proposal：检查 `fp-docs/changes/<slug>/proposal.md` 与 `proposal/00-index.md`；双形式直接阻塞，split form 严格按 manifest 顺序读取全部已列分片
 - 读取与本次需求相关的真实代码、测试、路由、模型、组件和 API；以当前代码为准
 
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为设计依据。当前代码仍是最终实现事实来源。
@@ -144,7 +146,7 @@ The explicit pre-write gate covers the selected form, exact target paths, `desig
 
 未满足这些条件时，不得创建、覆盖或移除 `design/00-index.md`、任一 end small file、split index、fragment 或 obsolete path。
 
-【立即用工具执行】读取 `design-template.md`，按实际涉及端写入设计文件。
+【立即用工具执行】读取 `${CLAUDE_SKILL_DIR}/design-template.md`，按实际涉及端写入设计文件。
 
 #### Post-write handoff
 
@@ -160,7 +162,7 @@ Post-write verification rejects dual forms, indirect change-index links, incompl
 
 ## 设计文档格式
 
-不要在 Socratic 问答期间加载输出模板。写入门禁通过后再完整读取 `design-template.md`；前端范围还必须保留上文定义的 Visual Source、组件映射和 Visual Checks 契约。
+不要在 Socratic 问答期间加载输出模板。写入门禁通过后再完整读取 `${CLAUDE_SKILL_DIR}/design-template.md`；前端范围还必须保留上文定义的 Visual Source、组件映射和 Visual Checks 契约。
 
 ## 提问原则
 

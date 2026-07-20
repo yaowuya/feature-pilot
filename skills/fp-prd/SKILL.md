@@ -4,9 +4,11 @@ description: Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitl
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
 
-Read `../_shared/artifact-layout.md` before resolving, creating, or revising the PRD. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` before resolving, creating, or revising the PRD. It owns canonical form selection, fragment manifest rules, size limits, conflict handling, and Producer/Consumer resolution.
 ---
 
 # FeaturePilot PRD
@@ -36,7 +38,7 @@ Before writing any PRD file, load and follow `fp-prd-grill-me`.
 
 ### Shared code-fact exploration
 
-Before either PRD-first or Prototype-first interviewing, load `fp-explore` and invoke `prd-facts` only when the input is non-empty, concerns an existing product/page/API/model/permission/compatibility behavior, current repository facts can reduce technical uncertainty, and the idea is not purely greenfield. Empty input keeps the existing immediate-stop rule and performs no exploration.
+Before either PRD-first or Prototype-first interviewing, invoke the Skill tool with `fp:fp-explore` and supply the structured `prd-facts` block below only when the input is non-empty, concerns an existing product/page/API/model/permission/compatibility behavior, current repository facts can reduce technical uncertainty, and the idea is not purely greenfield. Do not search for or directly read `skills/fp-explore/SKILL.md`. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop before interviewing or writing; do not search the consumer project for a fallback. Empty input keeps the existing immediate-stop rule and performs no exploration.
 
 <!-- fp-explore-invoke
 profile: prd-facts
@@ -123,7 +125,7 @@ At the start, choose one of two modes from user intent:
 
 ### PRD-first mode
 
-1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp-explore`, run the `prd-facts` invocation above, and pass only its verified facts and unanswered product decisions into `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, invoke `fp:fp-explore` through the Skill tool, run the `prd-facts` invocation above, and pass only its verified facts and unanswered product decisions into `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
 2. Load `fp-prd-grill-me`; it owns the interview even when `prd-facts` ran.
 3. Stop code-fact investigation as soon as the next useful product question is known.
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
@@ -135,7 +137,7 @@ At the start, choose one of two modes from user intent:
 6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
 7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
 8. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
-9. Write the selected form from `prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
+9. Write the selected form from `${CLAUDE_SKILL_DIR}/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
 10. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html` and reference it from the unique fragment that owns the complete `3.N` feature block and its `3.N.5 原型` subsection.
 11. Run PRD self-review and report the canonical entrypoint and prototype path.
 
@@ -143,7 +145,7 @@ At the start, choose one of two modes from user intent:
 
 Use this mode to make the prototype the primary clarification artifact before PRD writing.
 
-1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp-explore`, run `prd-facts`, and pass only verified facts and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, invoke `fp:fp-explore` through the Skill tool, run `prd-facts`, and pass only verified facts and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
 2. Load `fp-prd-grill-me`; it owns the Prototype-first interview even when `prd-facts` ran.
 3. Generate a kebab-case slug early for artifact paths and resolve any existing `prd.md`, `prd/00-index.md`, `prd/`, and `prototype.html`, but do not write files yet. Block structural conflicts before prototype work.
 4. Use `fp-prd-grill-me` Prototype-first interview to confirm only prototype-blocking decisions first:
@@ -181,7 +183,7 @@ A conversion must transfer all unique content, validate the new logical artifact
 
 ## PRD output contract
 
-Do not load the output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `prd-template.md` completely.
+Do not load the output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `${CLAUDE_SKILL_DIR}/prd-template.md` completely.
 
 - Small form writes only `prd.md`.
 - Split form writes only `prd/00-index.md` and its listed Markdown fragments. Its authoritative fragment manifest uses `| Order | File | Kind | Owns |`; every sibling fragment is listed exactly once, and the index owns navigation/ownership metadata only.
@@ -230,7 +232,7 @@ Before generating a new `prototype.html`:
 
 ## Self-Review
 
-Run the checklist in `prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. If any check fails, fix the PRD/prototype before reporting completion.
+Run the checklist in `${CLAUDE_SKILL_DIR}/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. If any check fails, fix the PRD/prototype before reporting completion.
 
 ## Invalid Output Recovery
 

@@ -4,8 +4,10 @@ description: 启动并严格执行全流程开发向导（propose → brainstorm
 ---
 ## FeaturePilot workspace and information layer
 
-Read `../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
-Read `../_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+
+Read `${CLAUDE_SKILL_DIR}/../_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_SKILL_DIR}/../_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
 ---
 
 # FeaturePilot Start
@@ -33,11 +35,11 @@ If it is missing:
 ## 强制执行契约
 
 从启动到结束必须遵守：
-- **显式加载子 skill**：每进入一个阶段，先读取并遵守对应的 `skills/<skill-name>/SKILL.md`。如果当前运行环境有 Skill/activate_skill 工具，使用工具加载；否则用文件读取工具读取本插件内的 SKILL.md。不要只凭记忆执行。
+- **显式加载子 skill**：在 Claude Code 中，每进入一个阶段都使用 Skill tool 和对应的完整名称（`fp:fp-propose`、`fp:fp-brainstorm`、`fp:fp-plan`、`fp:fp-execute`、`fp:fp-execute-sdd`、`fp:fp-quick`）加载 skill；不得通过搜索或直接读取消费者项目中的对应 `SKILL.md` 模拟调用。如果 Skill tool 不可用或调用失败，报告 FeaturePilot 插件可用性、权限或安装问题并停在当前门禁。只有明确的非 Claude Code Codex/Markdown fallback 才可用文件读取工具读取 FeaturePilot 分发源码内对应的 `skills/fp-*/SKILL.md`；不要只凭记忆执行。
 - **阶段门禁**：阶段 1、2、3 完成后必须停下等待用户确认。没有明确确认，不得进入下一阶段。
 - **产物核验**：每个阶段完成后必须用工具检查目标文件确实存在，并向用户展示关键路径和摘要。
 - **范围纪律**：不得跳过 proposal/design/plan 直接实现；只有在“小需求分流”中判断适合 `fp-quick` 且用户明确确认后，才允许切换到 `fp-quick`。
-- **失败处理**：如果子 skill、索引或目标目录缺失，先说明实际发现，再按本文件的 fallback 继续，不要假装已调用或已生成。
+- **失败处理**：在 Claude Code 中，子 skill 不可用或调用失败时停在当前门禁并报告，不进入文件 fallback。索引或目标目录缺失时，先说明实际发现，再按下文对应的 artifact 规则处理。只有第一个契约明确限定的非 Claude Code Codex/Markdown 环境可读取 FeaturePilot 分发源码中的 skill 文件继续；不要假装已调用或已生成。
 
 ## Shared canonical artifact resolution
 
@@ -80,7 +82,7 @@ Dependencies are enablers, not busywork:
 
 ## Shared start-routing exploration
 
-After the non-empty-input and init-availability checks, load `fp-explore` once before phase 1. `fp-start` remains responsible for canonical artifact resolution, the final active slug, the quick/full choice, and every stage gate.
+After the non-empty-input and init-availability checks, invoke the Skill tool once with `fp:fp-explore`, then supply the structured `start-routing` block below before phase 1. Do not search for or directly read `skills/fp-explore/SKILL.md`. If the Skill tool cannot invoke `fp:fp-explore`, report the plugin availability or installation failure and stop before phase 1 without searching the consumer project for a fallback. `fp-start` remains responsible for canonical artifact resolution, the final active slug, the quick/full choice, and every stage gate.
 
 <!-- fp-explore-invoke
 profile: start-routing

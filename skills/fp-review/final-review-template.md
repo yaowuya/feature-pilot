@@ -1,6 +1,6 @@
 # Final FeaturePilot Review: <slug>
 
-Resolution follows `../_shared/artifact-layout.md`. This report records canonical-first Consumer evidence in manifest order and rejects every historical or dual structural conflict before review.
+Resolution follows the artifact-layout contract already loaded by `fp-review`. This report records canonical-first Consumer evidence in manifest order and rejects every historical or dual structural conflict before review.
 
 叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段以及契约要求精确匹配的英文 schema 标题保留必要英文。若用户或目标项目设置明确指定其他语言，按共享优先级执行。
 

@@ -1,6 +1,6 @@
 # Task Layout Templates
 
-Read `../_shared/artifact-layout.md` first. Read this file only when `fp-plan` has selected a split form for an end or needs the two-end plan overview. Indexes and overviews are navigation/coordination artifacts, never executable task owners, so they must not contain `- [ ] **Task ...**` or `- [x] **Task ...**` markers.
+Apply the artifact-layout contract already loaded by `fp-plan`. Read this file only when `fp-plan` has selected a split form for an end or needs the two-end plan overview. Indexes and overviews are navigation/coordination artifacts, never executable task owners, so they must not contain `- [ ] **Task ...**` or `- [x] **Task ...**` markers.
 
 ## Change-level overview
 

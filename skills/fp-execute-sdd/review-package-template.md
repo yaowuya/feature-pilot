@@ -1,7 +1,7 @@
 # FeaturePilot SDD Review Package Template
 
 Use this template for `.fp-execute/packages/<task-id>-review-package.md` after an implementer reports `DONE` or `DONE_WITH_CONCERNS`.
-Resolve and record inputs under `../_shared/artifact-layout.md`. The package is canonical-first Consumer evidence, never a Producer rewrite or migration.
+Resolve and record inputs under the artifact-layout contract already loaded by the owning `fp-execute-sdd` controller. The package is canonical-first Consumer evidence, never a Producer rewrite or migration.
 
 ```markdown
 # Review Package: <task-id>
