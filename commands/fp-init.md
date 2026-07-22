@@ -9,4 +9,5 @@ Gate checksum：
 - `fp-init` 是唯一可创建或修复项目级 manifest/settings/intel 的流程。
 - 不创建 changes/archive/history。
 - 可选 settings、discovery、项目族示例采用与任何覆盖操作都必须先确认。
+- CodeGraph 是可选加速层；自动安装只使用 `npm install -g @colbymchenry/codegraph@latest`，MCP 配置独立确认，首次建图使用 `codegraph init`，失败必须回退。
 - discovery 只读；Unknown 不得猜测。

@@ -30,6 +30,12 @@ For target-state requirements, user instructions and approved active change arti
 | `settings/backend.md` | Backend/API/data/security settings | backend implementation and backend acceptance | backend/API/data/security/permission work only | missing/not-applicable |
 | `settings/prototype-style.md` | Prototype visual style reference | prototype generation consistency | prototype generation only | missing/not-applicable |
 
+## Code Map
+
+| Provider | Status | Version | Index Path | Last Checked | Use As |
+| --- | --- | --- | --- | --- | --- |
+| CodeGraph | <ready \| skipped \| failed \| unavailable> | <version or unavailable> | `.codegraph/` | <timestamp or not-checked> | navigation-hint-only |
+
 ## Intel Artifacts
 
 | File | Purpose | When To Read | Freshness | Sources |
@@ -53,6 +59,7 @@ For target-state requirements, user instructions and approved active change arti
 - Do **not** bulk-read all settings or intel files.
 - Use `When To Read` to pull only the smallest relevant settings/intel set for the current phase and question.
 - Treat generated intel as navigation and stale-prone hints, not proof of current behavior.
+- Treat the Code Map row as discovery metadata only; live CodeGraph detection and current source win over its recorded state.
 - Current code and command output win for current-state facts.
 - Approved change artifacts win for target-state requirements.
 - Re-open referenced source files before editing.

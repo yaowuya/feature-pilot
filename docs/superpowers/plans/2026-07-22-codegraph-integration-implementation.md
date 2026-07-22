@@ -158,7 +158,7 @@ git commit -m "test: define CodeGraph integration contract"
 - Modify: `skills/fp-init/templates.md`
 - Modify: `commands/fp-init.md`
 
-- [ ] **Step 1: 扩展测试，锁定 fp-init 三选项和 manifest 状态**
+- [x] **Step 1: 扩展测试，锁定 fp-init 三选项和 manifest 状态**
 
 在测试输出前加入：
 
@@ -190,13 +190,13 @@ Assert-Condition ($command.Contains('MCP')) 'Claude command checksum lacks separ
 Assert-Condition ($command.Contains('建图')) 'Claude command checksum lacks graph-build gate'
 ```
 
-- [ ] **Step 2: 运行测试并确认 RED**
+- [x] **Step 2: 运行测试并确认 RED**
 
 Run: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-codegraph-contract.ps1`
 
 Expected: FAIL，首个缺失锚点来自 `fp-init` 或 manifest 模板。
 
-- [ ] **Step 3: 在 fp-init 根目录解析后加入 CodeGraph 步骤**
+- [x] **Step 3: 在 fp-init 根目录解析后加入 CodeGraph 步骤**
 
 在 `skills/fp-init/SKILL.md` 的目标根解析之后、轻量 discovery 之前加载共享合同并执行以下状态机；后续章节顺延编号：
 
@@ -222,7 +222,7 @@ CLI 可用后，单独询问是否配置检测到的 Claude Code/Codex MCP。只
 
 同时把原 “Lightweight discovery boundaries” 中的禁止项限定为：安装包和穷举索引仍默认禁止，只有上述已确认 CodeGraph 步骤可执行 npm 全局安装和 CodeGraph 项目建图。
 
-- [ ] **Step 4: 更新 manifest 模板和最终报告**
+- [x] **Step 4: 更新 manifest 模板和最终报告**
 
 在 `skills/fp-init/templates.md` 的 manifest 模板中加入：
 
@@ -236,7 +236,7 @@ CLI 可用后，单独询问是否配置检测到的 Claude Code/Codex MCP。只
 
 在 `fp-init` 最终报告中明确列出 CLI 状态、MCP 配置/重启状态、索引状态、是否降级以及 manifest 是否获准更新。现有 manifest 不得未经批准覆盖；实时检测优先于表中历史状态。
 
-- [ ] **Step 5: 更新 Claude Code 薄命令校验摘要**
+- [x] **Step 5: 更新 Claude Code 薄命令校验摘要**
 
 在 `commands/fp-init.md` 的 Gate checksum 追加：
 
@@ -244,7 +244,7 @@ CLI 可用后，单独询问是否配置检测到的 Claude Code/Codex MCP。只
 - CodeGraph 是可选加速层；自动安装只使用 npm，MCP 配置独立确认，建图和失败回退遵循共享合同。
 ```
 
-- [ ] **Step 6: 运行聚焦与全局回归**
+- [x] **Step 6: 运行聚焦与全局回归**
 
 Run:
 
@@ -255,7 +255,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plugin.ps
 
 Expected: 聚焦测试 PASS；全局校验 PASS，或只因尚未登记新测试而在 Task 4 前保持现状。
 
-- [ ] **Step 7: 提交 fp-init 接入**
+- [x] **Step 7: 提交 fp-init 接入**
 
 ```powershell
 git add scripts/test-codegraph-contract.ps1 skills/fp-init/SKILL.md skills/fp-init/templates.md commands/fp-init.md

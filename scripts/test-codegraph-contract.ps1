@@ -41,4 +41,30 @@ Assert-Condition ($contract.Contains('at most one status check')) 'workflow stat
 Assert-Condition ($contract.Contains('do not run status again after sync')) 'sync can trigger a second status check'
 Assert-Condition ($contract.Contains('must not block FeaturePilot')) 'failure fallback is not explicit'
 
+$init = Read-Utf8 (Join-Path $root 'skills\fp-init\SKILL.md')
+$templates = Read-Utf8 (Join-Path $root 'skills\fp-init\templates.md')
+$command = Read-Utf8 (Join-Path $root 'commands\fp-init.md')
+
+foreach ($anchor in @(
+    'skills/_shared/codegraph.md',
+    'auto-install',
+    'show-install-steps',
+    'skip-codegraph',
+    'npm install -g @colbymchenry/codegraph@latest',
+    'npm prefix -g',
+    'codegraph install --target=auto --location=global --yes',
+    'codegraph init <project-root>',
+    'codegraph status <project-root> --json',
+    'auto-install includes first graph build',
+    'preinstalled-cli-requires-build-confirmation'
+)) {
+    Assert-Condition ($init.Contains($anchor)) "fp-init lost anchor: $anchor"
+}
+
+Assert-Condition ($templates.Contains('## Code Map')) 'manifest template lacks Code Map'
+Assert-Condition ($templates.Contains('navigation-hint-only')) 'manifest Code Map can be treated as current proof'
+Assert-Condition ($command.Contains('npm')) 'Claude command checksum lacks npm-only install gate'
+Assert-Condition ($command.Contains('MCP')) 'Claude command checksum lacks separate MCP gate'
+Assert-Condition ($command.Contains('codegraph init')) 'Claude command checksum lacks graph-build gate'
+
 Write-Output 'CodeGraph contract validation passed.'
