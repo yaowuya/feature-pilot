@@ -86,4 +86,22 @@ foreach ($anchor in @(
 }
 Assert-Condition ($explore.Contains('fall back to Stage A')) 'fp-explore can stop on CodeGraph failure'
 
+$validator = Read-Utf8 (Join-Path $root 'scripts\validate-plugin.ps1')
+$agents = Read-Utf8 (Join-Path $root 'AGENTS.md')
+$claude = Read-Utf8 (Join-Path $root 'CLAUDE.md')
+$readme = Read-Utf8 (Join-Path $root 'README.md')
+$guide = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
+
+Assert-Condition ($validator.Contains('test-codegraph-contract.ps1')) 'global validator does not invoke CodeGraph suite'
+Assert-Condition ($validator.Contains('skills\_shared\codegraph.md')) 'global validator does not anchor shared CodeGraph resource'
+foreach ($surface in @(
+    @{ Name = 'AGENTS.md'; Text = $agents },
+    @{ Name = 'CLAUDE.md'; Text = $claude },
+    @{ Name = 'README.md'; Text = $readme },
+    @{ Name = 'user guide'; Text = $guide }
+)) {
+    Assert-Condition ($surface.Text.Contains('CodeGraph')) "$($surface.Name) does not document CodeGraph"
+    Assert-Condition ($surface.Text.Contains('npm install -g @colbymchenry/codegraph@latest')) "$($surface.Name) lacks npm-only install command"
+}
+
 Write-Output 'CodeGraph contract validation passed.'

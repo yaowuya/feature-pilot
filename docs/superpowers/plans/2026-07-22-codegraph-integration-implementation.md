@@ -375,7 +375,7 @@ git commit -m "feat: use CodeGraph in fp-explore"
 - Modify: `README.md`
 - Modify: `docs/user_guide/init-prd-start.md`
 
-- [ ] **Step 1: 扩展聚焦测试，要求所有公共入口一致**
+- [x] **Step 1: 扩展聚焦测试，要求所有公共入口一致**
 
 在 `scripts/test-codegraph-contract.ps1` 输出前加入：
 
@@ -399,13 +399,13 @@ foreach ($surface in @(
 }
 ```
 
-- [ ] **Step 2: 运行聚焦测试并确认 RED**
+- [x] **Step 2: 运行聚焦测试并确认 RED**
 
 Run: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-codegraph-contract.ps1`
 
 Expected: FAIL，指出全局 validator 或公共文档尚未接入。
 
-- [ ] **Step 3: 将聚焦测试接入全局 validator**
+- [x] **Step 3: 将聚焦测试接入全局 validator**
 
 在 `scripts/validate-plugin.ps1` 调用 explore 聚焦测试的位置前加入：
 
@@ -418,7 +418,7 @@ Assert-Condition ($LASTEXITCODE -eq 0) 'focused CodeGraph contract validator fai
 
 把 `skills\_shared\codegraph.md` 纳入共享资源存在性、行数、字符数和必要锚点校验；把 `fp-init` 锚点补为 npm-only、独立 MCP、首次建图和回退，把 `fp-explore` 锚点补为 Stage 0、预算计数和源码复核。
 
-- [ ] **Step 4: 同步公共合同与用户指南**
+- [x] **Step 4: 同步公共合同与用户指南**
 
 在四个文档中使用一致表述：
 
@@ -433,7 +433,7 @@ CodeGraph 是可选的本地代码地图。`fp-init` 检测到未安装时提供
 - `README.md`：更新架构/低成本流程/项目配置，写明 npm 安装、独立 MCP 授权与非阻塞回退。
 - `docs/user_guide/init-prd-start.md`：在 `/fp-init` 部分增加三选项、npm 缺失处理、MCP 重启提示、首次建图授权和 `.codegraph/` 说明。
 
-- [ ] **Step 5: 运行全套静态验证**
+- [x] **Step 5: 运行全套静态验证**
 
 Run:
 
@@ -445,7 +445,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\validate-plugin.ps
 
 Expected: 三个命令均 PASS；命令适配器仍在 5,000 字符预算内，所有 `SKILL.md` 仍不超过 500 行。
 
-- [ ] **Step 6: 提交验证与文档**
+- [x] **Step 6: 提交验证与文档**
 
 ```powershell
 git add scripts/test-codegraph-contract.ps1 scripts/validate-plugin.ps1 AGENTS.md CLAUDE.md README.md docs/user_guide/init-prd-start.md
@@ -459,7 +459,7 @@ git commit -m "docs: document optional CodeGraph acceleration"
 **Files:**
 - Verify only; do not modify `package.json` or `package-lock.json`
 
-- [ ] **Step 1: 运行全部合同与插件验证**
+- [x] **Step 1: 运行全部合同与插件验证**
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-codegraph-contract.ps1
@@ -471,7 +471,7 @@ claude plugin validate .
 
 Expected: 所有命令退出码为 0；context measurement 只报告测量值，不出现合同缺失。
 
-- [ ] **Step 2: 检查 npm-only 和授权边界没有被弱化**
+- [x] **Step 2: 检查 npm-only 和授权边界没有被弱化**
 
 ```powershell
 rg -n "npm install -g @colbymchenry/codegraph@latest|npm prefix -g|自动安装（推荐）|展示安装步骤|MCP → CLI → 原有搜索|navigation-hint-only" skills commands scripts AGENTS.md CLAUDE.md README.md docs/user_guide/init-prd-start.md
@@ -480,7 +480,7 @@ rg -n "(?:irm|curl|install\.ps1|install\.sh|npx).*codegraph|codegraph.*(?:irm|cu
 
 Expected: 第一条覆盖共享合同、init、explore、测试和文档；第二条只命中明确的禁止性说明，不出现可执行安装示例。
 
-- [ ] **Step 3: 检查差异、提交范围和用户文件**
+- [x] **Step 3: 检查差异、提交范围和用户文件**
 
 ```powershell
 git diff --check
@@ -490,6 +490,6 @@ git log -5 --oneline
 
 Expected: `git diff --check` PASS；工作树中若仍有 `package.json`、`package-lock.json`，它们保持未跟踪且未进入任何任务提交；最新四个实施提交分别只覆盖其列出的文件。
 
-- [ ] **Step 4: 汇报交付结果**
+- [x] **Step 4: 汇报交付结果**
 
 汇报必须包含：npm-only 安装契约、三选项与独立 MCP 授权、首次建图规则、后续 `MCP → CLI → 原有搜索` 路由、一次健康检查/同步上限、源码复核边界、全部验证结果和任何未跟踪用户文件。不要在没有实际运行 CodeGraph 项目建图的情况下宣称真实项目索引已验证。

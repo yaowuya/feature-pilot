@@ -48,6 +48,28 @@ fp-docs/
 | `fp-docs/settings/prototype-style.md` | HTML 原型视觉风格参考 | 生成或更新 `prototype.html` 时 |
 | `fp-docs/intel/*` | 只读扫描生成的导航线索 | 只在当前问题相关时小范围读取 |
 
+### 可选 CodeGraph 代码地图
+
+`/fp-init` 在确定项目根目录后检测 CodeGraph。未检测到可用 CLI 时会让你选择：
+
+1. **自动安装（推荐）**：说明 npm 全局安装影响后执行安装；该选择也授权为当前项目执行首次建图。
+2. **展示安装步骤**：只显示前置条件、安装、可选 MCP 配置和建图命令，本轮不执行。
+3. **跳过**：不安装、不配置、不建图，继续普通初始化。
+
+唯一允许的自动安装命令是：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+FeaturePilot 不使用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx` 安装 CodeGraph。系统缺少 npm 时，它不会自动安装 Node.js，也不会切换安装方式；会说明前置条件并继续普通初始化。
+
+CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。MCP 配置可能修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
+
+项目根目录没有 `.codegraph/` 时：本轮自动安装已包含首次建图授权；如果 CLI 原本已安装，则会再次询问是否为当前项目建图。已有图和新图都必须通过 `codegraph status <project-root> --json` 验证，不能只凭目录存在判断可用。FeaturePilot 不会未经允许修改 `.gitignore` 或删除失败索引。
+
+后续代码调查按 `MCP → CLI → 原有搜索` 使用代码图。每个 FeaturePilot 工作流最多执行一次健康检查和一次必要同步；失败会自动回退，不影响主流程。代码图只提供 `navigation-hint-only`，修改范围、精确契约和完成结论仍以当前源码、测试和命令输出为准。
+
 ### 可选设置文件
 
 `/fp-init` 会询问是否生成可选 settings。它们不是强制配置；跳过后 FeaturePilot 仍可基于当前代码、相邻实现和用户回答继续工作。
@@ -97,6 +119,7 @@ examples/canway-cw/fp-docs/settings/
 - `manifest.md` 创建/更新状态。
 - `agent.md`、`frontend.md`、`backend.md`、`prototype-style.md` 创建/跳过状态。
 - intel 是生成轻量扫描还是仅保留骨架。
+- CodeGraph CLI、MCP、项目图和必要重启/回退状态。
 - 检测到的外部项目文档。
 - critical unknowns。
 - 下一步建议：通常是 `/fp-prd <想法>` 或 `/fp-start <slug 或功能描述>`。

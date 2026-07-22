@@ -96,6 +96,14 @@ flowchart LR
 
 上下文效率采用三层设计：`commands/` 只做薄入口和 gate checksum；所有 skill 每条工作流只加载一次 `skills/_shared/workspace-rules.md`；PRD、proposal、design、plan、review 模板只在对应写入门禁通过后加载。运行 `scripts/measure-context.ps1` 可查看相对优化前基线的静态上下文降幅。
 
+代码搜索可以使用可选的本地 CodeGraph 加速层。`fp-init` 未检测到 CodeGraph 时会提供“自动安装、展示安装步骤、跳过”；自动安装只使用官方 npm 全局方式：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+Agent MCP 配置会单独确认；CLI 已预装时，首次为项目构建 `.codegraph/` 也会单独确认。建图完成后，FeaturePilot 的代码调查按 `MCP → CLI → 原有搜索` 选择路径，每个工作流最多做一次健康检查和一次必要同步。CodeGraph 是可选导航层，任何安装、配置、建图、同步或查询失败都会回退到原有渐进式搜索；图结果不会替代当前源码、测试和命令输出。
+
 ## 借鉴 OpenSpec 的设计
 
 FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，但把命令聚焦在 AI 功能开发流程上：
@@ -110,7 +118,7 @@ FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，
 FeaturePilot 的默认使用方式尽量轻量。完整用户指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)：
 
 1. **可选探索**：运行 `/fp-explore <问题>` 调查当前实现或比较方案；空输入只做有界项目概览。探索不创建 FeaturePilot 产物，也不修改代码。
-2. **可选初始化**：运行 `/fp-init`，创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；如检测到 Canway/CW 项目，只有在用户确认后才可采用 `examples/canway-cw/` 示例规范作为项目 settings 草稿。
+2. **可选初始化**：运行 `/fp-init`，可选安装 CodeGraph 并构建项目代码图，然后创建 `fp-docs/`，并可选生成 `fp-docs/settings/agent.md`、`frontend.md`、`backend.md`、`prototype-style.md`；如检测到 Canway/CW 项目，只有在用户确认后才可采用 `examples/canway-cw/` 示例规范作为项目 settings 草稿。
 3. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
 4. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
 5. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
