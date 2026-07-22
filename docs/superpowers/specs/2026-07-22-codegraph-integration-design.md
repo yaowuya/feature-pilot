@@ -22,7 +22,7 @@ FeaturePilot 保留这三个边界，不把全局 Agent 配置和项目建图隐
 
 1. 采用“共享 CodeGraph 契约 + `fp-init` 集成 + `fp-explore` 快速路径”的方案。
 2. CodeGraph 是可选加速层，不是 FeaturePilot 强依赖。
-3. 未安装 CodeGraph 时，`fp-init` 提供三种行为：自动安装、展示安装步骤、跳过。
+3. 未安装 CodeGraph 时，`fp-init` 提供三种行为：通过 npm 自动安装、展示 npm 安装步骤、跳过；禁止使用 `irm`、`curl` 或远程脚本安装。
 4. 自动安装 CLI 后，必须单独询问是否配置检测到的 Claude Code/Codex MCP。
 5. 选择自动安装即同时授权为当前项目执行首次建图。
 6. CLI 已预装但当前项目没有 `.codegraph/` 时，`fp-init` 必须单独询问是否建图。
@@ -37,13 +37,14 @@ FeaturePilot 保留这三个边界，不把全局 Agent 配置和项目建图隐
 - 让后续 FeaturePilot 命令真正消费代码地图，而不是只生成未使用的索引。
 - 对符号、调用链、影响范围和代码结构问题优先使用 CodeGraph，降低重复搜索和文件读取数量。
 - 保持当前渐进读取预算、只读边界、源码验证和用户确认门禁。
-- 支持 Windows、macOS 和 Linux，并在当前 shell 尚未刷新 `PATH` 时仍可完成首次建图。
+- 支持已安装 Node.js/npm 的 Windows、macOS 和 Linux，并在 npm 全局 bin 尚未进入当前 `PATH` 时仍可完成首次建图。
 - 对未安装、用户跳过、语言不支持、索引损坏和查询失败提供无阻塞回退。
 
 ## 4. 非目标
 
 - 不把 CodeGraph 设为运行 FeaturePilot 的前置条件。
 - 不内嵌或分叉 CodeGraph 实现。
+- 不自动安装 Node.js/npm；缺少 npm 时只说明前置条件并回退到展示步骤或跳过。
 - 不由 FeaturePilot 管理 CodeGraph 升级、卸载或发布版本生命周期。
 - 不在 `fp-init` 之外静默创建项目代码图。
 - 不把 `.codegraph/` 数据复制进 `fp-docs/intel/` 或 FeaturePilot 变更产物。
@@ -57,7 +58,7 @@ FeaturePilot 保留这三个边界，不把全局 Agent 配置和项目建图隐
 新增 `skills/_shared/codegraph.md`，集中定义：
 
 - CLI、项目索引和 MCP 能力检测；
-- 跨平台安装命令与安装后可执行文件解析；
+- npm 安装命令与 npm 全局可执行文件解析；
 - `fp-init` 安装、Agent 配置和建图确认门禁；
 - 单工作流健康检查与同步规则；
 - MCP、CLI 和原有搜索的选择顺序；
@@ -129,41 +130,37 @@ codegraph --version
 
 `fp-init` 一次只询问一个决定，提供：
 
-- **自动安装：** 展示来源、命令和影响，取得明确选择后执行；选择本项同时授权当前项目首次建图。
-- **展示安装步骤：** 只展示适合当前操作系统的 CLI 安装、Agent MCP 配置和项目建图步骤，不执行任何命令；本轮继续普通 init。
+- **自动安装：** 先验证 `npm --version`，再展示 npm 包、命令和全局安装影响；取得明确选择后执行。选择本项同时授权当前项目首次建图。
+- **展示安装步骤：** 只展示 npm 前置条件、CLI 安装、Agent MCP 配置和项目建图步骤，不执行任何命令；本轮继续普通 init。
 - **跳过：** 不安装、不配置、不建图，继续普通 init。
 
-Windows 官方安装命令：
+所有支持平台统一使用 CodeGraph 官方 README 提供的 npm 全局安装方式：
 
-```powershell
-irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+```text
+npm install -g @colbymchenry/codegraph@latest
 ```
 
-macOS/Linux 官方安装命令：
+禁止在自动安装或展示步骤中使用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx` 代替上述命令。联网下载和 npm 全局安装仍须遵守宿主工具的权限/审批机制。不得把用户选择“展示步骤”或“跳过”解释为安装授权。
 
-```sh
-curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
-```
-
-联网下载和用户级安装仍须遵守宿主工具的权限/审批机制。不得把用户选择“展示步骤”或“跳过”解释为安装授权。
+如果 `npm --version` 失败，自动安装不可执行。`fp-init` 不安装 Node.js，不尝试其他 CodeGraph 安装方式；它应说明需要先安装 Node.js/npm，展示上述命令和后续步骤，然后让用户继续普通 init 或跳过 CodeGraph。
 
 ### 6.3 安装后解析可执行文件
 
-安装成功不能只根据安装脚本退出码判断，必须重新执行版本检查。
+安装成功不能只根据 npm 退出码判断，必须重新执行版本检查。先读取 `npm prefix -g`，再解析 npm 全局 launcher：
 
-- Windows 当前 shell 若尚未刷新 `PATH`，使用官方默认路径：
-
-  ```text
-  %LOCALAPPDATA%\codegraph\current\bin\codegraph.cmd
-  ```
-
-- macOS/Linux 若 `$HOME/.local/bin` 尚未进入 `PATH`，使用：
+- Windows：
 
   ```text
-  $HOME/.local/bin/codegraph
+  <npm-global-prefix>\codegraph.cmd
   ```
 
-如果默认路径也不存在或版本检查失败，报告安装未验证，跳过 MCP 配置和建图并回退；不得宣称安装成功。
+- macOS/Linux：
+
+  ```text
+  <npm-global-prefix>/bin/codegraph
+  ```
+
+如果 `codegraph` 已在当前 `PATH` 上，仍以正常命令为首选；只有命令解析失败时才使用 npm prefix 推导的 launcher。如果 launcher 也不存在或版本检查失败，报告安装未验证，跳过 MCP 配置和建图并回退；不得宣称安装成功。
 
 ### 6.4 Agent MCP 分层确认
 
@@ -259,10 +256,10 @@ CodeGraph 不能绕过 `fp-explore` 预算：
 
 ## 8. 错误、安全与隐私
 
-- 安装和 Agent 配置必须有独立、明确的用户授权。
+- npm 全局安装和 Agent 配置必须有独立、明确的用户授权。
 - 不读取或传输 `.env`、凭据、客户数据和未授权敏感范围。
 - CodeGraph 是本地索引，但是否索引特定源码仍受当前用户授权和项目边界约束。
-- 安装失败不自动重试不同安装机制，不自动清理已有安装。
+- npm 缺失或安装失败时不自动安装 Node.js，不重试 `irm`、`curl`、`npx` 或其他安装机制，也不自动清理已有安装。
 - 建图失败不自动执行 `codegraph uninit` 或删除 `.codegraph/`。
 - MCP 配置成功但当前会话未暴露工具时，使用 CLI 并报告需要重启。
 - `.codegraph/` 若可能被 Git 跟踪，只警告用户；不得未经批准修改 `.gitignore`。
@@ -298,15 +295,16 @@ CodeGraph 不能绕过 `fp-explore` 预算：
 
 1. 共享合同存在，并被 `fp-init`、`fp-explore` 和 workspace contract 正确路由；
 2. 未安装时存在自动安装、展示步骤和跳过三条互斥路径；
-3. Windows 与 macOS/Linux 官方安装命令和安装后默认绝对路径存在；
-4. 自动安装与 Agent MCP 配置采用分层确认；
-5. 自动安装授权包含首次建图，预装 CLI 的首次建图需要确认；
-6. 建图成功必须由 `status --json` 验证；
-7. 每个工作流最多一次状态检查和一次必要同步；同步后不得再次运行状态检查；
-8. 查询顺序为 MCP → CLI → 原有搜索；
-9. CodeGraph 失败不阻塞 FeaturePilot；
-10. 图结果是 `navigation-hint-only`，关键结论必须复核当前源码；
-11. 现有 manifest 覆盖规则、敏感数据规则和项目根目录边界未减弱。
+3. npm 全局安装命令、`npm prefix -g` 和 Windows/macOS/Linux launcher 推导规则存在；
+4. 合同明确禁止 `irm`、`curl`、远程安装脚本和 `npx`，且 npm 缺失时不得自动安装 Node.js；
+5. 自动安装与 Agent MCP 配置采用分层确认；
+6. 自动安装授权包含首次建图，预装 CLI 的首次建图需要确认；
+7. 建图成功必须由 `status --json` 验证；
+8. 每个工作流最多一次状态检查和一次必要同步；同步后不得再次运行状态检查；
+9. 查询顺序为 MCP → CLI → 原有搜索；
+10. CodeGraph 失败不阻塞 FeaturePilot；
+11. 图结果是 `navigation-hint-only`，关键结论必须复核当前源码；
+12. 现有 manifest 覆盖规则、敏感数据规则和项目根目录边界未减弱。
 
 ### 10.2 防退化负例
 
@@ -314,6 +312,8 @@ CodeGraph 不能绕过 `fp-explore` 预算：
 
 - CodeGraph 是运行 FeaturePilot 的强依赖；
 - 未确认即安装、配置 Agent 或为预装 CLI 项目建图；
+- 使用 `irm`、`curl`、远程安装脚本或 `npx` 安装 CodeGraph；
+- npm 缺失时自动安装 Node.js 或静默切换安装机制；
 - 用户选择展示步骤或跳过后仍执行安装；
 - 仅凭 `.codegraph/` 存在即宣称索引健康；
 - 每次查询都执行 `status` 或 `sync`；
@@ -342,7 +342,8 @@ git diff --check
 只有以下条件全部满足才算完成：
 
 - `/fp-init` 能检测 CodeGraph，并在未安装时提供自动安装、展示步骤和跳过；
-- 自动安装后能在当前 shell 未刷新 PATH 的情况下解析官方默认可执行路径；
+- 自动安装只使用 `npm install -g @colbymchenry/codegraph@latest`；npm 缺失时能够清晰回退；
+- 自动安装后能通过 `npm prefix -g` 在当前 PATH 未刷新时解析全局 launcher；
 - Agent MCP 配置有独立确认，跳过后 CLI 仍可工作；
 - 用户授权后能构建项目代码图，并以 `status --json` 验证；
 - 已有图能被复用，并按每工作流一次规则处理同步；
@@ -358,5 +359,4 @@ git diff --check
 - [CodeGraph CLI Reference](https://colbymchenry.github.io/codegraph/reference/cli/)
 - [CodeGraph MCP Server](https://colbymchenry.github.io/codegraph/reference/mcp-server/)
 - [CodeGraph Integrations](https://colbymchenry.github.io/codegraph/reference/integrations/)
-- [Windows installer](https://github.com/colbymchenry/codegraph/blob/main/install.ps1)
-- [macOS/Linux installer](https://github.com/colbymchenry/codegraph/blob/main/install.sh)
+- [CodeGraph npm package](https://www.npmjs.com/package/@colbymchenry/codegraph)
