@@ -258,7 +258,12 @@ foreach ($anchor in @(
     'MCP -> CLI -> native search',
     'navigation-hint-only',
     'must not auto-install Node.js',
-    'must not block FeaturePilot'
+    'must not block FeaturePilot',
+    'dirty-after-write',
+    'never query a dirty graph',
+    'pre-query sync',
+    'post-write sync',
+    'at most one post-write sync'
 )) {
     Assert-Condition ($codeGraphText.Contains($anchor)) "shared CodeGraph contract is missing: $anchor"
 }
@@ -802,7 +807,8 @@ foreach ($entry in $lazyResources.GetEnumerator()) {
 }
 
 $resourceAnchors = @{
-    'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only')
+    'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only', 'dirty-after-write', 'post-write sync')
+    'skills\fp-init\templates.md' = @('Refreshed: <timestamp or never>', 'Generated body hash:', 'Refresh decision: keep | regenerate | conflict', '## Selective refresh')
     'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.5 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
     'skills\fp-propose\proposal-template.md' = @('## Why', '## What Changes', '## Capabilities', '## Out of Scope', '## Impact')
     'skills\fp-brainstorm\design-template.md' = @('# <', '## ', '### API ', '#### API ')
@@ -832,7 +838,7 @@ foreach ($example in [regex]::Matches($taskLayoutTemplate, '(?s)```markdown\r?\n
 }
 
 $skillAnchors = @{
-    'fp-init' = @('templates.md', 'project-family-examples.md', 'Lightweight discovery boundaries', 'Never overwrite', 'auto-install', 'show-install-steps', 'skip-codegraph', 'npm install -g @colbymchenry/codegraph@latest', 'codegraph install --target=auto --location=global --yes', 'codegraph init <project-root>')
+    'fp-init' = @('templates.md', 'project-family-examples.md', 'Lightweight discovery boundaries', 'Never overwrite', 'auto-install', 'show-install-steps', 'skip-codegraph', 'npm install -g @colbymchenry/codegraph@latest', 'codegraph install --target=auto --location=global --yes', 'codegraph init <project-root>', 'refresh-existing-information-layer', 'stale-generated-intel', 'refresh-stale-intel', 'preserve-manual-settings', 'user-edit-conflict')
     'fp-prd' = @('Bucket A/B', 'Bucket C', 'Prototype-first', 'explicitly approved', 'prd-template.md')
     'fp-prd-grill-me' = @('one question per turn', 'MUST NOT decide Bucket C', 'Minimal Fact Exploration')
     'fp-propose' = @('proposal-template.md', 'Why / What Changes / Out of Scope / Impact', 'fp-docs/changes/<slug>/proposal.md')
@@ -840,12 +846,12 @@ $skillAnchors = @{
     'fp-plan' = @('fp-plan-backend', 'fp-plan-frontend', 'plan-backend.md', 'plan-frontend.md')
     'fp-plan-backend' = @('Global Constraints', 'Backend Interface Ledger', 'Coverage Matrix', 'plan-template.md')
     'fp-plan-frontend' = @('Global Constraints', 'Interfaces', 'Visual Checks', 'plan-template.md')
-    'fp-execute' = @('semi', 'full', 'Pre-flight Plan Review', 'TDD')
+    'fp-execute' = @('semi', 'full', 'Pre-flight Plan Review', 'TDD', 'dirty-after-write', 'post-write-sync', 'must not block completion')
     'fp-start' = @('fp-propose', 'fp-brainstorm', 'fp-plan', 'fp-execute-sdd', 'fp-review')
-    'fp-execute-sdd' = @('No parallel implementers', 'progress.md', 'task-brief-template.md', 'task-reviewer-prompt.md', 'Fix Loop')
+    'fp-execute-sdd' = @('No parallel implementers', 'progress.md', 'task-brief-template.md', 'task-reviewer-prompt.md', 'Fix Loop', 'dirty-after-write', 'post-write-sync', 'must not block completion')
     'fp-review' = @('read-only final reviewer', 'PASS_WITH_NOTES', 'stale intel', 'final-review-template.md')
     'fp-explore' = @('mode: standalone', 'prd-facts', 'start-routing', 'quick', 'fp-explore-invoke', 'fp-explore-return', 'read-only', 'Stage 0 - CodeGraph fast path', 'MCP -> CLI -> native search', 'candidate paths', 'local read windows', 'current source')
-    'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/')
+    'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/', 'dirty-after-write', 'post-write-sync', 'must not block completion')
     'fp-archive' = @('history/history.md', 'blocked', 'proposal.md')
     'fp-figma' = @('Figma', 'Flex / Grid', 'Visual Checks', 'settings/frontend.md')
     'fp-ui-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')

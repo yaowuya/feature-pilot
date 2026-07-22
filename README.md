@@ -104,6 +104,10 @@ npm install -g @colbymchenry/codegraph@latest
 
 Agent MCP 配置会单独确认；CLI 已预装时，首次为项目构建 `.codegraph/` 也会单独确认。建图完成后，FeaturePilot 的代码调查按 `MCP → CLI → 原有搜索` 选择路径，每个工作流最多做一次健康检查和一次必要同步。CodeGraph 是可选导航层，任何安装、配置、建图、同步或查询失败都会回退到原有渐进式搜索；图结果不会替代当前源码、测试和命令输出。
 
+再次运行 `fp-init` 时，如果已有 `fp-docs/manifest.md`，流程进入 `refresh-existing-information-layer`。它根据各 generated intel 的依赖 hash 和 generated body hash 识别过期或用户编辑冲突，展示文件清单后才执行 `refresh-stale-intel`；只刷新已批准、确实 stale 且无冲突的 generated intel，不自动覆盖 `settings/*`、unknowns/decisions、变更文档或历史。
+
+代码修改流程第一次写入源码后将图标记为 `dirty-after-write`，后续不得查询写入前的旧图。`fp-execute`、`fp-execute-sdd` 和 `fp-quick` 在写入后的返回边界对已有图执行一次 `post-write-sync`，让下一流程从当前工作树继续；同步失败不阻塞验证和交付，原来没有图的项目也不会被隐式建图。
+
 ## 借鉴 OpenSpec 的设计
 
 FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，但把命令聚焦在 AI 功能开发流程上：

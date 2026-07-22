@@ -75,6 +75,10 @@ npm install -g @colbymchenry/codegraph@latest
 
 需要代码定位、符号关系、调用链、数据流或影响范围时，按需读取 `skills/_shared/codegraph.md`。后续调查遵循 `MCP → CLI → 原有搜索`，每个工作流最多一次健康检查和一次必要同步。CodeGraph 失败不得阻塞 FeaturePilot；图结果只作 `navigation-hint-only`，关键结论必须回到当前源码、测试和命令输出复核。
 
+已有 `fp-docs/manifest.md` 时，`fp-init` 进入 `refresh-existing-information-layer`：根据 freshness block、依赖路径、Git blob SHA/内容 hash 和 generated body hash 识别 stale generated intel，展示清单后才执行 `refresh-stale-intel`。只选择性重建已批准且没有用户编辑冲突的 generated intel；`settings/*`、unknowns/decisions、active changes、archive/history 和冲突文件不得批量覆盖。
+
+任何代码修改流程首次写入源码后必须把图状态标记为 `dirty-after-write`，并禁止继续查询旧图。`fp-execute`、`fp-execute-sdd` 和 `fp-quick` 在写入后的用户可见返回前，对工作流开始时已存在的图最多执行一次 `post-write-sync`；失败只记录并回退，不阻塞验证、审查或完成，也不得隐式创建新图。
+
 ## OpenSpec-inspired artifact model
 
 Use `fp-docs/changes/<slug>/` as the review unit for a feature. Every logical artifact uses exactly one mutually exclusive canonical form:

@@ -6,7 +6,9 @@
 
 - 查询顺序固定为 `MCP -> CLI -> native search`，面向用户说明时表述为 `MCP → CLI → 原有搜索`。
 - 所有图结果均为 `navigation-hint-only`；实际修改、精确契约和完成声明必须用当前源码、测试或命令输出复核。
-- 每个 FeaturePilot 工作流 `at most one status check`；发现待同步变化时最多执行一次同步，并且 `do not run status again after sync`。
+- 每个 FeaturePilot 工作流在首次查询前 `at most one status check`；发现待同步变化时最多执行一次 `pre-query sync`，并且 `do not run status again after sync`。
+- 任何源码写入都会把本工作流图状态改为 `dirty-after-write`；此后 `never query a dirty graph`，只能使用当前源码搜索，直到安全的结束同步完成。
+- 代码修改流程在返回用户前可以执行 `at most one post-write sync`；该同步与查询前同步分开计数，且 `post-write sync must not block completion`。
 - 任一检测、安装、配置、建图、同步或查询故障都 `must not block FeaturePilot`，只报告一次精简原因并回退。
 - npm 不可用时 `must not auto-install Node.js`，也不得静默切换安装机制。
 
@@ -76,6 +78,7 @@ codegraph status <project-root> --json
 - `unchecked`：本工作流尚未检查。
 - `ready-mcp`：当前会话的 MCP 查询能力可用且项目图可用。
 - `ready-cli`：CLI 与项目图可用。
+- `dirty-after-write`：本工作流已经写入源码，先前的图快照已失效，禁止继续查询。
 - `unavailable`：未安装、未建图、用户跳过、语言不支持或检查失败。
 
 第一次需要代码图时才解析状态。当前会话暴露 CodeGraph MCP 健康能力时优先使用；否则 CLI 可用时执行一次 `codegraph status <project-root> --json`。状态显示待同步变化时最多执行一次：
@@ -84,7 +87,7 @@ codegraph status <project-root> --json
 codegraph sync <project-root> --quiet
 ```
 
-同步命令成功退出就是本轮刷新证据，不再次运行 `status`。任一步失败即记为 `unavailable`，同一工作流不重试。
+查询前同步命令成功退出就是本轮刷新证据，不再次运行 `status`。任一步失败即记为 `unavailable`，同一工作流不重试查询前检查。
 
 ## 查询路由和预算
 
@@ -99,6 +102,25 @@ codegraph explore --path <project-root> --max-files <budget> <query>
 `<budget>` 不得超过当前探索 profile 剩余的候选路径预算。CodeGraph 返回的路径计入 `candidate paths`，有界源码摘录计入 `local read windows`，整文件内容计入 `unbounded application-file reads`。不得通过 CodeGraph 绕过 distinct-file、搜索、读取窗口或 quick `8 / 8 / 1` 上限。
 
 只保留与目标最相关的候选并回到当前源码小范围复核。CodeGraph 不充分或不可用时立即回退到 `Glob → Grep → ranged Read`，不降低原有只读、敏感数据、外部研究和授权边界。
+
+## 源码写入后的失效和结束同步
+
+任一 FeaturePilot 流程首次创建、修改、移动或删除源码、测试、配置、schema 或生成器输入后，立即把当前图状态设为 `dirty-after-write`。从该时刻起 `never query a dirty graph`：不得继续调用 `codegraph_explore` 或 `codegraph explore`，也不得引用写入前的图结果证明写入后的事实；剩余调查使用原有当前源码搜索。
+
+如果目标项目在本工作流开始写入前已经有 `.codegraph/`，代码修改流程在每次用户可见的终止返回前执行一次 `post-write-sync`：
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+规则如下：
+
+- 每次工作流返回前 `at most one post-write sync`，无论此前是否执行过一次 `pre-query sync`。
+- 不在结束同步后再次运行 `status`，以同步命令成功退出作为当前工作树的刷新证据。
+- 结束同步成功后状态可记为 `ready-cli`，但本轮不再查询；下一工作流仍按正常健康检查处理外部变化。
+- CLI、索引或同步不可用时只记录一次降级原因；`post-write sync must not block completion`、任务状态更新、验证、审查或用户汇报。
+- 工作流开始时没有 `.codegraph/`，或用户此前跳过建图时，不得在执行结束时隐式运行 `init`。
+- `.codegraph/` 被 Git 跟踪时只警告，不把索引变化混入业务提交或 FeaturePilot 产物。
 
 ## Manifest、Git 和报告
 

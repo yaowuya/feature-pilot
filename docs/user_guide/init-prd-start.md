@@ -70,6 +70,28 @@ CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。M
 
 后续代码调查按 `MCP → CLI → 原有搜索` 使用代码图。每个 FeaturePilot 工作流最多执行一次健康检查和一次必要同步；失败会自动回退，不影响主流程。代码图只提供 `navigation-hint-only`，修改范围、精确契约和完成结论仍以当前源码、测试和命令输出为准。
 
+#### 已有信息层如何刷新
+
+项目已有 `fp-docs/manifest.md` 时，再次运行 `/fp-init` 会进入 `refresh-existing-information-layer`，而不是重新初始化全部文件。它只读取 manifest、refresh policy、相关 freshness block 和其中记录的依赖路径，然后按 Git SHA、依赖 hash 和 generated body hash 将 generated intel 分类为 fresh、soft-stale、hard-stale、unknown 或用户编辑冲突。
+
+发现 stale 文件后会先展示文件级清单，再提供：
+
+1. `refresh-stale-intel`：只重建清单中已批准且没有用户编辑冲突的 generated intel。
+2. 仅报告：不写入，后续继续实时检查当前源码。
+3. 跳过：不做更多 freshness 检查。
+
+`fp-docs/settings/*`、`intel/unknowns-and-decisions.md`、PRD/proposal/design/tasks、archive/history 不在批量刷新范围。generated body hash 显示文件被人工修改时，也必须单独查看差异并逐文件确认，不能被选择性刷新批量覆盖。
+
+#### 代码写入后的索引更新
+
+`fp-execute`、`fp-execute-sdd` 或 `fp-quick` 首次修改源码后，会把当前图标记为 `dirty-after-write`，本轮不再查询写入前的旧图。它们在写入后的用户可见返回前，对原本已存在的图执行一次 `post-write-sync`：
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+同步后不重复运行 `status`，下一工作流仍会做正常健康检查，以捕获外部新增修改。同步失败只会记录原因并回退原有搜索，不阻塞测试、审查或完成；项目原本没有 `.codegraph/` 时不会在执行结束时隐式建图。
+
 ### 可选设置文件
 
 `/fp-init` 会询问是否生成可选 settings。它们不是强制配置；跳过后 FeaturePilot 仍可基于当前代码、相邻实现和用户回答继续工作。

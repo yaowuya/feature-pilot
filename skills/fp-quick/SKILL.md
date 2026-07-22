@@ -8,6 +8,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 ---
 
 # FeaturePilot Quick
@@ -90,12 +91,21 @@ Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification`
 - 控制改动范围，不顺手重构无关代码。
 - 遇到新阻塞时停下说明，不擅自扩大范围。
 
+首次写入源码、测试、配置、schema 或生成器输入后，将当前图状态标记为 `dirty-after-write`，并 `never query a dirty graph`；剩余定位只使用当前源码搜索。项目在写入前已有 `.codegraph/` 时，在最终汇报或任何写入后的阻塞返回前执行一次 `post-write-sync`：
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+不再运行 `status`，不提交索引变化。同步失败只记录一次原因，`must not block completion`、验证或汇报；项目原本没有图时不得隐式建图。
+
 ### 5. 验证并汇报
 
 实现后运行与改动范围匹配的验证命令。最终汇报：
 - 完成了什么
 - 改了哪些关键文件
 - 验证命令及结果
+- CodeGraph `post-write-sync` 的执行、跳过或失败状态
 - 未验证项或残余风险
 
 如果验证失败，先按失败信息修复；同一问题连续失败多次或需要产品决策时，再请求用户介入。

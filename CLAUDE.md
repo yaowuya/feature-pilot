@@ -12,3 +12,5 @@
 - `fp-init` 未检测到 CLI 时提供自动安装、展示步骤和跳过；自动安装只使用 `npm install -g @colbymchenry/codegraph@latest`，不得使用 `irm`、`curl`、远程安装脚本或 `npx`。
 - Agent MCP 配置独立确认；首次建图和后续消费严格遵守 `skills/_shared/codegraph.md`。
 - 后续代码调查按 `MCP → CLI → 原有搜索`；图结果只用于导航，失败时回退，关键结论仍须验证当前源码、测试和命令输出。
+- 已有信息层由 `fp-init` 进入 `refresh-existing-information-layer`，只在确认后执行 `refresh-stale-intel`，不批量覆盖人工 settings 或用户编辑冲突。
+- 源码写入后标记 `dirty-after-write` 并停止查询旧图；执行类 skill 返回前对已有图运行一次 `post-write-sync`，失败不得阻塞主流程。

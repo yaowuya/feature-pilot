@@ -102,11 +102,14 @@ Every generated intel artifact should include a small freshness block near the t
 
 ```markdown
 Generated: <timestamp>
+Refreshed: <timestamp or never>
 Generated from Git SHA: <sha or unavailable>
 Working tree: clean | dirty | unavailable
 Depends on:
 - <source path> @ <git blob sha or content hash or unavailable>
+Generated body hash: <sha256 of generated body excluding this freshness block or unavailable>
 Freshness: fresh | soft-stale | hard-stale | unknown
+Refresh decision: keep | regenerate | conflict
 Use as: navigation-hint-only
 ```
 
@@ -127,7 +130,15 @@ Use as: navigation-hint-only
 - Profile is old.
 - Current change touches an area covered by an intel artifact.
 
-On stale intel, verify just-in-time.
+## Selective refresh
+
+1. Read only the manifest, this policy, the target artifact freshness block, and its recorded dependency paths.
+2. Recompute dependency fingerprints and classify the artifact before reading its whole generated body.
+3. If the body hash differs from `Generated body hash`, classify `conflict`; never overwrite without file-specific approval.
+4. After batch approval, regenerate only listed stale generated artifacts, record new fingerprints, and set `Refresh decision: regenerate`.
+5. Never refresh settings, unknowns/decisions, active change artifacts, archive, or history through this policy.
+
+On stale intel, verify just-in-time. A stale or conflicted artifact is never current-state proof.
 ````
 
 ## SDD Handoff

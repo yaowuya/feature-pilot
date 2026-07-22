@@ -9,6 +9,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
+If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract across controller and workers.
 ---
 
 # FeaturePilot Subagent-Driven Execute
@@ -340,6 +341,16 @@ After every task has either passed review or reached attempt 3 with only recorde
 12. Final review never resets or reopens a completed task review scope merely because it reports an existing review debt item.
 13. Only then produce the final execution report.
 
+## CodeGraph write freshness
+
+After any implementer/fixer writes source, tests, config, schema, or generator inputs, mark the graph `dirty-after-write`; controller and workers `never query a dirty graph` and use current-source search. If `.codegraph/` existed before writes, run one `post-write-sync` before each mutated step-confirmation, final, or blocker return:
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+Do not rerun `status`, commit `.codegraph/`, or initialize a missing graph. Record success/skip/one failure; sync `must not block completion`, review transitions, or blocker reporting.
+
 Final report must include:
 - Completed tasks.
 - Key commits / commit ranges.
@@ -347,6 +358,7 @@ Final report must include:
 - Brief/report/review/package paths.
 - Minor findings and review debt fixed or deferred, with exact findings and rationale.
 - Final review result.
+- CodeGraph `post-write-sync` execution, skip, or failure state.
 - Whether `/fp-archive` is recommended.
 
 Only `step-confirmation` produces a user confirmation prompt after an individual task passes review or is accepted with non-blocking review debt at attempt 3. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.
