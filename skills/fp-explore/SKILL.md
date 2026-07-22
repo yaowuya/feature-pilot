@@ -105,10 +105,11 @@ A recognized profile keeps its profile-specific fields even when blocked. Invali
 1. Resolve the target root and applicable engineering instructions.
 2. Read `fp-docs/manifest.md` first when present, as an index only.
 3. Translate the objective into exact terms, strings, routes, APIs, models, components, symbols, configuration, and tests.
-4. Search before opening files; inspect implementation, interfaces, tests, configuration, and adjacent patterns only as needed.
-5. Separate verified facts, inferences, risks, unknowns, stale navigation hints, and user-owned decisions.
-6. Ask one question only when its answer materially changes scope, meaning, conclusions, or a safety boundary.
-7. Synthesize when answered, budget-exhausted, blocked by a decision, awaiting research consent, or reaching mutation.
+4. Decide whether the CodeGraph Stage 0 fast path applies; it never installs CodeGraph or creates a project graph.
+5. Search before opening files; inspect implementation, interfaces, tests, configuration, and adjacent patterns only as needed.
+6. Separate verified facts, inferences, risks, unknowns, stale navigation hints, and user-owned decisions.
+7. Ask one question only when its answer materially changes scope, meaning, conclusions, or a safety boundary.
+8. Synthesize when answered, budget-exhausted, blocked by a decision, awaiting research consent, or reaching mutation.
 
 ### Empty standalone input
 
@@ -126,6 +127,24 @@ A caller may reinvoke with a narrower objective and still-valid verified facts. 
 ## Progressive low-context inspection
 
 Apply this contract to every non-empty standalone exploration and every internal profile. Empty standalone orientation keeps its existing bounded scope and reads only the smallest necessary range; it does not inherit the `quick` numeric limits below. Non-empty standalone uses `standard` as its default budget unless the user explicitly narrows the investigation. Broad permission such as “read whatever you need” permits relevant local inspection but is not an explicit request for comprehensive full-file review.
+
+### Stage 0 - CodeGraph fast path
+
+仅当问题涉及代码位置、符号关系、调用链、数据流、影响范围或相关源码候选时启用。按需读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md`；空输入 orientation、纯文档事实或精确非代码字符串搜索不主动触发本阶段。
+
+路由标识固定为 `MCP -> CLI -> native search`，面向用户说明为 `MCP → CLI → 原有搜索`：
+
+1. 只检查当前目标项目根目录的 `.codegraph/`。不存在时将本工作流状态记为 `unavailable`，可建议之后运行 `/fp-init`，然后 `fall back to Stage A`。
+2. 第一次需要代码图时解析一次工作流状态。当前会话暴露 CodeGraph MCP 时优先使用 `codegraph_explore`；需要且可用的健康能力优先由 MCP 提供，否则使用 CLI。
+3. CLI 与项目图可用时，本工作流 `at most one status check`，运行 `codegraph status <project-root> --json`。待同步时最多运行一次 `codegraph sync <project-root> --quiet`，并且 `do not run status again after sync`。
+4. 状态为 `ready-mcp` 时调用 `codegraph_explore`；状态为 `ready-cli` 时调用 `codegraph explore --path <project-root> --max-files <budget> <query>`。
+5. MCP、CLI、索引、同步、查询或语言支持失败时，只记录一次精简降级原因，将状态记为 `unavailable`，并 `fall back to Stage A`。同一工作流不重复重试。
+
+`fp-explore` 不安装 CLI、不配置 Agent，也不执行首次建图。增量 `sync` 只能更新现有 `.codegraph/` 派生缓存，不得修改源码或 FeaturePilot 产物；宿主只读权限不允许缓存更新时，跳过同步并回退，不请求扩大写权限来维持探索。
+
+`<budget>` 使用当前 profile 剩余的候选路径上限；剩余预算为零时跳过查询。CodeGraph 返回的路径计入 `candidate paths`，有界源码摘录计入 `local read windows`，整文件内容计入 `unbounded application-file reads`，相应文件也计入 distinct-file budget。CodeGraph 查询本身计入一次 search/static inspection。不得把 `--max-files` 当成必须耗尽的配额，也不得绕过 quick `8 / 8 / 1` 上限。
+
+所有图结果均为 `navigation-hint-only`。候选定位后必须用 `current source`、测试或命令输出复核会影响范围、契约、修改或结论的事实；图结果本身不能成为完成证明。证据充分时可直接进入 Stage C，候选不充分或需要精确匹配时从 Stage A/B 继续。
 
 ### Stage A - Glob candidate paths
 

@@ -22,6 +22,10 @@ Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills
 - Current code and command output win for current-state facts. Approved PRD/proposal/design/tasks win for target-state requirements.
 - Public skills must not hardcode customer vendors, component libraries/prefixes, design tokens, backend frameworks, API envelopes, or workflow policy. Put customer rules in target-project settings.
 
+## Optional CodeGraph route
+
+需要定位代码、符号、调用链、数据流、影响范围或相关源码候选时，按需读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md`。CodeGraph 只加速候选定位；不可用时继续现有搜索，不降低当前源码验证、读取预算、只读和授权边界。无需代码调查的阶段不得为了“预热”而加载、安装或构建代码图。
+
 ## Compatibility and ownership
 
 - Missing `fp-docs/manifest.md` does not block normal workflows. Recommend `/fp-init`, continue from current code/settings when safe, and create only artifacts owned by the active phase.

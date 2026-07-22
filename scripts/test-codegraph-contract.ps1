@@ -67,4 +67,23 @@ Assert-Condition ($command.Contains('npm')) 'Claude command checksum lacks npm-o
 Assert-Condition ($command.Contains('MCP')) 'Claude command checksum lacks separate MCP gate'
 Assert-Condition ($command.Contains('codegraph init')) 'Claude command checksum lacks graph-build gate'
 
+$workspace = Read-Utf8 (Join-Path $root 'skills\_shared\workspace-rules.md')
+$explore = Read-Utf8 (Join-Path $root 'skills\fp-explore\SKILL.md')
+
+Assert-Condition ($workspace.Contains('skills/_shared/codegraph.md')) 'workspace contract does not route CodeGraph lazily'
+foreach ($anchor in @(
+    'Stage 0 - CodeGraph fast path',
+    'codegraph_explore',
+    'codegraph explore --path <project-root> --max-files <budget> <query>',
+    'MCP -> CLI -> native search',
+    'at most one status check',
+    'do not run status again after sync',
+    'candidate paths',
+    'local read windows',
+    'current source'
+)) {
+    Assert-Condition ($explore.Contains($anchor)) "fp-explore lost CodeGraph anchor: $anchor"
+}
+Assert-Condition ($explore.Contains('fall back to Stage A')) 'fp-explore can stop on CodeGraph failure'
+
 Write-Output 'CodeGraph contract validation passed.'
