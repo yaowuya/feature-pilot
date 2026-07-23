@@ -103,6 +103,12 @@ codegraph explore --path <project-root> --max-files <budget> <query>
 
 只保留与目标最相关的候选并回到当前源码小范围复核。CodeGraph 不充分或不可用时立即回退到 `Glob → Grep → ranged Read`，不降低原有只读、敏感数据、外部研究和授权边界。
 
+### Review candidate-only contract
+
+在 `fp-review` 或 SDD final review 中，任何 CodeGraph `explore`、`impact`、`affected` helper/query 都只返回 candidate paths/symbols，不是 finding、scope、absence、fix 或完成证据。每个采用的 candidate 必须回到 current source 和 current diff，并至少使用 native search（caller/import/reference）、tests 或 command output 之一复核；报告同时记录 query、candidate、current-source verification 与原生证据。
+
+图缺失、stale、dirty-after-write、MCP/CLI unavailable 或结果不充分时，立即 `fallback to native search against current source`。CodeGraph failure must not block FeaturePilot review；只有原生当前证据本身缺失时才按 review 风险影响 verdict。不得用 `explore`、`impact` 或 `affected` 绕过 working-tree snapshot、scope matrix、artifact ownership、evidence freshness 或 command-safety gate。
+
 ## 源码写入后的失效和结束同步
 
 任一 FeaturePilot 流程首次创建、修改、移动或删除源码、测试、配置、schema 或生成器输入后，立即把当前图状态设为 `dirty-after-write`。从该时刻起 `never query a dirty graph`：不得继续调用 `codegraph_explore` 或 `codegraph explore`，也不得引用写入前的图结果证明写入后的事实；剩余调查使用原有当前源码搜索。

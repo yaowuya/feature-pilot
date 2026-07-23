@@ -47,16 +47,20 @@ Copy only the constraints that apply to this task, preserving exact values:
 
 ## Relevant Project Information Layer
 
-- FeaturePilot manifest:
-- Relevant settings excerpts:
-- Relevant workspace-map excerpts:
-- Relevant commands/quality-gates excerpts:
-- Relevant architecture/contracts excerpts:
-- Relevant security/data excerpts:
-- Relevant frontend settings excerpts:
-- Relevant backend settings excerpts:
-- Unknowns checked:
-- Staleness notes:
+This section is the task's `dynamic task context`. Missing optional information-layer files are `N/A`, not blockers.
+
+| Source class | Exact path/query | Relevant excerpt or result | Freshness/revalidation |
+| --- | --- | --- | --- |
+| Manifest | `<fp-docs/manifest.md or N/A>` | `<minimal relevant entry or N/A>` | `<current read or N/A>` |
+| Settings | `<relevant settings path or N/A>` | `<minimal constraint or N/A>` | `<current read or N/A>` |
+| Project facts | `<intel/project-facts.md section or N/A>` | `<navigation hint or N/A>` | `<source revalidation or N/A>` |
+| Change artifacts | `<PRD/proposal/design/task paths>` | `<minimal approved contract>` | `current canonical artifact` |
+| Current source/config | `<exact paths>` | `<current fact>` | `re-opened before dispatch` |
+| CodeGraph/native search candidates | `<query/result paths or N/A>` | `<candidate only or N/A>` | `<verified in current source or N/A>` |
+| Human-owned unknowns/decisions | `<intel/unknowns.md, intel/decisions.md, legacy hint, or N/A>` | `<relevant item or N/A>` | `<resolved status or N/A>` |
+
+- Legacy compatibility hints used: `<manifest-listed legacy paths or N/A>`
+- Staleness/conflict notes: `<live calculation or N/A>`
 
 ## Proposal / Design Context
 
@@ -67,6 +71,22 @@ Relevant proposal excerpt:
 Relevant design excerpt:
 
 > `<minimal exact excerpt>`
+
+## Visual Evidence Manifest (frontend/UI only)
+
+Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each planned case owns `manifest.md`, `reference.png`, `current.png`, and optional `diff.png`.
+
+| Case ID | Approved design source | Figma node | revision/time | Frame/variant | variables / Auto Layout / assets | Runtime route | Scenario/state | Viewport | DPR | Locale | Theme | Deterministic non-sensitive fixture | Reference path | Current path | Diff path / missing diff | Mask | Acceptance rule | Command/tool | Failure class | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<approved Figma/static design source>` | `<node or N/A>` | `<revision/time or approved-source time>` | `<frame/variant>` | `<available context or N/A>` | `<real target runtime route>` | `<scenario/state>` | `<viewport>` | `<DPR>` | `<locale>` | `<theme>` | `<stable fixture; no secrets or production/customer data>` | `.fp-execute/visual/<task-id>/<case-id>/reference.png` | `.fp-execute/visual/<task-id>/<case-id>/current.png` | `.fp-execute/visual/<task-id>/<case-id>/diff.png` or `N/A: <missing diff explanation>` | `<masks or None>` | `<case-specific rule>` | `<project-configured replay command/tool>` | `<core visual/non-core cosmetic>` | `PENDING` |
+
+- Source/runtime provenance: `reference.png` is from the approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` is from the real target runtime/Runtime route with stable data and stable environment. The optional diff may be missing only with explanation and must not hide missing source/runtime.
+- Browser interaction evidence is separate from screenshot evidence and must exercise the approved states.
+- Figma design context: `<get_design_context record for specified node with revision/time, frame/variant, variables/Auto Layout/assets when Figma MCP is available; explicitly approved source or blocker when unavailable; do not fabricate>`
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## Prior Interfaces Available
 
@@ -103,6 +123,7 @@ The report must include:
 - Failing test command and key failure output, unless the task explicitly uses alternative validation.
 - Passing test/lint/build/visual command and key output.
 - Interface/contract evidence.
+- Case-level Visual Evidence rows and `manifest.md`/`reference.png`/`current.png`/optional `diff.png` provenance, plus separate browser interaction evidence.
 - Commit SHA(s).
 - Known concerns or blockers.
 ```

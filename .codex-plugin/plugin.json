@@ -1,6 +1,6 @@
 {
   "name": "fp",
-  "version": "0.3.0+codex.20260710110329",
+  "version": "1.0.0+codex.20260723140954",
   "description": "AI \u529f\u80fd\u5f00\u53d1\u5f15\u5bfc\u5458\uff1a\u4fe1\u606f\u5c42\u9a71\u52a8\u9700\u6c42\u3001\u539f\u578b/\u8bbe\u8ba1\u3001\u4efb\u52a1\u8ba1\u5212\u3001TDD \u6267\u884c\u3001\u5ba1\u67e5\u4e0e\u5f52\u6863\u3002",
   "author": {
     "name": "zhong"

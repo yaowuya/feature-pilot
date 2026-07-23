@@ -462,6 +462,21 @@ Assert-Condition (Test-Path $codeGraphContractValidator) 'focused CodeGraph cont
 & powershell -NoProfile -ExecutionPolicy Bypass -File $codeGraphContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused CodeGraph contract validator failed'
 
+$reviewContractValidator = Join-Path $root 'scripts\test-review-contract.ps1'
+Assert-Condition (Test-Path $reviewContractValidator) 'focused fp-review contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $reviewContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-review contract validator failed'
+
+$initInformationLayerValidator = Join-Path $root 'scripts\test-init-information-layer-contract.ps1'
+Assert-Condition (Test-Path $initInformationLayerValidator) 'focused init information-layer contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $initInformationLayerValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused init information-layer contract validator failed'
+
+$figmaEvidenceValidator = Join-Path $root 'scripts\test-figma-evidence-contract.ps1'
+Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused Figma evidence contract validator failed'
+
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
@@ -808,7 +823,7 @@ foreach ($entry in $lazyResources.GetEnumerator()) {
 
 $resourceAnchors = @{
     'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only', 'dirty-after-write', 'post-write sync')
-    'skills\fp-init\templates.md' = @('Refreshed: <timestamp or never>', 'Generated body hash:', 'Refresh decision: keep | regenerate | conflict', '## Selective refresh')
+    'skills\fp-init\templates.md' = @('## Project Facts Freshness Metadata', 'fp-project-facts-freshness/v1', 'artifactSectionId', 'bodyHash', 'relativePath', 'fingerprint', 'metadata-only', 'stale/conflict is computed live', '## Selective refresh')
     'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.5 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
     'skills\fp-propose\proposal-template.md' = @('## Why', '## What Changes', '## Capabilities', '## Out of Scope', '## Impact')
     'skills\fp-brainstorm\design-template.md' = @('# <', '## ', '### API ', '#### API ')
@@ -878,7 +893,7 @@ Assert-Condition ($startExploreText.Contains('profile: start-routing') -and $sta
 Assert-Condition ($startExploreText.Contains('Default execution path') -and $startExploreText.Contains('SDD continuation mode gate')) 'start-routing edit removed protected execution routing'
 
 $sddSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
-Assert-Condition ($sddSkill.Contains('intel/sdd-handoff.md')) 'fp-execute-sdd is missing the SDD handoff preflight contract'
+Assert-Condition ($sddSkill.Contains('dynamic task context') -and $sddSkill.Contains('static handoff absence is not a blocker')) 'fp-execute-sdd is missing the dynamic information-layer preflight contract'
 Assert-Condition ($sddSkill.Contains('unresolved Unknown')) 'fp-execute-sdd is missing unresolved Unknown handling'
 
 $reviewSkill = Read-Utf8 (Join-Path $root 'skills\fp-review\SKILL.md')

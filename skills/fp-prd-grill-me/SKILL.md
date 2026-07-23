@@ -174,7 +174,8 @@ Allowed default context:
   - `settings/prototype-style.md` only for prototype generation.
   - `settings/frontend.md` only for UI/page/prototype decisions.
   - `settings/backend.md` only for backend/API/data/security/permission product decisions.
-- Read `intel/unknowns-and-decisions.md` only if the manifest lists it and it is directly relevant.
+- Read `intel/unknowns.md` / `intel/decisions.md` only if the manifest lists actual directly relevant project-level content. Their absence is not a blocker; keep ordinary questions as `change-local unknowns` in the current PRD interview.
+- During one-release compatibility, a manifest-listed `intel/unknowns-and-decisions.md` may be read as a legacy hint only, never required current proof.
 
 Do not read by default:
 

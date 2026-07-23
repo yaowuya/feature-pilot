@@ -27,6 +27,13 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - Figma 结果必须可被后续阶段延续：输出节点路径、区域拆解、项目组件映射、布局容器、token/尺寸和 Visual Checks，不只输出最终 UI 文件。
 - 如需 local viewer / browser 预览，必须等页面可运行后 just-in-time 启动；只绑定 localhost，不服务无关目录，不读取 dotfile/symlink，不把预览截图当作 Figma 源事实。
 
+## Design context and source evidence
+
+- 当 Figma MCP 可用时，before implementation 必须针对用户指定的 specified node 调用 `get_design_context`，并记录 Figma node、revision/time、frame/variant，以及可用的 variables、Auto Layout、assets 和组件信息；只读取当前范围。调用失败或信息不可得时如实标为 unavailable，do not fabricate。
+- 当 Figma MCP 不可用时，只有用户或已批准产物中的 explicitly approved source（Figma 导出或其他静态设计源）才可继续；没有可信 source 是 blocker，不得从记忆、代码或本地 runtime screenshot 反推并冒充设计上下文。
+- `reference.png` 只能来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 只能来自 real target runtime 的实际 runtime route，使用 stable data 与 stable environment。`diff.png` 是 optional diff；missing diff 必须说明，且 must not hide 缺失 reference/current 的事实。
+- Code Connect 只是 component mapping 的 optional enhancement，受能力与许可影响；must not auto-create `.figma.ts`，must not change tsconfig，must not install dependencies。Code Connect absence does not block ordinary UI。
+
 ## Canonical design layout
 
 处于 `fp-brainstorm` 阶段时，frontend design 使用 mutually exclusive form：small form 仅有 `design/frontend.md`；split form 仅有 `design/frontend/00-index.md` 与 manifest 列出的 `design/frontend/<number>-<area>.md`。`design/00-index.md` 必须直接链接已选择的 frontend entry，不经另一份摘要文件跳转。
@@ -50,7 +57,7 @@ There is no read-only compatibility for historical files or pairs; Figma blocks 
 
 ## 执行步骤
 
-1. 读取 Figma 结构与关键样式，仅关注 content 区域和用户指定节点；记录页面名、frame 名、node id、关键尺寸、颜色、字号、间距、状态和可复用组件。
+1. 按上述 Figma MCP/source gate 获取并记录 design context；读取 Figma 结构与关键样式，仅关注 content 区域和用户指定节点，记录页面名、frame 名、node id、revision/time、关键尺寸、颜色、字号、间距、状态和可复用组件。
 2. 分析页面结构、组件映射和布局方式，生成 `UI 组件树与 Figma 解析映射`：每个设计区域对应目标 DOM 层级、项目组件、slot、Flex/Grid 容器、关键 token、需要自封装的原因。
 3. 生成 `Visual Checks`：每项必须能在 local viewer / browser 里检查，且能追溯到具体 Figma 节点或 UI/UX 规范；避免“看起来一致”这种不可执行描述。`Visual Source`、组件映射和 `Visual Checks` 必须共同写入一个 detailed owner，且各出现恰好一次；split index 只记录 ownership metadata，不复制正文。
 4. 若当前处于 `fp-brainstorm` 设计阶段，只把步骤 1-3 的结果写入 small form 的 `design/frontend.md`，或 split form 中一个由 `design/frontend/00-index.md` manifest 列出的 detail fragment，不得直接写业务 UI 文件。写后验证互斥 form、direct change-index link、manifest completeness、唯一 visual owner 和两项 hard limits。

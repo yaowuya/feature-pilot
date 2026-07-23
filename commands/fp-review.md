@@ -10,3 +10,4 @@ Gate checksum：
 - 审查全部 proposal/design/tasks/progress/reviews 与整分支 diff、验证证据和信息层消费。
 - 使用 Critical/High/Medium/Low 与唯一 verdict；报告只写 skill 指定路径。
 - 缺 slug/baseRef 时按 skill 的确定规则处理，不猜测。
+- Direct independent final scope attempt 1; does not auto-fix; does not auto-retry.

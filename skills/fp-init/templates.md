@@ -1,6 +1,6 @@
 # fp-init templates
 
-Use these templates when `skills/fp-init/SKILL.md` instructs you to create skeleton or optional settings files. Substitute placeholders such as `<timestamp>` and `<detected local path>` with confirmed values. Do not guess unknown project facts; write `Unknown`.
+Use these templates when `skills/fp-init/SKILL.md` instructs you to create the manifest or an explicitly approved optional file. `manifest-only default` applies to new projects. Substitute placeholders with confirmed values; do not guess unknown project facts.
 
 ## FeaturePilot Manifest
 
@@ -9,7 +9,7 @@ Target: `fp-docs/manifest.md`
 ```markdown
 # FeaturePilot Manifest
 
-Schema: fp-manifest/v1
+Schema: fp-manifest/v2
 Generated: <timestamp>
 Project root: `<detected local path>`
 FP docs root: `fp-docs/`
@@ -40,9 +40,10 @@ For target-state requirements, user instructions and approved active change arti
 
 | File | Purpose | When To Read | Freshness | Sources |
 | --- | --- | --- | --- | --- |
-| `intel/unknowns-and-decisions.md` | Project-level unknowns and confirmations | requirement/design questions affected by known unknowns | fresh | init skeleton |
-| `intel/refresh-policy.md` | Freshness and staleness rules | when deciding whether intel can be trusted | fresh | init skeleton |
-| `intel/sdd-handoff.md` | SDD handoff contract | SDD execution only | fresh | init skeleton |
+| `intel/project-facts.md` | Optional generated facts cache | validation or non-obvious boundary lookup only | missing | approved discovery only |
+| `intel/.freshness.json` | metadata-only freshness inputs for project facts | live refresh calculation only | missing | created with project facts only |
+| `intel/unknowns.md` | Project-level unknowns | only when manifest lists relevant actual content | missing | human-owned, lazy, explicit approval |
+| `intel/decisions.md` | Project-level decisions | only when manifest lists relevant actual content | missing | human-owned, lazy, explicit approval |
 
 ## External Project Docs
 
@@ -65,134 +66,99 @@ For target-state requirements, user instructions and approved active change arti
 - Re-open referenced source files before editing.
 - Re-run commands before claiming validation.
 - Missing referenced paths make dependent sections stale.
-- If an intel artifact is hard-stale or soft-stale, verify just-in-time from current source before using it.
+- Compute stale/conflict live from `.freshness.json`, current sources, and current generated body; never trust a stored verdict.
 - UI-related phases must read `settings/frontend.md` when present.
 - Prototype generation should read `settings/prototype-style.md` when present.
 - Backend-related phases must read `settings/backend.md` when present.
 ```
 
-## Unknowns and Decisions
+## Project Facts
 
-Target: `fp-docs/intel/unknowns-and-decisions.md`
+Target: `fp-docs/intel/project-facts.md`
 
 ```markdown
-# Unknowns and Decisions
+# Project Facts
 
-## Unknowns
+Generated facts are `navigation-hint-only`; current source and command output win.
+
+## Validation and Quality Gates
+
+- <confirmed command or gate, source path, and confidence>
+
+## Non-obvious Contracts and Architecture Boundaries
+
+- <confirmed contract/boundary, source path, and confidence>
+
+## Security and Data Boundaries
+
+- <confirmed security/data boundary, source path, and confidence>
+```
+
+Contract: `no CodeGraph topology snapshots`. Do not include workspace trees, file inventories, symbol maps, callers/callees, dependency graphs, routes inferred only from topology, or other topology snapshots.
+
+## Project Facts Freshness Metadata
+
+Target: `fp-docs/intel/.freshness.json`
+
+```json
+{
+  "schema": "fp-project-facts-freshness/v1",
+  "generatorVersion": "<generator version>",
+  "generatedTime": "<ISO-8601 timestamp>",
+  "sections": [
+    {
+      "artifactSectionId": "<artifact/section id>",
+      "bodyHash": "<sha256 body hash>",
+      "sources": [
+        {
+          "relativePath": "<source relative path>",
+          "fingerprint": "<git blob SHA or content hash>"
+        }
+      ]
+    }
+  ]
+}
+```
+
+This file is `metadata-only`: schema, artifact/section id, source relative path + fingerprint, body hash, generated time, and generator version. `stale/conflict is computed live`; do not store freshness verdicts, project facts, CodeGraph state, or decisions here.
+
+## Selective refresh
+
+1. Compare current source fingerprints and body hash with metadata before reading the full cache.
+2. Classify fresh/stale/user-edit-conflict in memory and show the proposed section-level write scope.
+3. Refresh only approved stale sections without body conflicts; metadata is replaced with the new source fingerprints and body hash.
+4. Never refresh settings, human-owned unknowns/decisions, active changes, archive, or history.
+
+## Lazy Human-owned Unknowns
+
+Target: `fp-docs/intel/unknowns.md` (human-owned, lazy, explicit approval and actual project-level content required)
+
+```markdown
+# Project Unknowns
 
 | Area | Unknown | Impact | Resolve By | Blocking For |
 | --- | --- | --- | --- | --- |
+```
 
-## Decisions
+## Lazy Human-owned Decisions
+
+Target: `fp-docs/intel/decisions.md` (human-owned, lazy, explicit approval and actual project-level content required)
+
+```markdown
+# Project Decisions
 
 | Date | Decision | Source | Applies To |
 | --- | --- | --- | --- |
 ```
 
-## Refresh Policy
+## Legacy information-layer read compatibility
 
-Target: `fp-docs/intel/refresh-policy.md`
+For one release, manifest-listed `unknowns-and-decisions.md`, `refresh-policy.md`, and `sdd-handoff.md` may be read as compatibility hints only. v2 does not create or refresh them; they are not required and are not auto-deleted. Older generated files may contain these historical freshness fields, which are read-only inputs and never v2 output:
 
-````markdown
-# Refresh Policy
-
-Generated intel is navigation, not proof of current behavior.
-
-Every generated intel artifact should include a small freshness block near the top:
-
-```markdown
-Generated: <timestamp>
+```text
 Refreshed: <timestamp or never>
-Generated from Git SHA: <sha or unavailable>
-Working tree: clean | dirty | unavailable
-Depends on:
-- <source path> @ <git blob sha or content hash or unavailable>
-Generated body hash: <sha256 of generated body excluding this freshness block or unavailable>
-Freshness: fresh | soft-stale | hard-stale | unknown
+Generated body hash: <sha256 or unavailable>
 Refresh decision: keep | regenerate | conflict
-Use as: navigation-hint-only
-```
-
-## Hard-stale
-
-- Referenced paths disappear.
-- Package manifests/config files change.
-- Test/build/lint config changes.
-- Route/API framework config changes.
-- Auth/permission files change.
-- Component library/theme/token files change.
-- Any depends-on source recorded in `sources-and-provenance.md` has a changed git blob SHA or content hash.
-
-## Soft-stale
-
-- Git SHA differs from recorded SHA.
-- Working tree was dirty during generation.
-- Profile is old.
-- Current change touches an area covered by an intel artifact.
-
-## Selective refresh
-
-1. Read only the manifest, this policy, the target artifact freshness block, and its recorded dependency paths.
-2. Recompute dependency fingerprints and classify the artifact before reading its whole generated body.
-3. If the body hash differs from `Generated body hash`, classify `conflict`; never overwrite without file-specific approval.
-4. After batch approval, regenerate only listed stale generated artifacts, record new fingerprints, and set `Refresh decision: regenerate`.
-5. Never refresh settings, unknowns/decisions, active change artifacts, archive, or history through this policy.
-
-On stale intel, verify just-in-time. A stale or conflicted artifact is never current-state proof.
-````
-
-## SDD Handoff
-
-Target: `fp-docs/intel/sdd-handoff.md`
-
-```markdown
-# SDD Handoff
-
-## Mandatory Context Files
-
-- `fp-docs/manifest.md`
-
-## Global Constraints Sources
-
-- Unknown
-
-## Allowed Edit Scope Rules
-
-- Unknown
-
-## Validation Evidence Requirements
-
-- Unknown
-
-## Commit Policy
-
-- Unknown
-
-## Review Severity Policy
-
-- Unknown
-
-## Visual Evidence Requirements
-
-- Unknown
-
-## Backend Evidence Requirements
-
-- Unknown
-
-## Security/Data Constraints
-
-- Unknown
-
-## Common Project Pitfalls
-
-- Unknown
-
-## Stale Intel Handling
-
-- Re-open source files before editing.
-- Re-run commands before claiming validation.
-- If a referenced path is missing, treat the dependent section as stale.
 ```
 
 ## FeaturePilot Agent Settings
@@ -223,7 +189,7 @@ Target: `fp-docs/settings/agent.md`
 
 ## General Validation Expectations
 
-- <cross-domain validation expectations only; exact commands belong in intel/commands-and-quality-gates.md>
+- <cross-domain validation expectations only; confirmed exact commands may be cached in intel/project-facts.md after approved discovery>
 
 ## General Security / Data Notes
 

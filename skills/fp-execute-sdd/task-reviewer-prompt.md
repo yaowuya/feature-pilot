@@ -40,9 +40,11 @@ Applicable Global Constraints:
 6. Verify Interfaces / Contract checks are implemented and consistent.
 7. Verify tests or alternative validations actually prove the behavior.
 8. For frontend tasks, verify Template Outline, Script Outline, Style Outline, and Visual Checks are respected.
-9. Report every Critical/Important issue with file:line evidence. Do not filter out real bugs for politeness.
-10. Check whether the implementer followed the Relevant Project Information Layer section. If the task touched UI, verify `settings/frontend.md` was considered when present. If it touched backend/API/data/security behavior, verify `settings/backend.md` was considered when present. Flag any reliance on stale intel or missing source-file revalidation.
-11. For every failed finding, report Potential main-flow impact evidence: whether it affects core acceptance behavior, security, permissions, data integrity, external contracts, required build/core tests, downstream dependencies, or approved scope. Report evidence only; do not decide continuation.
+9. For each planned visual Case ID, read `.fp-execute/visual/<task-id>/<case-id>/manifest.md`; verify approved-source `reference.png`, real target runtime `current.png`, optional `diff.png` or missing diff explanation, Runtime route, Scenario/state, Viewport/DPR/Locale/Theme, deterministic non-sensitive fixture, Mask, Acceptance rule, Command/tool, and Failure class. A local runtime screenshot must not replace an approved Figma/static design source. Current evidence requires stable data and stable environment; optional diff absence must not hide missing source/runtime.
+10. Keep browser interaction evidence separate from screenshot evidence and verify observable flows exercise the approved states.
+11. Report every Critical/Important issue with file:line evidence. Do not filter out real bugs for politeness.
+12. Check whether the implementer followed the Relevant Project Information Layer section. If the task touched UI, verify `settings/frontend.md` was considered when present. If it touched backend/API/data/security behavior, verify `settings/backend.md` was considered when present. Flag any reliance on stale intel or missing source-file revalidation.
+13. For every failed finding, report Potential main-flow impact evidence: whether it affects core acceptance behavior, security, permissions, data integrity, external contracts, required build/core tests, downstream dependencies, or approved scope. Report evidence only; do not decide continuation.
 
 ## Read-Only Rules
 
@@ -52,6 +54,8 @@ Applicable Global Constraints:
 - If you cannot verify a requirement from the diff/package/files, report `CANNOT VERIFY FROM DIFF` and explain what evidence is missing.
 
 The controller, not the reviewer, decides whether a failed finding blocks the main flow. `Ready for next task` is reviewer input, not the controller's final continuation decision.
+
+For visual scope, trustworthy source and trustworthy runtime are mandatory for every core visual case. Missing either makes `Visual evidence: CANNOT_VERIFY`, is potential main-flow blocker evidence, and missing evidence must not become review debt. At attempt 3 only reproducible non-core cosmetic differences may be review debt; a core visual gap remains a main-flow blocker.
 
 ## Required Output File Format
 
@@ -100,10 +104,23 @@ Verdict: APPROVED | NEEDS FIXES
 
 ## Frontend Visual Review (if applicable)
 
+Visual evidence: PASS | FAIL | CANNOT_VERIFY
+
 - Template Outline respected: yes/no/n/a
 - Script Outline respected: yes/no/n/a
 - Style Outline respected: yes/no/n/a
 - Visual Checks respected: yes/no/n/a
+
+| Case ID | Approved design source | Figma node | revision/time | Frame/variant | variables / Auto Layout / assets | Runtime route | Scenario/state | Viewport | DPR | Locale | Theme | Deterministic non-sensitive fixture | Reference path | Current path | Diff path / missing diff | Mask | Acceptance rule | Command/tool | Failure class | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<approved Figma/static design source>` | `<node or N/A>` | `<revision/time or approved-source time>` | `<frame/variant>` | `<available context or N/A>` | `<real target runtime route>` | `<scenario/state>` | `<viewport>` | `<DPR>` | `<locale>` | `<theme>` | `<deterministic non-sensitive fixture>` | `.fp-execute/visual/<task-id>/<case-id>/reference.png` | `.fp-execute/visual/<task-id>/<case-id>/current.png` | `.fp-execute/visual/<task-id>/<case-id>/diff.png` or `N/A: <missing diff explanation>` | `<mask>` | `<case-specific rule>` | `<project-configured replay command/tool>` | `<core visual/non-core cosmetic>` | `<PASS/FAIL/CANNOT_VERIFY>` |
+
+- Browser interaction evidence: `<separate evidence exercising approved states>`
+- Screenshot evidence: `<manifest/reference/current/optional diff evidence>`
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## Final Assessment
 

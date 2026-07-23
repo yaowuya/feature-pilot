@@ -32,6 +32,23 @@ foreach ($anchor in @(
     Assert-Condition ($contract.Contains($anchor)) "shared contract lost anchor: $anchor"
 }
 
+foreach ($anchor in @(
+    'Review candidate-only contract',
+    'explore',
+    'impact',
+    'affected',
+    'candidate paths/symbols',
+    'current source',
+    'current diff',
+    'native search',
+    'tests',
+    'command output',
+    'fallback to native search against current source',
+    'CodeGraph failure must not block FeaturePilot review'
+)) {
+    Assert-Condition ($contract.Contains($anchor)) "shared review contract lost candidate-only anchor: $anchor"
+}
+
 foreach ($forbidden in @('irm', 'curl', 'install.ps1', 'install.sh', 'npx')) {
     Assert-Condition ($contract.Contains("forbid: $forbidden")) "shared contract does not forbid $forbidden"
 }
@@ -78,8 +95,9 @@ foreach ($anchor in @(
 
 Assert-Condition ($templates.Contains('## Code Map')) 'manifest template lacks Code Map'
 Assert-Condition ($templates.Contains('navigation-hint-only')) 'manifest Code Map can be treated as current proof'
-Assert-Condition ($templates.Contains('Refresh decision: keep | regenerate | conflict')) 'intel template lacks selective refresh decision'
-Assert-Condition ($templates.Contains('Refreshed: <timestamp or never>')) 'intel template lacks refresh timestamp'
+foreach ($anchor in @('## Project Facts Freshness Metadata', 'fp-project-facts-freshness/v1', 'artifactSectionId', 'bodyHash', 'relativePath', 'fingerprint', 'metadata-only', 'stale/conflict is computed live')) {
+    Assert-Condition ($templates.Contains($anchor)) "intel template lacks v2 metadata-only anchor: $anchor"
+}
 Assert-Condition ($command.Contains('npm')) 'Claude command checksum lacks npm-only install gate'
 Assert-Condition ($command.Contains('MCP')) 'Claude command checksum lacks separate MCP gate'
 Assert-Condition ($command.Contains('codegraph init')) 'Claude command checksum lacks graph-build gate'

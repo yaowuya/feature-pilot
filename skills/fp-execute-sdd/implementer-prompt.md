@@ -44,9 +44,12 @@ Follow the brief exactly:
 3. Run the failure command and record the key expected failure.
 4. Implement the minimum code needed for this task only.
 5. Run the pass command and relevant lint/build/type/visual checks.
-6. Self-review for scope, interfaces, global constraints, style, and test quality.
-7. Commit only this task's changes when validation passes.
-8. Write the full report file with evidence.
+6. For every planned visual Case ID, replay the project-configured command/tool against the real target runtime route with the declared scenario/state, viewport, DPR, locale, theme, and deterministic non-sensitive fixture. Write `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, preserve approved-source `reference.png`, capture real-runtime `current.png`, and record optional `diff.png` or the missing diff explanation. Browser interaction evidence is separate from screenshot evidence and exercises the approved states.
+7. Self-review for scope, interfaces, global constraints, style, and test quality.
+8. Commit only this task's changes when validation passes.
+9. Write the full report file with evidence.
+
+For visual cases, `reference.png` must come from an approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` must come from the real target runtime and Runtime route with stable data and stable environment. An optional diff or missing diff explanation must not hide missing core source/runtime evidence.
 
 If the brief is contradictory, incomplete, or requires a decision not already made, stop with NEEDS_CONTEXT or BLOCKED. Do not guess.
 
@@ -75,8 +78,18 @@ Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
 - Contract checks: <how verified>
 
 ## Visual Evidence (frontend/UI only)
-- Visual Checks run: yes/no/n/a
-- Evidence: <screenshot/browser/manual check path or reason>
+
+| Case ID | Approved design source | Figma node | revision/time | Frame/variant | variables / Auto Layout / assets | Runtime route | Scenario/state | Viewport | DPR | Locale | Theme | Deterministic non-sensitive fixture | Reference path | Current path | Diff path / missing diff | Mask | Acceptance rule | Command/tool | Failure class | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<approved Figma/static design source>` | `<node or N/A>` | `<revision/time or approved-source time>` | `<frame/variant>` | `<available context or N/A>` | `<real target runtime route>` | `<scenario/state>` | `<viewport>` | `<DPR>` | `<locale>` | `<theme>` | `<stable fixture; no secrets or production/customer data>` | `.fp-execute/visual/<task-id>/<case-id>/reference.png` | `.fp-execute/visual/<task-id>/<case-id>/current.png` | `.fp-execute/visual/<task-id>/<case-id>/diff.png` or `N/A: <missing diff explanation>` | `<mask>` | `<case-specific rule>` | `<project-configured replay command/tool>` | `<core visual/non-core cosmetic>` | `<PASS/FAIL/CANNOT_VERIFY>` |
+
+- Manifest: `.fp-execute/visual/<task-id>/<case-id>/manifest.md`
+- Browser interaction evidence: `<separate path/result proving approved states were exercised>`
+- Screenshot evidence: `<case artifact paths and result>`
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## Commits
 - <sha> <message>

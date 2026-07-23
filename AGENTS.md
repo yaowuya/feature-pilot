@@ -4,7 +4,7 @@ FeaturePilot is an AI feature-development guide that runs the lifecycle:
 
 `需求 → 原型/设计 → 计划 → 执行 → 归档`
 
-This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `0.3.0`.
+This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `1.0.0`.
 
 ## How to use in Codex
 
@@ -23,7 +23,7 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | Final review | `skills/fp-review/SKILL.md` |
 | Archive completed change | `skills/fp-archive/SKILL.md` |
 
-## 0.3.0 release behavior
+## 1.0.0 release behavior
 
 This release documents the current FeaturePilot gates for both Claude Code and Codex:
 
@@ -55,13 +55,19 @@ Information layer structure:
 ```text
 fp-docs/
   manifest.md               # FeaturePilot 信息层唯一入口
-  settings/
+  settings/                 # 可选；明确批准某个文件后才创建
     agent.md                # 可选：轻量 FeaturePilot policy adapter
     frontend.md             # 可选：前端/UI/视觉/设计系统规则
     backend.md              # 可选：后端/API/数据/安全规则
     prototype-style.md      # 可选：原型视觉风格参考
-  intel/                    # 生成的 source-backed 但 stale-prone 的导航线索
+  intel/                    # 可选；默认不存在
+    project-facts.md        # 可选生成事实：质量门禁与非显而易见边界
+    .freshness.json         # 仅保存生成 metadata
+    unknowns.md             # 可选、human-owned、lazy
+    decisions.md            # 可选、human-owned、lazy
 ```
+
+`manifest-only default` 是合法且完整的新项目状态。可选文件缺失时记为 `N/A`；SDD 从 manifest、相关 settings、可选 project facts、当前 change、当前源码/config 和搜索候选动态组装上下文，不要求静态 handoff。
 
 ## Optional CodeGraph acceleration
 
@@ -75,7 +81,7 @@ npm install -g @colbymchenry/codegraph@latest
 
 需要代码定位、符号关系、调用链、数据流或影响范围时，按需读取 `skills/_shared/codegraph.md`。后续调查遵循 `MCP → CLI → 原有搜索`，每个工作流最多一次健康检查和一次必要同步。CodeGraph 失败不得阻塞 FeaturePilot；图结果只作 `navigation-hint-only`，关键结论必须回到当前源码、测试和命令输出复核。
 
-已有 `fp-docs/manifest.md` 时，`fp-init` 进入 `refresh-existing-information-layer`：根据 freshness block、依赖路径、Git blob SHA/内容 hash 和 generated body hash 识别 stale generated intel，展示清单后才执行 `refresh-stale-intel`。只选择性重建已批准且没有用户编辑冲突的 generated intel；`settings/*`、unknowns/decisions、active changes、archive/history 和冲突文件不得批量覆盖。
+已有 `fp-docs/manifest.md` 时，`fp-init` 进入 `refresh-existing-information-layer`：根据 `.freshness.json` 中的 source fingerprint 与 body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`。metadata 不持久化 stale verdict。`settings/*`、human-owned unknowns/decisions、active changes、archive/history 和冲突内容不得批量覆盖。manifest 已列出的旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 仅作一版只读提示，不创建、刷新或要求。
 
 任何代码修改流程首次写入源码后必须把图状态标记为 `dirty-after-write`，并禁止继续查询旧图。`fp-execute`、`fp-execute-sdd` 和 `fp-quick` 在写入后的用户可见返回前，对工作流开始时已存在的图最多执行一次 `post-write-sync`；失败只记录并回退，不阻塞验证、审查或完成，也不得隐式创建新图。
 
@@ -109,7 +115,7 @@ When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and 
 Preferred path:
 
 1. `/fp-explore <question>` when the user wants read-only investigation or option comparison before choosing a workflow; empty input performs bounded orientation only.
-2. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`, `fp-docs/intel/`).
+2. `/fp-init` when the project has no workspace or needs refresh. New projects use the `manifest-only default`; settings, project facts, and human-owned knowledge are optional and created only through their approval gates.
 3. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
 4. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
 5. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.

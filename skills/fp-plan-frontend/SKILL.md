@@ -78,6 +78,14 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 - Keep dependencies ordered: API/client wrapper → state/composable/store → route/navigation → page skeleton → component details → style/visual refinement → lint/build/visual checks.
 - Page/component tasks must carry forward the resolved frontend design component mapping and Visual Checks. Do not invent new class names, component choices, tokens, or layout rules during execution.
 - If settings and existing code do not answer a visual or interaction decision, mark it as a planning blocker or explicit user question.
+- 每个需要视觉验收的 task 都必须携带 case-level `Visual Evidence Manifest`。每个 Case ID 记录 Approved design source、Figma node、revision/time、Frame/variant、可用的 variables / Auto Layout / assets、Runtime route、Scenario/state、Viewport、DPR、Locale、Theme、Deterministic non-sensitive fixture、Reference path、Current path、Diff path、Mask、Acceptance rule、Command/tool 与 Failure class。标准目录是 `.fp-execute/visual/<task-id>/<case-id>/`，包含 `manifest.md`、`reference.png`、`current.png`，`diff.png` 可选。
+- `reference.png` 必须来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 必须来自 real target runtime 的实际 route，使用 stable data 与 stable environment。optional diff 缺失时写明 missing diff，且 must not hide source/runtime 缺失。
+- Browser interaction evidence 与 screenshot evidence 必须 separate；observable flow 要操作到 manifest 中的 approved states，不能用点击成功替代视觉对比。
+- 优先使用 project-configured Playwright/browser runner 或等价浏览器工具，不硬编码框架或命令，do not define a global pixel threshold。若缺 browser runner，计划中新增 explicit task 并取得 authorization；do not silently install 依赖。
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## Recommended plan structure
 
@@ -95,6 +103,7 @@ Revise the plan if any of these appear:
 - Framework, component library, component prefix, token, or test command not sourced from settings or existing code.
 - Component tasks without concrete Interfaces and Contract checks.
 - Visual Checks that cannot be traced to the resolved frontend design, settings, Figma, screenshot, or existing code.
+- Core visual case 缺少 approved source、real runtime、稳定 fixture 或可重放命令；仅给 reason 不能替代证据。
 - Verification steps that only say “run tests” or “check page” without exact command/path/expected result.
 
 ## Self-review

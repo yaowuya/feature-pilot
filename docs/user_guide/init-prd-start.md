@@ -14,7 +14,7 @@
 
 ### 什么时候用
 
-在目标项目第一次接入 FeaturePilot，或希望补齐项目级 settings / intel 时运行：
+在目标项目第一次接入 FeaturePilot，或希望按需补齐项目级 settings / facts 时运行：
 
 ```text
 /fp-init
@@ -22,14 +22,14 @@
 
 ### 它会创建什么
 
-`/fp-init` 只负责目标项目的信息层，默认只在项目根目录创建：
+`/fp-init` 只负责目标项目的信息层。v2 的 `manifest-only default` 默认只在项目根目录创建：
 
 ```text
 fp-docs/
   manifest.md
-  settings/
-  intel/
 ```
+
+它不预建空 `settings/`/`intel/`、Unknown/Decision、refresh policy 或 SDD handoff。可选目录随已批准文件按需出现。
 
 `/fp-init` **不会**预创建这些目录：
 
@@ -46,7 +46,9 @@ fp-docs/
 | `fp-docs/settings/frontend.md` | 前端、UI、设计系统、视觉验收规则 | UI/页面/组件/前端实现相关时 |
 | `fp-docs/settings/backend.md` | 后端、API、数据、安全、权限规则 | 后端/API/数据/安全相关时 |
 | `fp-docs/settings/prototype-style.md` | HTML 原型视觉风格参考 | 生成或更新 `prototype.html` 时 |
-| `fp-docs/intel/*` | 只读扫描生成的导航线索 | 只在当前问题相关时小范围读取 |
+| `fp-docs/intel/project-facts.md` | 可选生成事实缓存，只含质量门禁与非显而易见的契约/架构/安全边界 | 仅相关时读取并回到当前源码复核 |
+| `fp-docs/intel/.freshness.json` | metadata-only：source fingerprint、body hash、生成时间/版本 | `/fp-init` 实时计算 stale/conflict 时 |
+| `fp-docs/intel/unknowns.md` / `decisions.md` | 可选 human-owned 项目知识 | 仅有实际内容、已批准且当前问题相关时 |
 
 ### 可选 CodeGraph 代码地图
 
@@ -72,15 +74,15 @@ CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。M
 
 #### 已有信息层如何刷新
 
-项目已有 `fp-docs/manifest.md` 时，再次运行 `/fp-init` 会进入 `refresh-existing-information-layer`，而不是重新初始化全部文件。它只读取 manifest、refresh policy、相关 freshness block 和其中记录的依赖路径，然后按 Git SHA、依赖 hash 和 generated body hash 将 generated intel 分类为 fresh、soft-stale、hard-stale、unknown 或用户编辑冲突。
+项目已有 `fp-docs/manifest.md` 时，再次运行 `/fp-init` 会进入 `refresh-existing-information-layer`。它只读取 manifest、可选 `project-facts.md`、`.freshness.json` 以及 metadata 中列出的源路径，用当前 source fingerprint/body hash 实时计算 section 的 stale/conflict；这些 verdict 不写回 metadata 充当项目事实。
 
 发现 stale 文件后会先展示文件级清单，再提供：
 
-1. `refresh-stale-intel`：只重建清单中已批准且没有用户编辑冲突的 generated intel。
+1. `refresh-stale-intel`：只重建清单中已批准且没有用户编辑冲突的 project-facts section，并更新 metadata。
 2. 仅报告：不写入，后续继续实时检查当前源码。
 3. 跳过：不做更多 freshness 检查。
 
-`fp-docs/settings/*`、`intel/unknowns-and-decisions.md`、PRD/proposal/design/tasks、archive/history 不在批量刷新范围。generated body hash 显示文件被人工修改时，也必须单独查看差异并逐文件确认，不能被选择性刷新批量覆盖。
+`fp-docs/settings/*`、human-owned `intel/unknowns.md`/`decisions.md`、PRD/proposal/design/tasks、archive/history 不在批量刷新范围。旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 在一个发布周期内只能作为 manifest-listed 只读提示，不创建、刷新、要求或自动删除。
 
 #### 代码写入后的索引更新
 
@@ -94,7 +96,7 @@ codegraph sync <project-root> --quiet
 
 ### 可选设置文件
 
-`/fp-init` 会询问是否生成可选 settings。它们不是强制配置；跳过后 FeaturePilot 仍可基于当前代码、相邻实现和用户回答继续工作。
+`/fp-init` 会逐项询问是否生成可选 settings，只有批准后才创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
 
 建议原则：
 
@@ -140,7 +142,7 @@ examples/canway-cw/fp-docs/settings/
 - 工作区路径。
 - `manifest.md` 创建/更新状态。
 - `agent.md`、`frontend.md`、`backend.md`、`prototype-style.md` 创建/跳过状态。
-- intel 是生成轻量扫描还是仅保留骨架。
+- 是否保持 manifest-only，或生成 project facts/freshness metadata；是否经单独批准写入 human-owned knowledge。
 - CodeGraph CLI、MCP、项目图和必要重启/回退状态。
 - 检测到的外部项目文档。
 - critical unknowns。

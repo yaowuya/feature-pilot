@@ -12,21 +12,22 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 # FeaturePilot Init
 
-`fp-init` bootstraps a FeaturePilot information layer with low setup cost. It can set up an optional local CodeGraph under explicit gates, creates the minimal skeleton, and optionally guides the user through lightweight read-only discovery to populate `fp-docs/intel/`.
+`fp-init` 以低成本建立 FeaturePilot 信息层。v2 采用 `manifest-only default`：新项目默认只创建 `fp-docs/manifest.md`；settings、项目事实缓存以及项目级 Unknown/Decision 都在明确批准且确有内容时按需创建。CodeGraph 仍是可选的候选导航层。
 
 ## Goals
 
-- Create the FeaturePilot information layer skeleton: `fp-docs/manifest.md` (single entry point), `fp-docs/settings/`, and `fp-docs/intel/`.
+- `new-project-manifest-only`：新项目信息层默认只有 `fp-docs/manifest.md`，不预建 `settings/`、`intel/` 或任何骨架文件。
 - Explain the workflow: `/fp-prd` clarifies requirements; `/fp-start` picks up a PRD or feature description and drives design → plan → execution.
 - Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), `fp-docs/settings/backend.md` (backend/API/data/security), and/or `fp-docs/settings/prototype-style.md` (prototype visual style reference) with user confirmation.
 - Optionally install CodeGraph through npm, configure Agent MCP separately, and build a project-local code map with explicit user authorization.
-- Optionally run lightweight read-only discovery to populate `fp-docs/intel/*` with source-backed project facts.
+- `approved-discovery-project-facts-only`：批准 discovery 后，生成的 Markdown 事实缓存最多只有 `fp-docs/intel/project-facts.md`，并配套 metadata-only 的 `fp-docs/intel/.freshness.json`。
+- `unknowns-and-decisions-human-owned-lazy`：只有本流程获得明确写入范围批准且确有项目级内容时，才创建 `intel/unknowns.md` 或 `intel/decisions.md`。
 - Never overwrite existing customer manifest/settings/intel without explicit approval.
 
 ## OpenSpec-inspired init principles
 
 - **Single entry point**: `fp-docs/manifest.md` is the only manifest. No `settings/manifest.md` or `intel/manifest.md`.
-- **Minimal tree first**: create only the directories needed to start working.
+- **Minimal tree first**: `manifest-only default` 是有效完整状态，目录随已批准文件按需创建。
 - **Helpful next steps**: always end with concrete next commands, not abstract advice.
 - **Existing-file safety**: detect existing settings and ask before changing them.
 - **Marker-ready content**: generated files use stable headings and `Unknown` placeholders instead of guesses.
@@ -38,22 +39,16 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 ```text
 fp-docs/
   manifest.md                # Single global entry point: read order, precedence, artifacts, freshness
-  settings/
+  settings/                  # Optional; created only after its explicit approval gate
     agent.md                 # Optional lean FeaturePilot policy adapter
     frontend.md              # Optional UI/frontend/visual/design-system settings
     backend.md               # Optional backend/API/data/security settings
     prototype-style.md       # Optional prototype visual style reference
-  intel/
-    sources-and-provenance.md
-    workspace-map.md
-    tech-stack.md
-    commands-and-quality-gates.md
-    architecture-and-boundaries.md
-    contracts.md
-    security-data-and-ops.md
-    unknowns-and-decisions.md
-    refresh-policy.md
-    sdd-handoff.md
+  intel/                     # Optional; absent in the default workspace
+    project-facts.md         # Optional generated facts cache
+    .freshness.json          # Metadata for generated project facts only
+    unknowns.md              # Optional, human-owned and lazy
+    decisions.md             # Optional, human-owned and lazy
 ```
 
 `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/` 由后续阶段按需自动创建，`fp-init` 不预建。
@@ -72,11 +67,7 @@ Treat the target project repository root as the FeaturePilot project root. `fp-i
 
 Do not walk upward to reuse or create a parent directory's `fp-docs/`. If the current working directory is a subdirectory, first identify the repository/project root, then create the workspace there.
 
-If absent at the project root, create only:
-
-- `fp-docs/`
-- `fp-docs/settings/`
-- `fp-docs/intel/`
+If absent at the project root, create only `fp-docs/` and the manifest in Section 3. Do not create empty optional directories. `settings-created-only-after-explicit-approval` applies to every `settings/*` file; create its parent directory only when writing an approved file.
 
 Do **not** create `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/` or any sample files — those are created on-demand by later phases (`fp-prd`/`fp-propose`/`fp-archive`).
 
@@ -141,50 +132,29 @@ codegraph status <project-root> --json
 
 保留本节实际检测结果，供新 manifest 的 Code Map 使用。已有 manifest 只有在用户明确同意更新后才可写入 Code Map；实时检测结果始终优先于历史记录。
 
-### 3. Create skeleton information layer
+### 3. Create the manifest-only information layer
 
-If missing, create the skeleton files below. Existing files are never overwritten without explicit approval.
-
-Use the exact skeleton templates in `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md`:
-
-| Target file | Template section |
-| --- | --- |
-| `fp-docs/manifest.md` | `FeaturePilot Manifest` |
-| `fp-docs/intel/unknowns-and-decisions.md` | `Unknowns and Decisions` |
-| `fp-docs/intel/refresh-policy.md` | `Refresh Policy` |
-| `fp-docs/intel/sdd-handoff.md` | `SDD Handoff` |
+新项目执行 `new-project-manifest-only`：使用 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 的 `FeaturePilot Manifest` 仅创建 `fp-docs/manifest.md`。不得预创建 `settings/`、`intel/`、Unknown/Decision、refresh policy、SDD handoff 或其他示例文件。已有文件未经明确批准永不覆盖。
 
 ### 4. Refresh an existing information layer
 
-如果进入 `fp-init` 时项目根已经存在 `fp-docs/manifest.md`，进入 `refresh-existing-information-layer`，而不是把已有信息层当成首次初始化。先完成 Section 2 的已有 CodeGraph `status/sync`，再按本节只检查可能过期的 generated intel。
+如果进入 `fp-init` 时项目根已经存在 `fp-docs/manifest.md`，进入 `refresh-existing-information-layer`。先完成 Section 2 的已有 CodeGraph `status/sync`，再只检查 manifest 列出的可选 `intel/project-facts.md` 及 `intel/.freshness.json`；不得批量读取全部 intel。
 
-只读取 manifest、`intel/refresh-policy.md`、相关 intel 顶部 freshness block，以及 block 中明确列出的依赖文件/hash；不得为了刷新而批量读取全部 intel。generated intel 范围仅包括：
-
-- `intel/sources-and-provenance.md`
-- `intel/workspace-map.md`
-- `intel/tech-stack.md`
-- `intel/commands-and-quality-gates.md`
-- `intel/architecture-and-boundaries.md`
-- `intel/contracts.md`
-- `intel/security-data-and-ops.md`
-- `intel/sdd-handoff.md`
-- `intel/refresh-policy.md` 的生成元数据
-
-把每个文件分类为 `fresh`、`soft-stale`、`hard-stale`、`unknown` 或 `user-edit-conflict`。依赖路径、Git blob SHA、内容 hash、生成 Git SHA 和 generated body hash 按 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 的 Refresh Policy 判断。缺失 freshness block 只能记为 `unknown`，不得假设新鲜。
+`.freshness.json` 只保存 schema、artifact/section id、source relative path + fingerprint、body hash、generated time 和 generator version。`stale-generated-intel`、`fresh`、`stale` 与 `user-edit-conflict` 都必须根据当前源 fingerprint 和当前 body hash 实时计算，不得把 stale/conflict 结论写成长期项目事实。缺少 metadata 时只记为 `unknown`。
 
 `stale-generated-intel` 检查完成后，先展示文件级表格、变化来源和预计写入范围，再询问一个决定：
 
 ```markdown
 检测到已有 FeaturePilot 信息层。如何处理过期的 generated intel？
 
-1. 选择性刷新（推荐）（`refresh-stale-intel`）— 只重建确认 stale 且没有用户编辑冲突的 generated intel，并更新其 freshness block。
+1. 选择性刷新（推荐）（`refresh-stale-intel`）— 只重建确认 stale 且没有用户编辑冲突的 `project-facts.md` section，并更新 `.freshness.json` metadata。
 2. 仅报告 — 展示 stale/conflict 清单，不写入；后续流程继续实时验证当前源码。
 3. 跳过 — 不检查更多文件、不更新 intel，继续普通 init。
 ```
 
-选择 `refresh-stale-intel` 是对所展示文件清单的一次批量覆盖批准，不授权未列出的文件。只根据当前源码重新生成 stale 文件；重写 `Generated`、`Refreshed`、Git SHA、working-tree 状态、依赖 hash、generated body hash、freshness 和 refresh decision。刷新后对实际依赖重新计算一次 hash，但不要为了证明刷新而再次全仓扫描。
+选择 `refresh-stale-intel` 只授权展示清单中的 `project-facts.md` section。刷新后重算实际依赖 fingerprint、body hash、generated time 和 generator version；不为证明刷新再次全仓扫描，也不持久化 stale/conflict verdict。
 
-`preserve-manual-settings`：永远不自动刷新 `fp-docs/settings/*`、`intel/unknowns-and-decisions.md`、PRD/proposal/design/tasks、archive/history 或其他用户维护内容。当前 body 与记录的 generated body hash 不一致时标记 `user-edit-conflict`，不得批量覆盖；如果确实需要重建该文件，必须单独展示差异并获得文件级确认。刷新 manifest 的 Code Map 或 intel 状态行也必须包含在用户看到的写入清单中。
+`preserve-manual-settings`：永远不自动刷新 `fp-docs/settings/*`、`intel/unknowns.md`、`intel/decisions.md`、PRD/proposal/design/tasks、archive/history 或其他用户维护内容。当前 body 与 metadata 记录的 body hash 不一致时实时标记 `user-edit-conflict`，必须逐文件展示差异并单独确认。manifest 的 Code Map 或状态行写入也必须出现在批准清单中。
 
 ### 5. Check existing project-level agent/docs
 
@@ -198,10 +168,12 @@ Before offering to generate settings, check the project root and `.claude/` / `.
 If **any** of these exist:
 
 - Read them silently.
-- Record discovered paths in `fp-docs/manifest.md` External Project Docs table.
-- Report: "检测到项目已有 `xxx.md`，FeaturePilot 已在 `fp-docs/manifest.md` 中记录引用，不会在 `fp-docs/settings/agent.md` 中重复内容。"
+- `first-time-manifest-external-doc-fill`：本轮首次创建 manifest 时，可把已确认路径直接填入新 manifest 的 External Project Docs table；这是首次创建内容的一部分，不是对已有文件的隐式更新。
+- `existing-manifest-external-doc-write-gate`：进入流程时 manifest 已存在，则先生成精确 diff 和包含该 manifest 的写入清单。只有用户明确批准这次写入后，才能新增/修改 External Project Docs 行；检测、读取、settings/discovery 批准都不自动授权 manifest 更新。
+- `report-only-or-skip-means-no-write`：Section 4 选择“仅报告”或“跳过”时，不得借本节写 manifest，也不得宣称引用已记录。只报告“检测到项目已有 `xxx.md`；当前 manifest 未修改”。
+- 若精确 manifest diff 已获批准并成功写入，才报告：“检测到项目已有 `xxx.md`，已按批准在 `fp-docs/manifest.md` 中记录引用；不会在 `fp-docs/settings/agent.md` 中重复内容。”
 
-Note: `fp-docs/manifest.md` is always created or updated regardless of whether external project docs exist. FeaturePilot normalization via the manifest should not be skipped.
+首次 manifest 创建或已有 manifest 的已批准写入都不得复制外部文档正文；只记录相对路径、优先级和最小备注。
 
 ### 6. Detect labelled project-family examples
 
@@ -209,7 +181,7 @@ After checking project docs, run only a small read-only project-family signal ch
 
 ### 7. Ask about optional settings
 
-After updating the manifest and handling any accepted project-family example, offer optional settings files.
+`after-resolving-manifest-disposition`：完成 manifest disposition（首次创建、已批准更新或未修改）并处理已接受的 project-family example 后，再提供可选 settings；不得把进入本阶段表述为已有 manifest 必然已更新。
 
 #### 7-a. Offer `settings/agent.md`
 
@@ -305,15 +277,17 @@ If the user chooses to generate, write the `FeaturePilot Prototype Style` templa
 After handling settings, ask:
 
 ```markdown
-FeaturePilot 可以为 SDD 构建一个轻量只读项目信息层，记录源代码根、验证命令发现、架构边界、契约、安全和 Unknowns。轻量 discovery 本身不会安装依赖、运行测试、构建、穷举索引所有文件或复制 secrets；前面单独确认的 CodeGraph 步骤不属于 discovery。
+FeaturePilot 可以生成一份可选的精简项目事实缓存，只记录验证/质量门禁以及非显而易见的契约、架构和安全边界。它不保存目录树、符号关系、调用链或其他 CodeGraph topology snapshot。轻量 discovery 本身不会安装依赖、运行测试、构建、穷举索引所有文件或复制 secrets；前面单独确认的 CodeGraph 步骤不属于 discovery。
 
 现在构建轻量信息层？
 
-1. 生成轻量 intel（推荐）— 只读扫描并写入 `fp-docs/intel/*`。
-2. 仅骨架 — 只保留 manifest + unknowns/refresh/sdd-handoff 骨架。
+1. 生成项目事实缓存（`approved-discovery-project-facts-only`）— 只读扫描并写入 `intel/project-facts.md` 与 metadata-only `intel/.freshness.json`。
+2. 保持默认 — 维持 `manifest-only default`，不创建 `intel/`。
 ```
 
-If approved, perform a read-only discovery pass.
+If approved, perform a read-only discovery pass and write only the two approved files. `project-facts.md` 只能包含 validation/quality gates 与 non-obvious contracts/architecture/security boundaries；`no CodeGraph topology snapshots`。
+
+若 discovery 或后续确认中出现确实跨 change 复用的项目级未知项/决定，先展示拟写内容和精确路径并询问单独 write scope。只有 `fp-init` 在批准后可创建 human-owned、lazy 的 `intel/unknowns.md` 或 `intel/decisions.md`。普通工作流把未知项记录在当前 change 或直接询问；这些文件缺失永不阻塞。
 
 ### 9. Lightweight discovery boundaries
 
@@ -344,13 +318,13 @@ After init, report:
 - Whether Agent MCP configuration was applied or skipped, and whether an Agent restart is required.
 - Whether the project graph was built, reused, synchronized, skipped, or failed, plus any one-time fallback reason.
 - Whether the manifest Code Map was created or explicitly approved for update.
-- Existing-information-layer freshness summary: fresh/stale/conflict counts and every generated intel file refreshed, reported, or skipped.
+- Existing-information-layer live freshness summary: `project-facts.md` sections refreshed/reported/skipped，以及实时 stale/conflict 计算结果。
 - Whether `settings/agent.md` was created/skipped/adopted.
 - Whether `settings/frontend.md` was created/skipped/adopted.
 - Whether `settings/backend.md` was created/skipped/adopted.
 - Whether `settings/prototype-style.md` was created/skipped/adopted.
-- Whether intel artifacts were created (lightweight discovery) or kept as skeleton.
-- External docs detected and recorded in manifest.
+- Whether optional `project-facts.md`/`.freshness.json` were created，或保持 manifest-only；是否经单独批准创建 human-owned unknowns/decisions。
+- `external-doc-manifest-disposition`：列出检测到的 external docs，并明确记录三态之一：`first-time-recorded`（随首次 manifest 创建写入）、`approved-update`（已有 manifest 的精确 diff 获批并写入）或 `not-modified`（仅报告/跳过/未批准，manifest 未修改）。没有检测到文档时报告 `N/A`，不得声称已记录。
 - Critical unknowns.
 - Suggested next command:
   - `/fp-prd <idea>` for requirement design.
@@ -359,6 +333,7 @@ After init, report:
 ## Guardrails
 
 - Do not make settings mandatory.
+- `manifest-only default` and `manifest-only workspace is valid`; missing optional information-layer files are `N/A`, not errors.
 - `fp-docs/manifest.md` is the only manifest entry point. Do not create `fp-docs/settings/manifest.md` or `fp-docs/intel/manifest.md`.
 - `settings/agent.md` must not absorb frontend or backend domain detail when `frontend.md` or `backend.md` is a better home.
 - `settings/frontend.md` replaces the old `frontend_design.md` name.
@@ -368,10 +343,12 @@ After init, report:
 - Do not create `fp-docs/changes/<slug>/` during init unless the user explicitly asks.
 - When project root already has `CLAUDE.md` or `AGENTS.md`, record the reference in `fp-docs/manifest.md` instead of duplicating content into `agent.md`.
 - Keep generated settings concise and editable; use `Unknown` instead of guessing.
-- Manifest and generated intel must include `When To Read` / freshness guidance so downstream skills can avoid token-heavy bulk reads.
+- Manifest must include `When To Read`; generated project facts use `.freshness.json` metadata and live freshness computation。
 - Generated intel is stale-prone; downstream skills must verify exact current facts from code instead of treating intel as authoritative.
 - CodeGraph is optional and `navigation-hint-only`; its failure must not block init or weaken current-source verification.
 
 ## Compatibility
 
-If an older project has `fp-docs/` but no `fp-docs/manifest.md`, treat it as a pre-information-layer project. Create only the manifest and missing skeleton files; do not overwrite existing `settings/` or `intel/` files. Recommend `/fp-init` as repair/refresh when safe.
+`legacy-information-layer-read-compatibility`：一个发布周期内，manifest 已列出的 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 以及旧 generated intel 只可作为 `read-only hints`；`v2 does not create or refresh` 这些文件，它们 `not required`，也不得因缺失而阻塞。不要自动删除旧文件。
+
+If an older project has `fp-docs/` but no `fp-docs/manifest.md`, treat it as a pre-information-layer project. Create only the manifest; do not overwrite or补建 existing `settings/`/`intel/` skeletons. Recommend `/fp-init` repair/refresh when safe.

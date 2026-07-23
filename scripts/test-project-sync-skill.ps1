@@ -95,7 +95,7 @@ foreach ($listMarker in @($currentListMarker, $mojibakeListMarker)) {
 Installed plugins:
 
   $listMarker fp@fp-dev
-    Version: 0.3.0
+    Version: 1.0.0
     Scope: user
     Status: ✔ enabled
 "@
