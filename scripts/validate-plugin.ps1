@@ -482,6 +482,11 @@ Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contr
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-explore contract validator failed'
 
+$decisionGateContractValidator = Join-Path $root 'scripts\test-decision-gate-contract.ps1'
+Assert-Condition (Test-Path $decisionGateContractValidator) 'focused decision-gate contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused decision-gate contract validator failed'
+
 $prdSkillPath = Join-Path $root 'skills\fp-prd\SKILL.md'
 $prdSkillText = Read-Utf8 $prdSkillPath
 $prdFrontmatter = [regex]::Match($prdSkillText, '(?s)\A---\r?\n(?<body>.*?)\r?\n---')
