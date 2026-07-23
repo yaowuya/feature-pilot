@@ -9,6 +9,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` once before coordinating proposal or design; it owns Decision Ledger statuses, per-item confirmation, persisted terminal evidence, and recovery behavior.
 ---
 
 # FeaturePilot Start
@@ -37,7 +38,7 @@ If it is missing:
 
 从启动到结束必须遵守：
 - **显式加载子 skill**：在 Claude Code 中，每进入一个阶段都使用 Skill tool 和对应的完整名称（`fp:fp-propose`、`fp:fp-brainstorm`、`fp:fp-plan`、`fp:fp-execute`、`fp:fp-execute-sdd`、`fp:fp-quick`）加载 skill；不得通过搜索或直接读取消费者项目中的对应 `SKILL.md` 模拟调用。如果 Skill tool 不可用或调用失败，报告 FeaturePilot 插件可用性、权限或安装问题并停在当前门禁。只有明确的非 Claude Code Codex/Markdown fallback 才可用文件读取工具读取 FeaturePilot 分发源码内对应的 `skills/fp-*/SKILL.md`；不要只凭记忆执行。
-- **阶段门禁**：阶段 1、2、3 完成后必须停下等待用户确认。没有明确确认，不得进入下一阶段。
+- **阶段门禁**：阶段 1、2、3 完成后必须停下等待用户确认。Proposal/design 阶段还必须核验其 Decision Ledger 与 pre-write confirmation evidence；没有明确确认或台账证据，不得进入下一阶段。
 - **产物核验**：每个阶段完成后必须用工具检查目标文件确实存在，并向用户展示关键路径和摘要。
 - **范围纪律**：不得跳过 proposal/design/plan 直接实现；只有在“小需求分流”中判断适合 `fp-quick` 且用户明确确认后，才允许切换到 `fp-quick`。
 - **失败处理**：在 Claude Code 中，子 skill 不可用或调用失败时停在当前门禁并报告，不进入文件 fallback。索引或目标目录缺失时，先说明实际发现，再按下文对应的 artifact 规则处理。只有第一个契约明确限定的非 Claude Code Codex/Markdown 环境可读取 FeaturePilot 分发源码中的 skill 文件继续；不要假装已调用或已生成。
@@ -120,6 +121,7 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 
 阶段完成检查：
 - Resolve and validate the selected proposal form with the shared contract; confirm its canonical entry and all manifest-listed fragments exist.
+- 从 `Impact` 的 unique detailed owner 解析 Handoff Decision Ledger 与 Pre-write Confirmation Evidence。每个 proposal-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved，不得把产物摘要当作确认完成，return to the owning phase `fp-propose` 补齐指定 `P-NNN` 的逐项确认。
 - 向用户展示 slug、proposal 路径、Why / What Changes / Impact 摘要。
 - 明确询问用户是否确认 proposal。
 
@@ -143,6 +145,7 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 
 阶段完成检查属于**写入后产物确认**，与 `fp-brainstorm` 内部的写入前内容确认不同：
 - 用工具确认 `design/00-index.md` 及实际涉及端解析出的 small file 或 split `00-index.md` 存在；split design 还必须按 manifest order 确认每个 listed fragment 存在。
+- 从每个 actual-end 的 unique detailed owner 解析 Decision Ledger 与 Pre-write Confirmation Evidence。每个 design-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved。合并所有 owner 后必须仍是 globally unique D-NNN sequence，且每个 owner 的 `Covered IDs` 恰好覆盖其台账行；否则 return to the owning phase `fp-brainstorm` 补齐指定 `D-NNN` 的逐项确认，不得进入计划。
 - 向用户展示关键架构决策、改动模块、前端组件/布局映射（如涉及）。
 - 明确询问用户是否确认设计。
 
@@ -152,9 +155,13 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 
 会话中断或用户说“继续”时，以当前 slug 的实际产物和已明确完成的门禁恢复，不重新启动整段设计：
 
-- 适用的 canonical-first resolved design 已存在：只核验 entry/index/ordered fragments、展示摘要并恢复写入后产物确认；除非用户明确要求修改，不得重跑 `fp-brainstorm`。
-- 写入前内容确认已经完成但设计文件尚不存在：恢复同一次 `fp-brainstorm` 的第五步，使用已确认内容直接读取模板、写文件并核验；不得重新探索、问答、起草或另建 finalization workflow。
-- 无法从当前会话确定写入前内容是否已确认：明确说明缺少哪个门禁，只补问该门禁，不得假设完成或重新做全流程。
+- 先解析 proposal 的 Handoff Decision Ledger 和 Pre-write Confirmation Evidence。缺少任一记录、来源/确认凭据，出现 `needs-user-confirmation`，或遗留 `placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` / sample authorization，都是 missing or unresolved pre-write confirmation evidence；must not assume the gate completed，也不得仅因文件存在而跳到写后确认。proposal 证据缺失时，return to the owning phase `fp-propose`，只展示并补齐缺失的 `P-NNN` 行与写入授权。
+- proposal 的终态台账只证明写入前门禁，**不能**证明 `proposal post-write artifact confirmation`。若当前会话无法证明用户已经确认该 proposal，先展示 proposal 摘要并恢复阶段 1 的写入后产物确认；在这项确认完成前，不得判定或启动 design 状态。
+- 只有 proposal 写入后确认完成，才检查 design：如果当前会话已能证明所有 `D-NNN` 的逐项确认与 separate write authorization 已完成、但设计文件尚未创建（`design-prewrite-proven-in-session`），恢复同一次 `fp-brainstorm` 的第五步，使用已确认内容直接读取模板、写文件并核验；不得重新探索、问答、起草或另建 finalization workflow。
+- 否则，若没有 `design/00-index.md`、任一 end entrypoint 或 partial design path，标记为 `design-not-started`，加载 `fp-brainstorm` 开始阶段 2；不得把 design 尚未开始当作缺失设计证据。
+- 若发现任何 design 路径，则先解析 canonical form。dual form、historical path、partial conversion、缺少 index/fragment，或 actual-end detailed owner 缺少/存在未终态 Decision Ledger 或 Pre-write Confirmation Evidence、owner 合并后不再是 globally unique D-NNN sequence、`Covered IDs` 与 owner 台账不一致，都是 design recovery：return to the owning phase `fp-brainstorm`，只补齐指定 `D-NNN` 行与写入授权。对旧产物要明确说明是 recovery confirmation，不得伪称为历史写入前确认。
+- 适用的 canonical-first resolved design 已存在且其 pre-write confirmation evidence 完整：只核验 entry/index/ordered fragments、台账终态、展示摘要并恢复写入后产物确认；除非用户明确要求修改，不得重跑 `fp-brainstorm`。
+- 无法从当前会话确定某个 decision ID 是否已确认：明确说明缺少哪个门禁，只补问该 ID，不得假设完成或重新做全流程。
 - 恢复判断只读取当前 slug 的 resolved logical PRD/proposal content、适用设计 logical content 和当前会话中的明确确认，不读取历史 change/archive，也不创建新的 slug。
 
 ### Bookkeeping failure
