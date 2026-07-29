@@ -1,5 +1,5 @@
 ---
-name: fp-review
+name: fp-final-review
 description: Use when performing a final whole-branch review of an implemented FeaturePilot change before archive or merge, especially after fp-execute finishes and the reviewer must verify proposal, design, tasks, progress ledger, validation evidence, and branch diff without editing files.
 ---
 ## FeaturePilot workspace and information layer
@@ -14,7 +14,7 @@ Apply the shared `Process document language` contract when writing the final rev
 
 # FeaturePilot Final Whole-Branch Review
 
-`fp-review` is the read-only final reviewer for a completed FeaturePilot change. It reviews the whole branch against `proposal.md`, design files, task plans, progress ledger, validation evidence, and the final branch diff, then writes the review under `.fp-execute/reviews/`.
+`fp-final-review` is the read-only final reviewer for a completed FeaturePilot change. It reviews the whole branch against `proposal.md`, design files, task plans, progress ledger, validation evidence, and the final branch diff, then writes the review under `.fp-execute/reviews/`.
 
 This skill is self-contained. It may read optional `fp-docs/settings/agent.md` as customer configuration, but must not depend on global code-review skills, external agents, prior archived changes, or local absolute paths. Current code, current FeaturePilot artifacts, customer settings, and the branch diff are the facts.
 
@@ -31,7 +31,7 @@ Forbidden:
 - Do not run `git add`, `git commit`, `git reset`, `git rebase`, formatters with write mode, migrations that create files, snapshot updates, autofix commands, or database-mutating commands.
 - Do not fix findings during review. Record evidence and required remediation instead.
 
-If a useful verification command would mutate the working tree, skip it and record why. `fp-review` does not auto-fix and does not auto-retry.
+If a useful verification command would mutate the working tree, skip it and record why. `fp-final-review` does not auto-fix and does not auto-retry.
 
 ## Inputs
 
@@ -46,7 +46,7 @@ Accept these inputs when provided:
 - `maxReviewAttempts`: must be `maxReviewAttempts=3`; reject any other value.
 - `priorReviewPath`: completed prior-attempt report path, or `N/A` for attempt 1.
 - `priorFindingDispositions`: every prior finding's stable ID and `unresolved | fixed with evidence | accepted non-blocking debt` disposition.
-- `finalReviewPackage`: deterministic package path created from `${CLAUDE_PLUGIN_ROOT}/skills/fp-review/final-review-package-template.md`, or `N/A` in direct mode.
+- `finalReviewPackage`: deterministic package path created from `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-package-template.md`, or `N/A` in direct mode.
 - `lastReviewedHead`: exact `reviewedTargetHead` covered by the completed prior attempt, or `N/A` for attempt 1.
 - `reviewedTargetHead`: committed clean product/change snapshot that is actually under review.
 - `packageParentHead`: parent of the evidence-only package commit; for SDD it must equal `reviewedTargetHead`.
@@ -54,7 +54,7 @@ Accept these inputs when provided:
 - `dispatchHead`: exact clean HEAD at reviewer dispatch, resolved outside the package.
 - `reviewPhase`: SDD recovery phase: `pending-dispatch`, `review-completed`, `result-committed`, optional `fixing`, or `complete`; direct mode uses `N/A-direct`.
 
-When these orchestration inputs are absent, direct `fp-review` creates one independent final scope, uses attempt 1 with `maxReviewAttempts=3`, sets `reviewPhase=N/A-direct`, `reviewedTargetHead=dispatchHead=HEAD`, `packageParentHead=HEAD`, and `evidenceCommitHead=N/A`, collects the same package evidence in memory, and writes the report. That direct independent final scope does not auto-fix and does not auto-retry; another direct invocation is a new explicitly requested scope, not attempt 2.
+When these orchestration inputs are absent, direct `fp-final-review` creates one independent final scope, uses attempt 1 with `maxReviewAttempts=3`, sets `reviewPhase=N/A-direct`, `reviewedTargetHead=dispatchHead=HEAD`, `packageParentHead=HEAD`, and `evidenceCommitHead=N/A`, collects the same package evidence in memory, and writes the report. That direct independent final scope does not auto-fix and does not auto-retry; another direct invocation is a new explicitly requested scope, not attempt 2.
 
 For an SDD-owned scope, the controller must pass all review state, `reviewPhase`, and four HEAD fields; `headRef resolves to reviewedTargetHead`, not the evidence commit. Reject `reviewAttempt` outside `1..3`, an attempt 2/3 without prior state, a changed `reviewScopeId`, or mismatch in package-known identity (`reviewedTargetHead`, `packageParentHead`, scope/attempt/prior state). The package deliberately contains `POST_COMMIT_EXTERNAL` rather than its own exact `evidenceCommitHead`/`dispatchHead`; never demand that it embed current dispatch SHA. A new reviewer, commit, session, or finding never resets the counter. There is no attempt 4.
 
@@ -310,7 +310,7 @@ Do not write review reports anywhere else.
 
 ## Final Review Report Template
 
-Use `${CLAUDE_PLUGIN_ROOT}/skills/fp-review/final-review-package-template.md` as the deterministic input schema when SDD supplies `finalReviewPackage`; it is not completion authority. Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-review/final-review-template.md` only after evidence collection is complete and immediately before writing the report. Preserve its headings and tables exactly; add coverage rows and findings without changing the schema.
+Use `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-package-template.md` as the deterministic input schema when SDD supplies `finalReviewPackage`; it is not completion authority. Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-template.md` only after evidence collection is complete and immediately before writing the report. Preserve its headings and tables exactly; add coverage rows and findings without changing the schema.
 
 ## Completion Response
 

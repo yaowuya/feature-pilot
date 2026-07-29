@@ -26,7 +26,7 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 - 在当前执行上下文直接完成任务，不派发 fresh implementer、独立 task reviewer 或 fixer。
 - 过程产物集合仅包含 `.fp-execute/progress.md`、task-owner file 中的唯一 checkbox，以及双端计划已有 `tasks/00-overview.md` 的派生进度。
 - 每个任务执行 TDD、必要验证和一次 inline 自审；发现问题就在当前任务内修复并重新验证，不建立独立 review/fix 状态机。
-- `fp-execute` 不拥有 final review scope。全部任务完成后输出执行报告，只提示运行独立的 `fp-review`。
+- `fp-execute` 不拥有 final review scope。全部任务完成后输出执行报告，只提示运行独立的 `fp-final-review`。
 - 只有用户明确要求 `fp-execute-sdd` 时才切换到 SDD；不要根据任务数量、模块跨度或风险自行切换。
 
 ## 执行模式
@@ -46,7 +46,7 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 2. 读取或初始化 `.fp-execute/progress.md` 并完成状态对账。
 3. 在当前上下文逐个执行任务，不在正常任务边界停下。
 4. 目标测试或验证失败时最多修复并重试 3 次；仍失败则记录 `BLOCKED`，暂停并说明需要的人工决策。
-5. 全部任务完成后输出执行报告，提示运行独立的 `fp-review`；不要在本 skill 内执行最终审查。
+5. 全部任务完成后输出执行报告，提示运行独立的 `fp-final-review`；不要在本 skill 内执行最终审查。
 
 ## Canonical 输入解析
 
@@ -132,4 +132,4 @@ codegraph sync <project-root> --quiet
 - 所有验证命令与结果。
 - progress ledger 路径和残余风险。
 - CodeGraph `post-write-sync` 的执行、跳过或失败状态。
-- 下一步：运行独立的 `fp-review`；通过后再执行 `/fp-archive`。
+- 下一步：运行独立的 `fp-final-review`；通过后再执行 `/fp-archive`。

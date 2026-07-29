@@ -105,7 +105,9 @@ codegraph explore --path <project-root> --max-files <budget> <query>
 
 ### Review candidate-only contract
 
-在 `fp-review` 或 SDD final review 中，任何 CodeGraph `explore`、`impact`、`affected` helper/query 都只返回 candidate paths/symbols，不是 finding、scope、absence、fix 或完成证据。每个采用的 candidate 必须回到 current source 和 current diff，并至少使用 native search（caller/import/reference）、tests 或 command output 之一复核；报告同时记录 query、candidate、current-source verification 与原生证据。
+在 `fp-final-review` 或 SDD final review 中，任何 CodeGraph `explore`、`impact`、`affected` helper/query 都只返回 candidate paths/symbols，不是 finding、scope、absence、fix 或完成证据。每个采用的 candidate 必须回到 current source 和 current diff，并至少使用 native search（caller/import/reference）、tests 或 command output 之一复核；报告同时记录 query、candidate、current-source verification 与原生证据。
+
+在 `fp-module-review` 中，CodeGraph 也只用于 target integration、wave ownership、caller/import/reference 和影响范围候选。任何候选 Finding、缺失关系或修复完成结论都必须由 current source、native search、tests 或 command output 复核；源码写入后遵守 `dirty-after-write`，返回前仅对已有图执行一次 `post-write-sync`，失败不阻塞主流程。
 
 图缺失、stale、dirty-after-write、MCP/CLI unavailable 或结果不充分时，立即 `fallback to native search against current source`。CodeGraph failure must not block FeaturePilot review；只有原生当前证据本身缺失时才按 review 风险影响 verdict。不得用 `explore`、`impact` 或 `affected` 绕过 working-tree snapshot、scope matrix、artifact ownership、evidence freshness 或 command-safety gate。
 

@@ -11,7 +11,8 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
 - **新鲜度与代码导航**：`project-facts.md` 的 stale/conflict 由 metadata 实时计算；CodeGraph 是可选导航层，统一使用 npm 安装、写后 dirty/sync 保护和当前源码复核。
 - **轻量执行与有界 SDD**：`fp-execute` 保持直接完成确认任务；`fp-execute-sdd` 使用证据包、稳定 review scope、最多三次审查与主流程阻塞判定，避免无限复审。
-- **证据优先审查**：`fp-review` 支持完整 Scope Matrix、跨变更 owner 识别、命令安全分类、增量证据与最终审查包。
+- **证据优先终审**：`fp-final-review` 支持完整 Scope Matrix、跨变更 owner 识别、命令安全分类、增量证据与最终审查包。
+- **模块专项审查**：`fp-module-review` 面向一个大型功能模块或多个相关模块，使用稳定 Finding、逐项批准门禁和受控 TDD 修复持续收敛。
 - **Figma 真实运行时视觉证据**：从计划到最终审查统一 case schema，区分 approved design reference 与 real-runtime current；核心 source/runtime 缺失固定为 `CANNOT_VERIFY` 主流程阻塞。
 - **产物与语言规则**：PRD、proposal、design、plan 使用 compact-first 且 small/split 互斥；过程文档叙述默认中文，代码与精确技术/schema 术语保留必要英文。
 - **Claude Code + Codex 双入口**：两端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
@@ -35,7 +36,9 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 | `commands/fp-propose.md` | 仅生成并确认开发提案的逻辑形式：小型 `proposal.md` 或拆分 `proposal/00-index.md` 及其 manifest 分片 |
 | `commands/fp-brainstorm.md` | 基于已确认提案生成技术设计 |
 | `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
-| `commands/fp-review.md` | 归档前最终整分支只读审查 |
+| `commands/fp-coverage.md` | 先固定覆盖率统计口径，再按可恢复的模块级批次补充测试，最终以最新完整测试全部通过且精确覆盖率达标作为双重验收门禁 |
+| `commands/fp-module-review.md` | 大型或多模块专项审查、Finding 门禁与受控修复 |
+| `commands/fp-final-review.md` | 归档前最终整分支只读审查 |
 | `commands/fp-archive.md` | 归档已完成的变更 |
 | `commands/fp-figma.md` | UI / Figma 设计稿分析入口 |
 
@@ -50,7 +53,9 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - `fp-plan` / `fp-plan-backend` / `fp-plan-frontend`：生成细粒度 TDD 执行计划。
 - `fp-execute`：默认执行入口，在当前上下文按 TDD 直接完成已确认计划，每个任务只做一次 inline 自审。
 - `fp-execute-sdd`：用户明确需要 fresh implementer/reviewer、任务隔离和多轮审查时使用的 SDD 执行模式。
-- `fp-review`：最终整分支审查。
+- `fp-coverage`：独立单元测试覆盖率专项；冻结项目既有统计口径，通过可恢复的模块级批次提升覆盖率，过程状态和 coverage 报告统一写入 `fp-docs/changes/<slug>-coverage/`，只有 fresh full-suite `exit code = 0` 且 exact coverage（精确覆盖率）达标时才完成。`.fp-coverage/progress.md` 只保存有界恢复索引，完整合同和运行证据拆到 `contract.md`、`baselines/`、`batches/`、`verifications/`；单元测试发现的生产/测试代码问题写入 `issues.md`，在 `FINAL_VERIFYING` completion boundary 生成并核对引用 fresh final verification 的 `final-report.md` 后，才进入 `COMPLETE`。新项目缺少 coverage 工具时保持 `RESOLVING` + `CANNOT_VERIFY` 并展示 approval-gated `coverage-tooling-bootstrap`；用户批准后才安装并持久化依赖、写最小配置和重新建立 fresh baseline。优先复用既有工具；Django 无现成方案时，已有 pytest 只推荐 `pytest-cov`，否则推荐 `pytest + pytest-cov`，`pytest-django` 仅按测试集成需要加入。
+- `fp-module-review`：针对一个大型功能模块或多个相关模块的持续专项审查，可在稳定 Finding 和逐项批准门禁下执行受控修复。
+- `fp-final-review`：FeaturePilot 变更归档或合并前的最终整分支只读审查。
 - `fp-archive`：归档变更。
 
 ## 架构图
@@ -64,7 +69,7 @@ flowchart LR
 
     subgraph Workflow[共享流程契约]
         S["FeaturePilot skills\nfp-prd → fp-propose → fp-brainstorm\n→ fp-plan → fp-execute（默认）"]
-        G["执行契约\n直接 TDD · inline 自审\n独立 fp-review"]
+        G["执行契约\n直接 TDD · inline 自审\n独立 fp-final-review"]
         SDD["显式选择\nfp-execute-sdd\nbrief · reviewer · fix loop"]
     end
 
@@ -108,7 +113,7 @@ Agent MCP 配置会单独确认；CLI 已预装时，首次为项目构建 `.cod
 
 再次运行 `fp-init` 时，如果已有 `fp-docs/manifest.md`，流程进入 `refresh-existing-information-layer`。它根据 `.freshness.json` 中的 source fingerprint/body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`；metadata 不保存 stale verdict。旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 只保留一版只读兼容，不创建、刷新或要求。
 
-代码修改流程第一次写入源码后将图标记为 `dirty-after-write`，后续不得查询写入前的旧图。`fp-execute`、`fp-execute-sdd` 和 `fp-quick` 在写入后的返回边界对已有图执行一次 `post-write-sync`，让下一流程从当前工作树继续；同步失败不阻塞验证和交付，原来没有图的项目也不会被隐式建图。
+代码修改流程第一次写入源码后将图标记为 `dirty-after-write`，后续不得查询写入前的旧图。`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 和 `fp-module-review` 在写入后的返回边界对已有图执行一次 `post-write-sync`，让下一流程从当前工作树继续；同步失败不阻塞验证和交付，原来没有图的项目也不会被隐式建图。
 
 ## 借鉴 OpenSpec 的设计
 
@@ -121,15 +126,40 @@ FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，
 
 ## 低成本使用流程
 
-FeaturePilot 的默认使用方式尽量轻量。完整用户指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)：
+FeaturePilot 的默认使用方式尽量轻量。完整主线指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)；两个独立专项流程见：
+
+- [`fp-coverage` 用户指南](docs/user_guide/fp-coverage.md)：冻结覆盖率口径，按可恢复批次补测，并以 fresh full-suite 与 exact coverage 双门验收。
+- [`fp-module-review` 用户指南](docs/user_guide/fp-module-review.md)：对大型或多个相关模块分 wave 审查，登记稳定 Finding，并在批准后执行受控修复。
 
 1. **可选探索**：运行 `/fp-explore <问题>` 调查当前实现或比较方案；空输入只做有界项目概览。探索不创建 FeaturePilot 产物，也不修改代码。
 2. **可选初始化**：运行 `/fp-init`，可选安装 CodeGraph 并构建代码图，默认仅创建 manifest；settings、project facts、human-owned unknowns/decisions 都在各自明确批准后按需创建。
 3. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
 4. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
-5. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
+5. **覆盖率专项**：运行 `/fp-coverage <目标>`，复用项目现有 test/coverage 工具并冻结统计口径；局部结果和历史报告只用于选批次，过程状态、`coverage.xml`、`htmlcov/` 及其他 coverage 报告统一进入 `fp-docs/changes/<slug>-coverage/`，完成需要 fresh full-suite `exit code = 0` 与 exact coverage 同时达标。缺少 coverage 工具时不会只给终止型 `BLOCKED`：流程保持 `RESOLVING` + `CANNOT_VERIFY`，展示包含精确依赖、命令、修改文件、source 和报告路径的 `coverage-tooling-bootstrap` 批准门禁；用户批准后才持久化依赖和最小配置并重新运行 fresh baseline。Django 无既有 coverage 方案时推荐 `pytest + pytest-cov`（已有 pytest 时只补 `pytest-cov`，`pytest-django` 按需）。
+6. **模块专项审查**：运行 `/fp-module-review <一个大型模块或多个相关模块>`，建立独立 `fp-docs/module-reviews/<slug>/` 工作区，按稳定 Finding 和行为变化批准门禁持续审查、修复与复验；它不替代归档前的 `fp-final-review`。
+7. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，`fp-start` 才进入复杂模式；不会仅根据计划规模或风险自动切换。该模式会使用任务说明、全新上下文实现代理、逐任务审查、修复循环和最终整分支审查。
+
+`fp-coverage` 的 coverage 过程产物使用独立 change 根目录，不写在项目根；恢复状态、详细运行证据、代码问题和最终总结按职责拆分：
+
+```text
+fp-docs/changes/<slug>-coverage/
+├── issues.md                    # 首个 unit-test-discovered 生产/测试代码问题出现时创建
+├── final-report.md              # completion boundary 生成并核对后才进入 COMPLETE
+├── .fp-coverage/
+│   ├── progress.md              # 有界当前状态、证据索引和 next action
+│   ├── contract.md              # 冻结口径、命令、批准和路径合同
+│   ├── baselines/<run-id>.md    # initial / periodic full evidence
+│   ├── batches/<batch-id>.md    # owner batch RED/GREEN evidence
+│   └── verifications/<run-id>.md # final verification attempts
+├── .coverage                    # coverage raw data 示例
+├── coverage.xml                 # 项目工具的机器可读报告示例
+├── htmlcov/                     # 项目工具的 HTML 报告示例
+└── <other-coverage-reports>     # 其他已声明的 coverage 输出
+```
+
+`progress.md` 不是 append-only 全量命令日志或第二 completion authority；canonical split paths 是 `.fp-coverage/contract.md`、`.fp-coverage/baselines/`、`.fp-coverage/batches/` 和 `.fp-coverage/verifications/`。恢复时只按索引读取当前 contract、最新 fresh evidence、active batch 和 issues。`issues.md` 只记录单元测试执行、归因或补测中发现并有测试/源码证据的 `production-code` 与 `test-code` 问题，不记录依赖、环境、coverage 配置或普通未覆盖元素；Developer review 只能由开发者明确更新。测试源码和批准的 fixture 仍保留在项目既有测试目录。
 
 ## 项目配置
 
@@ -202,7 +232,7 @@ fp-docs/
       progress.md                  # 直接执行与 SDD 共用的恢复证据
       briefs/                      # 仅 SDD
       packages/                    # 仅 SDD
-      reviews/                     # 独立 fp-review 或 SDD review
+      reviews/                     # 独立 fp-final-review 或 SDD review
   archive/                      # 由 fp-archive 自动创建
   history/history.md             # 由 fp-archive 自动创建
 ```
@@ -227,6 +257,9 @@ Consumer 先检测 canonical 小型文件与 split directory 的 `00-index.md`�
 /fp-explore 当前审批流的入口和权限边界是什么
 /fp-prd 我想做一个批量审批体验优化
 /fp-start <prd-slug 或 功能描述>
+/fp-coverage 将项目现有 combined unit test coverage 提升到 <目标阈值>
+/fp-module-review 审查 <一个大型模块或多个相关模块>
+/fp-final-review <change slug>
 ```
 
 维护者可在修改命令或技能后运行仓库一致性校验：
@@ -256,7 +289,7 @@ Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`�
 
 - 初始化：`fp-init`。
 - 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-grill-me`、`fp-propose`、`fp-brainstorm`；包含 PRD-first、Prototype-first、PRD interview gate、mandatory PRD template、prototype style extraction/lazy consumption。
-- 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-review`、`fp-archive`。
+- 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-final-review`、`fp-archive`。
 - 信息层规则：`manifest-only default`、按批准懒创建的 settings/intel、动态 SDD 上下文、project facts freshness，以及可选 CodeGraph 导航与写后同步边界。
 - 执行和审查：简化的 `fp-execute`、最多三次的 SDD 审查、Scope Matrix、命令安全、最终证据包与 Figma 真实运行时视觉验收。
 - Claude Code / Codex 双入口：插件运行时与 Markdown 技能说明保持同一套阶段门禁，并可通过本地同步 skill 校验两端缓存一致性。

@@ -1,6 +1,6 @@
 # FeaturePilot Final Review Package Template
 
-Use this template for `.fp-execute/packages/final-review-package.md` before dispatching `fp-review`. The package is deterministic review evidence, not completion authority: canonical task-owner checkboxes remain planned-completion authority and the progress ledger remains recovery/orchestration evidence.
+Use this template for `.fp-execute/packages/final-review-package.md` before dispatching `fp-final-review`. The package is deterministic review evidence, not completion authority: canonical task-owner checkboxes remain planned-completion authority and the progress ledger remains recovery/orchestration evidence.
 
 ```markdown
 # Final Review Package: <slug>
@@ -24,7 +24,7 @@ Use this template for `.fp-execute/packages/final-review-package.md` before disp
 
 The same SDD final scope keeps one stable `reviewScopeId`; a new reviewer, new commit, new session, or new finding never resets `reviewAttempt`. Never dispatch attempt 4.
 
-This avoids commit self-reference. The package must not embed its own exact evidenceCommitHead or dispatchHead because neither exists before the evidence-only commit. The controller resolves both externally after commit and passes them as fp-review runtime inputs. Use the sentinel exactly and never rewrite the package merely to insert either SHA.
+This avoids commit self-reference. The package must not embed its own exact evidenceCommitHead or dispatchHead because neither exists before the evidence-only commit. The controller resolves both externally after commit and passes them as fp-final-review runtime inputs. Use the sentinel exactly and never rewrite the package merely to insert either SHA.
 
 ## Deterministic Git Evidence
 

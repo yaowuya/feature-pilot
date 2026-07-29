@@ -110,7 +110,7 @@ Historical checks inspect the current slug at exact paths only. Historical files
 - historical file 或 dual structure 立即阻塞，不读取其正文、不猜测 ownership。
 - 转换或迁移必须得到 explicit approval，把全部 unique content 转入一种 canonical form，验证后移除 obsolete path；不得在原 historical dual structure 上继续更新。
 
-Frontend design 必须让以下三个视觉连续性小节各出现恰好一次，并共同归属于一个 detailed owner：small form 时归 `design/frontend.md`；split form 时归 manifest 中一个明确的 detail fragment。`design/frontend/00-index.md` 只记录该 fragment 的 ownership，不复制正文。后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-review` 都以该唯一 owner 为事实来源：
+Frontend design 必须让以下三个视觉连续性小节各出现恰好一次，并共同归属于一个 detailed owner：small form 时归 `design/frontend.md`；split form 时归 manifest 中一个明确的 detail fragment。`design/frontend/00-index.md` 只记录该 fragment 的 ownership，不复制正文。后续 `fp-plan-frontend`、`fp-execute`、`fp-execute-sdd`、`fp-final-review` 都以该唯一 owner 为事实来源：
 
 ```markdown
 #### Visual Source

@@ -12,4 +12,4 @@ Gate checksum：
 - 依次加载 `fp-propose` → `fp-brainstorm` → `fp-plan`；逐阶段核验/确认，proposal/design 还核验 Decision Ledger 与 per-item confirmation。
 - 计划确认前不改业务代码；执行读取已确认 task 文件。
 - 计划确认后默认加载 `fp-execute`；逐任务确认才使用 semi。
-- 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer isolation 才进入 SDD；再选择 SDD 逐项确认或自动连续，完成后运行 `fp-review`。
+- 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer isolation 才进入 SDD；再选择 SDD 逐项确认或自动连续，完成后运行 `fp-final-review`。

@@ -5,7 +5,7 @@ $root = Split-Path -Parent $PSScriptRoot
 
 function Assert-Condition([bool]$condition, [string]$message) {
     if (-not $condition) {
-        throw "Review contract validation failed: $message"
+        throw "Final review contract validation failed: $message"
     }
 }
 
@@ -92,7 +92,7 @@ function Test-PhaseResumeContract([string]$text) {
 
 function Test-FinalFlowOrder([string]$text) {
     $previousIndex = -1
-    foreach ($anchor in @('capture reviewedTargetHead', 'generate the final package', 'evidence-only commit', 'resolve evidenceCommitHead', 'dispatch fp-review')) {
+    foreach ($anchor in @('capture reviewedTargetHead', 'generate the final package', 'evidence-only commit', 'resolve evidenceCommitHead', 'dispatch fp-final-review')) {
         $currentIndex = $text.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase)
         if ($currentIndex -le $previousIndex) { return $false }
         $previousIndex = $currentIndex
@@ -100,14 +100,14 @@ function Test-FinalFlowOrder([string]$text) {
     return $true
 }
 
-$reviewSkillPath = Join-Path $root 'skills\fp-review\SKILL.md'
-$reviewerPath = Join-Path $root 'skills\fp-review\final-reviewer.md'
-$reportTemplatePath = Join-Path $root 'skills\fp-review\final-review-template.md'
-$finalPackagePath = Join-Path $root 'skills\fp-review\final-review-package-template.md'
+$reviewSkillPath = Join-Path $root 'skills\fp-final-review\SKILL.md'
+$reviewerPath = Join-Path $root 'skills\fp-final-review\final-reviewer.md'
+$reportTemplatePath = Join-Path $root 'skills\fp-final-review\final-review-template.md'
+$finalPackagePath = Join-Path $root 'skills\fp-final-review\final-review-package-template.md'
 $sddSkillPath = Join-Path $root 'skills\fp-execute-sdd\SKILL.md'
 $sddPackagePath = Join-Path $root 'skills\fp-execute-sdd\review-package-template.md'
 $codeGraphPath = Join-Path $root 'skills\_shared\codegraph.md'
-$commandPath = Join-Path $root 'commands\fp-review.md'
+$commandPath = Join-Path $root 'commands\fp-final-review.md'
 $validatorPath = Join-Path $root 'scripts\validate-plugin.ps1'
 
 foreach ($requiredPath in @(
@@ -134,6 +134,10 @@ $codeGraph = Read-Utf8 $codeGraphPath
 $command = Read-Utf8 $commandPath
 $validator = Read-Utf8 $validatorPath
 
+Assert-Condition (-not (Test-Path (Join-Path $root 'commands\fp-review.md'))) 'old fp-review command still exists'
+Assert-Condition (-not (Test-Path (Join-Path $root 'skills\fp-review'))) 'old fp-review skill directory still exists'
+Assert-Condition (-not (Test-Path (Join-Path $root 'scripts\test-review-contract.ps1'))) 'old review validator still exists'
+
 $reviewInputs = @(
     'reviewScopeId',
     'reviewAttempt',
@@ -144,15 +148,15 @@ $reviewInputs = @(
     'lastReviewedHead',
     'reviewPhase'
 )
-Assert-Anchors $reviewSkill $reviewInputs 'fp-review input contract'
+Assert-Anchors $reviewSkill $reviewInputs 'fp-final-review input contract'
 Assert-Anchors $reviewer $reviewInputs 'final reviewer input contract'
 Assert-Anchors $finalPackage $reviewInputs 'final review package'
 Assert-Condition ($reviewSkill.Contains('maxReviewAttempts=3') -and $reviewer.Contains('maxReviewAttempts=3')) 'review attempt ceiling is not fixed at 3'
-Assert-Anchors $reviewSkill @('independent final scope', 'attempt 1', 'does not auto-fix', 'does not auto-retry') 'direct fp-review defaults'
-Assert-Anchors $command @('independent final scope', 'attempt 1', 'does not auto-fix', 'does not auto-retry') 'fp-review command checksum'
+Assert-Anchors $reviewSkill @('independent final scope', 'attempt 1', 'does not auto-fix', 'does not auto-retry') 'direct fp-final-review defaults'
+Assert-Anchors $command @('independent final scope', 'attempt 1', 'does not auto-fix', 'does not auto-retry') 'fp-final-review command checksum'
 
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage }
 )) {
@@ -172,7 +176,7 @@ $scopeColumns = @('Declared path/contract', 'Observed diff path', 'Mapping', 'Cl
 Assert-Anchors $finalPackage $scopeColumns 'final package Scope Matrix schema'
 Assert-Anchors $reportTemplate $scopeColumns 'final report Scope Matrix schema'
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'final report'; Text = $reportTemplate }
@@ -187,7 +191,7 @@ foreach ($surface in @(
 }
 Assert-Anchors $reviewSkill @('complete branch inventory', 'selected change + shared + unowned') 'change-scoped verdict boundary'
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'final report'; Text = $reportTemplate }
@@ -198,7 +202,7 @@ foreach ($surface in @(
 
 $headInputs = @('reviewedTargetHead', 'packageParentHead', 'evidenceCommitHead', 'dispatchHead')
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'final report'; Text = $reportTemplate },
@@ -217,10 +221,10 @@ Assert-Anchors $reviewSkill @(
     'dispatch tree clean',
     'reviewedTargetHead=dispatchHead=HEAD',
     'evidenceCommitHead=N/A'
-) 'fp-review target/evidence/dispatch validation'
+) 'fp-final-review target/evidence/dispatch validation'
 Assert-Anchors $reviewer @('packageParentHead == reviewedTargetHead', 'evidenceCommitHead == dispatchHead == current git HEAD', 'reviewedTargetHead..dispatchHead', 'allowed evidence paths', 'product source unchanged', 'dispatch tree clean') 'final reviewer HEAD validation'
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'final report'; Text = $reportTemplate }
@@ -248,7 +252,7 @@ Assert-Anchors $flowText @(
 ) 'fp-execute-sdd non-self-referential evidence commit'
 
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'final report'; Text = $reportTemplate },
@@ -258,7 +262,7 @@ foreach ($surface in @(
 }
 
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'SDD review package'; Text = $sddPackage }
@@ -267,7 +271,7 @@ foreach ($surface in @(
 }
 
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $reviewSkill },
+    @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
     @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'CodeGraph shared contract'; Text = $codeGraph }
@@ -303,6 +307,6 @@ $orderMutation = $flowText.Replace('capture reviewedTargetHead', '__CAPTURE_TARG
 Assert-Condition ($orderMutation -ne $flowText) 'flow-order mutation fixture did not mutate the surface'
 Assert-Condition (-not (Test-FinalFlowOrder $orderMutation)) 'flow-order helper accepted package generation before target capture'
 
-Assert-Condition ($validator.Contains('test-review-contract.ps1')) 'global validator does not invoke the focused review contract'
+Assert-Condition ($validator.Contains('test-final-review-contract.ps1')) 'global validator does not invoke the focused review contract'
 
-Write-Output 'Review contract validation passed.'
+Write-Output 'Final review contract validation passed.'

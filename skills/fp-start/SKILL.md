@@ -214,7 +214,7 @@ Pass the exact selected continuation mode (`step-confirmation` or `automatic-con
 - Direct execution 对每个任务完成 TDD、必要验证和一次 inline 自审；发现问题就在当前任务中修复并重新验证，不派发独立 reviewer/fixer。
 - SDD 模式继续遵循 `fp-execute-sdd` 自己的 briefs、packages、review/fix 和 continuation contract。
 
-Direct execution does not own a final review scope; load `fp-review` once after `fp-execute` returns. `fp-review` 通过后才提示运行 `/fp-archive`。如果用户明确选择 `fp-execute-sdd`，由该 skill 按自身契约完成 final review，不再重复调用第二次 `fp-review`。
+Direct execution does not own a final review scope; load `fp-final-review` once after `fp-execute` returns. `fp-final-review` 通过后才提示运行 `/fp-archive`。如果用户明确选择 `fp-execute-sdd`，由该 skill 按自身契约完成 final review，不再重复调用第二次 `fp-final-review`。
 
 ---
 

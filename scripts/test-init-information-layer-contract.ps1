@@ -35,9 +35,9 @@ $taskBrief = Read-Utf8 'skills\fp-execute-sdd\task-brief-template.md'
 $reviewPackage = Read-Utf8 'skills\fp-execute-sdd\review-package-template.md'
 $prd = Read-Utf8 'skills\fp-prd\SKILL.md'
 $prdGrill = Read-Utf8 'skills\fp-prd-grill-me\SKILL.md'
-$review = Read-Utf8 'skills\fp-review\SKILL.md'
-$finalReviewer = Read-Utf8 'skills\fp-review\final-reviewer.md'
-$finalReviewTemplate = Read-Utf8 'skills\fp-review\final-review-template.md'
+$review = Read-Utf8 'skills\fp-final-review\SKILL.md'
+$finalReviewer = Read-Utf8 'skills\fp-final-review\final-reviewer.md'
+$finalReviewTemplate = Read-Utf8 'skills\fp-final-review\final-review-template.md'
 $command = Read-Utf8 'commands\fp-init.md'
 $readme = Read-Utf8 'README.md'
 $guide = Read-Utf8 'docs\user_guide\init-prd-start.md'
@@ -167,7 +167,7 @@ foreach ($surface in @(
     @{ Name = 'fp-execute-sdd'; Text = $executeSdd }
     @{ Name = 'task brief'; Text = $taskBrief }
     @{ Name = 'review package'; Text = $reviewPackage }
-    @{ Name = 'fp-review'; Text = $review }
+    @{ Name = 'fp-final-review'; Text = $review }
     @{ Name = 'final reviewer'; Text = $finalReviewer }
     @{ Name = 'final review template'; Text = $finalReviewTemplate }
 )) {
@@ -178,7 +178,7 @@ Assert-Condition (-not $prd.Contains('/fp-init --refresh')) 'fp-prd recommends a
 Assert-Condition ($prd.Contains('supported-init-rerun') -and $prd.Contains('`/fp-init`')) 'fp-prd does not route stale intel to the supported fp-init command'
 
 foreach ($surface in @(
-    @{ Name = 'fp-review'; Text = $review }
+    @{ Name = 'fp-final-review'; Text = $review }
     @{ Name = 'final reviewer'; Text = $finalReviewer }
     @{ Name = 'final review template'; Text = $finalReviewTemplate }
 )) {

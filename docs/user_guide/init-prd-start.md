@@ -86,7 +86,7 @@ CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。M
 
 #### 代码写入后的索引更新
 
-`fp-execute`、`fp-execute-sdd` 或 `fp-quick` 首次修改源码后，会把当前图标记为 `dirty-after-write`，本轮不再查询写入前的旧图。它们在写入后的用户可见返回前，对原本已存在的图执行一次 `post-write-sync`：
+`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 或 `fp-module-review` 首次修改测试、fixture、配置或源码后，会把当前图标记为 `dirty-after-write`，本轮不再查询写入前的旧图。它们在写入后的用户可见返回前，对原本已存在的图执行一次 `post-write-sync`：
 
 ```text
 codegraph sync <project-root> --quiet
@@ -306,7 +306,7 @@ Consumer 先检测 canonical small file 与 split directory 的 `00-index.md`，
 2. `fp-brainstorm`：生成并确认技术设计；`design/00-index.md` 映射实际存在的端，每端直接选择 `design/<end>.md` 或 `design/<end>/00-index.md`。
 3. `fp-plan`：生成并确认细粒度执行计划；每端直接选择 `tasks/plan-<end>.md` 或 `tasks/<end>/00-index.md`。只有双端计划才生成无 checkbox 的 `tasks/00-overview.md`；每个可执行任务的 checkbox 只存在于一个 owner file。
 4. `fp-execute`：默认在当前上下文按 TDD 直接执行已确认任务，每个任务完成一次 inline 自审。
-5. `fp-review`：最终整分支审查。
+5. `fp-final-review`：最终整分支审查。
 6. 建议 `/fp-archive`：归档完成的变更。
 
 阶段 1、2、3 完成后都必须停下等待用户确认；没有确认不得进入下一阶段。
@@ -358,8 +358,28 @@ FeaturePilot 会提示建议 `/fp-init`，但不会强制停止。后续如需�
 /fp-start <slug>
 ```
 
+### 覆盖率专项
+
+当目标是先冻结统计口径，再按可恢复 owner batch 补充测试，并以 fresh full-suite 与 exact coverage 双门验收时，使用独立的 [`fp-coverage` 指南](fp-coverage.md)：
+
+```text
+/fp-coverage 将 <metric> coverage 提高到 <明确目标>
+```
+
+它不会由 `fp-start` 自动触发；普通 feature 只缺少少量明确测试时，继续使用正常执行流程。
+
+### 模块专项审查
+
+当目标不是一个待归档 FeaturePilot change，而是一个大型功能模块或多个相关模块时，独立运行：
+
+```text
+/fp-module-review <模块目录、符号或功能边界>
+```
+
+`fp-module-review` 在 `fp-docs/module-reviews/<slug>/` 建立可恢复工作区，先冻结范围和兼容/测试基线，再按 ownership/call flow 分波审查。Finding 使用稳定 `MR-FNNN` owner；外部行为或安全策略变化必须按 ID 逐项批准，批准前不得修改生产行为。完整模式、产物、恢复与完成状态见 [`fp-module-review` 指南](fp-module-review.md)。它不会由 `fp-start` 自动触发，也不替代变更归档前的 `fp-final-review`。
+
 ### 执行模式
 
-计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-review`。
+计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-final-review`。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，才使用复杂执行模式，以获得任务 brief、逐任务独立审查、修复循环和 SDD final review；不要仅根据任务规模或风险自动切换。

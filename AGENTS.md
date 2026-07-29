@@ -20,7 +20,9 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | Technical design | `skills/fp-brainstorm/SKILL.md` |
 | Implementation plan | `skills/fp-plan/SKILL.md` |
 | Execute confirmed plan | `skills/fp-execute/SKILL.md` or `skills/fp-execute-sdd/SKILL.md` |
-| Final review | `skills/fp-review/SKILL.md` |
+| Raise unit-test, line, branch, statement, or combined coverage to a target, or resume an interrupted coverage effort | `skills/fp-coverage/SKILL.md` |
+| Review one large functional module or several related modules | `skills/fp-module-review/SKILL.md` |
+| Final whole-branch review before archive or merge | `skills/fp-final-review/SKILL.md` |
 | Archive completed change | `skills/fp-archive/SKILL.md` |
 
 ## 1.0.0 release behavior
@@ -32,6 +34,8 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 - `fp-prd` is an interview workflow, not a one-shot PRD generator: Bucket A/B confirmed items are reviewed in one batch, Bucket C unresolved decisions are asked sequentially one at a time, assistant recommendations are not user confirmation, and the assistant must never self-answer Bucket C.
 - PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing the resolved PRD small or split form.
 - Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write the resolved PRD small or split form.
+- `fp-coverage` resolves one dedicated `fp-docs/changes/<slug>-coverage/` root. `.fp-coverage/progress.md` is a bounded recovery index, while `.fp-coverage/contract.md`, `.fp-coverage/baselines/<run-id>.md`, `.fp-coverage/batches/<batch-id>.md`, and `.fp-coverage/verifications/<run-id>.md` own detailed split evidence; recovery reads only directly indexed current evidence, not all history. `issues.md` is created lazily and records only reproducible `production-code` or `test-code` problems discovered by unit-test execution/triage/addition; it excludes tooling, dependency, environment, CI, coverage-config, and ordinary uncovered-element problems, and agents cannot self-mark Developer review as REVIEWED. `final-report.md` is generated and validated at the `FINAL_VERIFYING` completion boundary after technical predicates pass; only then may the workflow enter `COMPLETE`, and the report must reference fresh final verification. `coverage.xml`, `htmlcov/`, raw data, and every declared report stay beneath the same root, never at the project root. Tests and approved fixtures remain in established test paths. None of these files is a second completion authority.
+- If tests can run but coverage tooling is missing, `fp-coverage` remains `RESOLVING` with `CANNOT_VERIFY` and presents an approval-gated `coverage-tooling-bootstrap` instead of only terminating as `BLOCKED`. Prefer the existing coverage toolchain and runner. With a proven Django project and no existing coverage solution, recommend only `pytest-cov` when pytest already exists, otherwise `pytest + pytest-cov`; add `pytest-django` only when tests need that integration. Before approval list exact dependencies, install command, dependency/lock/config files, production source, baseline/final commands, report paths, and rollback boundary. After approval, persist the dependency declaration, change only the reviewed coverage tooling/config, and run a fresh baseline; never silently install, upgrade unrelated packages, or reuse pre-bootstrap evidence.
 - Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
 - `fp-explore` accepts natural-language public input and remains read-only: it never writes artifacts, implements changes, or automatically dispatches another workflow. Its internal structured profiles may be invoked only by `fp-prd`, `fp-start`, and `fp-quick`, which retain their own product, routing, approval, and implementation gates.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
@@ -83,7 +87,7 @@ npm install -g @colbymchenry/codegraph@latest
 
 已有 `fp-docs/manifest.md` 时，`fp-init` 进入 `refresh-existing-information-layer`：根据 `.freshness.json` 中的 source fingerprint 与 body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`。metadata 不持久化 stale verdict。`settings/*`、human-owned unknowns/decisions、active changes、archive/history 和冲突内容不得批量覆盖。manifest 已列出的旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 仅作一版只读提示，不创建、刷新或要求。
 
-任何代码修改流程首次写入源码后必须把图状态标记为 `dirty-after-write`，并禁止继续查询旧图。`fp-execute`、`fp-execute-sdd` 和 `fp-quick` 在写入后的用户可见返回前，对工作流开始时已存在的图最多执行一次 `post-write-sync`；失败只记录并回退，不阻塞验证、审查或完成，也不得隐式创建新图。
+任何代码修改流程首次写入源码后必须把图状态标记为 `dirty-after-write`，并禁止继续查询旧图。`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 和 `fp-module-review` 在写入后的用户可见返回前，对工作流开始时已存在的图最多执行一次 `post-write-sync`；失败只记录并回退，不阻塞验证、审查或完成，也不得隐式创建新图。
 
 ## OpenSpec-inspired artifact model
 
