@@ -45,9 +45,10 @@ Follow the brief exactly:
 4. Implement the minimum code needed for this task only.
 5. Run the pass command and relevant lint/build/type/visual checks.
 6. For every planned visual Case ID, replay the project-configured command/tool against the real target runtime route with the declared scenario/state, viewport, DPR, locale, theme, and deterministic non-sensitive fixture. Write `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, preserve approved-source `reference.png`, capture real-runtime `current.png`, and record optional `diff.png` or the missing diff explanation. Browser interaction evidence is separate from screenshot evidence and exercises the approved states.
-7. Self-review for scope, interfaces, global constraints, style, and test quality.
-8. Commit only this task's changes when validation passes.
-9. Write the full report file with evidence.
+7. For each required `FIGCAP-*` and `PRES-*` in the brief, collect the declared runtime replay evidence. A rendered control, handler, screenshot, or changed file alone is not `PASS`. Do not mark the Figma change COMPLETE; report code-editing, capability, preservation, and visual results separately.
+8. Self-review for scope, interfaces, global constraints, style, and test quality.
+9. Commit only this task's changes when validation passes.
+10. Write the full report file with evidence.
 
 For visual cases, `reference.png` must come from an approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` must come from the real target runtime and Runtime route with stable data and stable environment. An optional diff or missing diff explanation must not hide missing core source/runtime evidence.
 
@@ -76,6 +77,12 @@ Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
 - Consumes: <verified interface>
 - Produces: <created/changed interface>
 - Contract checks: <how verified>
+
+## Capability and Preservation Evidence (when applicable)
+
+| ID | Required observable result / existing behavior | Before baseline | After replay | Status | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| `FIGCAP-001` or `PRES-001` | `<brief contract>` | `<N/A or command/result>` | `<command/result>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<path/artifact>` |
 
 ## Visual Evidence (frontend/UI only)
 

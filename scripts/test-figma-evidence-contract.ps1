@@ -316,6 +316,10 @@ function Test-BrowserScreenshotSeparation([string]$text) {
 }
 
 $figma = Read-Utf8 'skills\fp-figma\SKILL.md'
+$figmaCommand = Read-Utf8 'commands\fp-figma.md'
+$preservationTemplate = Read-Utf8 'skills\fp-figma\figma-preservation-template.md'
+$capabilitiesTemplate = Read-Utf8 'skills\fp-figma\figma-capabilities-template.md'
+$figmaReviewTemplate = Read-Utf8 'skills\fp-figma\figma-review-template.md'
 $planSkill = Read-Utf8 'skills\fp-plan-frontend\SKILL.md'
 $planTemplate = Read-Utf8 'skills\fp-plan-frontend\plan-template.md'
 $executeSkill = Read-Utf8 'skills\fp-execute-sdd\SKILL.md'
@@ -373,6 +377,126 @@ Assert-Anchors $figma @(
     'tsconfig',
     'install dependencies'
 ) 'fp-figma'
+
+Assert-Anchors $figma @(
+    'Figma-only UI source',
+    'prototype FUNCTION_SCOPE_ONLY',
+    'BROWSER_CAPABILITY_GATE',
+    'Playwright browser extension',
+    '@playwright/cli',
+    'not install silently',
+    'figma-preservation.md',
+    'figma-capabilities.md',
+    'FIGCAP-',
+    'PRES-',
+    'independent read-only review',
+    'Figma change complete'
+) 'fp-figma quality gates'
+
+Assert-Anchors $figmaCommand @(
+    'Figma-only UI source',
+    'PRES-*',
+    'not install silently'
+) 'fp-figma command quality checksum'
+
+Assert-Anchors $preservationTemplate @(
+    '# Figma Preservation Contract',
+    'PRES-001',
+    'PRES-NNN',
+    'Allowed Changes',
+    'Protected Behaviors',
+    'Before Baseline',
+    'After Replay',
+    'Customer-Approved Exceptions',
+    'CANNOT_VERIFY'
+) 'figma preservation template'
+
+Assert-Anchors $capabilitiesTemplate @(
+    '# Figma Capability Ledger',
+    'FIGCAP-001',
+    'FIGCAP-NNN',
+    'Atomic capability and acceptance result',
+    'Figma node / Frame / Variant',
+    'Browser interaction evidence',
+    'A static control does not prove capability completion',
+    'MISSING',
+    'PARTIAL'
+) 'figma capabilities template'
+
+Assert-Anchors $figmaReviewTemplate @(
+    'independent read-only reviewer',
+    'FIGCAP-001',
+    'PRES-001',
+    'Figma visual fidelity',
+    'Overall: `COMPLETE | INCOMPLETE | BLOCKED`',
+    'Figma change complete'
+) 'figma independent review template'
+
+Assert-Anchors $planSkill @(
+    'FIGCAP-*',
+    'PRES-*',
+    'Figma only',
+    'FUNCTION_SCOPE_ONLY',
+    'local `playwright-cli`',
+    'must not create an implicit install task'
+) 'frontend plan Figma quality contract'
+
+Assert-Anchors $planTemplate @(
+    'Figma source and browser capability resolution',
+    'Capability and preservation mapping',
+    'Capability / Preservation Ownership',
+    'FIGCAP-001',
+    'PRES-001'
+) 'frontend plan template Figma quality contract'
+
+Assert-Anchors $brief @(
+    'Figma Capability and Preservation Context',
+    'Required `FIGCAP-*`',
+    'Required `PRES-*`',
+    'Browser capability resolution'
+) 'task brief Figma quality contract'
+
+Assert-Anchors $implementer @(
+    'FIGCAP-*',
+    'PRES-*',
+    'Capability and Preservation Evidence',
+    'Do not mark the Figma change COMPLETE'
+) 'implementer Figma quality contract'
+
+Assert-Anchors $package @(
+    'Capability and Preservation Evidence',
+    'FIGCAP-*',
+    'PRES-*'
+) 'review package Figma quality contract'
+
+Assert-Anchors $taskReviewer @(
+    'For every required FIGCAP-*',
+    'For every required PRES-*',
+    'Capability completion: PASS | FAIL | CANNOT_VERIFY | BLOCKED',
+    'Preservation: PASS | FAIL | CANNOT_VERIFY | BLOCKED'
+) 'task reviewer Figma quality contract'
+
+Assert-Anchors $executeSkill @(
+    'every required FIGCAP-* is PASS',
+    'every core PRES-* is PASS',
+    'capability non-pass',
+    'preservation non-pass'
+) 'SDD controller Figma quality contract'
+
+Assert-Anchors $reviewSkill @(
+    'figma-preservation.md',
+    'figma-capabilities.md',
+    'Every required `FIGCAP-*`',
+    'Every core `PRES-*`',
+    'installation is never inferred'
+) 'final review Figma quality contract'
+
+Assert-Anchors $finalTemplate @(
+    'Figma Capability and Preservation Coverage',
+    'Overall Figma result',
+    'every required `FIGCAP-*`',
+    'core `PRES-*`'
+) 'final review template Figma quality contract'
 
 $plannedCaseAnchors = @(
     'Visual Evidence Manifest',
@@ -509,8 +633,30 @@ Assert-Anchors $planSkill @(
 Assert-Condition (Test-CodeConnectBoundary $figma) 'optional Code Connect boundary is incomplete'
 Assert-Condition (Test-PublicNeutrality $allPublicContracts) 'public visual-evidence contract contains a framework/runner/URL/storage/customer/fixture assumption'
 
+Assert-Anchors $figma @(
+    'prototype must not be a UI visual reference',
+    'not install silently',
+    'Only all required FIGCAP-* = PASS',
+    'independent read-only review'
+) 'fp-figma quality mutation baseline'
+
 # Mutation fixtures operate only in memory and are intentionally excluded from
 # $allPublicContracts, so their forbidden examples cannot self-trigger checks.
+$prototypeAsUiSource = Replace-Required $figma 'prototype must not be a UI visual reference' 'prototype may be a UI visual reference' 'prototype becomes an allowed UI reference'
+Assert-Condition (
+    $prototypeAsUiSource.IndexOf('prototype must not be a UI visual reference', [System.StringComparison]::Ordinal) -lt 0
+) 'mutation survived: prototype may become a Figma UI reference'
+
+$implicitInstall = Replace-Required $figma 'not install silently' 'implicit installation allowed' 'silent browser install'
+Assert-Condition (
+    $implicitInstall.IndexOf('not install silently', [System.StringComparison]::Ordinal) -lt 0
+) 'mutation survived: browser capability may install silently'
+
+$prematureComplete = Replace-Required $figma 'Only all required FIGCAP-* = PASS' 'Any FIGCAP-* = PASS' 'partial capability completion'
+Assert-Condition (
+    $prematureComplete.IndexOf('Only all required FIGCAP-* = PASS', [System.StringComparison]::Ordinal) -lt 0
+) 'mutation survived: partial capability completion may claim complete'
+
 $mutatedImplementer = Replace-Required $implementerOutput 'Approved design source' '' 'implementer drops approved source'
 Assert-Condition (-not (Test-CanonicalVisualTable $mutatedImplementer)) 'mutation survived: implementer may drop a schema field'
 

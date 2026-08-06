@@ -72,6 +72,15 @@ Relevant design excerpt:
 
 > `<minimal exact excerpt>`
 
+## Figma Capability and Preservation Context (when applicable)
+
+- Capability ledger: `<.fp-execute/figma-capabilities.md or N/A>`
+- Preservation contract: `<.fp-execute/figma-preservation.md or N/A>`
+- Required `FIGCAP-*`: `<exact IDs or None>`
+- Required `PRES-*`: `<exact IDs or None>`
+- Browser capability resolution: `<project runner | Playwright browser extension | local playwright-cli | customer choice pending | unavailable>`
+- UI source rule: `Figma only | no trustworthy Figma UI design; prototype FUNCTION_SCOPE_ONLY`
+
 ## Visual Evidence Manifest (frontend/UI only)
 
 Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each planned case owns `manifest.md`, `reference.png`, `current.png`, and optional `diff.png`.
@@ -123,6 +132,8 @@ The report must include:
 - Failing test command and key failure output, unless the task explicitly uses alternative validation.
 - Passing test/lint/build/visual command and key output.
 - Interface/contract evidence.
+- Required `FIGCAP-*` browser-visible results and required `PRES-*` before/after replay results.
+- Browser capability resolution and any non-PASS reason that prevents overall Figma completion.
 - Case-level Visual Evidence rows and `manifest.md`/`reference.png`/`current.png`/optional `diff.png` provenance, plus separate browser interaction evidence.
 - Commit SHA(s).
 - Known concerns or blockers.
