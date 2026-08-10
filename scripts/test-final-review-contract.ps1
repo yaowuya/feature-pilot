@@ -108,9 +108,14 @@ function Get-ActiveMarkdown([string]$text) {
     $openFence = $null
     foreach ($line in ($withoutComments -split "`r?`n")) {
         if ($null -eq $openFence) {
-            $opening = [regex]::Match($line, '^\s*(?<delimiter>`{3,}|~{3,})(?:[^\r\n]*)$')
+            $opening = [regex]::Match($line, '^ {0,3}(?<delimiter>\x60{3,}|~{3,})(?<info>.*)$')
             if ($opening.Success) {
-                $openFence = $opening.Groups['delimiter'].Value
+                $delimiter = $opening.Groups['delimiter'].Value
+                if ($delimiter.StartsWith([string][char]96) -and $opening.Groups['info'].Value.Contains([string][char]96)) {
+                    [void]$activeLines.Add($line)
+                    continue
+                }
+                $openFence = $delimiter
                 continue
             }
             [void]$activeLines.Add($line)
@@ -118,7 +123,7 @@ function Get-ActiveMarkdown([string]$text) {
         }
 
         $delimiterCharacter = [regex]::Escape([string]$openFence[0])
-        $closingPattern = '^\s*' + $delimiterCharacter + '{' + $openFence.Length + ',}\s*$'
+        $closingPattern = '^ {0,3}' + $delimiterCharacter + '{' + $openFence.Length + ',}[ \t]*$'
         if ($line -match $closingPattern) {
             $openFence = $null
         }
@@ -409,6 +414,7 @@ $uiE2EActiveGate = [regex]::Match((Get-ActiveMarkdown $reviewSkill), '(?ms)^### 
 Assert-Condition (-not [string]::IsNullOrWhiteSpace($uiE2EActiveGate)) 'active UI/E2E gate fixture is missing'
 $backtickFence = [string]::new([char]96, 3)
 $tildeFence = '~~~'
+$invalidBacktickOpening = $backtickFence + 'text' + [string][char]96
 $uiE2EPlainPseudo = $uiE2ESkillMutation + "`n" + $uiE2EActiveGate
 Assert-Condition (Test-UiE2EFinalGate $uiE2EPlainPseudo) 'active UI/E2E pseudo gate fixture is not valid'
 $uiE2ECommentPseudo = $uiE2ESkillMutation + "`n<!--`n" + $uiE2EActiveGate + "`n-->"
@@ -417,6 +423,10 @@ $uiE2ETildePseudo = $uiE2ESkillMutation + "`n" + $tildeFence + "text`n" + $uiE2E
 Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ECommentPseudo)) 'UI/E2E helper accepted commented fake gate text'
 Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EBacktickPseudo)) 'UI/E2E helper accepted backtick-fenced fake gate text'
 Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ETildePseudo)) 'UI/E2E helper accepted tilde-fenced fake gate text'
+$invalidBacktickGrant = $invalidBacktickOpening + "`nException: mock data is permitted."
+$invalidBacktickActive = Get-ActiveMarkdown $invalidBacktickGrant
+Assert-Condition ($invalidBacktickActive.Contains($invalidBacktickOpening)) 'invalid backtick-fence opening was removed from active Markdown'
+Assert-Condition ($invalidBacktickActive.Contains('Exception: mock data is permitted.')) 'invalid backtick-fence opening hid a following mock grant'
 
 $legalFenceExample = "visible`n" + $tildeFence + "text`n" + $backtickFence + " is not a closing tilde fence`n" + $tildeFence + "`nvisible"
 $activeLegalFenceExample = Get-ActiveMarkdown $legalFenceExample

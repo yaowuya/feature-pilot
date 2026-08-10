@@ -21,21 +21,40 @@ function Require-MutationBaseline([bool]$condition, [string]$message) {
 function Get-EffectiveNormativeText([string]$text) {
     $normalized = $text.Replace(([string][char]13) + $script:lf, $script:lf).Replace([string][char]13, $script:lf)
     $withoutComments = [regex]::Replace($normalized, '(?s)<!--.*?-->', '')
-    $insideFence = $false
+    $fenceCharacter = $null
+    $minimumFenceLength = 0
     $lines = [System.Collections.Generic.List[string]]::new()
     foreach ($line in ($withoutComments -split $script:lf)) {
-        if ($line -match '^ {0,3}(?:\`{3,}|~{3,})') {
-            $insideFence = -not $insideFence
+        if ($null -eq $fenceCharacter) {
+            $opening = [regex]::Match($line, '^ {0,3}(?<fence>\x60{3,}|~{3,})(?<info>.*)$')
+            if ($opening.Success) {
+                $fence = $opening.Groups['fence'].Value
+                if ($fence.StartsWith([string][char]96) -and $opening.Groups['info'].Value.Contains([string][char]96)) {
+                    $lines.Add($line)
+                    continue
+                }
+                $fenceCharacter = $fence.Substring(0, 1)
+                $minimumFenceLength = $fence.Length
+                continue
+            }
+            $lines.Add($line)
             continue
         }
-        if (-not $insideFence) { $lines.Add($line) }
+        $closing = [regex]::Match($line, '^ {0,3}(?<fence>\x60{3,}|~{3,})[ \t]*$')
+        if ($closing.Success) {
+            $fence = $closing.Groups['fence'].Value
+            if ($fence.Substring(0, 1) -eq $fenceCharacter -and $fence.Length -ge $minimumFenceLength) {
+                $fenceCharacter = $null
+                $minimumFenceLength = 0
+            }
+        }
     }
     return [string]::Join($script:lf, $lines.ToArray())
 }
 
 function Get-EffectiveVerifierPrompt([string]$text) {
     $outer = Get-EffectiveNormativeText $text
-    $promptFence = [regex]::Match($text, '(?ms)^ {0,3}\x60{3}text\s*\r?\n(?<body>.*?)^ {0,3}\x60{3}\s*$')
+    $promptFence = [regex]::Match($text, '(?ms)^ {0,3}\x60{3}text[ \t]*\r?\n(?<body>.*?)^ {0,3}\x60{3,}[ \t]*$')
     if (-not $promptFence.Success) { return $outer }
     $promptBody = [regex]::Replace($promptFence.Groups['body'].Value, '(?s)<!--.*?-->', '')
     return $outer + $script:lf + $promptBody
@@ -203,6 +222,11 @@ $commentedZeroMock = Replace-Required $verifier $zeroMockLine ('<!-- ' + $zeroMo
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $commentedZeroMock) $verifierHeading) $zeroMockLine)) 'mutation survived: comment-only zero-mock rule'
 $fencedZeroMock = Replace-Required $verifier $zeroMockLine ('~~~' + $lf + $zeroMockLine + $lf + '~~~') 'fenced zero-mock rule'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $fencedZeroMock) $verifierHeading) $zeroMockLine)) 'mutation survived: fenced zero-mock rule'
+$invalidBacktickOpening = [string]::new([char]96, 3) + 'text' + $tick
+$invalidBacktickFixture = "## $verifierHeading" + $lf + $invalidBacktickOpening + $lf + 'Exception: mock data is fine.'
+$invalidBacktickEffective = Get-EffectiveNormativeText $invalidBacktickFixture
+Assert-Condition ($invalidBacktickEffective.Contains($invalidBacktickOpening)) 'invalid backtick-fence opening was removed from active normative text'
+Assert-Condition (-not (Test-NoForbiddenGrant $invalidBacktickEffective)) 'invalid backtick-fence opening hid a following mock grant'
 $mayUseMock = Replace-Required $verifier 'It must not use' 'It may use' 'may-use mock rule'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $mayUseMock) $verifierHeading) $zeroMockLine)) 'mutation survived: verifier may use mock data'
 $mockException = Insert-AfterRequired $verifier $zeroMockLine ($lf + 'Exception: mock data is permitted.') 'mock exception'

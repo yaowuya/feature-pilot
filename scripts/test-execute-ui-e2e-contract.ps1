@@ -26,10 +26,10 @@ function Get-EffectiveNormativeText([string]$text) {
     $lines = [System.Collections.Generic.List[string]]::new()
     foreach ($line in ($withoutComments -split $script:lf)) {
         if ($null -eq $fenceCharacter) {
-            $opening = [regex]::Match($line, '^ {0,3}(?<fence>\`{3,}|~{3,})(?<info>.*)$')
+            $opening = [regex]::Match($line, '^ {0,3}(?<fence>\x60{3,}|~{3,})(?<info>.*)$')
             if ($opening.Success) {
                 $fence = $opening.Groups['fence'].Value
-                if ($fence.StartsWith('\`') -and $opening.Groups['info'].Value.Contains('\`')) {
+                if ($fence.StartsWith([string][char]96) -and $opening.Groups['info'].Value.Contains([string][char]96)) {
                     $lines.Add($line)
                     continue
                 }
@@ -40,7 +40,7 @@ function Get-EffectiveNormativeText([string]$text) {
             $lines.Add($line)
             continue
         }
-        $closing = [regex]::Match($line, '^ {0,3}(?<fence>\`{3,}|~{3,})\s*$')
+        $closing = [regex]::Match($line, '^ {0,3}(?<fence>\x60{3,}|~{3,})[ \t]*$')
         if ($closing.Success) {
             $fence = $closing.Groups['fence'].Value
             if ($fence.Substring(0, 1) -eq $fenceCharacter -and $fence.Length -ge $minimumFenceLength) {
@@ -259,6 +259,11 @@ $commentedZeroMock = Replace-Required $skill $zeroMockLine ('<!-- ' + $zeroMockL
 Assert-Condition (-not (Test-ZeroMockRule (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $commentedZeroMock) $gateHeading) $zeroMockLine $mockTerms $canonicalGateLines)) 'mutation survived: comment-only zero-mock rule'
 $fencedZeroMock = Replace-Required $skill $zeroMockLine ('~~~' + $lf + $zeroMockLine + $lf + '~~~') 'fenced-code zero-mock rule'
 Assert-Condition (-not (Test-ZeroMockRule (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $fencedZeroMock) $gateHeading) $zeroMockLine $mockTerms $canonicalGateLines)) 'mutation survived: fenced-code zero-mock rule'
+$invalidBacktickOpening = [string]::new([char]96, 3) + 'text' + $code
+$invalidBacktickFixture = "## $gateHeading" + $lf + $invalidBacktickOpening + $lf + 'Exception: mock data is permitted.'
+$invalidBacktickEffective = Get-EffectiveNormativeText $invalidBacktickFixture
+Assert-Condition ($invalidBacktickEffective.Contains($invalidBacktickOpening)) 'invalid backtick-fence opening was removed from active normative text'
+Assert-Condition (-not (Test-SectionHasNoPermissiveGrant $invalidBacktickEffective @('mock data'))) 'invalid backtick-fence opening hid a following mock grant'
 $mayUseMock = Replace-Required $skill 'It must not use' 'It may use' 'may-use mock rule'
 Assert-Condition (-not (Test-ZeroMockRule (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $mayUseMock) $gateHeading) $zeroMockLine $mockTerms $canonicalGateLines)) 'mutation survived: fp-execute may use mock E2E data'
 $permittedMock = Insert-AfterRequired $skill $zeroMockLine ($lf + 'Exception: mock is permitted.') 'permitted mock exception'
