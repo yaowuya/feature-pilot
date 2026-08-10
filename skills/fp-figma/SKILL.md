@@ -8,6 +8,8 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing design artifacts; it owns exclusive forms, manifests, hard limits, conversion, and historical-layout rejection.
+
+When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before Figma mapping or evidence planning. It owns UI Delivery Level, staged lifecycle, real frontend E2E, coverage, bootstrap, blocking, final-review, and archive rules.
 ---
 
 # FeaturePilot Figma
@@ -33,6 +35,14 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - 当 Figma MCP 不可用时，只有用户或已批准产物中的 explicitly approved source（Figma 导出或其他静态设计源）才可继续；没有可信 source 是 blocker，不得从记忆、代码或本地 runtime screenshot 反推并冒充设计上下文。
 - `reference.png` 只能来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 只能来自 real target runtime 的实际 runtime route，使用 stable data 与 stable environment。`diff.png` 是 optional diff；missing diff 必须说明，且 must not hide 缺失 reference/current 的事实。
 - Code Connect 只是 component mapping 的 optional enhancement，受能力与许可影响；must not auto-create `.figma.ts`，must not change tsconfig，must not install dependencies。Code Connect absence does not block ordinary UI。
+
+## UI delivery and evidence mapping
+
+For every UI-bearing Figma mapping case, record the approved design source/Figma node and the source-derived condition or branch it represents, then associate its stable task ID, case ID, UI Delivery Level, runtime route, Visual Evidence case, and E2E case. A Figma node or approved static design source establishes visual provenance only; it is never real frontend E2E evidence. The later UI/E2E Delivery Contract links the existing Visual Evidence Manifest by `Task ID + Case ID` and does not duplicate visual-manifest fields.
+
+Derive `static-only`, `interactive`, or `business-flow` from the source-backed user-visible behavior rather than from implementation convenience. Preserve the shared contract's lifecycle and case rules: static-only maps to an evidence-backed E2E `N/A`, while interactive and business-flow map to required real browser E2E. A business-flow mapping identifies the real core API boundary, persistence/permission outcome, and cleanup expectation for the later plan; it must retain `Mocked Core API: false` in E2E evidence.
+
+Visual and E2E evidence are distinct channels. Continue to record approved source, component mapping, and Visual Checks for the visual channel; carry the route and source-derived condition forward so the frontend plan can create the UI/E2E Delivery Contract and canonical per-case coverage matrix. Do not derive E2E success from Figma data, an export, a reference image, or a local runtime screenshot.
 
 ## Canonical design layout
 

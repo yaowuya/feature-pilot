@@ -10,6 +10,8 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing the frontend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
+
+When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before deriving frontend tasks. It owns the UI Delivery Level, allowed staged lifecycle, real frontend E2E and zero-mock rule, coverage matrix, local Playwright bootstrap, retry, blocking, final-review, and archive rules.
 ---
 
 # FeaturePilot Frontend Plan
@@ -81,7 +83,11 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 - 每个需要视觉验收的 task 都必须携带 case-level `Visual Evidence Manifest`。每个 Case ID 记录 Approved design source、Figma node、revision/time、Frame/variant、可用的 variables / Auto Layout / assets、Runtime route、Scenario/state、Viewport、DPR、Locale、Theme、Deterministic non-sensitive fixture、Reference path、Current path、Diff path、Mask、Acceptance rule、Command/tool 与 Failure class。标准目录是 `.fp-execute/visual/<task-id>/<case-id>/`，包含 `manifest.md`、`reference.png`、`current.png`，`diff.png` 可选。
 - `reference.png` 必须来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 必须来自 real target runtime 的实际 route，使用 stable data 与 stable environment。optional diff 缺失时写明 missing diff，且 must not hide source/runtime 缺失。
 - Browser interaction evidence 与 screenshot evidence 必须 separate；observable flow 要操作到 manifest 中的 approved states，不能用点击成功替代视觉对比。
-- 优先使用 project-configured Playwright/browser runner 或等价浏览器工具，不硬编码框架或命令，do not define a global pixel threshold。若缺 browser runner，计划中新增 explicit task 并取得 authorization；do not silently install 依赖。
+- 每个 UI-bearing task/case 除既有 Visual Evidence Manifest 外，必须由唯一 stable task owner 在独立的 `UI/E2E Delivery Contract` 中记录 source-derived condition/requirement reference、UI Delivery Level、runtime route reference or E2E route、E2E applicability、required lifecycle stage evidence、canonical `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` path，以及 N/A / BLOCKED rationale。该表以 `Task ID + Case ID` 关联既有 Visual Evidence Manifest，does not duplicate visual-manifest fields，且不得改变或复用既有表。
+- UI/E2E Delivery Contract 只拥有交付级别、来源条件、E2E applicability、阶段、E2E coverage 与 N/A / BLOCKED 决策；approved design source、Figma mapping、viewport/fixture、reference/current/diff、mask、visual acceptance 和 visual command 均继续由 Visual Evidence Manifest 唯一拥有。
+- Source-derived coverage 必须逐 case 映射需求、Figma/design、当前代码和真实可观察分支。`static-only` 仅可在可信视觉通过后以有证据理由记录 E2E `N/A`；`interactive` 与 `business-flow` 均为 `REQUIRED`，不得跳过、人工豁免或以截图替代。business-flow 还必须计划 real core API、`Mocked Core API: false`、真实 persistence/permission result 及 cleanup。
+- 在每个 UI task 的步骤中明确分阶段：`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS`；`interactive` 和 `business-flow` 必须继续 `INTERACTION_READY -> FRONTEND_E2E_PASS`。Visual 和真实前端 E2E 是独立 artifact；真实 E2E 禁止 route/intercept、MSW、Cypress stubs/intercepts、fixture JSON、mock module、hard-coded API data、store/localStorage business-data injection、database seed 或绕开 UI 的 direct backend/API write。不能在真实环境安全触发的 in-scope condition 为 `BLOCKED`，不得改标为 `N/A` 或使用 mock。
+- 优先使用 existing project runner 或 project-configured Playwright/browser runner 或等价浏览器工具，不硬编码框架或命令，do not define a global pixel threshold。若 runner 缺失，按 shared contract 自动检测 target frontend root、workspace、lockfile 和 package manager，在目标项目内将 `@playwright/test` 作为 development dependency 安装并安装 Chromium；Never install globally, overwrite existing configuration, or upgrade unrelated dependencies。记录 resolved version、commands 和 changed files；无有效 frontend root 或 bootstrap 失败为 `BLOCKED`。
 
 - Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
@@ -104,6 +110,7 @@ Revise the plan if any of these appear:
 - Component tasks without concrete Interfaces and Contract checks.
 - Visual Checks that cannot be traced to the resolved frontend design, settings, Figma, screenshot, or existing code.
 - Core visual case 缺少 approved source、real runtime、稳定 fixture 或可重放命令；仅给 reason 不能替代证据。
+- UI-bearing case 缺少独立 UI/E2E Delivery Contract、source-derived coverage matrix、required lifecycle evidence，或在真实 E2E 使用 mock / bypass UI。
 - Verification steps that only say “run tests” or “check page” without exact command/path/expected result.
 
 ## Self-review
@@ -119,3 +126,4 @@ Before returning to `fp-plan`, verify:
 7. If `tasks/frontend/00-index.md` exists, `plan-frontend.md` does not exist; the manifest uses `Order / File / Kind / Owns`; every listed fragment exists, no unindexed fragment exists, order is deterministic, no consumer needs glob order, and every executable task checkbox appears exactly once only in a `tasks`-kind fragment, with none in the index/context/interface/coverage files.
 8. `frontend-NNN` IDs are unique across all owner files, continue across fragments, and dependencies reference existing IDs; after execution begins, plan revisions do not silently move or renumber tasks.
 9. Every output file is within 500 lines and 30,000 characters; small form has no `tasks/frontend/`, and a single-end frontend plan has no `tasks/00-overview.md`.
+10. Every UI-bearing case has a unique UI/E2E Delivery Contract row, a source-derived per-case coverage matrix path, level-appropriate lifecycle evidence, and no invalid E2E `N/A`, mock, or bypass-UI exception.

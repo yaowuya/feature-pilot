@@ -21,7 +21,7 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 - Component library/design system: <source>
 - Script/style conventions: <source>
 - Visual source: <Figma / screenshot / existing page / settings>
-- Visual evidence runner: <project-configured browser runner/tool, or explicit authorized setup task>
+- Visual evidence runner: <project-configured browser runner/tool, or shared-contract automatic local Playwright bootstrap>
 - Verification commands: <source>
 
 ## File Structure
@@ -56,6 +56,22 @@ Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each case writes `mani
 - Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+
+### 2.6 UI/E2E Delivery Contract
+
+This contract is independent of the Visual Evidence Manifest. Each UI-bearing task/case has exactly one stable owner row; the UI/E2E Delivery Contract links the existing Visual Evidence Manifest by `Task ID + Case ID` and does not duplicate visual-manifest fields. Approved design provenance, Figma mapping, viewport/fixture, reference/current/diff, mask, visual acceptance, and visual command remain the Visual Evidence Manifest's unique responsibility; Figma/approved design source and runtime screenshots never replace real frontend E2E.
+
+E2E evidence root: `.fp-execute/e2e/<task-id>/<case-id>/`. The canonical coverage matrix is `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`; one matrix covers exactly one task/case pair.
+
+| Task ID | Case ID | Source-derived condition / requirement reference | UI Delivery Level | Runtime route reference / E2E route | E2E Applicability | Required lifecycle path / stage evidence | Coverage matrix | N/A / BLOCKED rationale |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `frontend-NNN` | `<case-id>` | `<proposal/design/code source and condition/branch>` | `static-only` / `interactive` / `business-flow` | `<Visual Case ID route reference or explicit E2E route>` | `N/A` only for static-only; otherwise `REQUIRED` | `<level-appropriate required stages and artifact paths>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<reason and evidence when N/A or BLOCKED; otherwise N/A>` |
+
+Every task first reaches `SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS`. A `static-only` case then records evidence-backed E2E `N/A` before final review. `interactive` and `business-flow` cases use `E2E Applicability: REQUIRED` and must additionally reach `INTERACTION_READY -> FRONTEND_E2E_PASS` with real browser evidence; required E2E cannot be SKIPPED, manual-approved, or waived.
+
+For `business-flow`, record real core API proof, `Mocked Core API: false`, real persistence or permission result, and cleanup of test-created data. E2E may use real test accounts only; it must not use `page.route`, `route.fulfill`, MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow. Any in-scope condition that cannot safely receive real-environment evidence is `BLOCKED`, never `N/A` or covered by mock data.
+
+The per-case coverage matrix is source-derived and must cover happy paths and branches; validation and boundaries; loading, empty, error, and retry states; permissions and isolation; persistence and navigation; state transitions and concurrency; and applicable API pagination, filtering, sorting, and compatibility. Record each condition as `covered`, `N/A`, or `BLOCKED` with rationale and real evidence.
 
 ## 3. Task breakdown
 
@@ -101,6 +117,12 @@ Expected: FAIL with `<specific missing behavior>`
 **Visual / UX Checks:**
 - <check traceable to design/settings/Figma/screenshot/current code>
 - Visual Evidence cases: <Case IDs owned by this task; core cases require both trustworthy reference.png and real-runtime current.png>
+
+**UI/E2E Lifecycle and Evidence:**
+- UI Delivery Level and Contract cases: <the task/case rows owned in section 2.6>
+- Source and stages: <SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS; add INTERACTION_READY -> FRONTEND_E2E_PASS when required>
+- E2E evidence: <real browser command, `.fp-execute/e2e/<task-id>/<case-id>/` artifacts, and canonical coverage matrix; visual evidence remains separate>
+- BLOCKED handling: <real-environment limitation, safe trigger constraint, and unresolved source-derived coverage condition>
 
 **Step 4: Run test to verify it passes**
 
