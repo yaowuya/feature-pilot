@@ -199,8 +199,8 @@ For every UI case, record its UI Delivery Level, required lifecycle path, actual
 
 - A `static-only` case reaches this gate only after `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
 - An `interactive` or `business-flow` case must reach `FRONTEND_E2E_PASS`; missing real E2E evidence, a missing matrix, a blocked matrix entry, or any other required E2E shortfall is not `N/A`.
-- A `business-flow` case additionally proves the real core API, `Mocked Core API: false`, real persistence or permission result, and cleanup of test-created data.
-- Inspect the zero-mock rule directly. A route/intercept/stub/fixture/mock module, injected business data, seed, or direct backend/API write that bypasses the UI is a mock violation.
+- A `business-flow` case must additionally prove the real core API, `Mocked Core API: false`, real persistence or permission result, and cleanup of test-created data.
+- Inspect the zero-mock rule directly. Any `page.route`/route, intercept, MSW, Cypress stub, fixture JSON, hard-coded API data, mock module, frontend store/localStorage business-data injection, database seed, or direct backend/API write that bypasses the UI is a mock violation and blocks the gate with `FAIL` or `BLOCKED`.
 
 Emit one independent `UI/E2E Gate: PASS | N/A | FAIL | BLOCKED` result. `N/A` means no UI-bearing case exists; it never means a required E2E case was skipped. A core UI/E2E gap, mock violation, unsafe unverified real-environment condition, missing required E2E evidence, missing coverage matrix, or lifecycle `BLOCKED` state makes the UI/E2E Gate `FAIL` or `BLOCKED` and names the repair owner. Such a result cannot be converted into `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
 

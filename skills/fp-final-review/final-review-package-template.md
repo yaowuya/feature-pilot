@@ -2,7 +2,6 @@
 
 Use this template for `.fp-execute/packages/final-review-package.md` before dispatching `fp-final-review`. The package is deterministic review evidence, not completion authority: canonical task-owner checkboxes remain planned-completion authority and the progress ledger remains recovery/orchestration evidence.
 
-```markdown
 # Final Review Package: <slug>
 
 ## Review Identity
@@ -166,4 +165,3 @@ Read the shared UI/E2E contract and join every planned UI case by exact Task ID 
 - Owner-checkbox reconciliation: `<evidence>`
 - Review attempt event: `<scope id, attempt, head, prior report, disposition>`
 - Completion authority reminder: `<package does not determine completion>`
-```

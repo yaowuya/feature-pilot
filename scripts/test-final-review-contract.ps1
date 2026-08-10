@@ -102,17 +102,25 @@ function Test-FinalFlowOrder([string]$text) {
 
 function Get-ActiveMarkdown([string]$text) {
     # Contract prose inside an HTML comment or a fenced example cannot satisfy a
-    # live skill guard. Keep only active, non-fenced Markdown for guard checks.
+    # live skill guard. Keep only active Markdown for every gate assertion.
     $withoutComments = [regex]::Replace($text, '(?s)<!--.*?-->', '')
     $activeLines = New-Object System.Collections.Generic.List[string]
-    $insideFence = $false
+    $openFence = $null
     foreach ($line in ($withoutComments -split "`r?`n")) {
-        if ($line -match '^\s*```') {
-            $insideFence = -not $insideFence
+        if ($null -eq $openFence) {
+            $opening = [regex]::Match($line, '^\s*(?<delimiter>`{3,}|~{3,})(?:[^\r\n]*)$')
+            if ($opening.Success) {
+                $openFence = $opening.Groups['delimiter'].Value
+                continue
+            }
+            [void]$activeLines.Add($line)
             continue
         }
-        if (-not $insideFence) {
-            [void]$activeLines.Add($line)
+
+        $delimiterCharacter = [regex]::Escape([string]$openFence[0])
+        $closingPattern = '^\s*' + $delimiterCharacter + '{' + $openFence.Length + ',}\s*$'
+        if ($line -match $closingPattern) {
+            $openFence = $null
         }
     }
     return [string]::Join("`n", $activeLines)
@@ -131,11 +139,34 @@ function Test-UiE2EFinalGate([string]$text) {
         ($body -match '(?is)required.*actual.*stage'),
         ($body -match '(?is)VISUAL_REVIEW_PASS'),
         ($body -match '(?is)static-only.{0,220}E2E Applicability:\s*N/A.{0,220}(?:evidence-backed|reason)'),
-        ($body -match '(?is)(?:interactive|business-flow).{0,260}FRONTEND_E2E_PASS'),
+        ($body -match '(?is)interactive.{0,160}(?:must|required).{0,160}FRONTEND_E2E_PASS'),
+        ($body -match '(?is)business-flow.{0,160}(?:must|required).{0,160}FRONTEND_E2E_PASS'),
         ($body -match '(?is)\.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix\.md'),
-        ($body -match '(?is)Mocked Core API:\s*false'),
+        ($body -match '(?is)business-flow.{0,240}(?:must|required).{0,240}Mocked Core API:\s*false'),
         ($body -match '(?is)cleanup'),
+        ($body -match '(?is)(?:page\.route|route).{0,160}intercept.{0,160}MSW.{0,160}Cypress.{0,160}fixture.{0,160}hard-coded API.{0,160}mock module.{0,160}(?:store|localStorage).{0,160}seed.{0,160}direct backend/API write.{0,160}mock violation.{0,240}(?:block|FAIL|BLOCKED)'),
+        ($body -notmatch '(?is)(?:page\.route|route).{0,160}intercept.{0,160}MSW.{0,160}Cypress.{0,160}fixture.{0,160}hard-coded API.{0,160}mock module.{0,160}(?:store|localStorage).{0,160}seed.{0,160}direct backend/API write.{0,240}(?:allowed|permitted)'),
         ($body -match '(?is)(?:core UI/E2E gap|mock violation|unsafe unverified|required E2E).{0,360}(?:FAIL|BLOCKED)'),
+        ($body -match '(?is)(?:cannot|must not).{0,200}(?:PASS_WITH_NOTES|review debt|manual (?:override|approval)|waiv(?:e|ed))')
+    )
+    return -not ($checks -contains $false)
+}
+
+function Test-UiE2EReviewerGate([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    return $active -match '(?is)UI/E2E Gate.{0,520}Task ID.{0,180}Case ID.{0,180}\.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix\.md.{0,260}Mocked Core API.{0,180}Cleanup'
+}
+
+function Test-UiE2EArtifactGate([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $section = [regex]::Match($active, '(?ms)^## UI/E2E Gate[ \t]*\r?\n(?<body>.*?)(?=^## |\z)')
+    if (-not $section.Success) { return $false }
+    $body = $section.Groups['body'].Value
+    $checks = @(
+        ($body -match '(?is)\| Task ID \| Case ID \| UI Delivery Level \| Required stage \| Actual stage \|'),
+        ($body -match '(?is)\.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix\.md'),
+        ($body -match '(?is)Mocked Core API'),
+        ($body -match '(?is)Cleanup'),
         ($body -match '(?is)(?:cannot|must not).{0,200}(?:PASS_WITH_NOTES|review debt|manual (?:override|approval)|waiv(?:e|ed))')
     )
     return -not ($checks -contains $false)
@@ -146,6 +177,7 @@ function Test-ArchiveUiE2EHardGate([string]$text) {
     $section = [regex]::Match($active, '(?ms)^### Step 2\.1: UI/E2E Final Gate[ \t]*\r?\n(?<body>.*?)(?=^### |\z)')
     if (-not $section.Success) { return $false }
     $body = $section.Groups['body'].Value
+    $confirmation = [regex]::Match($active, '(?m)^### Step 3:')
 
     $checks = @(
         ($body -match '(?is)latest.{0,80}final review'),
@@ -155,7 +187,7 @@ function Test-ArchiveUiE2EHardGate([string]$text) {
         ($body -match '(?is)ordinary non-core.{0,220}incomplete task'),
         ($body -match '(?is)not a second completion authority')
     )
-    return -not ($checks -contains $false)
+    return -not ($checks -contains $false) -and $section.Index -lt $confirmation.Index
 }
 
 $reviewSkillPath = Join-Path $root 'skills\fp-final-review\SKILL.md'
@@ -194,6 +226,9 @@ $codeGraph = Read-Utf8 $codeGraphPath
 $command = Read-Utf8 $commandPath
 $validator = Read-Utf8 $validatorPath
 $archiveSkill = Read-Utf8 $archiveSkillPath
+$activeReviewer = Get-ActiveMarkdown $reviewer
+$activeReportTemplate = Get-ActiveMarkdown $reportTemplate
+$activeFinalPackage = Get-ActiveMarkdown $finalPackage
 
 Assert-Condition (-not (Test-Path (Join-Path $root 'commands\fp-review.md'))) 'old fp-review command still exists'
 Assert-Condition (-not (Test-Path (Join-Path $root 'skills\fp-review'))) 'old fp-review skill directory still exists'
@@ -349,9 +384,9 @@ Assert-Anchors $reviewSkill @('Attempt 3', 'non-blocking debt', 'main-flow block
 # The UI/E2E gate is independent from (but cross-references) Visual Evidence.
 # It carries lifecycle/E2E closure instead of duplicating the visual table fields.
 Assert-Condition (Test-UiE2EFinalGate $reviewSkill) 'fp-final-review is missing the non-waivable UI/E2E final gate'
-Assert-Condition ($reviewer -match '(?is)UI/E2E Gate.{0,520}Task ID.{0,180}Case ID.{0,180}Mocked Core API.{0,180}Cleanup') 'final reviewer prompt is missing UI/E2E gate verification fields'
-Assert-Condition ($reportTemplate -match '(?ims)^## UI/E2E Gate[ \t]*\r?\n.*?\| Task ID \| Case ID \| UI Delivery Level \| Required stage \| Actual stage \|.*?\| Mocked Core API \| Cleanup \|.*?\| Blocking condition \|') 'final report must keep a dedicated UI/E2E Gate table'
-Assert-Condition ($finalPackage -match '(?ims)^## UI/E2E Gate[ \t]*\r?\n.*?\| Task ID \| Case ID \| UI Delivery Level \| Required stage \| Actual stage \|.*?\| Mocked Core API \| Cleanup \|.*?\| Blocking condition \|') 'final package must keep a dedicated UI/E2E Gate table'
+Assert-Condition (Test-UiE2EReviewerGate $reviewer) 'final reviewer prompt is missing active UI/E2E gate verification fields'
+Assert-Condition (Test-UiE2EArtifactGate $reportTemplate) 'final report must keep an active dedicated UI/E2E Gate table and matrix path'
+Assert-Condition (Test-UiE2EArtifactGate $finalPackage) 'final package must keep an active dedicated UI/E2E Gate table and matrix path'
 Assert-Condition (Test-ArchiveUiE2EHardGate $archiveSkill) 'fp-archive must reject non-waivable UI/E2E core gaps before confirmation'
 
 $uiE2ESkillMutation = $reviewSkill.Replace('### 2.2 UI/E2E Gate', '### Removed UI/E2E Gate')
@@ -362,27 +397,42 @@ $uiE2EPassNotesMutation = $reviewSkill.Replace('cannot be converted into `PASS`,
 Assert-Condition ($uiE2EPassNotesMutation -ne $reviewSkill) 'PASS_WITH_NOTES mutation fixture did not mutate the review skill'
 Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EPassNotesMutation)) 'UI/E2E helper accepted a PASS_WITH_NOTES/manual-waiver bypass'
 
-$uiE2EMockMutation = $reviewSkill.Replace('Mocked Core API: false', 'Mocked Core API: true') + "`nMocked Core API: false"
+$uiE2EMockMutation = $reviewSkill.Replace('is a mock violation and blocks the gate with `FAIL` or `BLOCKED`', 'is allowed') + "`nMocked Core API: false"
 Assert-Condition ($uiE2EMockMutation -ne $reviewSkill) 'mock-core-API mutation fixture did not mutate the review skill'
-Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EMockMutation)) 'UI/E2E helper accepted appended mock-free text after a mock violation'
+Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EMockMutation)) 'UI/E2E helper accepted a prohibited mock route/intercept/data path'
 
-$uiE2ESkipMutation = $reviewSkill.Replace('FRONTEND_E2E_PASS', 'E2E SKIPPED') + "`nFRONTEND_E2E_PASS"
+$uiE2ESkipMutation = $reviewSkill.Replace('case must reach `FRONTEND_E2E_PASS`', 'case may skip real E2E') + "`nFRONTEND_E2E_PASS"
 Assert-Condition ($uiE2ESkipMutation -ne $reviewSkill) 'required-E2E skip mutation fixture did not mutate the review skill'
-Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ESkipMutation)) 'UI/E2E helper accepted appended E2E-pass text after a required-E2E skip'
+Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ESkipMutation)) 'UI/E2E helper accepted a may-skip required E2E path'
 
-$uiE2EFakeComment = @'
-<!-- ## UI/E2E Gate
-shared UI/E2E contract Task ID + Case ID UI Delivery Level required actual stage VISUAL_REVIEW_PASS static-only E2E Applicability: N/A evidence-backed reason interactive FRONTEND_E2E_PASS .fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md Mocked Core API: false cleanup core UI/E2E gap FAIL cannot PASS_WITH_NOTES review debt manual override waived
--->
-'@
-$uiE2EFakeFence = @'
-```text
-## UI/E2E Gate
-shared UI/E2E contract Task ID + Case ID UI Delivery Level required actual stage VISUAL_REVIEW_PASS static-only E2E Applicability: N/A evidence-backed reason interactive FRONTEND_E2E_PASS .fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md Mocked Core API: false cleanup core UI/E2E gap FAIL cannot PASS_WITH_NOTES review debt manual override waived
-```
-'@
-$uiE2EFakeMutation = $uiE2ESkillMutation + $uiE2EFakeComment + $uiE2EFakeFence
-Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EFakeMutation)) 'UI/E2E helper accepted commented or fenced fake gate text'
+$uiE2EActiveGate = [regex]::Match((Get-ActiveMarkdown $reviewSkill), '(?ms)^### 2\.2 UI/E2E Gate[ \t]*\r?\n.*?(?=^### |\z)').Value
+Assert-Condition (-not [string]::IsNullOrWhiteSpace($uiE2EActiveGate)) 'active UI/E2E gate fixture is missing'
+$backtickFence = [string]::new([char]96, 3)
+$tildeFence = '~~~'
+$uiE2EPlainPseudo = $uiE2ESkillMutation + "`n" + $uiE2EActiveGate
+Assert-Condition (Test-UiE2EFinalGate $uiE2EPlainPseudo) 'active UI/E2E pseudo gate fixture is not valid'
+$uiE2ECommentPseudo = $uiE2ESkillMutation + "`n<!--`n" + $uiE2EActiveGate + "`n-->"
+$uiE2EBacktickPseudo = $uiE2ESkillMutation + "`n" + $backtickFence + "text`n" + $uiE2EActiveGate + "`n" + $backtickFence
+$uiE2ETildePseudo = $uiE2ESkillMutation + "`n" + $tildeFence + "text`n" + $uiE2EActiveGate + "`n" + $tildeFence
+Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ECommentPseudo)) 'UI/E2E helper accepted commented fake gate text'
+Assert-Condition (-not (Test-UiE2EFinalGate $uiE2EBacktickPseudo)) 'UI/E2E helper accepted backtick-fenced fake gate text'
+Assert-Condition (-not (Test-UiE2EFinalGate $uiE2ETildePseudo)) 'UI/E2E helper accepted tilde-fenced fake gate text'
+
+$legalFenceExample = "visible`n" + $tildeFence + "text`n" + $backtickFence + " is not a closing tilde fence`n" + $tildeFence + "`nvisible"
+$activeLegalFenceExample = Get-ActiveMarkdown $legalFenceExample
+Assert-Condition ($activeLegalFenceExample -notmatch 'not a closing tilde fence') 'active Markdown helper accepted text inside a paired tilde fence'
+Assert-Condition ([regex]::Matches($activeLegalFenceExample, '(?m)^visible$').Count -eq 2) 'active Markdown helper did not preserve legal text around a paired tilde fence'
+
+$reportGate = [regex]::Match($activeReportTemplate, '(?ms)^## UI/E2E Gate[ \t]*\r?\n.*?(?=^## |\z)').Value
+$reportGateRemoved = $reportTemplate.Replace('## UI/E2E Gate', '## Removed UI/E2E Gate')
+Assert-Condition (Test-UiE2EArtifactGate ($reportGateRemoved + "`n" + $reportGate)) 'active report pseudo gate fixture is not valid'
+Assert-Condition (-not (Test-UiE2EArtifactGate ($reportGateRemoved + "`n<!--`n" + $reportGate + "`n-->"))) 'artifact gate accepted commented pseudo table/matrix/waiver'
+Assert-Condition (-not (Test-UiE2EArtifactGate ($reportGateRemoved + "`n" + $backtickFence + "text`n" + $reportGate + "`n" + $backtickFence))) 'artifact gate accepted fenced pseudo table/matrix/waiver'
+
+$packageGate = [regex]::Match($activeFinalPackage, '(?ms)^## UI/E2E Gate[ \t]*\r?\n.*?(?=^## |\z)').Value
+$packageGateRemoved = $finalPackage.Replace('## UI/E2E Gate', '## Removed UI/E2E Gate')
+Assert-Condition (Test-UiE2EArtifactGate ($packageGateRemoved + "`n" + $packageGate)) 'active package pseudo gate fixture is not valid'
+Assert-Condition (-not (Test-UiE2EArtifactGate ($packageGateRemoved + "`n" + $tildeFence + "text`n" + $packageGate + "`n" + $tildeFence))) 'artifact gate accepted tilde-fenced pseudo table/matrix/waiver'
 
 $archiveOverrideMutation = $archiveSkill.Replace('A user confirmation cannot override or waive this gate', 'A user confirmation may override this gate')
 Assert-Condition ($archiveOverrideMutation -ne $archiveSkill) 'archive override mutation fixture did not mutate the archive skill'
@@ -392,6 +442,11 @@ $archiveGateRemoved = $archiveSkill.Replace('### Step 2.1: UI/E2E Final Gate', '
 $archivePermissionMutation = $archiveGateRemoved + "`n<!-- ### Step 2.1: UI/E2E Final Gate`nRead the latest final review UI/E2E Gate. FAIL or BLOCKED must not archive. user confirmation cannot override or waive. ordinary non-core incomplete task. not a second completion authority.`n-->"
 Assert-Condition ($archivePermissionMutation -ne $archiveSkill) 'archive permission mutation fixture did not mutate the archive skill'
 Assert-Condition (-not (Test-ArchiveUiE2EHardGate $archivePermissionMutation)) 'archive helper accepted an appended permission-style UI/E2E gate'
+
+$archiveGateText = [regex]::Match((Get-ActiveMarkdown $archiveSkill), '(?ms)^### Step 2\.1: UI/E2E Final Gate[ \t]*\r?\n.*?(?=^### Step 3:|\z)').Value
+$archiveGateMoved = [regex]::Replace($archiveSkill, '(?ms)^### Step 2\.1: UI/E2E Final Gate[ \t]*\r?\n.*?(?=^### Step 3:)', '') + "`n" + $archiveGateText
+Assert-Condition ($archiveGateMoved -ne $archiveSkill) 'archive gate move mutation fixture did not mutate the archive skill'
+Assert-Condition (-not (Test-ArchiveUiE2EHardGate $archiveGateMoved)) 'archive helper accepted a UI/E2E gate after user confirmation'
 
 # Negative in-memory fixtures prove the semantic helpers reject regressions,
 # rather than merely finding an unrelated combined anchor elsewhere.

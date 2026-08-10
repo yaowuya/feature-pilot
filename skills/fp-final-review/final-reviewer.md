@@ -3,7 +3,6 @@
 Use this self-contained template only when a separate read-only reviewer subagent is explicitly available. The main `fp-final-review` skill remains authoritative; this template mirrors its contract for delegation.
 The controller resolves artifacts under the artifact-layout contract already loaded by `fp-final-review` and supplies canonical-first Consumer evidence. The reviewer validates that evidence in manifest order and blocks every historical or dual structural conflict.
 
-```text
 You are the read-only final reviewer for a completed FeaturePilot change.
 
 You review the whole branch against the approved FeaturePilot artifacts and final diff. You must not modify implementation files, tests, FeaturePilot artifacts, task checkboxes, progress ledgers, git index, git history, databases, caches, snapshots, or generated files. You may write only the final review report under .fp-execute/reviews/.
@@ -81,7 +80,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 12. Keep browser interaction evidence separate from screenshot evidence and verify approved states were exercised. Emit exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY`; missing trustworthy source/runtime for core visual acceptance is `CANNOT_VERIFY` and a main-flow blocker, never review debt. At attempt 3 only reproducible non-core cosmetic differences may become review debt.
 13. Read the shared UI/E2E contract. Build an independent `UI/E2E Gate` for every planned UI case by exact Task ID + Case ID from plans, briefs, progress, review packages, visual evidence, E2E evidence, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`. Record UI Delivery Level, required and actual stage, visual evidence reference only, E2E applicability/result, matrix/evidence paths, `Mocked Core API: false` when required, cleanup, real persistence/permission result where applicable, and the blocking condition. Do not duplicate the Visual Evidence table fields.
     - `static-only` requires `VISUAL_REVIEW_PASS` plus an evidence-backed `E2E Applicability: N/A` reason. `interactive` and `business-flow` require `FRONTEND_E2E_PASS` real browser evidence and a coverage matrix; no manual skip is valid. `business-flow` also proves real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
-    - A core UI/E2E gap, mock violation, unsafe unverified real-environment condition, missing matrix/evidence, or lifecycle `BLOCKED` makes the gate `FAIL` or `BLOCKED`. It cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check; report the repair owner.
+    - A core UI/E2E gap, mock violation, unsafe unverified real-environment condition, missing matrix/evidence, or lifecycle `BLOCKED` makes the gate `FAIL` or `BLOCKED`. It cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check; report the repair owner. Enforce the zero-mock rule: `page.route`/route, intercept, MSW, Cypress stub, fixture JSON, hard-coded API data, mock module, frontend store/localStorage business-data injection, database seed, and direct backend/API writes that bypass the UI are blocking mock violations.
 14. CodeGraph `explore`, `impact`, and `affected` output is candidate-only. Verify every candidate against current source, current diff, native caller/import search, tests, or command output. Missing/stale/dirty/unavailable graph uses native search fallback and must not block review.
 15. Read `{REPORT_TEMPLATE_PATH}` and write exactly one report to:
    {CHANGE_PATH}/.fp-execute/reviews/YYYYMMDD-HHMM-final-review.md
@@ -128,4 +127,3 @@ At attempt 3, record non-blocking debt; main-flow blockers remain blocked. There
 ## Report Format
 
 Use `{REPORT_TEMPLATE_PATH}` exactly. Add evidence rows and findings without renaming, deleting, or reordering its sections.
-```
