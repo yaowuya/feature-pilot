@@ -9,6 +9,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, bootstrap, retry, and non-waivable blocking.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract across controller and workers.
 ---
 
@@ -41,6 +42,7 @@ skills/fp-execute-sdd/
   SKILL.md
   task-brief-template.md
   implementer-prompt.md
+  e2e-verifier-prompt.md
   task-reviewer-prompt.md
   fix-prompt.md
   review-package-template.md
@@ -78,6 +80,7 @@ Immediately read with tools:
 - Complete resolved PRD/proposal logical content (`prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`)
 - Resolved complete design artifacts using the canonical-first rule above
 - Complete resolved task files: each selected small file or split index plus its manifest-ordered task-owner fragments, and the two-end `tasks/00-overview.md` only when applicable
+- For UI-bearing work, matching `UI/E2E Delivery Contract` and `Visual Evidence Manifest` rows from the resolved canonical frontend plan
 - Project constraints if present: `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`
 - Existing `fp-docs/changes/<slug>/.fp-execute/progress.md`, if any
 
@@ -118,12 +121,13 @@ The controller must:
 3. Create a task brief file.
 4. Dispatch exactly one implementer subagent for that task.
 5. Wait for the implementer to finish.
-6. Create a review package from the actual diff and report.
-7. Dispatch exactly one read-only task reviewer.
-8. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
-9. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes or attempt 3 leaves only non-blocking review debt.
-10. After a task passes review or is accepted with non-blocking review debt at attempt 3, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
-11. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
+6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, dispatch the independent E2E verifier before package/review; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
+7. Create a review package from the actual diff, implementer report, and independent E2E result.
+8. Dispatch exactly one read-only task reviewer.
+9. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
+10. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes or attempt 3 leaves only non-blocking review debt.
+11. After a task passes review or is accepted with non-blocking review debt at attempt 3, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
+12. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
 The dynamic context assembled here replaces the old static handoff gate; the exact brief/package sources are review evidence.
 
@@ -205,6 +209,7 @@ Ledger rules:
 - When both ends exist, `tasks/00-overview.md` progress counts are derived from owner checkboxes; recompute them on mismatch instead of treating them as another state source. Never create or expect it for a single-end plan.
 - On any mismatch, inspect the owner file, commits, actual implementation, tests, and review evidence; reconcile both records before selecting, repeating, or declaring the task complete.
 - Append an event for task start, implementer result, package creation, review result, fix attempt, blocked state, checkbox update, and final review.
+- For each UI case, record its delivery level, current lifecycle stage, manifest reference, E2E evidence root, coverage-matrix result, attempts, cleanup, and any `BLOCKED` rationale in progress/review package evidence only; do not copy Visual Evidence Manifest fields or replace the unique task-owner checkbox as the sole completion authority.
 - Append one `review_attempt` event after every review with `reviewScopeId`, scope/task, attempt, `reviewedTargetHead`, runtime `evidenceCommitHead`/`dispatchHead`, verdict, Critical/Important/Minor counts, review path, exact findings, and disposition. Counts alone are insufficient evidence.
 - On resume, restore the recorded review attempt for each task review scope and final review scope. A different finding, reviewer, fixer, commit, session, compaction, or restart never resets that scope's counter.
 - Persist one stable reviewScopeId per task/final scope before its attempt 1. A new reviewer, new commit, new session, or new finding never resets `reviewAttempt`; identity changes update evidence inside the same scope.
@@ -240,13 +245,27 @@ Each Case ID records Approved design source/Figma node plus revision/time, Frame
 
 `reference.png` must come from an approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` must come from the real target runtime and runtime route with stable data and stable environment. The optional diff may be absent only with a missing diff explanation and must not hide absent core source/runtime evidence. Browser interaction evidence is separate from screenshot evidence and must exercise the approved states.
 
-Use the project-configured browser runner/tool and inspected replay command. Never hard-code a framework, runner, storage root, URL, or global pixel threshold, and never silently install dependencies. A missing runner requires an explicit planned task and authorization. Code Connect is optional enhancement only; never auto-create `.figma.ts`, alter tsconfig, or install dependencies.
+Use the project-configured browser runner/tool and inspected replay command. Never hard-code a framework, runner, storage root, URL, or global pixel threshold. Required E2E runner bootstrap follows the shared UI/E2E contract: project-local only, no unrelated upgrade or existing-config overwrite. Code Connect is optional enhancement only; never auto-create `.figma.ts` or alter tsconfig.
 
 Core visual acceptance without trustworthy source or trustworthy runtime evidence is `CANNOT_VERIFY` and a main-flow blocker. Missing evidence must not become review debt. At attempt 3 only reproducible non-core cosmetic differences may become review debt; core visual evidence gaps remain blocked.
 
 Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+
+## UI/E2E Delivery Gate
+
+For a UI-bearing task, resolve the matching `UI/E2E Delivery Contract` and `Visual Evidence Manifest` by stable `Task ID + Case ID` from the canonical frontend plan. Link the manifest by reference only: visual provenance, Figma mapping, viewport/fixture, reference/current/diff, mask, visual acceptance, and visual command remain Visual Evidence Manifest fields.
+
+The controller records `SOURCE_READY` from the source-derived condition/requirement, route, and real account/role; then `STATIC_UI_READY`; then applies the existing visual decision table to record `VISUAL_REVIEW_PASS` before E2E dispatch.
+- `static-only` may proceed from `VISUAL_REVIEW_PASS` to final review only with the evidence-backed `E2E Applicability: N/A` record; it must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
+- `interactive` and `business-flow` must progress `VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS` with independent real-browser E2E evidence; required E2E cannot be skipped, manually waived, or satisfied by a screenshot.
+
+For every required E2E case, dispatch one fresh independent `e2e-verifier` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/e2e-verifier-prompt.md`. The implementer may prepare `INTERACTION_READY` but must never self-confirm `FRONTEND_E2E_PASS`; the verifier runs only the real browser UI and records case evidence.
+
+The task reviewer must verify both the existing visual evidence and the independent E2E verifier evidence; a screenshot is never a substitute for E2E, and a visual/E2E core gap or mock violation cannot be `PASS_WITH_NOTES`, review debt, or a manual waiver.
+
+Any required lifecycle/E2E/coverage/cleanup/mock failure consumes the bounded diagnostic retry: attempt 1 or 2 returns through the serial fix loop, a third failure is `BLOCKED`, and a fourth attempt is forbidden. The controller must not reconcile the owner checkbox or dispatch final review while one remains `BLOCKED`.
 
 ## Task Brief Package
 
@@ -261,6 +280,7 @@ Before dispatching an implementer, write a brief using `${CLAUDE_PLUGIN_ROOT}/sk
 - Required commit behavior.
 - Explicit scope exclusions.
 - For every planned visual case, the complete Visual Evidence Manifest row, replay command/tool, source/runtime provenance, and expected evidence paths.
+- For every UI case, the separate UI/E2E Delivery Contract row with its lifecycle stage, applicability, E2E evidence root, coverage-matrix path, verifier handoff, cleanup, and blocker status; do not duplicate visual-manifest fields.
 
 The implementer receives the brief path, not the full controller chat.
 
@@ -274,6 +294,7 @@ Rules:
 - The implementer may edit files, run tests, and commit only the current task.
 - The implementer must write the full report to `.fp-execute/reports/<task-id>-report.md`.
 - For a visual task, the implementer must write each case `manifest.md` and report case-level reference/current/optional diff provenance plus separate browser interaction evidence.
+- For an interactive/business-flow case, the controller dispatches the independent E2E verifier after visual pass; the implementer may not report `FRONTEND_E2E_PASS`.
 - The implementer final chat response must be short: status, commits, tests, report path, concerns.
 
 Allowed implementer statuses:
@@ -284,7 +305,7 @@ Allowed implementer statuses:
 
 ## Review Package
 
-After `DONE` or `DONE_WITH_CONCERNS`, create a package using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/review-package-template.md`:
+After `DONE` or `DONE_WITH_CONCERNS`, first complete required UI/E2E verifier dispatch and then create a package using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/review-package-template.md`:
 - brief path
 - implementer report path
 - base/head SHA for this task
@@ -293,6 +314,7 @@ After `DONE` or `DONE_WITH_CONCERNS`, create a package using `${CLAUDE_PLUGIN_RO
 - full diff with context
 - test command evidence
 - case-level Visual Evidence Manifest, source/runtime provenance, replay command, artifact paths, and browser interaction evidence
+- case-level UI/E2E Delivery Contract evidence: lifecycle stage, verifier result, E2E evidence path, coverage matrix, cleanup, and any blocker
 - controller notes and known concerns
 
 Write it to `.fp-execute/packages/<task-id>-review-package.md`. Do not paste large diffs into chat.
@@ -305,7 +327,7 @@ Reviewer must verify two gates:
 1. **Spec Compliance:** task brief, interfaces, constraints, visual checks, and validation evidence.
 2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness.
 
-For frontend/UI tasks the reviewer also emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and real artifacts, and keeps browser interaction evidence separate from screenshot evidence.
+For frontend/UI tasks the reviewer also emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY` and `E2E evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and independent real-browser evidence, and keeps browser interaction evidence separate from screenshot evidence.
 
 Reviewer output goes to `.fp-execute/reviews/<task-id>-review.md` and must include:
 - `Spec Compliance: PASS | FAIL | CANNOT VERIFY FROM DIFF`
@@ -315,6 +337,7 @@ Reviewer output goes to `.fp-execute/reviews/<task-id>-review.md` and must inclu
 - Interface/contract assessment
 - `Ready for next task: YES | NO`
 - `Visual evidence: PASS | FAIL | CANNOT_VERIFY`
+- `E2E evidence: PASS | FAIL | CANNOT_VERIFY`
 
 Reviewer rules:
 - Read-only only. No edits, no commits, no index changes, no generated artifacts.
@@ -343,7 +366,7 @@ Apply exactly one Rule ID to every task review. The table is mutually exclusive 
 
 ## Visual decision application
 
-Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, and every planned visual scope resolves to VISUAL_PASS. A planned visual FAIL or CANNOT_VERIFY cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the Rule ID table.
+Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, every planned visual scope resolves to VISUAL_PASS, and every required UI/E2E case has independent real-browser `FRONTEND_E2E_PASS` with covered/justified status and cleanup. A planned visual or required E2E FAIL/CANNOT_VERIFY cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the applicable visual or UI/E2E retry rule.
 
 Task non-pass transition table:
 - **Critical/Important finding:** append exact findings; at attempt 1 or 2 use the serial fixer flow below, regenerate the package, increment exactly once, and re-review.
@@ -352,7 +375,9 @@ Task non-pass transition table:
 - **Schema-inconsistent result:** `NEEDS FIXES` with only Minor findings, or `Spec Compliance: FAIL` with no severity-bucket finding, is invalid reviewer output. Append the raw verdict and findings, normalize the brief/package/reviewer evidence, regenerate the package, increment exactly once, and dispatch a corrected fresh reviewer without a fixer unless inspection proves a code change is required.
 - **Malformed or unclassified combination:** append the raw verdict and all available evidence, inspect the brief/diff/package to classify the actual defect, repair or normalize the responsible code/package/reviewer input, regenerate as applicable, increment exactly once, and dispatch a corrected fresh reviewer. Never invent PASS or reuse the same attempt.
 
-Every non-pass result at attempt 1 or 2 must transition through exactly one table row to the next attempt only when that row is RETRY_NONPASS. BLOCKER outcomes stop and wait for the required user decision. The controller must not repeat the same attempt, accept the task prematurely, or defer a non-pass as review debt before attempt 3. At attempt 3, only ATTEMPT3_COSMETIC is review debt; every other non-pass visual Rule ID remains BLOCKER and never dispatches a fourth review.
+Every non-pass result at attempt 1 or 2 must transition through exactly one table row to the next attempt when it is governed by the Visual review decision table, and only when that row is RETRY_NONPASS. Required UI/E2E non-pass uses the same serial fix/re-verify attempt count, never a visual-cosmetic exception. BLOCKER outcomes stop and wait for the required user decision. The controller must not repeat the same attempt, accept the task prematurely, or defer a non-pass as review debt before attempt 3. At attempt 3, only ATTEMPT3_COSMETIC is review debt; every other non-pass visual or required UI/E2E result remains BLOCKER and never dispatches a fourth review.
+
+For required UI/E2E cases, a missing lifecycle stage, coverage condition, real-browser result, cleanup, or `Mocked Core API: false` proof is a core non-pass. A mock violation, required-E2E gap, or third failed E2E attempt is always `BLOCKED`; it cannot use ATTEMPT3_COSMETIC or be converted into review debt.
 
 For attempt 1 or 2 with any Critical or Important finding:
 1. Append a ledger `review_attempt` event with the exact findings, counts, review path, and failed disposition.
@@ -386,7 +411,7 @@ Every dispatch states a capability expectation, not a guessed model ID. Use the 
 
 After every task has either passed review or reached attempt 3 with only recorded non-blocking review debt:
 1. Ensure every completed task's unique owner checkbox is checked and no summary/index file contains a task checkbox.
-2. Ensure ledger has no unresolved `BLOCKED` or main-flow blocker; every other unresolved finding must appear under `Review Debt`.
+2. Ensure ledger has no unresolved `BLOCKED` or main-flow blocker, including any required UI/E2E lifecycle, coverage, cleanup, or mock violation; every other unresolved finding must appear under `Review Debt`.
 3. Ensure Minor findings are fixed or explicitly deferred.
 4. Before final attempt 1, create and persist one opaque stable reviewScopeId from immutable scope identity (change slug plus execution-start Base SHA and a ledger nonce); never derive it from HEAD, reviewer, session, or finding. Initialize `reviewAttempt=1`, `maxReviewAttempts=3`, `priorReviewPath=N/A`, `priorFindingDispositions=N/A`, and `lastReviewedHead=N/A`.
 5. Run the clean-snapshot checkpoint before consuming each final review attempt: reconcile and commit authorized implementation and execution artifacts, including owner checkboxes, valid overview progress, prior ledger/brief/report/package/review evidence; never absorb unrelated user changes. Verify `git status --short` is empty. A failed clean-snapshot checkpoint does not consume a review attempt. When clean, capture reviewedTargetHead from HEAD; this is the committed product/change snapshot actually reviewed, and its target dirty fingerprint is `CLEAN`.
@@ -428,6 +453,7 @@ Final report must include:
 - Minor findings and review debt fixed or deferred, with exact findings and rationale.
 - Final review result.
 - CodeGraph `post-write-sync` execution, skip, or failure state.
+- Per UI case, the lifecycle stage, manifest reference, independent E2E verifier result, E2E evidence/coverage-matrix paths, cleanup, and unresolved blocker (if any).
 - Whether `/fp-archive` is recommended.
 
 Only `step-confirmation` produces a user confirmation prompt after an individual task passes review or is accepted with non-blocking review debt at attempt 3. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.

@@ -107,6 +107,17 @@ Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
+## UI/E2E Delivery Evidence (frontend/UI only)
+
+Link the matching Visual Evidence Manifest row by Task ID + Case ID; do not repeat its visual provenance or screenshot fields.
+
+| Case ID | UI Delivery Level | Source-derived condition / requirement | Lifecycle stage | E2E Applicability | Independent verifier result | E2E evidence root | Coverage matrix | Cleanup | Mocked Core API / blocker |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `static-only | interactive | business-flow` | `<source/requirement reference>` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `REQUIRED | N/A with rationale` | `<e2e-result.md path/status>` | `.fp-execute/e2e/<task-id>/<case-id>/` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<result>` | `false | N/A | BLOCKED rationale` |
+
+- E2E verifier evidence includes the real-browser command, environment identity, destination, start/end, attempts, test IDs, artifacts, source-derived coverage, cleanup, and business-flow persistence/permission result.
+- Required E2E cannot be skipped or self-confirmed by the implementer. A mock violation, unsafe `BLOCKED` coverage condition, or core UI/E2E gap cannot be `PASS_WITH_NOTES`, review debt, or a manual waiver.
+
 ## Full Diff With Context
 
 ```diff
