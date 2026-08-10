@@ -342,6 +342,16 @@ function Test-CanonicalUiE2EDeliveryTable([string]$section) {
     return (Normalize-MarkdownCell $rowCells[$coverageIndex]) -eq '.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md'
 }
 
+function Test-NoPermissiveException([string]$text, [string]$forbiddenTargetPattern) {
+    $permissionPattern = '(?:allow(?:ed|ing)?\b|permit(?:ted|ting)?\b|may\b(?!\s+not\b)|can\b(?!\s+not\b))'
+    $targetBeforePermission = '(?i)' + $forbiddenTargetPattern + '[^.!?;:\r\n]{0,120}' + $permissionPattern
+    $permissionBeforeTarget = '(?i)' + $permissionPattern + '[^.!?;:\r\n]{0,120}' + $forbiddenTargetPattern
+    return -not (
+        [regex]::IsMatch($text, $targetBeforePermission) -or
+        [regex]::IsMatch($text, $permissionBeforeTarget)
+    )
+}
+
 function Test-UiE2EPlanningGuardrails([string]$text) {
     return (Test-ContainsAnchors $text @(
         'static-only',
@@ -373,7 +383,8 @@ function Test-UiE2EPlanningGuardrails([string]$text) {
         'state transitions and concurrency',
         'pagination, filtering, sorting, and compatibility'
     )) -and
-        $text -notmatch '(?i)required E2E\s+(?:may|can|is)\s+(?:be\s+)?(?:SKIPPED|manual[- ]approved|waived)'
+        $text -notmatch '(?i)required E2E\s+(?:may|can|is)\s+(?:be\s+)?(?:SKIPPED|manual[- ]approved|waived)' -and
+        (Test-NoPermissiveException $text '(?:page\.route|route\.fulfill|route mocking|MSW|Cypress stubs/intercepts|fixture JSON|mock modules|hard-coded API data|store/localStorage business-data injection|database seed|direct backend/API writes)')
 }
 
 function Test-AutomaticPlaywrightBootstrap([string]$text) {
@@ -392,7 +403,8 @@ function Test-AutomaticPlaywrightBootstrap([string]$text) {
         'BLOCKED'
     )) -and
         $text -notmatch '(?i)do not silently install' -and
-        $text -notmatch '(?i)explicit task[^\r\n]{0,100}authorization'
+        $text -notmatch '(?i)explicit task[^\r\n]{0,100}authorization' -and
+        (Test-NoPermissiveException $text '(?:global installation|install globally|global install)')
 }
 
 function Test-MinimalUiE2ELinking([string]$text) {
@@ -669,6 +681,10 @@ Assert-Condition (-not (Test-MinimalUiE2ELinking $mutatedUiE2EDuplicate)) 'mutat
 Require-MutationBaseline (Test-UiE2EPlanningGuardrails $planTemplate) 'frontend plan real-E2E guardrails'
 $mutatedRouteMock = Replace-Required $planTemplate 'page.route' 'route mocking is permitted' 'template permits route mock'
 Assert-Condition (-not (Test-UiE2EPlanningGuardrails $mutatedRouteMock)) 'mutation survived: template may permit mocked E2E requests'
+$appendedRouteMockPermission = Insert-AfterRequired $planTemplate 'page.route' ' mocking is permitted for E2E.' 'template appends route mock permission'
+Assert-Condition (-not (Test-UiE2EPlanningGuardrails $appendedRouteMockPermission)) 'mutation survived: template may append a permissive page.route exception'
+$permissionBeforeRouteMock = $planTemplate + [Environment]::NewLine + 'Permitted E2E setup may use page.route mocking.'
+Assert-Condition (-not (Test-UiE2EPlanningGuardrails $permissionBeforeRouteMock)) 'mutation survived: template may place a permissive page.route exception before its target'
 $mutatedRequiredE2ESkip = Replace-Required $planTemplate 'required E2E cannot be SKIPPED, manual-approved, or waived' 'required E2E may be SKIPPED' 'template permits required E2E skip'
 Assert-Condition (-not (Test-UiE2EPlanningGuardrails $mutatedRequiredE2ESkip)) 'mutation survived: template may skip required E2E'
 
@@ -677,6 +693,10 @@ $mutatedBootstrapPackage = Replace-Required $planSkill '@playwright/test' 'a bro
 Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $mutatedBootstrapPackage)) 'mutation survived: bootstrap may omit @playwright/test'
 $mutatedBootstrapGlobal = Replace-Required $planSkill 'Never install globally' 'Install globally' 'bootstrap permits global installation'
 Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $mutatedBootstrapGlobal)) 'mutation survived: bootstrap may permit global installation'
+$appendedGlobalInstallPermission = Insert-AfterRequired $planSkill 'Never install globally' '. Global installation is permitted for E2E.' 'bootstrap appends global installation permission'
+Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $appendedGlobalInstallPermission)) 'mutation survived: bootstrap may append a permissive global-install exception'
+$permissionBeforeGlobalInstall = $planSkill + [Environment]::NewLine + 'Permitted bootstrap may use global installation.'
+Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $permissionBeforeGlobalInstall)) 'mutation survived: bootstrap may place a permissive global-install exception before its target'
 
 $mutatedReviewerVerdict = Insert-AfterRequired $reviewerOutput 'Visual evidence: PASS | FAIL | CANNOT_VERIFY' ([Environment]::NewLine + 'Visual evidence: SKIPPED') 'task reviewer appends fourth visual verdict'
 Assert-Condition (-not (Test-ExactVisualVerdict $mutatedReviewerVerdict)) 'mutation survived: task reviewer may append a fourth visual verdict'
