@@ -56,28 +56,40 @@ function Test-ExactLine([string]$text, [string]$line) {
     return @($text -split $script:lf | Where-Object { $_ -ceq $line }).Count -eq 1
 }
 
-function Test-NoPermissiveException([string]$section, [string[]]$terms) {
+function Test-NoForbiddenGrant([string]$section) {
+    $mockAction = '(?:mock(?:\s+(?:data|module))?|page\.route|route\.fulfill|MSW|Cypress\s+stubs/intercepts|fixture\s+JSON|hard-coded\s+API\s+data|frontend\s+store/localStorage\s+business-data\s+injection|database\s+seed|direct\s+backend/API\s+writes)'
+    $grantVerb = '(?:may|can|allow(?:s|ed|ing)?|permit(?:s|ted|ting)?)'
+    $grantState = '(?:is|are)\s+(?:allowed|permitted|okay|fine|valid)'
+    $skipAction = '(?:skip(?:ped|ping)?|manual\s+waiver|PASS_WITH_NOTES)'
     foreach ($line in ($section -split $script:lf)) {
         $plain = [regex]::Replace($line, '[\`*>#]', '')
         foreach ($clause in [regex]::Split($plain, '(?<=[.!?])\s+|(?i:\s*,?\s+but\s+|\s*;\s*)')) {
-            $forbidden = @($terms | Where-Object { $clause.IndexOf($_, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 })
-            $grant = $clause -match '(?i)\b(?:may|can|allow(?:s|ed|ing)?|permit|permits|permitted|permitting)\b(?!\s+not\b)'
-            if ($forbidden.Count -gt 0 -and $grant) { return $false }
+            $mockGrant = '(?i)(?:' + $mockAction + ').{0,36}(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b)|\b' + $grantVerb + '\b(?!\s+not\b).{0,36}(?:' + $mockAction + ')'
+            $globalGrant = '(?i)(?:(?:global\s+install|install\s+globally).{0,36}(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b)|\b' + $grantVerb + '\b(?!\s+not\b).{0,36}(?:global\s+install|install\s+globally))'
+            $requiredSkipGrant = '(?i)(?:required\s+E2E.{0,36}(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b).{0,36}' + $skipAction + '|(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b).{0,36}' + $skipAction + '.{0,36}required\s+E2E)'
+            $manualWaiverGrant = '(?i)(?:manual\s+waiver.{0,36}(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b)|\b' + $grantVerb + '\b(?!\s+not\b).{0,36}manual\s+waiver)'
+            $passWithNotesGrant = '(?i)(?:PASS_WITH_NOTES.{0,36}(?:\b' + $grantVerb + '\b(?!\s+not\b)|\b' + $grantState + '\b)|\b' + $grantVerb + '\b(?!\s+not\b).{0,36}PASS_WITH_NOTES)'
+            if ($clause -match $mockGrant -or $clause -match $globalGrant -or $clause -match $requiredSkipGrant -or $clause -match $manualWaiverGrant -or $clause -match $passWithNotesGrant) { return $false }
         }
     }
     return $true
 }
 
-function Test-TrueExitOrReturn([System.Management.Automation.Language.StatementAst]$statement) {
-    if ($statement -is [System.Management.Automation.Language.ExitStatementAst] -or $statement -is [System.Management.Automation.Language.ReturnStatementAst]) { return $true }
-    if ($statement -isnot [System.Management.Automation.Language.IfStatementAst]) { return $false }
-    $ifStatement = [System.Management.Automation.Language.IfStatementAst]$statement
-    if ($ifStatement.Clauses.Count -ne 1) { return $false }
-    $condition = $ifStatement.Clauses[0].Item1.Extent.Text.Trim('(', ')', ' ')
-    if ($condition -cne '$true' -and $condition -notmatch '^1\s*-eq\s*1$') { return $false }
-    return @($ifStatement.Clauses[0].Item2.FindAll({
+function Test-IsNestedInFunctionDefinition([System.Management.Automation.Language.Ast]$node) {
+    $cursor = $node.Parent
+    while ($null -ne $cursor) {
+        if ($cursor -is [System.Management.Automation.Language.FunctionDefinitionAst]) { return $true }
+        $cursor = $cursor.Parent
+    }
+    return $false
+}
+
+function Test-TopLevelStatementMayTerminate([System.Management.Automation.Language.StatementAst]$statement) {
+    if ($statement -is [System.Management.Automation.Language.FunctionDefinitionAst]) { return $false }
+    return @($statement.FindAll({
         param($node)
-        $node -is [System.Management.Automation.Language.ExitStatementAst] -or $node -is [System.Management.Automation.Language.ReturnStatementAst]
+        ($node -is [System.Management.Automation.Language.ExitStatementAst] -or $node -is [System.Management.Automation.Language.ReturnStatementAst]) -and
+            -not (Test-IsNestedInFunctionDefinition $node)
     }, $true)).Count -gt 0
 }
 
@@ -97,7 +109,7 @@ function Test-ValidatorRegistration([string]$text, [string[]]$lines) {
         }
         if (-not $matches) { continue }
         for ($prior = 0; $prior -lt $start; $prior++) {
-            if (Test-TrueExitOrReturn $statements[$prior]) { return $false }
+            if (Test-TopLevelStatementMayTerminate $statements[$prior]) { return $false }
         }
         return $true
     }
@@ -145,6 +157,9 @@ $reviewerLine = 'The task reviewer must verify both the existing visual evidence
 $retryLine = 'Any required lifecycle/E2E/coverage/cleanup/mock failure consumes the bounded diagnostic retry: attempt 1 or 2 returns through the serial fix loop, a third failure is ' + $tick + 'BLOCKED' + $tick + ', and a fourth attempt is forbidden. The controller must not reconcile the owner checkbox or dispatch final review while one remains ' + $tick + 'BLOCKED' + $tick + '.'
 $zeroMockLine = 'Real E2E has an absolute zero-mock rule. It must not use ' + $tick + 'page.route' + $tick + ', ' + $tick + 'route.fulfill' + $tick + ', MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, frontend store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow.'
 $bootstrapLine = 'Prefer the existing runner. If it is missing, detect target frontend root, workspace, lockfile, and package manager, then automatically install ' + $tick + '@playwright/test' + $tick + ' as a development dependency and Chromium only in that target project. Never install globally, overwrite existing configuration, or upgrade unrelated dependencies; bootstrap failure is ' + $tick + 'BLOCKED' + $tick + '.'
+$bootstrapAuthorityLine = 'Bootstrap is authorized only when controller and brief record the exact target frontend root, allowed bootstrap/test paths, current manifest/lockfile/config state, selected package manager, and the scoped real E2E case.'
+$bootstrapScopeLine = 'Within that recorded root and allowed scope, you may create or adjust only necessary real E2E tests, project manifest/lockfile entries, Chromium installation, and minimal config only when no existing config exists; do not edit product code, overwrite existing config, or upgrade unrelated dependencies.'
+$bootstrapEvidenceLine = 'Record the exact target root, allowed paths/scope, detected workspace/lockfile/package manager, commands, resolved version, and every manifest/lockfile/config/test/browser change in E2E evidence.'
 $evidenceLine = 'For each case record ' + $tick + 'Executed command' + $tick + ', ' + $tick + 'Environment identity' + $tick + ', ' + $tick + 'Destination' + $tick + ', ' + $tick + 'Start' + $tick + ', ' + $tick + 'End' + $tick + ', ' + $tick + 'Attempts' + $tick + ', ' + $tick + 'Test IDs' + $tick + ', ' + $tick + 'Artifacts' + $tick + ', ' + $tick + 'Coverage matrix reference' + $tick + ', ' + $tick + 'Cleanup' + $tick + ', and ' + $tick + 'Mocked Core API: false' + $tick + ' for business-flow.'
 $blockedSourceLine = 'If a source-derived condition cannot be safely reached in the real environment, record its coverage entry as ' + $tick + 'BLOCKED' + $tick + ', never as ' + $tick + 'N/A' + $tick + ' or a mock fallback.'
 $registration = @(
@@ -153,7 +168,6 @@ $registration = @(
     '& powershell -NoProfile -ExecutionPolicy Bypass -File $executeSddUiE2EContractValidator',
     'Assert-Condition ($LASTEXITCODE -eq 0) ''focused SDD execution UI/E2E contract validator failed'''
 )
-$mockTerms = @('mock', 'page.route', 'route.fulfill', 'MSW', 'Cypress stubs/intercepts', 'fixture JSON', 'mock modules', 'hard-coded API data', 'store/localStorage business-data injection', 'database seed', 'direct backend/API writes')
 
 Assert-Condition (Test-ExactLine $effectiveSkill $sharedLine) 'fp-execute-sdd does not load the shared staged UI/E2E contract'
 Assert-Condition (Test-ExactSecondLevelHeading $effectiveSkill $gateHeading) 'fp-execute-sdd is missing one effective exact UI/E2E Delivery Gate heading'
@@ -165,7 +179,8 @@ Assert-Condition ((Test-ExactLine $gate $dispatchLine) -and (Test-ExactLine $gat
 Assert-Condition (Test-ExactSecondLevelHeading $effectiveVerifier $verifierHeading) 'SDD E2E verifier is missing its effective verification-rules section'
 $verifierRules = Get-ExactSecondLevelSection $effectiveVerifier $verifierHeading
 Assert-Condition ((Test-ExactLine $verifierRules $zeroMockLine) -and (Test-ExactLine $verifierRules $bootstrapLine) -and (Test-ExactLine $verifierRules $evidenceLine) -and (Test-ExactLine $verifierRules $blockedSourceLine)) 'SDD verifier lacks required zero-mock, bootstrap, evidence, or source-derived blocking rules'
-Assert-Condition (Test-NoPermissiveException $verifierRules ($mockTerms + @('global', 'SKIPPED', 'manual waiver', 'PASS_WITH_NOTES'))) 'SDD verifier permits a mock, waiver, or global-install exception'
+Assert-Condition ((Test-NoForbiddenGrant $effectiveVerifier) -and (Test-NoForbiddenGrant $effectiveSkill)) 'SDD verifier or controller permits a mock, required-E2E waiver, or global-install exception'
+Assert-Condition ((Test-ExactLine $verifierRules $bootstrapAuthorityLine) -and (Test-ExactLine $verifierRules $bootstrapScopeLine) -and (Test-ExactLine $verifierRules $bootstrapEvidenceLine)) 'SDD verifier lacks controller-scoped authority for project-local bootstrap and necessary real E2E tests'
 Assert-Condition ($brief.Contains('## UI/E2E Delivery Contract (frontend/UI only)') -and $brief.Contains('Visual Evidence Manifest reference') -and $implementer.Contains('must never self-confirm ' + $tick + 'FRONTEND_E2E_PASS' + $tick) -and $reviewer.Contains('both the existing visual evidence and the independent E2E verifier evidence') -and $package.Contains('## UI/E2E Delivery Evidence (frontend/UI only)') -and $fix.Contains('must not be converted into review debt, ' + $tick + 'PASS_WITH_NOTES' + $tick + ', or a manual waiver')) 'SDD templates do not carry the independent staged UI/E2E gate'
 Assert-Condition (Test-ValidatorRegistration $validator $registration) 'global validator does not invoke the focused SDD UI/E2E validator through the required AST registration chain'
 
@@ -177,14 +192,26 @@ Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-Effecti
 $mayUseMock = Replace-Required $verifier 'It must not use' 'It may use' 'may-use mock rule'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $mayUseMock) $verifierHeading) $zeroMockLine)) 'mutation survived: verifier may use mock data'
 $mockException = Insert-AfterRequired $verifier $zeroMockLine ($lf + 'Exception: mock data is permitted.') 'mock exception'
-Assert-Condition (-not (Test-NoPermissiveException (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $mockException) $verifierHeading) $mockTerms)) 'mutation survived: verifier permits mock data'
+Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $mockException))) 'mutation survived: verifier permits mock data'
 $globalInstall = Insert-AfterRequired $verifier $bootstrapLine ($lf + 'Exception: global install is permitted.') 'global-install exception'
-Assert-Condition (-not (Test-NoPermissiveException (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $globalInstall) $verifierHeading) @('global'))) 'mutation survived: verifier permits global install'
-$skipWaiver = Insert-AfterRequired $skill $interactiveLine ($lf + 'Exception: required E2E may be SKIPPED with a manual waiver.') 'required E2E skip waiver'
-Assert-Condition (-not (Test-NoPermissiveException (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $skipWaiver) $gateHeading) @('SKIPPED', 'manual waiver'))) 'mutation survived: SDD permits required-E2E skip/waiver'
-foreach ($termination in @('if (1 -eq 1) { exit }', 'if (1 -eq 1) { return }')) {
+Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $globalInstall))) 'mutation survived: verifier permits global install'
+$crossSectionMockFine = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + $lf + 'Exception: mock data is fine.') 'cross-section mock-fine exception'
+Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $crossSectionMockFine))) 'mutation survived: verifier permits mock data in another section'
+$crossSectionMockAllowed = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + $lf + 'Exception: mock data is allowed.') 'cross-section mock-allowed exception'
+Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $crossSectionMockAllowed))) 'mutation survived: verifier allows mock data in another section'
+$commentedMockGrant = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + '<!-- Exception: mock data is fine. -->') 'commented mock grant'
+Assert-Condition (Test-NoForbiddenGrant (Get-EffectiveNormativeText $commentedMockGrant)) 'mutation fixture is invalid: commented mock grant should be ignored'
+$fencedMockGrant = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + '~~~text' + $lf + 'Exception: mock data is fine.' + $lf + '~~~') 'fenced mock grant'
+Assert-Condition (Test-NoForbiddenGrant (Get-EffectiveNormativeText $fencedMockGrant)) 'mutation fixture is invalid: fenced mock grant should be ignored'
+foreach ($payload in @('Required E2E is okay to skip.', 'Required E2E is permitted to skip.', 'Required E2E is allowed to skip.')) {
+    $skipWaiver = Insert-AfterRequired $skill '## Completion and Final Review' ($lf + $lf + $payload) 'cross-section required-E2E grant'
+    Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $skipWaiver))) "mutation survived: $payload"
+}
+foreach ($termination in @('if (1 -eq 1) { exit }', 'if (1 -eq 1) { return }', 'if (2 -gt 1) { exit }', 'if (2 -gt 1) { return }')) {
     Assert-Condition (-not (Test-ValidatorRegistration (Insert-BeforeRequired $validator $registration[0] ($termination + $lf) 'unreachable registration') $registration)) "mutation survived: $termination before SDD validator registration"
 }
+$functionReturn = Insert-BeforeRequired $validator $registration[0] ('function Test-SafeReturn { return }' + $lf) 'function-local return'
+Assert-Condition (Test-ValidatorRegistration $functionReturn $registration) 'function-local return should not make SDD validator registration unreachable'
 
 if ($failures.Count -gt 0) { throw ('SDD execution UI/E2E contract validation failed:' + $lf + '- ' + ($failures -join ($lf + '- '))) }
 Write-Output 'SDD execution UI/E2E contract validation passed.'
