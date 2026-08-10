@@ -487,6 +487,11 @@ Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence con
 & powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused Figma evidence contract validator failed'
 
+$uiE2EContractValidator = Join-Path $root 'scripts\test-ui-e2e-contract.ps1'
+Assert-Condition (Test-Path $uiE2EContractValidator) 'focused UI/E2E contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E contract validator failed'
+
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
