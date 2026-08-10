@@ -148,9 +148,9 @@ function Test-DecisionLedgerSet([string[]]$sections, [string]$requiredPrefix) {
 
 function Test-PreWriteConfirmationEvidence([string]$section, [string[]]$requiredIds) {
     try {
-        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
-        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
-        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
+        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
+        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
+        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
         if (-not $covered.Success -or -not $outstanding.Success -or -not $authorization.Success) { return $false }
 
         foreach ($id in $requiredIds) {
@@ -300,6 +300,19 @@ Assert-Condition (Test-PersistedDecisionLedger $proposalLedgerFixture 'P') 'conc
 Assert-Condition (Test-PersistedDecisionLedger $designLedgerFixture 'D') 'concrete design Decision Ledger fixture is invalid'
 Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceFixture @('P-001')) 'concrete proposal pre-write confirmation evidence is invalid'
 Assert-Condition (Test-PreWriteConfirmationEvidence $designEvidenceFixture @('D-001')) 'concrete design pre-write confirmation evidence is invalid'
+
+$proposalEvidenceNoFinalNewlineFixture = @(
+    '- Covered IDs: `P-001`'
+    '- Outstanding blocking decisions: `none`'
+    '- Explicit user authorization to write: P-001: user message 42 approves proposal.md and target paths'
+) -join "`n"
+$proposalEvidenceLfFixture = $proposalEvidenceNoFinalNewlineFixture + "`n"
+$proposalEvidenceCrlfFixture = $proposalEvidenceLfFixture.Replace("`n", "`r`n")
+$proposalEvidenceBareCrFixture = $proposalEvidenceNoFinalNewlineFixture + "`r"
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceLfFixture @('P-001')) 'LF pre-write confirmation evidence fixture is invalid'
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceCrlfFixture @('P-001')) 'CRLF pre-write confirmation evidence fixture is invalid'
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceNoFinalNewlineFixture @('P-001')) 'pre-write confirmation evidence fixture without a final newline is invalid'
+Assert-Condition (-not (Test-PreWriteConfirmationEvidence $proposalEvidenceBareCrFixture @('P-001'))) 'mutation survived: pre-write confirmation evidence may end with a bare CR'
 
 $proposalPendingMutation = Replace-Required $proposalLedgerFixture 'PRD-confirmed' 'needs-user-confirmation' 'proposal terminal status'
 Assert-Condition (-not (Test-PersistedDecisionLedger $proposalPendingMutation 'P')) 'mutation survived: a pending proposal decision may be persisted'
