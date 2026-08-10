@@ -4,6 +4,8 @@
 
 Every UI-bearing task declares one `UI Delivery Level` and records why that level applies:
 
+This contract is mandatory for UI-bearing work in `fp-execute` and `fp-execute-sdd`.
+
 - `static-only`: only static presentation is in scope. It needs visual `PASS` / `VISUAL_REVIEW_PASS` evidence and an evidence-backed `E2E Applicability: N/A` reason.
 - `interactive`: user interaction is in scope. It requires real browser front-end E2E and `E2E Applicability: REQUIRED`.
 - `business-flow`: a user-visible flow crosses a real business boundary. It requires real browser front-end E2E, proof of the real core API, `Mocked Core API: false`, the real persistence or permission result, and cleanup of test-created data.
@@ -35,7 +37,20 @@ Visual and E2E evidence are distinct channels:
 - Visual evidence uses `.fp-execute/visual/<task-id>/<case-id>/`.
 - E2E evidence uses `.fp-execute/e2e/<task-id>/<case-id>/`.
 
-E2E evidence includes the executed command, runner/version, browser, trace/video/screenshots when available, environment identity, result, and cleanup evidence. Visual fixtures are separate and never E2E evidence.
+For every E2E execution, record:
+
+- `Executed command`
+- `Environment identity`
+- `Destination`
+- `Start` timestamp
+- `End` timestamp
+- `Attempts`
+- `Test IDs`
+- `Artifacts`
+- `Coverage matrix reference`: `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`
+- `Cleanup`
+
+E2E evidence may additionally record runner/version, browser, and result; artifacts include trace/video/screenshots when available. Visual fixtures are separate and never E2E evidence.
 
 ## Real Frontend E2E: No Mock Data or Requests
 
@@ -75,3 +90,7 @@ Never install globally, overwrite existing configuration, or upgrade unrelated d
 ## Retry, Blocking, Final Review, and Archive
 
 Core visual/E2E gaps and any mock violation remain `BLOCKED` through 3 attempts. They cannot be converted into review debt, `N/A`, `PASS`, a manual approval, or a waived check. `FINAL_REVIEW` and `ARCHIVE` cannot waive these blockers.
+
+After a failure, diagnostic retries may continue only through attempt 3.
+A third failed attempt is `BLOCKED`; a fourth attempt is forbidden.
+A core UI/E2E gap or any mock violation cannot become review debt, `N/A`, `PASS`, `PASS_WITH_NOTES`, a manual approval, or a waived check.
