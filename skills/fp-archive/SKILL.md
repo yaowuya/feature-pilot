@@ -9,6 +9,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, stale-intel evidence, compatibility, and the archive-only ownership boundary.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving the archive candidate; it is the normative layout and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before checking a UI-bearing archive candidate; it owns the non-waivable UI/E2E archive boundary.
 
 叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段以及契约要求精确匹配的英文 schema 标题保留必要英文。若用户或目标项目设置明确指定其他语言，按共享优先级执行。
 ---
@@ -23,10 +24,10 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resol
 
 ### Step 1: 确定归档目标
 
-- 若调用时已有 slug 参数 → 读取并展示目标 `fp-docs/changes/<slug>/` 的摘要，要求用户确认后再继续。
+- 若调用时已有 slug 参数 → 确定目标 `fp-docs/changes/<slug>/`；先完成归档前检查，再展示摘要并要求用户确认。
 - 若无参数 → 列出 `fp-docs/changes/` 下所有目录，让用户选择。
 
-归档会移动目录并更新历史，属于不可轻易回滚的文件操作。无论 slug 来自参数还是选择，都必须在移动前展示源路径、目标归档路径和检查摘要，并等待用户明确确认。
+归档会移动目录并更新历史，属于不可轻易回滚的文件操作。无论 slug 来自参数还是选择，都必须在移动前完成所有归档前检查（包括 UI/E2E Final Gate），再展示源路径、目标归档路径和检查摘要，并等待用户明确确认。
 
 ### Step 2: 归档前检查
 
@@ -40,16 +41,26 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resol
 6. 只在解析出的 task-owner files 中检查未完成 checkbox；再检查 `.fp-execute/progress.md` 的 unfinished/blocked/failed 记录。ledger 只是恢复证据，冲突时结合 git、实际文件和验证结果对账。
 7. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
 
-如果存在未完成任务或 blocked 记录，先展示摘要并询问是否继续归档；不得静默归档。
+### Step 2.1: UI/E2E Final Gate
 
-### Step 3: 归档文件
+在展示移动摘要或请求用户确认前，读取当前 change 的最新（latest）final review 报告及其 `UI/E2E Gate`，并核对该 gate 引用的 task/case evidence、coverage matrix 与 cleanup 记录。报告必须能证明它覆盖当前目标快照；报告或 gate 缺失、过期、歧义，或引用证据缺失，都使归档 `BLOCKED`。
+
+`UI/E2E Gate: FAIL` 或 `BLOCKED` 时，任何 core UI/E2E gap、mock violation、unsafe unverified real-environment condition、missing required E2E/matrix、`Mocked Core API` 非 `false`、cleanup 缺失或 lifecycle `BLOCKED` 都必须阻止归档；不得展示“继续归档”的确认选项。The archive must not proceed on `FAIL` or `BLOCKED`. A user confirmation cannot override or waive this gate. 该读取只消费 final review/evidence，not a second completion authority。
+
+只有通过的 `UI/E2E Gate: PASS`，或有证据证明不存在 UI-bearing case 的 `N/A`，才能继续普通归档检查。若仍有 ordinary non-core incomplete task 或普通非核心 blocked 记录，才展示摘要并询问是否继续归档；必须先确认它不属于 UI/E2E core gate，且不得静默归档。
+
+### Step 3: 展示并确认
+
+仅在 Step 2 和 Step 2.1 通过后，展示源路径、目标归档路径、结构检查摘要、UI/E2E Gate 结果，以及 ordinary non-core 未完成项；等待用户明确确认后才继续。
+
+### Step 4: 归档文件
 
 1. **移动目录**：将 `fp-docs/changes/<slug>/` 整体移动到：
    ```
    fp-docs/archive/YYYY-MM-DD-<slug>/
    ```
 
-### Step 4: 更新 history.md
+### Step 5: 更新 history.md
 
 在 `fp-docs/history/history.md` 末尾追加：
 
@@ -67,6 +78,6 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resol
 **归档路径：** `fp-docs/archive/YYYY-MM-DD-<slug>/`
 ```
 
-### Step 5: 完成
+### Step 6: 完成
 
 输出：`✅ 已归档：fp-docs/archive/YYYY-MM-DD-<slug>/`

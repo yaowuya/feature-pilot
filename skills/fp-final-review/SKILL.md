@@ -9,6 +9,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before reviewing UI-bearing work; it owns the staged UI/E2E lifecycle, zero-mock rule, coverage matrix, and non-waivable archive boundary.
 Apply the shared `Process document language` contract when writing the final review report. This reminder does not alter the exact `PASS`, `PASS_WITH_NOTES`, `FAIL`, or `BLOCKED` verdict semantics.
 ---
 
@@ -98,8 +99,9 @@ Immediately read the actual files that exist for the selected change:
 6. the complete resolved task set: each selected small plan or split index plus all manifest-ordered owner fragments, and the two-end overview only when applicable
 7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
 8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
-9. `finalReviewPackage`, `priorReviewPath`, and progress-ledger attempt state when provided
-10. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
+9. for every planned UI Case ID, its matching task brief/package/progress rows, visual manifest, E2E evidence directory, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` when applicable
+10. `finalReviewPackage`, `priorReviewPath`, and progress-ledger attempt state when provided
+11. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
 
 From these selected change canonical artifacts, build the initial owner inventory before any sibling lookup. Include declared file/scope ownership from the selected proposal/design, canonical task-owner `Files`/scope entries, and the selected evidence package/ledger Scope Matrix. Do not read sibling change bodies during Required Reads; bounded discovery occurs only for selected-unmapped observed paths after the branch inventory exists.
 
@@ -188,6 +190,19 @@ Use only the project-configured browser runner/tool and case-specific Acceptance
 Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+
+### 2.2 UI/E2E Gate
+
+Read the shared UI/E2E contract and build this gate from the resolved plans, task briefs, progress ledger, task-review packages, finalReviewPackage, visual manifests, and E2E evidence. Resolve every planned UI case by the exact Task ID + Case ID pair. The gate is independent from `Visual Evidence`: reference the visual-manifest result/path rather than repeating the visual evidence table's source, viewport, screenshot, or diff fields.
+
+For every UI case, record its UI Delivery Level, required lifecycle path, actual completed stage, visual evidence reference, E2E applicability/result, canonical matrix/evidence paths, `Mocked Core API: false` state when E2E is required, cleanup, real persistence/permission result where applicable, and a precise blocking condition. Use the canonical E2E matrix path exactly: `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`.
+
+- A `static-only` case reaches this gate only after `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
+- An `interactive` or `business-flow` case must reach `FRONTEND_E2E_PASS`; missing real E2E evidence, a missing matrix, a blocked matrix entry, or any other required E2E shortfall is not `N/A`.
+- A `business-flow` case additionally proves the real core API, `Mocked Core API: false`, real persistence or permission result, and cleanup of test-created data.
+- Inspect the zero-mock rule directly. A route/intercept/stub/fixture/mock module, injected business data, seed, or direct backend/API write that bypasses the UI is a mock violation.
+
+Emit one independent `UI/E2E Gate: PASS | N/A | FAIL | BLOCKED` result. `N/A` means no UI-bearing case exists; it never means a required E2E case was skipped. A core UI/E2E gap, mock violation, unsafe unverified real-environment condition, missing required E2E evidence, missing coverage matrix, or lifecycle `BLOCKED` state makes the UI/E2E Gate `FAIL` or `BLOCKED` and names the repair owner. Such a result cannot be converted into `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
 
 ### 3. Scope Matrix
 
@@ -283,6 +298,8 @@ Apply these verdicts only to mapped-current scope, relevant shared contracts, mi
 - `BLOCKED`: an unresolved structural rejection prevents trustworthy artifact resolution, or review cannot complete because required inputs, base ref, diff, or safe verification are unavailable.
 
 At Attempt 3, mapped non-blocking findings may be recorded as non-blocking debt with evidence. Main-flow blockers remain blocked and prevent completion/archive. A new reviewer, commit, session, or finding never creates a fresh attempt counter for the same `reviewScopeId`.
+
+The `UI/E2E Gate` is a core gate. If it is `FAIL` or `BLOCKED`, the final verdict must be `FAIL` or `BLOCKED` respectively; `PASS` and `PASS_WITH_NOTES` are forbidden regardless of review attempt, review debt, or manual override.
 
 If verdict is not `PASS`, list exact blocking items before archive.
 

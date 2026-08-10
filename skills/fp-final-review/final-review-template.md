@@ -133,6 +133,20 @@ Visual evidence: PASS | FAIL | CANNOT_VERIFY
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
+## UI/E2E Gate
+
+Read the shared UI/E2E contract and join every planned UI case by exact Task ID + Case ID across plans, briefs, progress, review packages, visual manifests, E2E evidence, and coverage matrices. This gate is independent from `Visual Evidence`: reference that table's case/result/path rather than copying its visual fields.
+
+**UI/E2E Gate:** PASS | N/A | FAIL | BLOCKED
+
+| Task ID | Case ID | UI Delivery Level | Required stage | Actual stage | Visual evidence reference | E2E applicability / result | Matrix / evidence paths | Mocked Core API | Cleanup | Business result | Blocking condition |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<task-id>` | `<case-id>` | `static-only / interactive / business-flow` | `<required lifecycle path>` | `<last completed stage>` | `<Visual Evidence row + manifest path>` | `<REQUIRED/N/A + PASS/FAIL/BLOCKED>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md; <artifacts>` | `false / N/A` | `<result/path or N/A>` | `<real persistence/permission result or N/A>` | `<None or exact core gap + repair owner>` |
+
+- `static-only`: requires `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
+- `interactive` and `business-flow`: require `FRONTEND_E2E_PASS`, real browser evidence, and the canonical matrix. `business-flow` also requires real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
+- `N/A` means no UI-bearing case exists; required E2E cannot be skipped or manually approved. A core UI/E2E gap, mock violation, unsafe unverified condition, missing required matrix/evidence, or `BLOCKED` lifecycle is `FAIL` or `BLOCKED`, must name its repair owner, and cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check.
+
 ## Verification Commands
 
 Classify before execution: `SAFE` may run only after inspecting definitions; `UNSAFE` and `UNKNOWN` must not run.
