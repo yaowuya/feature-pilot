@@ -21,7 +21,7 @@ FeaturePilot 已有 Figma/source gate、case 级视觉证据、独立审查和�
 非目标：
 
 - 不新增用户可见命令或第二套 UI 工作流。
-- 不硬编码 Playwright 以外的项目 URL、包管理器、认证方案、存储路径、全局像素阈值或客户组件库。
+- 除自动补齐 Playwright 外，不硬编码项目 URL、包管理器、认证方案、存储路径、全局像素阈值或客户组件库。
 - 不承诺复制 SDD-RIPER 的签名、防重放和固定浏览器探针能力。
 
 ## 2. 架构决策
@@ -117,6 +117,8 @@ Permission/Persistence Evidence: <observable real result or N/A with rationale>
 - 可以使用已授权的真实测试账号会话状态，但不能伪造用户、权限、角色或业务数据。
 - 视觉截图可继续使用稳定、非敏感 fixture；它是视觉证据，不得被复用为 E2E 数据或 E2E PASS 依据。
 - 没有真实环境、真实账号或可安全清理的真实数据时，Case 为 `BLOCKED`，不得降级为 mock、截图或人工通过。
+
+异常、失败和重试边界也只能通过真实环境支持的真实业务条件、真实权限条件或真实服务状态触发。不得为了覆盖错误态而拦截、改写或伪造请求/响应；若某个仍在本次范围内的条件无法安全地在真实环境触发，coverage matrix 必须标记为 `blocked` 并记录原因，不能把环境不可达伪装成 `N/A`。
 
 `business-flow` 的结果额外要求 `Core API Mode: real`、`Mocked Core API: false`，并记录对应的真实持久化、权限或数据隔离可见结果。
 
