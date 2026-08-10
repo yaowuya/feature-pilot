@@ -148,9 +148,9 @@ function Test-DecisionLedgerSet([string[]]$sections, [string]$requiredPrefix) {
 
 function Test-PreWriteConfirmationEvidence([string]$section, [string[]]$requiredIds) {
     try {
-        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
-        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
-        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
+        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
+        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
+        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*\r?$')
         if (-not $covered.Success -or -not $outstanding.Success -or -not $authorization.Success) { return $false }
 
         foreach ($id in $requiredIds) {
