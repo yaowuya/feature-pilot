@@ -121,7 +121,7 @@ The controller must:
 3. Create a task brief file.
 4. Dispatch exactly one implementer subagent for that task.
 5. Wait for the implementer to finish.
-6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, dispatch the independent E2E verifier before package/review; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
+6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, confirm the brief-owned E2E bootstrap authority before dispatching the independent verifier; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
 7. Create a review package from the actual diff, implementer report, and independent E2E result.
 8. Dispatch exactly one read-only task reviewer.
 9. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
@@ -260,6 +260,8 @@ For a UI-bearing task, resolve the matching `UI/E2E Delivery Contract` and `Visu
 The controller records `SOURCE_READY` from the source-derived condition/requirement, route, and real account/role; then `STATIC_UI_READY`; then applies the existing visual decision table to record `VISUAL_REVIEW_PASS` before E2E dispatch.
 - `static-only` may proceed from `VISUAL_REVIEW_PASS` to final review only with the evidence-backed `E2E Applicability: N/A` record; it must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
 - `interactive` and `business-flow` must progress `VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS` with independent real-browser E2E evidence; required E2E cannot be skipped, manually waived, or satisfied by a screenshot.
+
+Before every required E2E verifier launch, the controller must place the exact `Target frontend root`, `Allowed bootstrap / real E2E test paths and scope`, `Manifest / lockfile / config status`, and `Package manager` in the matching Task ID + Case ID brief UI/E2E record. If any value is missing, unresolved, or outside the approved task scope, record `BLOCKED` and do not dispatch the verifier.
 
 For every required E2E case, dispatch one fresh independent `e2e-verifier` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/e2e-verifier-prompt.md`. The implementer may prepare `INTERACTION_READY` but must never self-confirm `FRONTEND_E2E_PASS`; the verifier runs only the real browser UI and records case evidence.
 

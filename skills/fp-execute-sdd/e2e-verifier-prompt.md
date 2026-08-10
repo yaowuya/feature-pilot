@@ -18,14 +18,18 @@ UI/E2E Delivery Contract row: {DELIVERY_CONTRACT_ROW}
 E2E evidence root: {E2E_EVIDENCE_ROOT}
 Coverage matrix: {COVERAGE_MATRIX_PATH}
 Result file: {E2E_RESULT_PATH}
-Exact target frontend root: {TARGET_FRONTEND_ROOT}
-Allowed bootstrap/test paths and scope: {ALLOWED_E2E_PATHS_AND_SCOPE}
+Target frontend root: {TARGET_FRONTEND_ROOT}
+Allowed bootstrap / real E2E test paths and scope: {ALLOWED_E2E_PATHS_AND_SCOPE}
+Manifest / lockfile / config status: {MANIFEST_LOCKFILE_CONFIG_STATUS}
+Package manager: {PACKAGE_MANAGER}
 
 ## Mission
 
 Verify only the declared case through the real target browser UI. Start only after the controller records VISUAL_REVIEW_PASS. For an interactive or business-flow case, independently establish INTERACTION_READY and FRONTEND_E2E_PASS or BLOCKED. Do not treat a screenshot, implementer assertion, API call, backend write, database seed, fixture, or browser-storage injection as E2E evidence.
 
 Read the brief, matching UI/E2E Delivery Contract row, Visual Evidence Manifest, and current source/config needed to identify the real frontend root, runner, account/role, route, and source-derived coverage. Re-check the live target before making a claim. The Visual Evidence Manifest remains the sole owner of visual provenance and screenshot fields; reference it rather than copying those fields into E2E evidence.
+
+If any authority input is missing, unresolved, or outside the recorded scope, return `BLOCKED` without bootstrap or E2E execution.
 
 ## Required Output
 
