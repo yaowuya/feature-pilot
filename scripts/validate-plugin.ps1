@@ -502,6 +502,11 @@ Assert-Condition (Test-Path $executeSddUiE2EContractValidator) 'focused SDD exec
 & powershell -NoProfile -ExecutionPolicy Bypass -File $executeSddUiE2EContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused SDD execution UI/E2E contract validator failed'
 
+$uiE2EIntegrationValidator = Join-Path $root 'scripts\test-ui-e2e-integration-contract.ps1'
+Assert-Condition (Test-Path $uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'
+
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
