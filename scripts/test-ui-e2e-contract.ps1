@@ -50,15 +50,35 @@ function Test-ExactLines([string]$text, [string[]]$lines) {
     return $true
 }
 
-function Test-ExactContiguousLines([string]$text, [string[]]$lines) {
-    $normalized = $text -replace "`r`n", "`n"
-    $escapedLines = @($lines | ForEach-Object { [regex]::Escape($_) })
-    $pattern = '(?m)^' + ($escapedLines -join '$\n^') + '$'
-    return [regex]::Matches($normalized, $pattern).Count -eq 1
+function Remove-FencedCode([string]$text) {
+    $insideFence = $false
+    $keptLines = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in ($text -split "`r?`n")) {
+        if ($line -match '^\s*(?:`{3,}|~{3,})') {
+            $insideFence = -not $insideFence
+            continue
+        }
+        if (-not $insideFence) {
+            $keptLines.Add($line)
+        }
+    }
+    return [string]::Join("`n", $keptLines.ToArray())
+}
+
+function Get-NonFencedMarkdownLines([string]$text) {
+    return @((Remove-FencedCode $text) -split "`n")
+}
+
+function Test-DocumentTitleSchema([string]$text, [string]$documentTitle) {
+    $h1Lines = @(
+        Get-NonFencedMarkdownLines $text |
+            Where-Object { $_ -match '^#(?!#)\s+' }
+    )
+    return $h1Lines.Count -eq 1 -and $h1Lines[0] -ceq $documentTitle
 }
 
 function Get-MarkdownSecondLevelSection([string]$text, [string]$heading) {
-    $normalized = $text -replace "`r`n", "`n"
+    $normalized = Remove-FencedCode $text
     $pattern = ('(?ms)^## {0}$\n(?<body>.*?)(?=^## |\z)' -f [regex]::Escape($heading))
     $matches = [regex]::Matches($normalized, $pattern)
     if ($matches.Count -ne 1) {
@@ -68,25 +88,45 @@ function Get-MarkdownSecondLevelSection([string]$text, [string]$heading) {
 }
 
 function Test-ExactOrderedSecondLevelHeadings([string]$text, [string[]]$headings) {
-    $normalized = $text -replace "`r`n", "`n"
-    $previousPosition = -1
-    foreach ($heading in $headings) {
-        $pattern = ('(?m)^## {0}$' -f [regex]::Escape($heading))
-        $matches = [regex]::Matches($normalized, $pattern)
-        if ($matches.Count -ne 1 -or $matches[0].Index -le $previousPosition) {
+    $actualHeadings = @(
+        Get-NonFencedMarkdownLines $text |
+            Where-Object { $_ -match '^##(?!#)\s+' }
+    )
+    if ($actualHeadings.Count -ne $headings.Count) {
+        return $false
+    }
+    for ($index = 0; $index -lt $headings.Count; $index++) {
+        if ($actualHeadings[$index] -cne "## $($headings[$index])") {
             return $false
         }
-        $previousPosition = $matches[0].Index
     }
     return $true
 }
 
-function Test-SectionHasNoPermissiveException([string]$section, [string[]]$forbiddenTerms) {
-    foreach ($line in ($section -split "`r?`n")) {
-        $plainLine = [regex]::Replace($line, '[`*_]', '')
-        if ($plainLine -notmatch '(?i)^\s*(?:[-*]\s*)?(?:exception|override|waiver|allowance)\s*:') {
-            continue
+function Test-LineHasPermissiveGrant([string]$line) {
+    $affirmativeLine = [regex]::Replace(
+        $line,
+        '(?i)\b(?:may not|cannot|can''t|must not|do not|does not|never)\b[^.!?\r\n]{0,160}',
+        ' NEGATED_CLAUSE '
+    )
+    return $affirmativeLine -match '(?i)\b(?:may|can|allow(?:s|ed|ing)?|permit(?:s|ted|ting)?|waiv(?:e|es|ed|ing))\b'
+}
+
+function Get-EffectiveSpecificationSentences([string]$section) {
+    $sentences = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in ((Remove-FencedCode $section) -split "`n")) {
+        $plainLine = [regex]::Replace($line, '[`*_>#]', '')
+        foreach ($sentence in [regex]::Split($plainLine, '(?<=[.!?])\s+')) {
+            if ($sentence.Trim()) {
+                $sentences.Add($sentence.Trim())
+            }
         }
+    }
+    return $sentences.ToArray()
+}
+
+function Test-SectionHasNoPermissiveGrant([string]$section, [string[]]$forbiddenTerms) {
+    foreach ($plainLine in (Get-EffectiveSpecificationSentences $section)) {
         $hasForbiddenTerm = $false
         foreach ($term in $forbiddenTerms) {
             if ($plainLine.IndexOf($term, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
@@ -94,7 +134,18 @@ function Test-SectionHasNoPermissiveException([string]$section, [string[]]$forbi
                 break
             }
         }
-        if ($hasForbiddenTerm -and $plainLine -match '(?i)\b(?:may|can|allow(?:ed)?|permit(?:ted)?|waive(?:d)?)\b') {
+        if ($hasForbiddenTerm -and (Test-LineHasPermissiveGrant $plainLine)) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Test-SectionHasNoArchiveWaiverGrant([string]$section) {
+    foreach ($plainLine in (Get-EffectiveSpecificationSentences $section)) {
+        $hasLifecycleEnd = $plainLine -match '(?i)\b(?:FINAL_REVIEW|ARCHIVE)\b'
+        $hasBlocker = $plainLine -match '(?i)\bblockers?\b'
+        if ($hasLifecycleEnd -and $hasBlocker -and (Test-LineHasPermissiveGrant $plainLine)) {
             return $false
         }
     }
@@ -123,7 +174,7 @@ function Test-ZeroMockContract(
             return $false
         }
     }
-    return Test-SectionHasNoPermissiveException $section $forbiddenTerms
+    return Test-SectionHasNoPermissiveGrant $section $forbiddenTerms
 }
 
 function Test-RequiredE2EExceptionGuard(
@@ -132,7 +183,7 @@ function Test-RequiredE2EExceptionGuard(
     [string[]]$contradictionTerms
 ) {
     return (Test-ExactSentence $section $requiredE2ERule) -and
-        (Test-SectionHasNoPermissiveException $section $contradictionTerms)
+        (Test-SectionHasNoPermissiveGrant $section $contradictionTerms)
 }
 
 function Test-RetryBlockingContract(
@@ -141,7 +192,7 @@ function Test-RetryBlockingContract(
     [string[]]$contradictionTerms
 ) {
     return (Test-ExactLines $section $retryLines) -and
-        (Test-SectionHasNoPermissiveException $section $contradictionTerms)
+        (Test-SectionHasNoPermissiveGrant $section $contradictionTerms)
 }
 
 function Test-ArchiveNoWaiverContract(
@@ -150,11 +201,44 @@ function Test-ArchiveNoWaiverContract(
     [string]$noWaiverRule
 ) {
     return (Test-ExactSentence $section $blockerRule) -and
-        (Test-ExactSentence $section $noWaiverRule)
+        (Test-ExactSentence $section $noWaiverRule) -and
+        (Test-SectionHasNoArchiveWaiverGrant $section)
 }
 
 function Test-ValidatorRegistration([string]$text, [string[]]$registrationLines) {
-    return Test-ExactContiguousLines $text $registrationLines
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+        $text,
+        [ref]$tokens,
+        [ref]$parseErrors
+    )
+    if ($parseErrors.Count -ne 0) {
+        return $false
+    }
+
+    $expectedTypes = @(
+        'AssignmentStatementAst',
+        'PipelineAst',
+        'PipelineAst',
+        'PipelineAst'
+    )
+    $statements = @($ast.EndBlock.Statements)
+    for ($start = 0; $start -le ($statements.Count - $registrationLines.Count); $start++) {
+        $matches = $true
+        for ($offset = 0; $offset -lt $registrationLines.Count; $offset++) {
+            $statement = $statements[$start + $offset]
+            if ($statement.GetType().Name -cne $expectedTypes[$offset] -or
+                $statement.Extent.Text.Trim() -cne $registrationLines[$offset]) {
+                $matches = $false
+                break
+            }
+        }
+        if ($matches) {
+            return $true
+        }
+    }
+    return $false
 }
 
 function Replace-Required(
@@ -283,7 +367,9 @@ Assert-Anchors $contract @(
     'BLOCKED'
 ) 'shared UI/E2E contract'
 
-Assert-Condition (Test-ExactLine $contract $documentTitle) 'shared UI/E2E contract is missing its exact top-level title'
+Assert-Condition (
+    Test-DocumentTitleSchema $contract $documentTitle
+) 'shared UI/E2E contract must have exactly one non-fenced H1 with its exact top-level title'
 Assert-Condition (
     Test-ExactOrderedSecondLevelHeadings $contract $requiredHeadings
 ) 'shared UI/E2E contract is missing, duplicating, or reordering an exact required ## heading'
@@ -321,11 +407,17 @@ Assert-Condition (
     Test-ValidatorRegistration $validator $canonicalValidatorRegistrationLines
 ) 'global validator does not contain the complete focused UI/E2E contract invocation chain'
 
-Require-MutationBaseline (Test-ExactLine $contract $documentTitle) 'exact top-level title'
+Require-MutationBaseline (
+    Test-DocumentTitleSchema $contract $documentTitle
+) 'exact top-level title schema'
 $mutatedTitle = Replace-Required $contract $documentTitle 'FeaturePilot UI/E2E Staged Contract' 'top-level title becomes ordinary text'
 Assert-Condition (
-    -not (Test-ExactLine $mutatedTitle $documentTitle)
+    -not (Test-DocumentTitleSchema $mutatedTitle $documentTitle)
 ) 'mutation survived: the top-level title may become ordinary text'
+$mutatedExtraH1 = Insert-AfterRequired $contract $documentTitle ([Environment]::NewLine + '# Extra UI/E2E Title') 'extra top-level title is added'
+Assert-Condition (
+    -not (Test-DocumentTitleSchema $mutatedExtraH1 $documentTitle)
+) 'mutation survived: the UI/E2E contract may have an extra H1'
 
 Require-MutationBaseline (
     Test-ExactOrderedSecondLevelHeadings $contract $requiredHeadings
@@ -334,6 +426,17 @@ $mutatedHeading = Replace-Required $contract '## Coverage Matrix' 'Coverage Matr
 Assert-Condition (
     -not (Test-ExactOrderedSecondLevelHeadings $mutatedHeading $requiredHeadings)
 ) 'mutation survived: a required ## heading may become ordinary text'
+$mutatedExtraH2 = Insert-AfterRequired $contract '## Coverage Matrix' ([Environment]::NewLine + '## Extra UI/E2E Section') 'extra second-level title is added'
+Assert-Condition (
+    -not (Test-ExactOrderedSecondLevelHeadings $mutatedExtraH2 $requiredHeadings)
+) 'mutation survived: the UI/E2E contract may have an extra H2'
+$fencedPseudoHeadings = $contract + [Environment]::NewLine + '```markdown' + [Environment]::NewLine + '# Pseudo Title' + [Environment]::NewLine + '## Pseudo Section' + [Environment]::NewLine + '```'
+Assert-Condition (
+    Test-DocumentTitleSchema $fencedPseudoHeadings $documentTitle
+) 'mutation fixture is invalid: fenced pseudo H1 should not alter the title schema'
+Assert-Condition (
+    Test-ExactOrderedSecondLevelHeadings $fencedPseudoHeadings $requiredHeadings
+) 'mutation fixture is invalid: fenced pseudo H2 should not alter the second-level heading schema'
 
 Require-MutationBaseline (
     Test-StateMachineContract $stateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule
@@ -357,6 +460,16 @@ $mutatedRequiredE2EExceptionSection = Get-MarkdownSecondLevelSection $mutatedReq
 Assert-Condition (
     -not (Test-RequiredE2EExceptionGuard $mutatedRequiredE2EExceptionSection $canonicalRequiredE2ERule $requiredE2EContradictionTerms)
 ) 'mutation survived: a required-E2E exception may allow SKIPPED, manual waiver, or PASS_WITH_NOTES'
+$mutatedRequiredE2EQuote = Insert-AfterRequired $contract $canonicalRequiredE2ERule ([Environment]::NewLine + '> A required E2E may be `SKIPPED` with a manual approval and `PASS_WITH_NOTES`.') 'required E2E quote permits skip'
+$mutatedRequiredE2EQuoteSection = Get-MarkdownSecondLevelSection $mutatedRequiredE2EQuote 'Required State Machine'
+Assert-Condition (
+    -not (Test-RequiredE2EExceptionGuard $mutatedRequiredE2EQuoteSection $canonicalRequiredE2ERule $requiredE2EContradictionTerms)
+) 'mutation survived: a required-E2E quote may allow SKIPPED, manual approval, or PASS_WITH_NOTES'
+$fencedRequiredE2EGrant = Insert-AfterRequired $contract $canonicalRequiredE2ERule ([Environment]::NewLine + '```text' + [Environment]::NewLine + '> A required E2E may be `SKIPPED` with a manual approval and `PASS_WITH_NOTES`.' + [Environment]::NewLine + '```') 'fenced required-E2E grant is ignored'
+$fencedRequiredE2EGrantSection = Get-MarkdownSecondLevelSection $fencedRequiredE2EGrant 'Required State Machine'
+Assert-Condition (
+    Test-RequiredE2EExceptionGuard $fencedRequiredE2EGrantSection $canonicalRequiredE2ERule $requiredE2EContradictionTerms
+) 'mutation fixture is invalid: fenced required-E2E grant should not alter the contract'
 
 Require-MutationBaseline (
     Test-ZeroMockContract $zeroMockSection $canonicalZeroMockRule $zeroMockForbiddenTerms
@@ -371,6 +484,16 @@ $mutatedZeroMockExceptionSection = Get-MarkdownSecondLevelSection $mutatedZeroMo
 Assert-Condition (
     -not (Test-ZeroMockContract $mutatedZeroMockExceptionSection $canonicalZeroMockRule $zeroMockForbiddenTerms)
 ) 'mutation survived: a zero-mock exception may allow page.route or mocks'
+$mutatedZeroMockNote = Insert-AfterRequired $contract $canonicalZeroMockRule ([Environment]::NewLine + 'Note: Real E2E may use `page.route` and mocks.') 'zero-mock note permits route and mocks'
+$mutatedZeroMockNoteSection = Get-MarkdownSecondLevelSection $mutatedZeroMockNote 'Real Frontend E2E: No Mock Data or Requests'
+Assert-Condition (
+    -not (Test-ZeroMockContract $mutatedZeroMockNoteSection $canonicalZeroMockRule $zeroMockForbiddenTerms)
+) 'mutation survived: a zero-mock note may allow page.route or mocks'
+$fencedZeroMockGrant = Insert-AfterRequired $contract $canonicalZeroMockRule ([Environment]::NewLine + '```text' + [Environment]::NewLine + 'Note: Real E2E may use `page.route` and mocks.' + [Environment]::NewLine + '```') 'fenced zero-mock grant is ignored'
+$fencedZeroMockGrantSection = Get-MarkdownSecondLevelSection $fencedZeroMockGrant 'Real Frontend E2E: No Mock Data or Requests'
+Assert-Condition (
+    Test-ZeroMockContract $fencedZeroMockGrantSection $canonicalZeroMockRule $zeroMockForbiddenTerms
+) 'mutation fixture is invalid: fenced zero-mock grant should not alter the contract'
 
 Require-MutationBaseline (
     Test-ArchiveNoWaiverContract $retrySection $canonicalArchiveBlockerRule $canonicalArchiveNoWaiverRule
@@ -380,6 +503,16 @@ $mutatedArchiveWaiverSection = Get-MarkdownSecondLevelSection $mutatedArchiveWai
 Assert-Condition (
     -not (Test-ArchiveNoWaiverContract $mutatedArchiveWaiverSection $canonicalArchiveBlockerRule $canonicalArchiveNoWaiverRule)
 ) 'mutation survived: final review or archive may waive blockers'
+$mutatedArchiveHeading = Insert-AfterRequired $contract $canonicalArchiveNoWaiverRule ([Environment]::NewLine + '### Waiver' + [Environment]::NewLine + 'FINAL_REVIEW and ARCHIVE may waive blockers.') 'archive waiver heading permits blockers'
+$mutatedArchiveHeadingSection = Get-MarkdownSecondLevelSection $mutatedArchiveHeading 'Retry, Blocking, Final Review, and Archive'
+Assert-Condition (
+    -not (Test-ArchiveNoWaiverContract $mutatedArchiveHeadingSection $canonicalArchiveBlockerRule $canonicalArchiveNoWaiverRule)
+) 'mutation survived: an archive waiver heading may allow blockers'
+$fencedArchiveWaiver = Insert-AfterRequired $contract $canonicalArchiveNoWaiverRule ([Environment]::NewLine + '```text' + [Environment]::NewLine + '### Waiver' + [Environment]::NewLine + 'FINAL_REVIEW and ARCHIVE may waive blockers.' + [Environment]::NewLine + '```') 'fenced archive waiver is ignored'
+$fencedArchiveWaiverSection = Get-MarkdownSecondLevelSection $fencedArchiveWaiver 'Retry, Blocking, Final Review, and Archive'
+Assert-Condition (
+    Test-ArchiveNoWaiverContract $fencedArchiveWaiverSection $canonicalArchiveBlockerRule $canonicalArchiveNoWaiverRule
+) 'mutation fixture is invalid: fenced archive waiver should not alter the contract'
 
 Require-MutationBaseline (
     Test-ValidatorRegistration $validator $canonicalValidatorRegistrationLines
@@ -388,6 +521,24 @@ $mutatedValidator = Replace-Required $validator $canonicalValidatorRegistrationL
 Assert-Condition (
     -not (Test-ValidatorRegistration $mutatedValidator $canonicalValidatorRegistrationLines)
 ) 'mutation survived: global validator may retain a name or variable while omitting the UI/E2E invocation'
+$validatorRegistrationStart = $validator.IndexOf($canonicalValidatorRegistrationLines[0], [System.StringComparison]::Ordinal)
+if ($validatorRegistrationStart -lt 0) {
+    throw 'Invalid mutation fixture; production text was not hit: focused UI/E2E registration start'
+}
+$validatorLineEndStart = $validatorRegistrationStart + $canonicalValidatorRegistrationLines[0].Length
+$validatorNewLine = if (
+    $validator.Length -ge ($validatorLineEndStart + 2) -and
+    $validator.Substring($validatorLineEndStart, 2) -eq "`r`n"
+) { "`r`n" } else { "`n" }
+$validatorRegistrationBlock = [string]::Join($validatorNewLine, $canonicalValidatorRegistrationLines)
+$mutatedValidatorBlockComment = Replace-Required $validator $validatorRegistrationBlock ('<#' + $validatorNewLine + $validatorRegistrationBlock + $validatorNewLine + '#>') 'focused UI/E2E chain becomes a block comment'
+Assert-Condition (
+    -not (Test-ValidatorRegistration $mutatedValidatorBlockComment $canonicalValidatorRegistrationLines)
+) 'mutation survived: a block comment may impersonate the focused UI/E2E validator chain'
+$mutatedValidatorHereString = Replace-Required $validator $validatorRegistrationBlock ("@'" + $validatorNewLine + $validatorRegistrationBlock + $validatorNewLine + "'@") 'focused UI/E2E chain becomes a here-string'
+Assert-Condition (
+    -not (Test-ValidatorRegistration $mutatedValidatorHereString $canonicalValidatorRegistrationLines)
+) 'mutation survived: a here-string may impersonate the focused UI/E2E validator chain'
 
 if ($failures.Count -gt 0) {
     throw "UI/E2E contract validation failed:`n- $($failures -join "`n- ")"
