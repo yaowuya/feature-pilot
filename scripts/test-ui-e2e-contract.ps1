@@ -291,6 +291,31 @@ function Test-ArchiveNoWaiverContract(
         (Test-SectionHasNoArchiveWaiverGrant $section)
 }
 
+function Test-TopLevelStatementTerminatesBeforeRegistration([System.Management.Automation.Language.StatementAst]$statement) {
+    if ($statement -is [System.Management.Automation.Language.ExitStatementAst] -or
+        $statement -is [System.Management.Automation.Language.ReturnStatementAst] -or
+        $statement.Extent.Text.Trim() -match '^(?i)(?:exit|return)(?:\s|$)') {
+        return $true
+    }
+    if ($statement -isnot [System.Management.Automation.Language.IfStatementAst]) {
+        return $false
+    }
+
+    $ifStatement = [System.Management.Automation.Language.IfStatementAst]$statement
+    if ($ifStatement.Clauses.Count -ne 1 -or
+        $ifStatement.Clauses[0].Item1.Extent.Text.Trim() -cnotmatch '^\$true$') {
+        return $false
+    }
+    foreach ($bodyStatement in $ifStatement.Clauses[0].Item2.Statements) {
+        if ($bodyStatement -is [System.Management.Automation.Language.ExitStatementAst] -or
+            $bodyStatement -is [System.Management.Automation.Language.ReturnStatementAst] -or
+            $bodyStatement.Extent.Text.Trim() -match '^(?i)(?:exit|return)(?:\s|$)') {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Test-ValidatorRegistration([string]$text, [string[]]$registrationLines) {
     $tokens = $null
     $parseErrors = $null
@@ -322,8 +347,7 @@ function Test-ValidatorRegistration([string]$text, [string[]]$registrationLines)
         }
         if ($matches) {
             for ($preceding = 0; $preceding -lt $start; $preceding++) {
-                $precedingText = $statements[$preceding].Extent.Text.Trim()
-                if ($precedingText -match '^(?i)(?:exit|return)(?:\s|$)') {
+                if (Test-TopLevelStatementTerminatesBeforeRegistration $statements[$preceding]) {
                     return $false
                 }
             }
@@ -556,8 +580,16 @@ Assert-Condition (
     Test-ExactLines $coverageSection $canonicalCoverageLines
 ) 'shared UI/E2E contract does not preserve canonical coverage-matrix ownership and status semantics'
 Assert-Condition (
-    $contract -cnotmatch '(?<![A-Za-z])blocked(?![A-Za-z])'
+    (Get-EffectiveNormativeText $contract) -cnotmatch '(?<![A-Za-z])blocked(?![A-Za-z])'
 ) 'shared UI/E2E contract still uses ambiguous lowercase blocked'
+$commentedLowercaseBlocked = $contract + [Environment]::NewLine + '<!--' + [Environment]::NewLine + 'blocked' + [Environment]::NewLine + '-->'
+Assert-Condition (
+    (Get-EffectiveNormativeText $commentedLowercaseBlocked) -cnotmatch '(?<![A-Za-z])blocked(?![A-Za-z])'
+) 'mutation fixture is invalid: lowercase blocked inside an HTML comment should not be normative text'
+$fencedLowercaseBlocked = $contract + [Environment]::NewLine + '```text' + [Environment]::NewLine + 'blocked' + [Environment]::NewLine + '```'
+Assert-Condition (
+    (Get-EffectiveNormativeText $fencedLowercaseBlocked) -cnotmatch '(?<![A-Za-z])blocked(?![A-Za-z])'
+) 'mutation fixture is invalid: lowercase blocked inside a valid fence should not be normative text'
 Assert-Condition (
     Test-RetryBlockingContract $retrySection $canonicalRetryLines $requiredE2EContradictionTerms
 ) 'shared UI/E2E contract does not preserve the diagnostic retry ceiling and blocker disposition'
@@ -763,6 +795,14 @@ $mutatedValidatorReturnBeforeChain = Replace-Required $validator $canonicalValid
 Assert-Condition (
     -not (Test-ValidatorRegistration $mutatedValidatorReturnBeforeChain $canonicalValidatorRegistrationLines)
 ) 'mutation survived: a top-level return may make the focused UI/E2E validator chain unreachable'
+$mutatedValidatorIfTrueExitBeforeChain = Replace-Required $validator $canonicalValidatorRegistrationLines[0] ('if ($true) { exit }' + [Environment]::NewLine + $canonicalValidatorRegistrationLines[0]) 'literal-true if exits before focused UI/E2E registration'
+Assert-Condition (
+    -not (Test-ValidatorRegistration $mutatedValidatorIfTrueExitBeforeChain $canonicalValidatorRegistrationLines)
+) 'mutation survived: a literal-true if may exit before the focused UI/E2E validator chain'
+$mutatedValidatorIfTrueReturnBeforeChain = Replace-Required $validator $canonicalValidatorRegistrationLines[0] ('if ($true) { return }' + [Environment]::NewLine + $canonicalValidatorRegistrationLines[0]) 'literal-true if returns before focused UI/E2E registration'
+Assert-Condition (
+    -not (Test-ValidatorRegistration $mutatedValidatorIfTrueReturnBeforeChain $canonicalValidatorRegistrationLines)
+) 'mutation survived: a literal-true if may return before the focused UI/E2E validator chain'
 $mutatedValidator = Replace-Required $validator $canonicalValidatorRegistrationLines[2] '# focused UI/E2E invocation deleted' 'focused UI/E2E invocation is deleted'
 Assert-Condition (
     -not (Test-ValidatorRegistration $mutatedValidator $canonicalValidatorRegistrationLines)
