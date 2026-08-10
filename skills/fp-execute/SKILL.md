@@ -10,6 +10,7 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it owns canonical small/split paths, manifests, task ownership, historical-layout rejection, and Consumer validation.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, bootstrap, retry, and non-waivable blocking.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 
 ---
@@ -28,7 +29,6 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 - 每个任务执行 TDD、必要验证和一次 inline 自审；发现问题就在当前任务内修复并重新验证，不建立独立 review/fix 状态机。
 - `fp-execute` 不拥有 final review scope。全部任务完成后输出执行报告，只提示运行独立的 `fp-final-review`。
 - 只有用户明确要求 `fp-execute-sdd` 时才切换到 SDD；不要根据任务数量、模块跨度或风险自行切换。
-
 ## 执行模式
 
 ### 半自动模式（semi）
@@ -47,7 +47,6 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 3. 在当前上下文逐个执行任务，不在正常任务边界停下。
 4. 目标测试或验证失败时最多修复并重试 3 次；仍失败则记录 `BLOCKED`，暂停并说明需要的人工决策。
 5. 全部任务完成后输出执行报告，提示运行独立的 `fp-final-review`；不要在本 skill 内执行最终审查。
-
 ## Canonical 输入解析
 
 1. 作为 canonical-first Consumer 而不是 Producer，先检测每个 small/split 候选，再读取唯一 canonical form：`prd.md` 或 `prd/00-index.md`；`proposal.md` 或 `proposal/00-index.md`；`design/backend.md` 或 `design/backend/00-index.md`；`design/frontend.md` 或 `design/frontend/00-index.md`。
@@ -55,7 +54,6 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 3. 只有 `tasks`-kind fragment 可以拥有 checkbox；每个 task ID 使用一个 unique task owner。验证端内与跨端依赖存在且无环。
 4. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist；A single-end plan never has an overview。双端 overview 的进度是从 owner checkboxes 计算的 derived progress summary。
 5. Root-level `design-backend.md` / `design-frontend.md`、indexless split、historical path 或 small/split dual form 都必须在执行前阻塞；`fp-execute` 不迁移需求、设计或计划产物。
-
 ## 执行状态
 
 在 `fp-docs/changes/<slug>/.fp-execute/progress.md` 维护简单的恢复证据。如果任务文件不在标准 change 目录，则在任务文件同级创建 `.fp-execute/progress.md`。
@@ -84,8 +82,8 @@ Base SHA: <执行开始时的 git sha>
 - Task-owner checkbox 是计划完成状态；ledger is recovery evidence, not a second completion authority。
 - Ledger 与 checkbox 不一致时检查 owner file、`git log`、实际实现和验证结果，再修正状态；不要盲目重做。
 - 每个任务完成时一起更新 checkbox、ledger、验证命令和 commit 范围；双端计划再从 owner checkboxes 重算 overview。
+- UI-bearing task 同时在 ledger 记录每个 `Task ID + Case ID` 的当前 lifecycle gate、Visual Evidence Manifest reference、`.fp-execute/e2e/<task-id>/<case-id>/` evidence reference、coverage-matrix result、attempt count、cleanup and `BLOCKED` rationale。它们不得替代 checkbox 的完成权威。
 - 阻塞时记录原因、已尝试命令和需要的人工决策。
-
 ## Pre-flight Plan Review
 
 执行业务代码前一次性检查：
@@ -96,7 +94,23 @@ Base SHA: <执行开始时的 git sha>
 4. 每个任务有可执行的测试或替代验证步骤，没有 `TBD`、`TODO`、`按需处理` 等占位内容。
 5. 前端任务包含需要的 template/script/style/visual 骨架，并符合项目当前框架与组件惯例。
 6. 计划冲突一次性汇总并暂停；扫描通过后直接开始执行。
+## UI-bearing Task Gate
 
+Before each UI-bearing confirmed task, resolve its unique stable task owner and read the matching `UI/E2E Delivery Contract` and `Visual Evidence Manifest` rows by `Task ID + Case ID` from the canonical frontend plan. The UI/E2E contract links existing visual evidence and does not duplicate visual-manifest fields: approved-design provenance, Figma mapping, viewport/fixture, reference/current/diff, mask, visual acceptance, and visual command remain the Visual Evidence Manifest's only fields.
+
+For every matched case, record lifecycle-gate evidence under the existing task ledger and canonical case directories; this is recovery/verification evidence only, and the unique task-owner checkbox remains the sole plan-completion authority. First prove `SOURCE_READY` from the source-derived condition / requirement reference, route, and real test account or role. Implement the case as `STATIC_UI_READY`, then require the existing Visual Evidence Manifest to pass as `VISUAL_REVIEW_PASS`.
+
+- `static-only` follows `SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> FINAL_REVIEW -> ARCHIVE` only after its visual pass and evidence-backed `E2E Applicability: N/A` reason. It must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
+- `interactive` and `business-flow` follow `SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS -> FINAL_REVIEW -> ARCHIVE`. At `INTERACTION_READY`, prove the real target browser can operate the required controls; at `FRONTEND_E2E_PASS`, run real browser E2E and record `E2E Applicability: REQUIRED`.
+- Required E2E cannot be `SKIPPED` or manual-approved, and a screenshot is not E2E evidence. A required UI/E2E gap cannot become non-blocking debt, `N/A`, `PASS`, `PASS_WITH_NOTES`, a manual approval, or a waived check; it is `BLOCKED`.
+
+For each required E2E case, create and maintain `.fp-execute/e2e/<task-id>/<case-id>/`, including `coverage-matrix.md`. Record `Executed command`, `Environment identity`, `Destination`, `Start`, `End`, `Attempts`, `Test IDs`, `Artifacts`, and `Cleanup`; link the real-browser result and the Visual Evidence Manifest separately. Derive coverage from source and confirmed requirements: happy paths and branches; validation and boundaries; loading, empty, error, and retry states; permissions and isolation; persistence and navigation; state transitions and concurrency; and applicable API pagination, filtering, sorting, and compatibility. A real environment condition that cannot safely be verified is `BLOCKED`, never a mock or an E2E `N/A`.
+
+Real E2E has an absolute zero-mock rule. It must not use `page.route`, `route.fulfill`, MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, frontend store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow. For `business-flow`, prove the browser reaches the real core API, record `Mocked Core API: false`, observe the real persistence or permission result, and perform cleanup of test-created data through an approved normal flow or documented real-environment cleanup mechanism that does not replace the tested UI flow.
+
+Prefer the existing runner. If it is missing, detect the target frontend root, workspace, lockfile, and package manager, then automatically install `@playwright/test` as a development dependency and Chromium only in that target project. Reuse existing configuration; create minimal configuration/current-task skeleton only when none exists. Never install globally, overwrite existing configuration, or upgrade unrelated dependencies. Record bootstrap commands, resolved version, and changed files in the case evidence. Missing frontend root or bootstrap failure is `BLOCKED`, never a mock fallback.
+
+After a UI/E2E failure, diagnostic retries may continue only through attempt 3. A third failed attempt is `BLOCKED`; a fourth attempt is forbidden. Do not update the unique task-owner checkbox as complete or continue that task to final handoff while any required lifecycle gate, coverage condition, real-E2E result, cleanup, or mock check is `BLOCKED`.
 ## TDD 执行流程（每个任务）
 
 1. 从唯一 task-owner file 读取任务、Files、Reasoning、Depends on、Interfaces 和验收标准。
@@ -108,7 +122,6 @@ Base SHA: <执行开始时的 git sha>
 7. 验证通过后更新唯一 owner checkbox；双端计划同步派生进度。
 8. 按任务提交代码，提交信息与交付行为一致。
 9. 在 ledger 记录 commit 范围、验证命令、结果和残余风险。
-
 ## CodeGraph 写后刷新
 
 首次创建、修改、移动或删除源码、测试、配置、schema 或生成器输入时，立即把本工作流代码图状态标记为 `dirty-after-write`。此后 `never query a dirty graph`：本轮剩余定位全部使用当前源码的 `Glob/Grep/ranged Read`，不得继续使用写入前的 CodeGraph 结果。
@@ -120,7 +133,6 @@ codegraph sync <project-root> --quiet
 ```
 
 每次用户可见返回前最多执行一次，不再运行 `status`，不把 `.codegraph/` 混入任务提交。成功时记录已刷新；失败时记录一次降级原因并继续当前验证、checkbox/ledger 更新和汇报，`must not block completion`。项目原本没有图时不得隐式执行 `init`。
-
 ## 完成汇报
 
 半自动模式每个任务汇报：任务、文件、验证、commit、ledger 和未解决风险。
@@ -132,4 +144,6 @@ codegraph sync <project-root> --quiet
 - 所有验证命令与结果。
 - progress ledger 路径和残余风险。
 - CodeGraph `post-write-sync` 的执行、跳过或失败状态。
-- 下一步：运行独立的 `fp-final-review`；通过后再执行 `/fp-archive`。
+- 每个 UI case 的 lifecycle gate、Visual/E2E evidence links and coverage-matrix result。
+- 若有任何 unresolved UI core gap、required E2E、real-business closure、cleanup、coverage 或 mock violation 为 `BLOCKED`，must not hand off to `fp-final-review`；输出 `.fp-execute/e2e/<task-id>/<case-id>/`、已尝试命令和所需人工决策，并保持 task owner 未完成。
+- 仅在所有 UI-bearing cases 满足其交付等级门禁后，下一步才是运行独立的 `fp-final-review`；通过后再执行 `/fp-archive`。
