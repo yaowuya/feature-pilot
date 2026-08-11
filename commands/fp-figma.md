@@ -6,6 +6,7 @@ description: 根据 Figma 链接生成或完善项目当前前端框架的 UI �
 
 Gate checksum：
 
-- 只读当前 UI 范围需要的 Figma 节点、frontend/prototype settings 与相邻真实代码。
-- 遵循项目当前框架、组件与状态模式，不假设供应商或组件前缀。
-- 设计阶段只产出映射和 Visual Checks；进入实现阶段才修改业务 UI。
+- Figma-only UI source；原型不参与视觉还原。
+- `PRES-*` / `FIGCAP-*` 防止改坏或漏功能。
+- 浏览器能力由客户选择，not install silently。
+- independent review 通过才是 Figma change complete。
