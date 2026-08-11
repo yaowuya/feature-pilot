@@ -53,8 +53,9 @@ function Get-EffectiveNormativeText([string]$text) {
 }
 
 function Get-EffectiveVerifierPrompt([string]$text) {
-    $outer = Get-EffectiveNormativeText $text
-    $promptFence = [regex]::Match($text, '(?ms)^ {0,3}\x60{3}text[ \t]*\r?\n(?<body>.*?)^ {0,3}\x60{3,}[ \t]*$')
+    $normalized = $text.Replace(([string][char]13) + $script:lf, $script:lf).Replace([string][char]13, $script:lf)
+    $outer = Get-EffectiveNormativeText $normalized
+    $promptFence = [regex]::Match($normalized, '(?ms)^ {0,3}\x60{3}text[ \t]*\n(?<body>.*?)^ {0,3}\x60{3,}[ \t]*$')
     if (-not $promptFence.Success) { return $outer }
     $promptBody = [regex]::Replace($promptFence.Groups['body'].Value, '(?s)<!--.*?-->', '')
     return $outer + $script:lf + $promptBody
@@ -168,6 +169,7 @@ $package = Read-Utf8 'skills\fp-execute-sdd\review-package-template.md'
 $fix = Read-Utf8 'skills\fp-execute-sdd\fix-prompt.md'
 $verifier = Read-Utf8 'skills\fp-execute-sdd\e2e-verifier-prompt.md'
 $validator = Read-Utf8 'scripts\validate-plugin.ps1'
+$normalizedBrief = $brief.Replace(([string][char]13) + $lf, $lf).Replace([string][char]13, $lf)
 $effectiveSkill = Get-EffectiveNormativeText $skill
 $effectiveVerifier = Get-EffectiveVerifierPrompt $verifier
 $gateHeading = 'UI/E2E Delivery Gate'
@@ -213,7 +215,7 @@ $verifierRules = Get-ExactSecondLevelSection $effectiveVerifier $verifierHeading
 Assert-Condition ((Test-ExactLine $verifierRules $zeroMockLine) -and (Test-ExactLine $verifierRules $bootstrapLine) -and (Test-ExactLine $verifierRules $evidenceLine) -and (Test-ExactLine $verifierRules $blockedSourceLine)) 'SDD verifier lacks required zero-mock, bootstrap, evidence, or source-derived blocking rules'
 Assert-Condition ((Test-NoForbiddenGrant $effectiveVerifier) -and (Test-NoForbiddenGrant $effectiveSkill)) 'SDD verifier or controller permits a mock, required-E2E waiver, or global-install exception'
 Assert-Condition ((Test-ExactLine $verifierRules $bootstrapAuthorityLine) -and (Test-ExactLine $verifierRules $bootstrapScopeLine) -and (Test-ExactLine $verifierRules $bootstrapEvidenceLine)) 'SDD verifier lacks controller-scoped authority for project-local bootstrap and necessary real E2E tests'
-Assert-Condition ((Test-ExactLine $effectiveVerifier 'Target frontend root: {TARGET_FRONTEND_ROOT}') -and (Test-ExactLine $effectiveVerifier 'Allowed bootstrap / real E2E test paths and scope: {ALLOWED_E2E_PATHS_AND_SCOPE}') -and (Test-ExactLine $effectiveVerifier 'Manifest / lockfile / config status: {MANIFEST_LOCKFILE_CONFIG_STATUS}') -and (Test-ExactLine $effectiveVerifier 'Package manager: {PACKAGE_MANAGER}') -and (Test-ExactLine $effectiveVerifier $verifierAuthorityBlockedLine) -and (Test-ExactLine $brief $briefAuthorityHeader) -and (Test-ExactLine $brief $briefAuthorityLine)) 'SDD controller, brief, and verifier do not share exact bootstrap authority fields'
+Assert-Condition ((Test-ExactLine $effectiveVerifier 'Target frontend root: {TARGET_FRONTEND_ROOT}') -and (Test-ExactLine $effectiveVerifier 'Allowed bootstrap / real E2E test paths and scope: {ALLOWED_E2E_PATHS_AND_SCOPE}') -and (Test-ExactLine $effectiveVerifier 'Manifest / lockfile / config status: {MANIFEST_LOCKFILE_CONFIG_STATUS}') -and (Test-ExactLine $effectiveVerifier 'Package manager: {PACKAGE_MANAGER}') -and (Test-ExactLine $effectiveVerifier $verifierAuthorityBlockedLine) -and (Test-ExactLine $normalizedBrief $briefAuthorityHeader) -and (Test-ExactLine $normalizedBrief $briefAuthorityLine)) 'SDD controller, brief, and verifier do not share exact bootstrap authority fields'
 Assert-Condition ($brief.Contains('## UI/E2E Delivery Contract (frontend/UI only)') -and $brief.Contains('Visual Evidence Manifest reference') -and $implementer.Contains('must never self-confirm ' + $tick + 'FRONTEND_E2E_PASS' + $tick) -and $reviewer.Contains('both the existing visual evidence and the independent E2E verifier evidence') -and $package.Contains('## UI/E2E Delivery Evidence (frontend/UI only)') -and $fix.Contains('must not be converted into review debt, ' + $tick + 'PASS_WITH_NOTES' + $tick + ', or a manual waiver')) 'SDD templates do not carry the independent staged UI/E2E gate'
 Assert-Condition (Test-ValidatorRegistration $validator $registration) 'global validator does not invoke the focused SDD UI/E2E validator through the required AST registration chain'
 
@@ -239,6 +241,9 @@ $crossSectionMockAllowed = Insert-AfterRequired $verifier '## E2E Result File Fo
 Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveNormativeText $crossSectionMockAllowed))) 'mutation survived: verifier allows mock data in another section'
 $textFenceMockFine = Insert-AfterRequired $verifier '## Mission' ($lf + $lf + 'Exception: mock data is fine.') 'actionable text-fence mock-fine exception'
 Assert-Condition (-not (Test-NoForbiddenGrant (Get-EffectiveVerifierPrompt $textFenceMockFine))) 'mutation survived: verifier permits mock data inside its actionable text fence'
+$crlfVerifier = $verifier.Replace(([string][char]13) + $lf, $lf).Replace($lf, ([string][char]13) + $lf)
+$crlfEffectiveVerifier = Get-EffectiveVerifierPrompt $crlfVerifier
+Assert-Condition (Test-ExactLine $crlfEffectiveVerifier 'Target frontend root: {TARGET_FRONTEND_ROOT}') 'CRLF actionable text fence omits verifier bootstrap authority inputs'
 $commentedMockGrant = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + '<!-- Exception: mock data is fine. -->') 'commented mock grant'
 Assert-Condition (Test-NoForbiddenGrant (Get-EffectiveVerifierPrompt $commentedMockGrant)) 'mutation fixture is invalid: commented mock grant should be ignored'
 $fencedMockGrant = Insert-AfterRequired $verifier '## E2E Result File Format' ($lf + '~~~text' + $lf + 'Exception: mock data is fine.' + $lf + '~~~') 'fenced mock grant'
