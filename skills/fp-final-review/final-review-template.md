@@ -41,6 +41,10 @@ Resolution follows the artifact-layout contract already loaded by `fp-final-revi
 - Structural gate: `PASS | FAIL | BLOCKED` — `<exact rejected path/rule; PASS_WITH_NOTES is forbidden on any shared-contract rejection>`
 - Progress ledger: `<path or missing>`
 - Prior task reviews: `<paths or none>`
+- Figma preservation contract: `<path or N/A>`
+- Figma capability ledger: `<path or N/A>`
+- Figma independent reviews: `<paths or N/A>`
+- Browser capability resolution: `<project runner / Playwright browser extension / local playwright-cli / unavailable>`
 - Project constraints: `<paths or none>`
 - Dynamic brief/package sources: `<manifest, settings, optional project facts, change artifacts, current source/config, CodeGraph/native-search candidates; N/A where absent>`
 - `static handoff absence is not a blocker`: `<confirmed; completeness assessed from dynamic brief/package sources>`
@@ -115,6 +119,22 @@ Search only canonical task-owner `Files`/scope entries and existing evidence pac
 | --- | --- | --- | --- |
 | `manifest/settings/intel` | Dynamic task context, relevant settings/project facts, Unknowns, live freshness; optional files may be N/A | Covered / Partial / Missing / N/A | `<dynamic brief/package sources and current proof>` |
 | proposal/design/tasks | <requirement> | Covered / Partial / Missing / Violated / N/A | <file/test/commit> |
+
+## Figma Capability and Preservation Coverage
+
+| ID | Source / required observable result | Owner task/file | Runtime evidence | Status | Review evidence |
+| --- | --- | --- | --- | --- | --- |
+| `FIGCAP-001` or `PRES-001` | `<contract>` | `<path/task>` | `<command/artifact>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<review path>` |
+
+## Figma Completion Status
+
+- Code editing: `DONE | PARTIAL | NOT_STARTED`
+- Capability completion: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
+- Preservation: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
+- Figma visual fidelity: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
+- Overall Figma result: `COMPLETE | INCOMPLETE | BLOCKED`
+
+A Figma `COMPLETE` result requires every required `FIGCAP-*`, core `PRES-*`, and core Visual Case to be `PASS`, with no unapproved behavior change.
 
 ## Visual Evidence
 

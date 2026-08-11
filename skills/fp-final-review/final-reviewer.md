@@ -40,6 +40,10 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Overview applicability: {TWO_END_OVERVIEW_OR_SINGLE_END_NONE}
 - Progress ledger: {PROGRESS_LEDGER_PATH_OR_MISSING}
 - Prior task reviews: {TASK_REVIEW_PATHS_OR_NONE}
+- Figma preservation contract: {FIGMA_PRESERVATION_PATH_OR_NA}
+- Figma capability ledger: {FIGMA_CAPABILITIES_PATH_OR_NA}
+- Figma independent reviews: {FIGMA_REVIEW_PATHS_OR_NONE}
+- Browser capability resolution: {BROWSER_CAPABILITY_OR_NA}
 - Dynamic brief/package sources: {DYNAMIC_CONTEXT_SOURCES_OR_NA}
 - Project constraints: {PROJECT_CONSTRAINT_PATHS_OR_NONE}
 - Frontend settings: {FRONTEND_SETTINGS_PATH_OR_MISSING}
@@ -77,8 +81,9 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 10. Before validation, classify every command as `SAFE`, `UNSAFE`, or `UNKNOWN`. Run a SAFE variant only after inspecting script/wrapper definitions. `--fix`, `--write`, snapshot update, migration, seed, formatter, generator, cache, coverage, dist, unknown wrapper, service startup, database mutation, or external mutation must not run; UNSAFE and UNKNOWN are SKIPPED with evidence impact.
 11. For every planned visual Case ID, inspect `.fp-execute/visual/<task-id>/<case-id>/manifest.md` and independently carry the complete schema into the report: Approved design source, Figma node, revision/time, Frame/variant, available variables / Auto Layout / assets, Runtime route, Scenario/state, Viewport, DPR, Locale, Theme, Deterministic non-sensitive fixture, explicit Reference path for `reference.png`, explicit Current path for `current.png`, Diff path for optional `diff.png` or missing diff explanation, Mask, Acceptance rule, Command/tool, Failure class, and Result. A local runtime screenshot must not replace an approved Figma/static design source; current evidence comes from the real target runtime and requires stable data and stable environment. An optional diff or missing diff must not hide absent core source/runtime.
 12. Keep browser interaction evidence separate from screenshot evidence and verify approved states were exercised. Emit exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY`; missing trustworthy source/runtime for core visual acceptance is `CANNOT_VERIFY` and a main-flow blocker, never review debt. At attempt 3 only reproducible non-core cosmetic differences may become review debt.
-13. CodeGraph `explore`, `impact`, and `affected` output is candidate-only. Verify every candidate against current source, current diff, native caller/import search, tests, or command output. Missing/stale/dirty/unavailable graph uses native search fallback and must not block review.
-14. Read `{REPORT_TEMPLATE_PATH}` and write exactly one report to:
+13. For Figma-derived UI scope, verify every required `FIGCAP-*` has source/task-file mapping and a browser-observable result, every core `PRES-*` has before/after replay or a customer-approved exception, and Figma-only UI source is respected. Prototype is `FUNCTION_SCOPE_ONLY` when no trustworthy Figma UI design exists and cannot yield visual `PASS`; browser capability reuse or installation must be explicit and never inferred.
+14. CodeGraph `explore`, `impact`, and `affected` output is candidate-only. Verify every candidate against current source, current diff, native caller/import search, tests, or command output. Missing/stale/dirty/unavailable graph uses native search fallback and must not block review.
+15. Read `{REPORT_TEMPLATE_PATH}` and write exactly one report to:
    {CHANGE_PATH}/.fp-execute/reviews/YYYYMMDD-HHMM-final-review.md
 
     Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
