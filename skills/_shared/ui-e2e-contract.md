@@ -28,6 +28,12 @@ The state order is exact:
 
 Tasks may progress only from left to right. A `static-only` task reaches `FINAL_REVIEW` only after its visual pass and justified E2E N/A record. `interactive` and `business-flow` tasks must reach `FRONTEND_E2E_PASS` with real browser evidence before final review. Required E2E cannot be `SKIPPED` or manual-approved; an unmet requirement is `BLOCKED`.
 
+`VISUAL_REVIEW_PASS` is issued only by a separate, independent, read-only visual-review stage: it must not modify files; it checks only the existing Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state; SDD uses a fresh reviewer.
+
+The visual-review stage records exactly `VISUAL_REVIEW_PASS`, `CANNOT_VERIFY`, or `FAIL`; only `VISUAL_REVIEW_PASS` can advance. `CANNOT_VERIFY` is `BLOCKED`.
+
+On visual `FAIL`, return only to `STATIC_UI_READY`; on interaction or required-E2E `FAIL`, return only to `INTERACTION_READY`. Preserve prior visual-pass evidence only while current source and real runtime state still match it; otherwise run visual review again.
+
 ## Case Manifest and E2E Evidence
 
 Each case manifest records its task and case ID, source-derived condition, UI delivery level, runtime route, real test account/role, `E2E Applicability: REQUIRED | N/A`, E2E result, `Mocked Core API: false` when E2E is required, cleanup result, evidence paths, and rationale for any `N/A` or `BLOCKED` status.

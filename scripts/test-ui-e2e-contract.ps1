@@ -399,6 +399,9 @@ $requiredHeadings = @(
 $canonicalExecutionBinding = 'This contract is mandatory for UI-bearing work in `fp-execute` and `fp-execute-sdd`.'
 $canonicalStateMachineLine = '`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS -> FINAL_REVIEW -> ARCHIVE`'
 $canonicalRequiredE2ERule = 'Required E2E cannot be `SKIPPED` or manual-approved; an unmet requirement is `BLOCKED`.'
+$canonicalVisualReviewLine = '`VISUAL_REVIEW_PASS` is issued only by a separate, independent, read-only visual-review stage: it must not modify files; it checks only the existing Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state; SDD uses a fresh reviewer.'
+$canonicalVisualReviewResultLine = 'The visual-review stage records exactly `VISUAL_REVIEW_PASS`, `CANNOT_VERIFY`, or `FAIL`; only `VISUAL_REVIEW_PASS` can advance. `CANNOT_VERIFY` is `BLOCKED`.'
+$canonicalStageRollbackLine = 'On visual `FAIL`, return only to `STATIC_UI_READY`; on interaction or required-E2E `FAIL`, return only to `INTERACTION_READY`. Preserve prior visual-pass evidence only while current source and real runtime state still match it; otherwise run visual review again.'
 $canonicalZeroMockRule = 'Real E2E has an absolute zero-mock rule. It must not use `page.route`, `route.fulfill`, MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, frontend store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow.'
 $canonicalArchiveBlockerRule = 'Core visual/E2E gaps and any mock violation remain `BLOCKED` through 3 attempts.'
 $canonicalArchiveNoWaiverRule = '`FINAL_REVIEW` and `ARCHIVE` cannot waive these blockers.'
@@ -452,6 +455,9 @@ $canonicalNormativeLines = @(
     'The state order is exact:',
     '`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS -> FINAL_REVIEW -> ARCHIVE`',
     'Tasks may progress only from left to right. A `static-only` task reaches `FINAL_REVIEW` only after its visual pass and justified E2E N/A record. `interactive` and `business-flow` tasks must reach `FRONTEND_E2E_PASS` with real browser evidence before final review. Required E2E cannot be `SKIPPED` or manual-approved; an unmet requirement is `BLOCKED`.',
+    '`VISUAL_REVIEW_PASS` is issued only by a separate, independent, read-only visual-review stage: it must not modify files; it checks only the existing Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state; SDD uses a fresh reviewer.',
+    'The visual-review stage records exactly `VISUAL_REVIEW_PASS`, `CANNOT_VERIFY`, or `FAIL`; only `VISUAL_REVIEW_PASS` can advance. `CANNOT_VERIFY` is `BLOCKED`.',
+    'On visual `FAIL`, return only to `STATIC_UI_READY`; on interaction or required-E2E `FAIL`, return only to `INTERACTION_READY`. Preserve prior visual-pass evidence only while current source and real runtime state still match it; otherwise run visual review again.',
     '## Case Manifest and E2E Evidence',
     'Each case manifest records its task and case ID, source-derived condition, UI delivery level, runtime route, real test account/role, `E2E Applicability: REQUIRED | N/A`, E2E result, `Mocked Core API: false` when E2E is required, cleanup result, evidence paths, and rationale for any `N/A` or `BLOCKED` status.',
     'Visual and E2E evidence are distinct channels:',
@@ -562,8 +568,9 @@ Assert-Condition (
     Test-ExactSentence $applicabilitySection $canonicalExecutionBinding
 ) 'shared UI/E2E contract does not bind applicability to fp-execute and fp-execute-sdd'
 Assert-Condition (
-    Test-StateMachineContract $stateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule
-) 'shared UI/E2E contract does not preserve the exact state machine and required-E2E no-skip rule'
+    (Test-StateMachineContract $stateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule) -and
+    (Test-ExactLines $stateMachineSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'shared UI/E2E contract does not preserve the exact state machine, independent visual review, and stage-local rollback rules'
 Assert-Condition (
     Test-ExactLines $applicabilitySection $deliveryTransitionTableLines
 ) 'shared UI/E2E contract is missing the exact delivery-level transition table'
@@ -684,13 +691,39 @@ Assert-Condition (
 ) 'mutation survived: the closed normative sequence may grant ARCHIVE permission for a core gap'
 
 Require-MutationBaseline (
-    Test-StateMachineContract $stateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule
-) 'state machine and required-E2E no-skip rule'
+    (Test-StateMachineContract $stateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule) -and
+    (Test-ExactLines $stateMachineSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'state machine, independent visual review, and stage-local rollback rules'
 $mutatedStateMachine = Replace-Required $contract $canonicalStateMachineLine '`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> FRONTEND_E2E_PASS -> INTERACTION_READY -> FINAL_REVIEW -> ARCHIVE`' 'state order is reversed'
 $mutatedStateMachineSection = Get-MarkdownSecondLevelSection $mutatedStateMachine 'Required State Machine'
 Assert-Condition (
     -not (Test-StateMachineContract $mutatedStateMachineSection $canonicalStateMachineLine $canonicalRequiredE2ERule)
 ) 'mutation survived: state machine may reorder interaction and frontend E2E'
+$commentedVisualReview = Replace-Required $contract $canonicalVisualReviewLine ('<!-- ' + $canonicalVisualReviewLine + ' -->') 'comment-only visual review rule'
+$commentedVisualReviewSection = Get-MarkdownSecondLevelSection (Get-EffectiveNormativeText $commentedVisualReview) 'Required State Machine'
+Assert-Condition (
+    -not (Test-ExactLines $commentedVisualReviewSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'mutation survived: comment-only independent visual review rule'
+$fencedVisualReview = Replace-Required $contract $canonicalVisualReviewLine ('~~~' + [Environment]::NewLine + $canonicalVisualReviewLine + [Environment]::NewLine + '~~~') 'fenced visual review rule'
+$fencedVisualReviewSection = Get-MarkdownSecondLevelSection (Get-EffectiveNormativeText $fencedVisualReview) 'Required State Machine'
+Assert-Condition (
+    -not (Test-ExactLines $fencedVisualReviewSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'mutation survived: fenced independent visual review rule'
+$mutatedVisualReviewWrite = Replace-Required $contract 'it must not modify files' 'it may modify files' 'visual review may modify files'
+$mutatedVisualReviewWriteSection = Get-MarkdownSecondLevelSection $mutatedVisualReviewWrite 'Required State Machine'
+Assert-Condition (
+    -not (Test-ExactLines $mutatedVisualReviewWriteSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'mutation survived: visual review may modify files'
+$mutatedCannotVerifyAdvance = Replace-Required $contract '`CANNOT_VERIFY` is `BLOCKED`.' '`CANNOT_VERIFY` may advance to `INTERACTION_READY`.' 'cannot-verify may advance'
+$mutatedCannotVerifyAdvanceSection = Get-MarkdownSecondLevelSection $mutatedCannotVerifyAdvance 'Required State Machine'
+Assert-Condition (
+    -not (Test-ExactLines $mutatedCannotVerifyAdvanceSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'mutation survived: CANNOT_VERIFY may enter interaction'
+$mutatedRollbackScope = Replace-Required $contract 'return only to `STATIC_UI_READY`' 'may return to `INTERACTION_READY`' 'visual failure skips static UI recovery'
+$mutatedRollbackScopeSection = Get-MarkdownSecondLevelSection $mutatedRollbackScope 'Required State Machine'
+Assert-Condition (
+    -not (Test-ExactLines $mutatedRollbackScopeSection @($canonicalVisualReviewLine, $canonicalVisualReviewResultLine, $canonicalStageRollbackLine))
+) 'mutation survived: visual failure may skip STATIC_UI_READY recovery'
 $mutatedRequiredE2E = Replace-Required $contract $canonicalRequiredE2ERule 'Required E2E may be `SKIPPED` with a manual waiver.' 'required E2E is skipped or manually waived'
 $mutatedRequiredE2ESection = Get-MarkdownSecondLevelSection $mutatedRequiredE2E 'Required State Machine'
 Assert-Condition (
