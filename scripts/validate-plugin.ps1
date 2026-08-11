@@ -1275,7 +1275,7 @@ foreach ($file in $oldReviewFiles) {
     }
 }
 
-$commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Length } | Measure-Object -Sum).Sum
+$commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Replace("`r`n", "`n").Replace("`r", "`n").Length } | Measure-Object -Sum).Sum
 $commandCharBudget = $commands.Count * 480
 Assert-Condition ($commandChars -le $commandCharBudget) "command adapters exceed the $commandCharBudget-character budget for $($commands.Count) commands: $commandChars"
 
