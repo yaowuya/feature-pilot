@@ -13,7 +13,7 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - **轻量执行与有界 SDD**：`fp-execute` 保持直接完成确认任务；`fp-execute-sdd` 使用证据包、稳定 review scope、最多三次审查与主流程阻塞判定，避免无限复审。
 - **证据优先终审**：`fp-final-review` 支持完整 Scope Matrix、跨变更 owner 识别、命令安全分类、增量证据与最终审查包。
 - **模块专项审查**：`fp-module-review` 面向一个大型功能模块或多个相关模块，使用稳定 Finding、逐项批准门禁和受控 TDD 修复持续收敛。
-- **Figma 真实运行时视觉证据**：从计划到最终审查统一 case schema，区分 approved design reference 与 real-runtime current；核心 source/runtime 缺失固定为 `CANNOT_VERIFY` 主流程阻塞。
+- **Figma 真实运行时质量门禁**：有可信 Figma UI 设计时只以它作为 UI 参考；以 `FIGCAP-*` 功能账本、`PRES-*` 既有功能保护、独立只读审查和 real-runtime visual case 联合判定。缺可信浏览器能力时由客户选择复用/安装方式，未验证只可报告 `CANNOT_VERIFY`，不得宣称 Figma 改造完成。
 - **产物与语言规则**：PRD、proposal、design、plan 使用 compact-first 且 small/split 互斥；过程文档叙述默认中文，代码与精确技术/schema 术语保留必要英文。
 - **Claude Code + Codex 双入口**：两端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
 
@@ -46,7 +46,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 | `commands/fp-module-review.md` | 大型或多模块专项审查、Finding 门禁与受控修复 |
 | `commands/fp-final-review.md` | 归档前最终整分支只读审查 |
 | `commands/fp-archive.md` | 归档已完成的变更 |
-| `commands/fp-figma.md` | UI / Figma 设计稿分析入口 |
+| `commands/fp-figma.md` | Figma UI 分析、改造与质量审查入口 |
 
 ## 核心技能
 
@@ -57,6 +57,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 - `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md` 及其 manifest 分片，两种形式互斥。
 - `fp-brainstorm`：生成后端/前端技术设计。
 - `fp-plan` / `fp-plan-backend` / `fp-plan-frontend`：生成细粒度 TDD 执行计划。
+- `fp-figma`：使用 Figma-only source、能力账本、既有功能保护和独立视觉/功能 review；浏览器工具只复用已发现能力或按客户选择安装，不静默安装。
 - `fp-execute`：默认执行入口，在当前上下文按 TDD 直接完成已确认计划，每个任务只做一次 inline 自审。
 - `fp-execute-sdd`：用户明确需要 fresh implementer/reviewer、任务隔离和多轮审查时使用的 SDD 执行模式。
 - `fp-coverage`：独立单元测试覆盖率专项；冻结项目既有统计口径，通过可恢复的模块级批次提升覆盖率，过程状态和 coverage 报告统一写入 `fp-docs/changes/<slug>-coverage/`，只有 fresh full-suite `exit code = 0` 且 exact coverage（精确覆盖率）达标时才完成。`.fp-coverage/progress.md` 只保存有界恢复索引，完整合同和运行证据拆到 `contract.md`、`baselines/`、`batches/`、`verifications/`；单元测试发现的生产/测试代码问题写入 `issues.md`，在 `FINAL_VERIFYING` completion boundary 生成并核对引用 fresh final verification 的 `final-report.md` 后，才进入 `COMPLETE`。新项目缺少 coverage 工具时保持 `RESOLVING` + `CANNOT_VERIFY` 并展示 approval-gated `coverage-tooling-bootstrap`；用户批准后才安装并持久化依赖、写最小配置和重新建立 fresh baseline。优先复用既有工具；Django 无现成方案时，已有 pytest 只推荐 `pytest-cov`，否则推荐 `pytest + pytest-cov`，`pytest-django` 仅按测试集成需要加入。

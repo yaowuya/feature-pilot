@@ -39,6 +39,10 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Overview applicability: {TWO_END_OVERVIEW_OR_SINGLE_END_NONE}
 - Progress ledger: {PROGRESS_LEDGER_PATH_OR_MISSING}
 - Prior task reviews: {TASK_REVIEW_PATHS_OR_NONE}
+- Figma preservation contract: {FIGMA_PRESERVATION_PATH_OR_NA}
+- Figma capability ledger: {FIGMA_CAPABILITIES_PATH_OR_NA}
+- Figma independent reviews: {FIGMA_REVIEW_PATHS_OR_NONE}
+- Browser capability resolution: {BROWSER_CAPABILITY_OR_NA}
 - Dynamic brief/package sources: {DYNAMIC_CONTEXT_SOURCES_OR_NA}
 - Project constraints: {PROJECT_CONSTRAINT_PATHS_OR_NONE}
 - Frontend settings: {FRONTEND_SETTINGS_PATH_OR_MISSING}
@@ -81,6 +85,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 13. Read the shared UI/E2E contract. Build an independent `UI/E2E Gate` for every planned UI case by exact Task ID + Case ID from plans, briefs, progress, review packages, visual evidence, E2E evidence, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`. Record UI Delivery Level, required and actual stage, visual evidence reference only, E2E applicability/result, matrix/evidence paths, `Mocked Core API: false` when required, cleanup, real persistence/permission result where applicable, and the blocking condition. Do not duplicate the Visual Evidence table fields.
     - `static-only` requires `VISUAL_REVIEW_PASS` plus an evidence-backed `E2E Applicability: N/A` reason. `interactive` and `business-flow` require `FRONTEND_E2E_PASS` real browser evidence and a coverage matrix; no manual skip is valid. `business-flow` also proves real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
     - A core UI/E2E gap, mock violation, unsafe unverified real-environment condition, missing matrix/evidence, or lifecycle `BLOCKED` makes the gate `FAIL` or `BLOCKED`. It cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check; report the repair owner. Enforce the zero-mock rule: `page.route`/route, intercept, MSW, Cypress stub, fixture JSON, hard-coded API data, mock module, frontend store/localStorage business-data injection, database seed, and direct backend/API writes that bypass the UI are blocking mock violations.
+    - For Figma-derived UI scope, verify every required `FIGCAP-*` has source/task-file mapping and a browser-observable result, every core `PRES-*` has before/after replay or a customer-approved exception, and Figma-only UI source is respected. Prototype is `FUNCTION_SCOPE_ONLY` when no trustworthy Figma UI design exists and cannot yield visual `PASS`; browser capability reuse or installation must be explicit and never inferred.
 14. CodeGraph `explore`, `impact`, and `affected` output is candidate-only. Verify every candidate against current source, current diff, native caller/import search, tests, or command output. Missing/stale/dirty/unavailable graph uses native search fallback and must not block review.
 15. Read `{REPORT_TEMPLATE_PATH}` and write exactly one report to:
    {CHANGE_PATH}/.fp-execute/reviews/YYYYMMDD-HHMM-final-review.md

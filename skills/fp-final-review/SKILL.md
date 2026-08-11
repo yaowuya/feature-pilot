@@ -99,7 +99,7 @@ Immediately read the actual files that exist for the selected change:
 6. the complete resolved task set: each selected small plan or split index plus all manifest-ordered owner fragments, and the two-end overview only when applicable
 7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
 8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
-9. for every planned UI Case ID, its matching task brief/package/progress rows, visual manifest, E2E evidence directory, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` when applicable
+9. for every planned UI Case ID, its matching task brief/package/progress rows, visual manifest, E2E evidence directory, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` when applicable; and, when the UI scope used `fp-figma`, `.fp-execute/figma-preservation.md`, `.fp-execute/figma-capabilities.md`, all relevant `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, and `*-figma-review.md`. A plan-required Figma artifact is `Missing`, never replaced by chat or implementer self-report.
 10. `finalReviewPackage`, `priorReviewPath`, and progress-ledger attempt state when provided
 11. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
 
@@ -177,6 +177,13 @@ Build a coverage table from source artifacts:
 
 For each item, mark `Covered`, `Partial`, `Missing`, `Violated`, or `N/A`, with file/test/commit evidence.
 
+For Figma-derived UI scope also cover:
+
+- Every required `FIGCAP-*`: source requirement, task/file owner, browser-observable result, status, and evidence.
+- Every core `PRES-*`: before baseline, after replay, approved exception, status, and evidence.
+- Figma-only UI source: Figma evidence or `FUNCTION_SCOPE_ONLY` with forced visual `CANNOT_VERIFY`; prototype never substitutes for a trustworthy Figma UI source.
+- Browser capability resolution: reused runner/extension/local CLI or explicit customer choice; never inferred installation.
+
 ### 2.1 Visual Evidence Gate
 
 For every planned frontend/UI Case ID, resolve `.fp-execute/visual/<task-id>/<case-id>/manifest.md` and verify its Approved design source/Figma node plus revision/time, Frame/variant, available variables / Auto Layout / assets, Runtime route, Scenario/state, Viewport, DPR, Locale, Theme, Deterministic non-sensitive fixture, Reference path, Current path, Diff path, Mask, Acceptance rule, Command/tool, and Failure class.
@@ -185,7 +192,9 @@ For every planned frontend/UI Case ID, resolve `.fp-execute/visual/<task-id>/<ca
 
 Record `Visual evidence: PASS | FAIL | CANNOT_VERIFY`. Core visual acceptance without trustworthy source or trustworthy runtime is `CANNOT_VERIFY` and a main-flow blocker. Missing evidence must not become review debt. At attempt 3 only reproducible non-core cosmetic differences may become review debt; core visual evidence gaps remain blocked.
 
-Use only the project-configured browser runner/tool and case-specific Acceptance rule. Do not assume a framework, command, URL, storage root, or global pixel threshold; do not silently install dependencies. Code Connect is an optional enhancement and absence does not block ordinary UI review.
+Use only the project-configured browser runner/tool and case-specific Acceptance rule. Do not assume a framework, command, URL, storage root, or global pixel threshold; do not silently install dependencies. Code Connect is an optional enhancement and absence does not block ordinary UI review. Browser capability is reused or explicitly customer-approved; installation is never inferred.
+
+Overall Figma completion is impossible when any required `FIGCAP-*` or core `PRES-*` is `FAIL`, `CANNOT_VERIFY`, or `BLOCKED`, even when screenshots pass. Figma `PASS` requires every required `FIGCAP-*`, core `PRES-*`, and core visual Case to be `PASS` with no unapproved behavior change.
 
 Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.

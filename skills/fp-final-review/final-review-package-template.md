@@ -130,6 +130,17 @@ If the graph is missing, stale, unavailable, or dirty, use native search against
 | --- | --- | --- | --- |
 | `<contract>` | `<SAFE command or read-only inspection>` | `<PASS | FAIL | SKIPPED>` | `<output/path:line>` |
 
+## Figma Capability and Preservation Evidence
+
+- Figma preservation contract: `<.fp-execute/figma-preservation.md or N/A>`
+- Figma capability ledger: `<.fp-execute/figma-capabilities.md or N/A>`
+- Figma independent review: `<.fp-execute/reviews/*-figma-review.md or N/A>`
+- Browser capability resolution: `<project runner | Playwright browser extension | local playwright-cli | customer choice pending | unavailable>`
+
+| ID | Required observable result / existing behavior | Owner task/file | Before baseline | After replay | Status | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| `FIGCAP-001` or `PRES-001` | `<contract>` | `<task/path>` | `<N/A or command/result>` | `<command/result>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<artifact/review>` |
+
 ## Visual Evidence
 
 For every planned frontend/UI Case ID, resolve the case manifest and carry its evidence into this deterministic package.

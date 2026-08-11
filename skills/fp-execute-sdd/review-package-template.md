@@ -91,6 +91,16 @@ Review the task's `dynamic task context`; absent optional sources are `N/A`.
 
 - `<none or implementer/controller concern>`
 
+## Capability and Preservation Evidence (when applicable)
+
+- Capability ledger: `<.fp-execute/figma-capabilities.md or N/A>`
+- Preservation contract: `<.fp-execute/figma-preservation.md or N/A>`
+- Browser capability resolution: `<project runner | Playwright browser extension | local playwright-cli | customer choice pending | unavailable>`
+
+| ID | Required observable result / existing behavior | Before baseline | After replay | Status | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| `FIGCAP-*` or `PRES-*` | `<brief contract>` | `<N/A or command/result>` | `<command/result>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<path/artifact>` |
+
 ## Visual Evidence Manifest (frontend/UI only)
 
 Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`.

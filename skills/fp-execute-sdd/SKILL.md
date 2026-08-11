@@ -241,6 +241,8 @@ Use `-fix-<n>` sections inside the same report for fix attempts; do not scatter 
 
 For every frontend/UI task with planned visual cases, carry the same case-level Visual Evidence Manifest through the plan, task brief, implementer report, review package, task review, progress evidence, final package, and final review. The standard case root is `.fp-execute/visual/<task-id>/<case-id>/`; it contains `manifest.md`, `reference.png`, `current.png`, and optional `diff.png`.
 
+When a task brief declares `FIGCAP-*` or `PRES-*`, the controller must also carry the ledger/contract paths, exact IDs, before/after replay evidence and browser capability resolution through the brief, report, package and review. Visual `PASS` never overrides a capability non-pass or preservation non-pass.
+
 Each Case ID records Approved design source/Figma node plus revision/time, Frame/variant, available variables / Auto Layout / assets, Runtime route, Scenario/state, Viewport, DPR, Locale, Theme, Deterministic non-sensitive fixture, Reference path, Current path, Diff path, Mask, Acceptance rule, Command/tool, and Failure class. Fixtures contain no secrets or production/customer data.
 
 `reference.png` must come from an approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` must come from the real target runtime and runtime route with stable data and stable environment. The optional diff may be absent only with a missing diff explanation and must not hide absent core source/runtime evidence. Browser interaction evidence is separate from screenshot evidence and must exercise the approved states.
@@ -315,7 +317,7 @@ After `DONE` or `DONE_WITH_CONCERNS`, first complete required UI/E2E verifier di
 - diff stat
 - full diff with context
 - test command evidence
-- case-level Visual Evidence Manifest, source/runtime provenance, replay command, artifact paths, and browser interaction evidence
+- case-level Visual Evidence Manifest, source/runtime provenance, replay command, artifact paths, browser interaction evidence, and required `FIGCAP-*` / `PRES-*` before/after evidence
 - case-level UI/E2E Delivery Contract evidence: lifecycle stage, verifier result, E2E evidence path, coverage matrix, cleanup, and any blocker
 - controller notes and known concerns
 
@@ -368,7 +370,7 @@ Apply exactly one Rule ID to every task review. The table is mutually exclusive 
 
 ## Visual decision application
 
-Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, every planned visual scope resolves to VISUAL_PASS, and every required UI/E2E case has independent real-browser `FRONTEND_E2E_PASS` with covered/justified status and cleanup. A planned visual or required E2E FAIL/CANNOT_VERIFY cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the applicable visual or UI/E2E retry rule.
+Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, every planned visual scope resolves to VISUAL_PASS, every required FIGCAP-* is PASS, every core PRES-* is PASS, and every required UI/E2E case has independent real-browser `FRONTEND_E2E_PASS` with covered/justified status and cleanup. A planned visual or required E2E FAIL/CANNOT_VERIFY, capability non-pass, or preservation non-pass cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the applicable visual or UI/E2E retry rule and Rule ID table.
 
 Task non-pass transition table:
 - **Critical/Important finding:** append exact findings; at attempt 1 or 2 use the serial fixer flow below, regenerate the package, increment exactly once, and re-review.

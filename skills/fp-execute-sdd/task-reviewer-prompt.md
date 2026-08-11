@@ -41,8 +41,8 @@ Applicable Global Constraints:
 7. Verify tests or alternative validations actually prove the behavior.
 8. For frontend tasks, verify Template Outline, Script Outline, Style Outline, and Visual Checks are respected.
 9. For each planned visual Case ID, read `.fp-execute/visual/<task-id>/<case-id>/manifest.md`; verify approved-source `reference.png`, real target runtime `current.png`, optional `diff.png` or missing diff explanation, Runtime route, Scenario/state, Viewport/DPR/Locale/Theme, deterministic non-sensitive fixture, Mask, Acceptance rule, Command/tool, and Failure class. A local runtime screenshot must not replace an approved Figma/static design source. Current evidence requires stable data and stable environment; optional diff absence must not hide missing source/runtime.
-10. For every required UI/E2E case, inspect the independent `.fp-execute/e2e/<task-id>/<case-id>/e2e-result.md` and `coverage-matrix.md`. Verify command/environment/destination/timestamps/attempts/test IDs/artifacts/cleanup, real browser UI provenance, source-derived coverage, and `Mocked Core API: false` for business-flow. Reject mocks, direct API/backend setup bypassing UI, a screenshot substituted for E2E, skipped/waived required E2E, or missing safe-real-environment evidence.
-11. Verify both the existing visual evidence and the independent E2E verifier evidence. Keep browser interaction evidence separate from screenshot evidence and verify observable flows exercise the approved states.
+10. For every required UI/E2E case, inspect the independent `.fp-execute/e2e/<task-id>/<case-id>/e2e-result.md` and `coverage-matrix.md`. Verify command/environment/destination/timestamps/attempts/test IDs/artifacts/cleanup, real browser UI provenance, source-derived coverage, and `Mocked Core API: false` for business-flow. Reject mocks, direct API/backend setup bypassing UI, a screenshot substituted for E2E, skipped/waived required E2E, or missing safe-real-environment evidence. Verify both the existing visual evidence and the independent E2E verifier evidence. Keep browser interaction evidence separate from screenshot evidence and verify observable flows exercise the approved states.
+11. For every required FIGCAP-*, verify task/file mapping and a real browser-observable result; a static control is insufficient. For every required PRES-*, compare the before baseline and after replay under the declared stable conditions. Figma only governs UI presentation when trustworthy Figma design exists; prototype must not be used as a visual substitute. Report Capability completion and Preservation verdicts separately from Visual evidence.
 12. Report every Critical/Important issue with file:line evidence. Do not filter out real bugs for politeness.
 13. Check whether the implementer followed the Relevant Project Information Layer section. If the task touched UI, verify `settings/frontend.md` was considered when present. If it touched backend/API/data/security behavior, verify `settings/backend.md` was considered when present. Flag any reliance on stale intel or missing source-file revalidation.
 14. For every failed finding, report Potential main-flow impact evidence: whether it affects core acceptance behavior, security, permissions, data integrity, external contracts, required build/core tests, downstream dependencies, or approved scope. Report evidence only; do not decide continuation.
@@ -102,6 +102,15 @@ Verdict: APPROVED | NEEDS FIXES
 - Consumes verified: yes/no/details
 - Produces verified: yes/no/details
 - Contract checks: pass/fail/details
+
+## Capability and Preservation Review (if applicable)
+
+Capability completion: PASS | FAIL | CANNOT_VERIFY | BLOCKED
+Preservation: PASS | FAIL | CANNOT_VERIFY | BLOCKED
+
+| ID | Required result / existing behavior | Runtime evidence | Verdict | Missing evidence or finding |
+| --- | --- | --- | --- | --- |
+| `FIGCAP-001` or `PRES-001` | `<brief contract>` | `<command/path>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<none or detail>` |
 
 ## Frontend Visual Review (if applicable)
 
