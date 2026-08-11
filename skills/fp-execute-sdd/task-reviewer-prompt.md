@@ -41,7 +41,7 @@ Applicable Global Constraints:
 7. Verify tests or alternative validations actually prove the behavior.
 8. For frontend tasks, verify Template Outline, Script Outline, Style Outline, and Visual Checks are respected.
 9. For each planned visual Case ID, read `.fp-execute/visual/<task-id>/<case-id>/manifest.md`; verify approved-source `reference.png`, real target runtime `current.png`, optional `diff.png` or missing diff explanation, Runtime route, Scenario/state, Viewport/DPR/Locale/Theme, deterministic non-sensitive fixture, Mask, Acceptance rule, Command/tool, and Failure class. A local runtime screenshot must not replace an approved Figma/static design source. Current evidence requires stable data and stable environment; optional diff absence must not hide missing source/runtime.
-10. Keep browser interaction evidence separate from screenshot evidence and verify observable flows exercise the approved states.
+10. For every required UI/E2E case, inspect the independent `.fp-execute/e2e/<task-id>/<case-id>/e2e-result.md` and `coverage-matrix.md`. Verify command/environment/destination/timestamps/attempts/test IDs/artifacts/cleanup, real browser UI provenance, source-derived coverage, and `Mocked Core API: false` for business-flow. Reject mocks, direct API/backend setup bypassing UI, a screenshot substituted for E2E, skipped/waived required E2E, or missing safe-real-environment evidence. Verify both the existing visual evidence and the independent E2E verifier evidence. Keep browser interaction evidence separate from screenshot evidence and verify observable flows exercise the approved states.
 11. For every required FIGCAP-*, verify task/file mapping and a real browser-observable result; a static control is insufficient. For every required PRES-*, compare the before baseline and after replay under the declared stable conditions. Figma only governs UI presentation when trustworthy Figma design exists; prototype must not be used as a visual substitute. Report Capability completion and Preservation verdicts separately from Visual evidence.
 12. Report every Critical/Important issue with file:line evidence. Do not filter out real bugs for politeness.
 13. Check whether the implementer followed the Relevant Project Information Layer section. If the task touched UI, verify `settings/frontend.md` was considered when present. If it touched backend/API/data/security behavior, verify `settings/backend.md` was considered when present. Flag any reliance on stale intel or missing source-file revalidation.
@@ -132,6 +132,17 @@ Visual evidence: PASS | FAIL | CANNOT_VERIFY
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
+## UI/E2E Delivery Review (if applicable)
+
+E2E evidence: PASS | FAIL | CANNOT_VERIFY
+
+| Case ID | UI Delivery Level | Lifecycle stage | Visual Evidence Manifest reference | E2E result/evidence | Coverage matrix | Cleanup | Mocked Core API | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `static-only | interactive | business-flow` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `<manifest path/row only>` | `.fp-execute/e2e/<task-id>/<case-id>/e2e-result.md` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<result/BLOCKED>` | `false | N/A` | `PASS/FAIL/CANNOT_VERIFY` |
+
+- A required E2E/core UI gap, failed cleanup, mock violation, unsafe blocked coverage, or absent independent verifier result is a core non-pass and cannot be review debt, `PASS_WITH_NOTES`, or a manual waiver.
+- `static-only` needs its evidence-backed E2E `N/A` reason after visual pass. `interactive` and `business-flow` require real-browser `FRONTEND_E2E_PASS`; business-flow also requires real core API, persistence/permission, `Mocked Core API: false`, and cleanup.
+
 ## Final Assessment
 
 Ready for next task: YES | NO
@@ -146,6 +157,7 @@ Your final chat response must include only:
 - Critical/Important count
 - Potential main-flow impact evidence: <none or summary>
 - Ready for next task: YES | NO
+- E2E evidence: PASS | FAIL | CANNOT_VERIFY
 
 ## Severity Calibration
 

@@ -2,7 +2,6 @@
 
 Use this template for `.fp-execute/packages/final-review-package.md` before dispatching `fp-final-review`. The package is deterministic review evidence, not completion authority: canonical task-owner checkboxes remain planned-completion authority and the progress ledger remains recovery/orchestration evidence.
 
-```markdown
 # Final Review Package: <slug>
 
 ## Review Identity
@@ -142,6 +141,12 @@ If the graph is missing, stale, unavailable, or dirty, use native search against
 | --- | --- | --- | --- | --- | --- | --- |
 | `FIGCAP-001` or `PRES-001` | `<contract>` | `<task/path>` | `<N/A or command/result>` | `<command/result>` | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<artifact/review>` |
 
+## Figma Completion Gate
+
+Figma Completion Status: `COMPLETE | INCOMPLETE | BLOCKED`
+
+For Figma-derived UI scope, `COMPLETE` requires every required `FIGCAP-*`, core `PRES-*`, and core Visual Case `PASS` with independent Figma review. `INCOMPLETE`, `BLOCKED`, or any `FAIL`/`CANNOT_VERIFY` makes the final verdict `FAIL` or `BLOCKED`; it cannot be `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
+
 ## Visual Evidence
 
 For every planned frontend/UI Case ID, resolve the case manifest and carry its evidence into this deterministic package.
@@ -157,10 +162,33 @@ For every planned frontend/UI Case ID, resolve the case manifest and carry its e
 Visual evidence: PASS | FAIL | CANNOT_VERIFY
 - Core blocker/debt: Core source/runtime missing is CANNOT_VERIFY and a main-flow blocker; it never becomes review debt. At attempt 3, only a reproducible non-core cosmetic FAIL difference may become review debt; all other non-core FAIL/CANNOT_VERIFY cases are BLOCKER.
 
+## UI Case Inventory / N/A Reconciliation
+
+Before emitting the UI/E2E gate, reconcile the reviewed target snapshot against task-owner Files/task text, frontend design component/interaction/Visual Checks, Figma `FIGCAP-*`/`PRES-*` mappings, and mapped-current/shared/unowned frontend diff. Every UI-bearing source needs Task ID + Case ID + Delivery Contract; an unmapped source is `FAIL` or `BLOCKED`.
+
+| Source owner / diff evidence | UI classification | Task ID | Case ID | Disposition |
+| --- | --- | --- | --- | --- |
+| `<task/design/Figma/diff evidence>` | `UI-bearing / non-UI` | `<task-id or N/A>` | `<case-id or N/A>` | `<mapped / FAIL / BLOCKED>` |
+
+`N/A` is valid only with zero UI-bearing inventory rows, no Figma UI scope, no mapped-current or unowned frontend diff, and evidence covering the reviewed target snapshot.
+
+## UI/E2E Gate
+
+Read the shared UI/E2E contract and join every planned UI case by exact Task ID + Case ID across plans, briefs, progress, review packages, visual manifests, E2E evidence, and coverage matrices. This gate is independent from `Visual Evidence`: reference that table's case/result/path rather than copying its visual fields.
+
+**UI/E2E Gate:** PASS | N/A | FAIL | BLOCKED
+
+| Task ID | Case ID | UI Delivery Level | Required stage | Actual stage | Visual evidence reference | E2E applicability / result | Matrix / evidence paths | Mocked Core API | Cleanup | Business result | Blocking condition |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<task-id>` | `<case-id>` | `static-only / interactive / business-flow` | `<required lifecycle path>` | `<last completed stage>` | `<Visual Evidence row + manifest path>` | `<REQUIRED/N/A + PASS/FAIL/BLOCKED>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md; <artifacts>` | `false / N/A` | `<result/path or N/A>` | `<real persistence/permission result or N/A>` | `<None or exact core gap + repair owner>` |
+
+- `static-only`: requires `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
+- `interactive` and `business-flow`: require `FRONTEND_E2E_PASS`, real browser evidence, and the canonical matrix. `business-flow` also requires real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
+- `N/A` means the UI Case Inventory has zero UI-bearing sources; required E2E cannot be skipped or manually approved. A core UI/E2E gap, mock violation, unsafe unverified condition, missing required matrix/evidence, or `BLOCKED` lifecycle is `FAIL` or `BLOCKED`, must name its repair owner, and cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check.
+
 ## Ledger Cross-check
 
 - Progress ledger: `<path or N/A>`
 - Owner-checkbox reconciliation: `<evidence>`
 - Review attempt event: `<scope id, attempt, head, prior report, disposition>`
 - Completion authority reminder: `<package does not determine completion>`
-```

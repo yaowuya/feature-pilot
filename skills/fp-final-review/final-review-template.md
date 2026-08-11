@@ -128,6 +128,10 @@ Search only canonical task-owner `Files`/scope entries and existing evidence pac
 
 ## Figma Completion Status
 
+### Figma Completion Gate
+
+Figma Completion Status: `COMPLETE | INCOMPLETE | BLOCKED`
+
 - Code editing: `DONE | PARTIAL | NOT_STARTED`
 - Capability completion: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
 - Preservation: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
@@ -135,6 +139,8 @@ Search only canonical task-owner `Files`/scope entries and existing evidence pac
 - Overall Figma result: `COMPLETE | INCOMPLETE | BLOCKED`
 
 A Figma `COMPLETE` result requires every required `FIGCAP-*`, core `PRES-*`, and core Visual Case to be `PASS`, with no unapproved behavior change.
+
+For Figma-derived UI scope, `INCOMPLETE`, `BLOCKED`, or any required `FIGCAP-*`, core `PRES-*`, or core Visual Case `FAIL`/`CANNOT_VERIFY` makes the final verdict `FAIL` or `BLOCKED`; it cannot be `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
 
 ## Visual Evidence
 
@@ -152,6 +158,30 @@ Visual evidence: PASS | FAIL | CANNOT_VERIFY
 - Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+
+## UI Case Inventory / N/A Reconciliation
+
+Before emitting the UI/E2E gate, reconcile the reviewed target snapshot against task-owner Files/task text, frontend design component/interaction/Visual Checks, Figma `FIGCAP-*`/`PRES-*` mappings, and mapped-current/shared/unowned frontend diff. Every UI-bearing source needs Task ID + Case ID + Delivery Contract; an unmapped source is `FAIL` or `BLOCKED`.
+
+| Source owner / diff evidence | UI classification | Task ID | Case ID | Disposition |
+| --- | --- | --- | --- | --- |
+| `<task/design/Figma/diff evidence>` | `UI-bearing / non-UI` | `<task-id or N/A>` | `<case-id or N/A>` | `<mapped / FAIL / BLOCKED>` |
+
+`N/A` is valid only with zero UI-bearing inventory rows, no Figma UI scope, no mapped-current or unowned frontend diff, and evidence covering the reviewed target snapshot.
+
+## UI/E2E Gate
+
+Read the shared UI/E2E contract and join every planned UI case by exact Task ID + Case ID across plans, briefs, progress, review packages, visual manifests, E2E evidence, and coverage matrices. This gate is independent from `Visual Evidence`: reference that table's case/result/path rather than copying its visual fields.
+
+**UI/E2E Gate:** PASS | N/A | FAIL | BLOCKED
+
+| Task ID | Case ID | UI Delivery Level | Required stage | Actual stage | Visual evidence reference | E2E applicability / result | Matrix / evidence paths | Mocked Core API | Cleanup | Business result | Blocking condition |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<task-id>` | `<case-id>` | `static-only / interactive / business-flow` | `<required lifecycle path>` | `<last completed stage>` | `<Visual Evidence row + manifest path>` | `<REQUIRED/N/A + PASS/FAIL/BLOCKED>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md; <artifacts>` | `false / N/A` | `<result/path or N/A>` | `<real persistence/permission result or N/A>` | `<None or exact core gap + repair owner>` |
+
+- `static-only`: requires `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
+- `interactive` and `business-flow`: require `FRONTEND_E2E_PASS`, real browser evidence, and the canonical matrix. `business-flow` also requires real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
+- `N/A` means the UI Case Inventory has zero UI-bearing sources; required E2E cannot be skipped or manually approved. A core UI/E2E gap, mock violation, unsafe unverified condition, missing required matrix/evidence, or `BLOCKED` lifecycle is `FAIL` or `BLOCKED`, must name its repair owner, and cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check.
 
 ## Verification Commands
 

@@ -40,6 +40,12 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 - `fp-explore` accepts natural-language public input and remains read-only: it never writes artifacts, implements changes, or automatically dispatches another workflow. Its internal structured profiles may be invoked only by `fp-prd`, `fp-start`, and `fp-quick`, which retain their own product, routing, approval, and implementation gates.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
 
+## UI/E2E execution and archive gates
+
+Every UI-bearing task declares `static-only`, `interactive`, or `business-flow`. The Visual Evidence Manifest and UI/E2E Delivery Contract are separate and link only by `Task ID + Case ID`; do not duplicate visual evidence. A `static-only` case may use E2E `N/A` only after visual pass and with an evidence-backed reason.
+
+`interactive` and `business-flow` require real browser E2E with a zero-mock rule and source-derived branch/boundary coverage, not only the happy path. If the target frontend project has no usable runner, automatically bootstrap `@playwright/test` and Chromium in that target frontend project; never install globally or upgrade unrelated dependencies. A `business-flow` must prove the real core API, real persistence or permission result, and cleanup. A core UI/E2E blocker cannot be waived or overridden before archive.
+
 ## Workspace and settings
 
 Before choosing output paths, component-library guidance, test commands, or workflow behavior, treat the target project repository root as the FeaturePilot project root and look only for `fp-docs/` directly under that root:

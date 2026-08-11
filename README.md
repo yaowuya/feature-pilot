@@ -17,6 +17,12 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - **产物与语言规则**：PRD、proposal、design、plan 使用 compact-first 且 small/split 互斥；过程文档叙述默认中文，代码与精确技术/schema 术语保留必要英文。
 - **Claude Code + Codex 双入口**：两端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
 
+## Staged UI/E2E delivery
+
+UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visual evidence and E2E evidence are separate records linked only by `Task ID + Case ID`, so the visual manifest is not duplicated. A `static-only` case may use E2E `N/A` only after visual pass and with an evidence-backed reason.
+
+`interactive` and `business-flow` require real browser E2E with a zero-mock rule; coverage includes source-derived branches and boundary conditions, not only the happy path. If no project runner exists, FeaturePilot automatically bootstraps `@playwright/test` and Chromium in the target frontend project without a global installation or unrelated upgrades. A `business-flow` also proves the real core API, real persistence or permission result, and cleanup. Core UI/E2E blockers cannot be waived or overridden before archive.
+
 ## Claude Code 插件结构
 
 - `.claude-plugin/plugin.json`：Claude Code 插件清单。

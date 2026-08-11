@@ -45,7 +45,7 @@ Follow the brief exactly:
 4. Implement the minimum code needed for this task only.
 5. Run the pass command and relevant lint/build/type/visual checks.
 6. For every planned visual Case ID, replay the project-configured command/tool against the real target runtime route with the declared scenario/state, viewport, DPR, locale, theme, and deterministic non-sensitive fixture. Write `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, preserve approved-source `reference.png`, capture real-runtime `current.png`, and record optional `diff.png` or the missing diff explanation. Browser interaction evidence is separate from screenshot evidence and exercises the approved states.
-7. For each required `FIGCAP-*` and `PRES-*` in the brief, collect the declared runtime replay evidence. A rendered control, handler, screenshot, or changed file alone is not `PASS`. Do not mark the Figma change COMPLETE; report code-editing, capability, preservation, and visual results separately.
+7. For each UI case, record `SOURCE_READY`, `STATIC_UI_READY`, visual-manifest evidence, and (when required) `INTERACTION_READY` in the brief/report. You must never self-confirm `FRONTEND_E2E_PASS`: the controller sends a fresh independent E2E verifier after visual pass. For each required `FIGCAP-*` and `PRES-*` in the brief, collect the declared runtime replay evidence. A rendered control, handler, screenshot, or changed file alone is not `PASS`. Do not mark the Figma change COMPLETE; report code-editing, capability, preservation, and visual results separately.
 8. Self-review for scope, interfaces, global constraints, style, and test quality.
 9. Commit only this task's changes when validation passes.
 10. Write the full report file with evidence.
@@ -97,6 +97,14 @@ Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
 - Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+
+## UI/E2E Readiness (frontend/UI only)
+
+| Case ID | UI Delivery Level | Current lifecycle stage | Visual Evidence Manifest reference | E2E Applicability | E2E evidence root | Coverage matrix | Verifier handoff | Cleanup / blocker |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `static-only | interactive | business-flow` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | BLOCKED` | `<plan/manifest reference>` | `REQUIRED | N/A with evidence-backed reason` | `.fp-execute/e2e/<task-id>/<case-id>/` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<required independent verifier handoff or N/A>` | `<pending/complete/BLOCKED>` |
+
+- Do not execute a self-certified E2E result or use visual screenshots as E2E proof. The verifier alone records `FRONTEND_E2E_PASS`, real-browser command evidence, coverage, and cleanup.
 
 ## Commits
 - <sha> <message>

@@ -1,6 +1,9 @@
 ﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+$pluginValidationCompleted = $false
+$pluginValidationFailure = $null
+try {
 $root = Split-Path -Parent $PSScriptRoot
 
 function Assert-Condition([bool]$condition, [string]$message) {
@@ -457,6 +460,11 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
+$uiE2EIntegrationValidator = Join-Path $root 'scripts\test-ui-e2e-integration-contract.ps1'
+Assert-Condition (Test-Path $uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'
+
 $codeGraphContractValidator = Join-Path $root 'scripts\test-codegraph-contract.ps1'
 Assert-Condition (Test-Path $codeGraphContractValidator) 'focused CodeGraph contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $codeGraphContractValidator
@@ -486,6 +494,21 @@ $figmaEvidenceValidator = Join-Path $root 'scripts\test-figma-evidence-contract.
 Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused Figma evidence contract validator failed'
+
+$uiE2EContractValidator = Join-Path $root 'scripts\test-ui-e2e-contract.ps1'
+Assert-Condition (Test-Path $uiE2EContractValidator) 'focused UI/E2E contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E contract validator failed'
+
+$executeUiE2EContractValidator = Join-Path $root 'scripts\test-execute-ui-e2e-contract.ps1'
+Assert-Condition (Test-Path $executeUiE2EContractValidator) 'focused direct-execution UI/E2E contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $executeUiE2EContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused direct-execution UI/E2E contract validator failed'
+
+$executeSddUiE2EContractValidator = Join-Path $root 'scripts\test-execute-sdd-ui-e2e-contract.ps1'
+Assert-Condition (Test-Path $executeSddUiE2EContractValidator) 'focused SDD execution UI/E2E contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $executeSddUiE2EContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused SDD execution UI/E2E contract validator failed'
 
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
@@ -1275,10 +1298,19 @@ foreach ($file in $oldReviewFiles) {
     }
 }
 
-$commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Length } | Measure-Object -Sum).Sum
+$commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Replace("`r`n", "`n").Replace("`r", "`n").Length } | Measure-Object -Sum).Sum
 $commandCharBudget = $commands.Count * 480
 Assert-Condition ($commandChars -le $commandCharBudget) "command adapters exceed the $commandCharBudget-character budget for $($commands.Count) commands: $commandChars"
 
 $skillChars = ($skills | ForEach-Object { (Read-Utf8 (Join-Path $_.FullName 'SKILL.md')).Length } | Measure-Object -Sum).Sum
 $coreChars = $commandChars + $skillChars + $sharedText.Length
 Write-Output "FeaturePilot plugin validation passed: $($commands.Count) commands, $($skills.Count) skills, all SKILL.md files <= 500 lines, core prompt chars $coreChars."
+$pluginValidationCompleted = $true
+} catch {
+    $pluginValidationFailure = $_
+    throw
+} finally {
+    if (-not $pluginValidationCompleted -and $null -eq $pluginValidationFailure) {
+        throw 'Validation ended before the final success sentinel.'
+    }
+}

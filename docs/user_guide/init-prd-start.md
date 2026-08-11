@@ -383,3 +383,9 @@ FeaturePilot 会提示建议 `/fp-init`，但不会强制停止。后续如需�
 计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-final-review`。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，才使用复杂执行模式，以获得任务 brief、逐任务独立审查、修复循环和 SDD final review；不要仅根据任务规模或风险自动切换。
+
+### UI/E2E delivery gate
+
+每个 UI-bearing task 声明 `static-only`、`interactive` 或 `business-flow`。Visual Evidence Manifest 与 UI/E2E Delivery Contract 是两份独立记录，只按 `Task ID + Case ID` 关联；不要重复视觉证据。`static-only` 只有在视觉通过后并记录 evidence-backed reason 时，才可将 E2E 记为 `N/A`。
+
+`interactive` 和 `business-flow` 必须运行 real browser E2E，并遵守 zero-mock rule；覆盖范围来自需求与源码分支/边界，不限于主流程。目标前端项目没有可用 runner 时，FeaturePilot 自动 bootstrap `@playwright/test`，并将 Chromium 安装到 target frontend project 内，不全局安装，也不升级无关依赖。`business-flow` 还要证明 real core API、real persistence or permission result 与 cleanup。Core UI/E2E blocker cannot be waived or overridden before archive。
