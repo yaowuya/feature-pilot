@@ -179,7 +179,9 @@ function Test-ValidatorRegistration([string]$text, [string[]]$expectedLines) {
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$parseErrors)
     if ($parseErrors.Count -ne 0) { return $false }
     $expectedTypes = @('AssignmentStatementAst', 'PipelineAst', 'PipelineAst', 'PipelineAst')
-    $statements = @($ast.EndBlock.Statements)
+    $tryBlocks = @($ast.EndBlock.Statements | Where-Object { $_ -is [System.Management.Automation.Language.TryStatementAst] })
+    if ($tryBlocks.Count -ne 1) { return $false }
+    $statements = @($tryBlocks[0].Body.Statements)
     for ($start = 0; $start -le ($statements.Count - $expectedLines.Count); $start++) {
         $matches = $true
         for ($offset = 0; $offset -lt $expectedLines.Count; $offset++) {

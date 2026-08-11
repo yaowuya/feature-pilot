@@ -1,6 +1,9 @@
 ﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+$pluginValidationCompleted = $false
+$pluginValidationFailure = $null
+try {
 $root = Split-Path -Parent $PSScriptRoot
 
 function Assert-Condition([bool]$condition, [string]$message) {
@@ -457,6 +460,11 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
+$uiE2EIntegrationValidator = Join-Path $root 'scripts\test-ui-e2e-integration-contract.ps1'
+Assert-Condition (Test-Path $uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'
+
 $codeGraphContractValidator = Join-Path $root 'scripts\test-codegraph-contract.ps1'
 Assert-Condition (Test-Path $codeGraphContractValidator) 'focused CodeGraph contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $codeGraphContractValidator
@@ -501,11 +509,6 @@ $executeSddUiE2EContractValidator = Join-Path $root 'scripts\test-execute-sdd-ui
 Assert-Condition (Test-Path $executeSddUiE2EContractValidator) 'focused SDD execution UI/E2E contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $executeSddUiE2EContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused SDD execution UI/E2E contract validator failed'
-
-$uiE2EIntegrationValidator = Join-Path $root 'scripts\test-ui-e2e-integration-contract.ps1'
-Assert-Condition (Test-Path $uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'
-& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator
-Assert-Condition ($LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'
 
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
@@ -1302,3 +1305,12 @@ Assert-Condition ($commandChars -le $commandCharBudget) "command adapters exceed
 $skillChars = ($skills | ForEach-Object { (Read-Utf8 (Join-Path $_.FullName 'SKILL.md')).Length } | Measure-Object -Sum).Sum
 $coreChars = $commandChars + $skillChars + $sharedText.Length
 Write-Output "FeaturePilot plugin validation passed: $($commands.Count) commands, $($skills.Count) skills, all SKILL.md files <= 500 lines, core prompt chars $coreChars."
+$pluginValidationCompleted = $true
+} catch {
+    $pluginValidationFailure = $_
+    throw
+} finally {
+    if (-not $pluginValidationCompleted -and $null -eq $pluginValidationFailure) {
+        throw 'Validation ended before the final success sentinel.'
+    }
+}

@@ -126,7 +126,9 @@ function Test-ValidatorRegistration([string]$text, [string[]]$lines) {
     $errors = $null
     $ast = [System.Management.Automation.Language.Parser]::ParseInput($text, [ref]$tokens, [ref]$errors)
     if ($errors.Count -ne 0) { return $false }
-    $statements = @($ast.EndBlock.Statements)
+    $tryBlocks = @($ast.EndBlock.Statements | Where-Object { $_ -is [System.Management.Automation.Language.TryStatementAst] })
+    if ($tryBlocks.Count -ne 1) { return $false }
+    $statements = @($tryBlocks[0].Body.Statements)
     for ($start = 0; $start -le ($statements.Count - $lines.Count); $start++) {
         $matches = $true
         for ($offset = 0; $offset -lt $lines.Count; $offset++) {

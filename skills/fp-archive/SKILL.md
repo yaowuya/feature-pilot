@@ -47,11 +47,17 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before check
 
 `UI/E2E Gate: FAIL` 或 `BLOCKED` 时，任何 core UI/E2E gap、mock violation、unsafe unverified real-environment condition、missing required E2E/matrix、`Mocked Core API` 非 `false`、cleanup 缺失或 lifecycle `BLOCKED` 都必须阻止归档；不得展示“继续归档”的确认选项。The archive must not proceed on `FAIL` or `BLOCKED`. A user confirmation cannot override or waive this gate. 该读取只消费 final review/evidence，not a second completion authority。
 
-只有通过的 `UI/E2E Gate: PASS`，或有证据证明不存在 UI-bearing case 的 `N/A`，才能继续普通归档检查。若仍有 ordinary non-core incomplete task 或普通非核心 blocked 记录，才展示摘要并询问是否继续归档；必须先确认它不属于 UI/E2E core gate，且不得静默归档。
+只有通过的 `UI/E2E Gate: PASS`，或最新报告的 `UI Case Inventory / N/A Reconciliation` 已证明当前快照零 UI-bearing source、无 Figma UI scope、无 mapped-current/unowned frontend diff 的 `N/A`，才能继续普通归档检查。漏登记 UI-bearing source 是 `FAIL` 或 `BLOCKED`，不得用 `N/A` 继续。若仍有 ordinary non-core incomplete task 或普通非核心 blocked 记录，才展示摘要并询问是否继续归档；必须先确认它不属于 UI/E2E core gate，且不得静默归档。
+
+### Step 2.2: Figma Completion Gate
+
+在展示移动摘要或请求用户确认前，当当前 scope 使用 `fp-figma` 时，读取覆盖当前快照的 latest final review、`Figma Completion Status: COMPLETE`、每项 required `FIGCAP-*`、core `PRES-*`、core Visual Case 结果，以及 independent Figma review。报告、状态、证据或审查缺失、过期或歧义都使归档 `BLOCKED`。
+
+任一 `FAIL`、`CANNOT_VERIFY`、`BLOCKED` 或 `INCOMPLETE` 都必须阻止归档；只有每项 required `FIGCAP-*`、core `PRES-*`、core Visual Case 为 `PASS` 且 Figma Completion Status 为 `COMPLETE` 才能继续。The archive must not proceed on `FAIL`, `CANNOT_VERIFY`, `BLOCKED`, or `INCOMPLETE`. A user confirmation cannot override or waive this gate. 该读取只消费 final review/evidence，not a second completion authority。
 
 ### Step 3: 展示并确认
 
-仅在 Step 2 和 Step 2.1 通过后，展示源路径、目标归档路径、结构检查摘要、UI/E2E Gate 结果，以及 ordinary non-core 未完成项；等待用户明确确认后才继续。
+仅在 Step 2、Step 2.1 和适用的 Step 2.2 通过后，展示源路径、目标归档路径、结构检查摘要、UI/E2E Gate/Figma Completion 结果，以及 ordinary non-core 未完成项；等待用户明确确认后才继续。
 
 ### Step 4: 归档文件
 

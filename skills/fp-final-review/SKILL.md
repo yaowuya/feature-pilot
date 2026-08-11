@@ -100,6 +100,8 @@ Immediately read the actual files that exist for the selected change:
 7. `fp-docs/changes/<slug>/.fp-execute/progress.md` if present
 8. existing `fp-docs/changes/<slug>/.fp-execute/reviews/*.md` task reviews if present
 9. for every planned UI Case ID, its matching task brief/package/progress rows, visual manifest, E2E evidence directory, and `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` when applicable; and, when the UI scope used `fp-figma`, `.fp-execute/figma-preservation.md`, `.fp-execute/figma-capabilities.md`, all relevant `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, and `*-figma-review.md`. A plan-required Figma artifact is `Missing`, never replaced by chat or implementer self-report.
+
+Before trusting the planned UI Case list or emitting E2E `N/A`, build a `UI Case Inventory / N/A Reconciliation` from resolved task-owner `Files`/task text, frontend design component/interaction/Visual Checks, Figma `FIGCAP-*`/`PRES-*` mappings, and mapped-current/shared/unowned frontend diff paths. Every UI-bearing source must map to one Task ID + Case ID + Delivery Contract row, or its unmapped state is `FAIL` or `BLOCKED`. `N/A` is allowed only when this inventory has zero UI-bearing sources, no Figma UI scope, no mapped-current or unowned frontend diff, and evidence covers the reviewed target snapshot.
 10. `finalReviewPackage`, `priorReviewPath`, and progress-ledger attempt state when provided
 11. project/customer constraint files if present: `fp-docs/settings/agent.md`, `CLAUDE.md`, `.claude/CLAUDE.md`, `AGENTS.md`, `.agents/AGENTS.md`
 
@@ -196,6 +198,8 @@ Use only the project-configured browser runner/tool and case-specific Acceptance
 
 Overall Figma completion is impossible when any required `FIGCAP-*` or core `PRES-*` is `FAIL`, `CANNOT_VERIFY`, or `BLOCKED`, even when screenshots pass. Figma `PASS` requires every required `FIGCAP-*`, core `PRES-*`, and core visual Case to be `PASS` with no unapproved behavior change.
 
+Record `Figma Completion Status: COMPLETE | INCOMPLETE | BLOCKED`. For Figma-derived UI scope, any required `FIGCAP-*`, core `PRES-*`, or core visual Case that is `INCOMPLETE`, `CANNOT_VERIFY`, `FAIL`, or `BLOCKED` makes the final verdict `FAIL` or `BLOCKED`; it cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
+
 Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
@@ -203,6 +207,8 @@ Evidence channels: browser interaction evidence is separate from screenshot evid
 ### 2.2 UI/E2E Gate
 
 Read the shared UI/E2E contract and build this gate from the resolved plans, task briefs, progress ledger, task-review packages, finalReviewPackage, visual manifests, and E2E evidence. Resolve every planned UI case by the exact Task ID + Case ID pair. The gate is independent from `Visual Evidence`: reference the visual-manifest result/path rather than repeating the visual evidence table's source, viewport, screenshot, or diff fields.
+
+Emit the `UI Case Inventory / N/A Reconciliation` beside this gate. Its zero-UI conclusion must reconcile the resolved task-owner and frontend-design inventory, Figma `FIGCAP-*`/`PRES-*` mappings, and mapped-current/shared/unowned frontend diff against the reviewed target snapshot; an omitted UI-bearing source is `FAIL` or `BLOCKED`, never an `N/A` shortcut.
 
 For every UI case, record its UI Delivery Level, required lifecycle path, actual completed stage, visual evidence reference, E2E applicability/result, canonical matrix/evidence paths, `Mocked Core API: false` state when E2E is required, cleanup, real persistence/permission result where applicable, and a precise blocking condition. Use the canonical E2E matrix path exactly: `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md`.
 

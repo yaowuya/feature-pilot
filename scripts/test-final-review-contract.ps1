@@ -195,6 +195,71 @@ function Test-ArchiveUiE2EHardGate([string]$text) {
     return -not ($checks -contains $false) -and $section.Index -lt $confirmation.Index
 }
 
+function Test-UiCaseInventoryContract([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $hasRequiredInventory = $active -match '(?is)UI Case Inventory\s*/\s*N/A Reconciliation.{0,900}task-owner.{0,900}frontend design.{0,900}FIGCAP.{0,900}PRES.{0,900}(?:mapped-current|unowned).{0,900}Task ID.{0,240}Case ID.{0,360}(?:FAIL|BLOCKED).{0,320}N/A.{0,360}(?:zero|no) UI'
+    foreach ($sentence in [regex]::Matches($active, '(?is)[^.]*N/A[^.]*\.')) {
+        $value = $sentence.Value
+        $grantsNa = $value -match '(?is)\b(?:may|can|allow(?:ed)?|permit(?:ted)?|valid|acceptable)\b'
+        $isSafeNa = $value -match '(?is)\bonly\b.{0,180}(?:zero|no) UI-bearing.{0,180}no Figma UI scope.{0,180}no mapped-current or unowned frontend diff'
+        if ($grantsNa -and -not $isSafeNa) { return $false }
+    }
+    return $hasRequiredInventory
+}
+
+function Test-UiCaseInventoryArtifact([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $section = [regex]::Match($active, '(?ms)^## UI Case Inventory / N/A Reconciliation[ \t]*\r?\n(?<body>.*?)(?=^## |\z)')
+    if (-not $section.Success) { return $false }
+    $body = $section.Groups['body'].Value
+    return $body -match '(?is)\| Source owner / diff evidence \| UI classification \| Task ID \| Case ID \| Disposition \|' -and
+        $body -match '(?is)N/A.{0,360}(?:zero|no) UI.{0,360}(?:mapped-current|unowned)'
+}
+
+function Test-NoPermissiveFinalDisposition([string]$text) {
+    foreach ($sentence in [regex]::Split($text, '(?<=[.!?])\s+')) {
+        $mentionsDisposition = $sentence -match '(?is)(?:PASS_WITH_NOTES|review debt|manual (?:override|approval)|user confirmation|\boverride\b|waiv(?:e|ed|er|ers))'
+        $grantsDisposition = $sentence -match '(?is)\b(?:may|can|allow(?:ed)?|permit(?:ted)?|override|waiv(?:e|ed|er|ers)|valid|acceptable)\b'
+        $deniesDisposition = $sentence -match '(?is)\b(?:cannot|must not|never|prohibit(?:ed)?|not (?:allowed|permitted|valid|acceptable))\b'
+        if ($mentionsDisposition -and $grantsDisposition -and -not $deniesDisposition) { return $false }
+    }
+    return $true
+}
+
+function Test-FigmaFinalHardGate([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $block = [regex]::Match($active, '(?ms)Figma Completion Status:\s*`?COMPLETE \| INCOMPLETE \| BLOCKED`?.*?(?=^#{1,3} |\z)').Value
+    return -not [string]::IsNullOrWhiteSpace($block) -and
+        $block -match '(?is)(?:FIGCAP|PRES).{0,420}(?:INCOMPLETE|CANNOT_VERIFY|FAIL|BLOCKED).{0,420}(?:final verdict|verdict).{0,240}(?:FAIL|BLOCKED)' -and
+        $block -match '(?is)(?:cannot|must not|never).{0,260}(?:PASS_WITH_NOTES|review debt|manual (?:override|approval)|waiv\w*)' -and
+        (Test-NoPermissiveFinalDisposition $block)
+}
+
+function Test-FigmaFinalArtifact([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $section = [regex]::Match($active, '(?ms)^#{2,3} Figma Completion Gate[ \t]*\r?\n(?<body>.*?)(?=^## |\z)')
+    if (-not $section.Success) { return $false }
+    $body = $section.Groups['body'].Value
+    return $body -match '(?is)Figma Completion Status.{0,260}(?:FIGCAP|PRES).{0,260}(?:FAIL|CANNOT_VERIFY|BLOCKED|INCOMPLETE).{0,260}(?:FAIL|BLOCKED)' -and
+        (Test-NoPermissiveFinalDisposition $body)
+}
+
+function Test-ArchiveFigmaHardGate([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    $section = [regex]::Match($active, '(?ms)^### Step 2\.2: Figma Completion Gate[ \t]*\r?\n(?<body>.*?)(?=^### |\z)')
+    if (-not $section.Success) { return $false }
+    $body = $section.Groups['body'].Value
+    $confirmation = [regex]::Match($active, '(?m)^### Step 3:')
+    $checks = @(
+        ($body -match '(?is)latest.{0,100}final review'),
+        ($body -match '(?is)Figma Completion Status:\s*COMPLETE'),
+        ($body -match '(?is)(?:required FIGCAP|core PRES|core Visual).{0,280}(?:PASS|independent Figma review)'),
+        ($body -match '(?is)(?:FAIL|CANNOT_VERIFY|BLOCKED|INCOMPLETE).{0,260}(?:must not|cannot).{0,260}archive'),
+        ($body -match '(?is)user confirmation.{0,220}(?:cannot|must not).{0,220}(?:override|waive)')
+    )
+    return -not ($checks -contains $false) -and $section.Index -lt $confirmation.Index -and (Test-NoPermissiveFinalDisposition $active)
+}
+
 $reviewSkillPath = Join-Path $root 'skills\fp-final-review\SKILL.md'
 $reviewerPath = Join-Path $root 'skills\fp-final-review\final-reviewer.md'
 $reportTemplatePath = Join-Path $root 'skills\fp-final-review\final-review-template.md'
@@ -393,6 +458,46 @@ Assert-Condition (Test-UiE2EReviewerGate $reviewer) 'final reviewer prompt is mi
 Assert-Condition (Test-UiE2EArtifactGate $reportTemplate) 'final report must keep an active dedicated UI/E2E Gate table and matrix path'
 Assert-Condition (Test-UiE2EArtifactGate $finalPackage) 'final package must keep an active dedicated UI/E2E Gate table and matrix path'
 Assert-Condition (Test-ArchiveUiE2EHardGate $archiveSkill) 'fp-archive must reject non-waivable UI/E2E core gaps before confirmation'
+Assert-Condition (Test-UiCaseInventoryContract $reviewSkill) 'fp-final-review must reconcile every UI-bearing source before it can issue E2E N/A'
+Assert-Condition (Test-UiCaseInventoryContract $reviewer) 'final reviewer must reconcile every UI-bearing source before it can issue E2E N/A'
+Assert-Condition (Test-UiCaseInventoryArtifact $reportTemplate) 'final report must keep an active UI Case Inventory / N/A Reconciliation table'
+Assert-Condition (Test-UiCaseInventoryArtifact $finalPackage) 'final package must keep an active UI Case Inventory / N/A Reconciliation table'
+Assert-Condition (Test-FigmaFinalHardGate $reviewSkill) 'fp-final-review must make Figma capability/preservation non-pass a final blocker'
+Assert-Condition (Test-FigmaFinalHardGate $reviewer) 'final reviewer must make Figma capability/preservation non-pass a final blocker'
+Assert-Condition (Test-FigmaFinalArtifact $reportTemplate) 'final report must keep an active Figma Completion Gate'
+Assert-Condition (Test-FigmaFinalArtifact $finalPackage) 'final package must keep an active Figma Completion Gate'
+Assert-Condition (Test-ArchiveFigmaHardGate $archiveSkill) 'fp-archive must reject incomplete Figma capability/preservation evidence before confirmation'
+
+$inventoryHeadingMutation = [regex]::Replace($reviewSkill, [regex]::Escape('UI Case Inventory / N/A Reconciliation'), 'Removed UI Case Inventory', 1)
+Assert-Condition ($inventoryHeadingMutation -ne $reviewSkill) 'UI Case Inventory heading mutation fixture did not mutate the review skill'
+Assert-Condition (-not (Test-UiCaseInventoryContract $inventoryHeadingMutation)) 'inventory helper accepted a missing reconciliation requirement'
+$inventoryShortcutMutation = $reviewSkill + "`nN/A may be issued whenever a reviewer judges a UI scope absent, notwithstanding any source inventory."
+Assert-Condition (-not (Test-UiCaseInventoryContract $inventoryShortcutMutation)) 'inventory helper accepted an omitted UI-bearing source as N/A'
+
+$figmaVerdictSource = 'any required `FIGCAP-*`, core `PRES-*`, or core visual Case that is `INCOMPLETE`, `CANNOT_VERIFY`, `FAIL`, or `BLOCKED` makes the final verdict `FAIL` or `BLOCKED`'
+$figmaVerdictMutation = $reviewSkill.Replace($figmaVerdictSource, 'a failed FIGCAP may be accepted as `PASS_WITH_NOTES` after manual approval')
+Assert-Condition ($figmaVerdictMutation -ne $reviewSkill) 'Figma non-pass verdict mutation fixture did not mutate the review skill'
+Assert-Condition (-not (Test-FigmaFinalHardGate $figmaVerdictMutation)) 'Figma final helper accepted a non-pass PASS_WITH_NOTES/manual-approval bypass'
+$figmaAppendMutation = $reviewSkill.Replace('Provenance: reference.png', 'Exception: a failed FIGCAP may be converted to PASS_WITH_NOTES after manual approval; this is not recommended.`n`nProvenance: reference.png')
+Assert-Condition ($figmaAppendMutation -ne $reviewSkill) 'Figma permission mutation fixture did not mutate the review skill'
+Assert-Condition (-not (Test-FigmaFinalHardGate $figmaAppendMutation)) 'Figma final helper accepted an appended permission bypass'
+$figmaArtifactMutation = $reportTemplate.Replace('it cannot be `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check', 'it may be `PASS_WITH_NOTES` after manual approval')
+Assert-Condition ($figmaArtifactMutation -ne $reportTemplate) 'Figma artifact mutation fixture did not mutate the report template'
+Assert-Condition (-not (Test-FigmaFinalArtifact $figmaArtifactMutation)) 'Figma artifact helper accepted a permission bypass'
+
+$archiveFigmaGateRemoved = $archiveSkill.Replace('### Step 2.2: Figma Completion Gate', '### Removed Figma Completion Gate')
+Assert-Condition ($archiveFigmaGateRemoved -ne $archiveSkill) 'archive Figma heading mutation fixture did not mutate the archive skill'
+Assert-Condition (-not (Test-ArchiveFigmaHardGate $archiveFigmaGateRemoved)) 'archive Figma helper accepted a missing Figma completion gate'
+$archiveFigmaOverrideMutation = $archiveSkill.Replace('A user confirmation cannot override or waive this gate', 'A user confirmation may override a failed FIGCAP; this is not recommended')
+Assert-Condition ($archiveFigmaOverrideMutation -ne $archiveSkill) 'archive Figma override mutation fixture did not mutate the archive skill'
+Assert-Condition (-not (Test-ArchiveFigmaHardGate $archiveFigmaOverrideMutation)) 'archive Figma helper accepted a user-confirmation override'
+$archiveFigmaAppendMutation = $archiveSkill + "`nA user confirmation may override a failed FIGCAP; this is not recommended."
+Assert-Condition ($archiveFigmaAppendMutation -ne $archiveSkill) 'archive Figma appended-override mutation fixture did not mutate the archive skill'
+Assert-Condition (-not (Test-ArchiveFigmaHardGate $archiveFigmaAppendMutation)) 'archive Figma helper accepted an appended user-confirmation override'
+$archiveFigmaGateText = [regex]::Match((Get-ActiveMarkdown $archiveSkill), '(?ms)^### Step 2\.2: Figma Completion Gate[ \t]*\r?\n.*?(?=^### Step 3:|\z)').Value
+$archiveFigmaGateMoved = [regex]::Replace($archiveSkill, '(?ms)^### Step 2\.2: Figma Completion Gate[ \t]*\r?\n.*?(?=^### Step 3:)', '') + "`n" + $archiveFigmaGateText
+Assert-Condition ($archiveFigmaGateMoved -ne $archiveSkill) 'archive Figma gate move mutation fixture did not mutate the archive skill'
+Assert-Condition (-not (Test-ArchiveFigmaHardGate $archiveFigmaGateMoved)) 'archive Figma helper accepted a Figma gate after user confirmation'
 
 $uiE2ESkillMutation = $reviewSkill.Replace('### 2.2 UI/E2E Gate', '### Removed UI/E2E Gate')
 Assert-Condition ($uiE2ESkillMutation -ne $reviewSkill) 'UI/E2E heading mutation fixture did not mutate the review skill'

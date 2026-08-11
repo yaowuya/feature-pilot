@@ -119,6 +119,102 @@ function Test-ValidatorRegistration([string]$validatorText, [string[]]$registrat
     return $false
 }
 
+function Test-TopLevelStatementTerminates([System.Management.Automation.Language.StatementAst]$statement) {
+    if ($statement -is [System.Management.Automation.Language.FunctionDefinitionAst]) { return $false }
+    if ($statement -is [System.Management.Automation.Language.ExitStatementAst] -or
+        $statement -is [System.Management.Automation.Language.ReturnStatementAst] -or
+        $statement.Extent.Text.Trim() -match '^(?i)(?:exit|return)(?:\s|$)') {
+        return $true
+    }
+    if ($statement -isnot [System.Management.Automation.Language.IfStatementAst]) { return $false }
+    return @($statement.FindAll({
+        param($node)
+        $node -is [System.Management.Automation.Language.ExitStatementAst] -or
+        $node -is [System.Management.Automation.Language.ReturnStatementAst]
+    }, $true)).Count -gt 0
+}
+
+function Test-UiE2EValidatorSequence([string]$validatorText, [object[]]$expectedBlocks) {
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+        $validatorText,
+        [ref]$tokens,
+        [ref]$parseErrors
+    )
+    if ($parseErrors.Count -ne 0) { return $false }
+
+    $tryBlocks = @($ast.EndBlock.Statements | Where-Object { $_ -is [System.Management.Automation.Language.TryStatementAst] })
+    if ($tryBlocks.Count -ne 1) { return $false }
+    $expectedTypes = @('AssignmentStatementAst', 'PipelineAst', 'PipelineAst', 'PipelineAst')
+    $statements = @($tryBlocks[0].Body.Statements)
+    $cursor = 0
+    foreach ($block in $expectedBlocks) {
+        $found = $false
+        for ($start = $cursor; $start -le ($statements.Count - $block.Count); $start++) {
+            $matches = $true
+            for ($offset = 0; $offset -lt $block.Count; $offset++) {
+                $statement = $statements[$start + $offset]
+                if ($statement.GetType().Name -cne $expectedTypes[$offset] -or
+                    $statement.Extent.Text.Trim() -cne $block[$offset]) {
+                    $matches = $false
+                    break
+                }
+            }
+            if ($matches) {
+                $cursor = $start + $block.Count
+                $found = $true
+                break
+            }
+        }
+        if (-not $found) { return $false }
+    }
+
+    $completionIndex = -1
+    for ($index = $cursor; $index -lt $statements.Count; $index++) {
+        if ($statements[$index].Extent.Text.Contains('FeaturePilot plugin validation passed')) {
+            $completionIndex = $index
+            break
+        }
+    }
+    if ($completionIndex -lt 0) { return $false }
+
+    for ($index = 0; $index -lt $completionIndex; $index++) {
+        if (Test-TopLevelStatementTerminates $statements[$index]) { return $false }
+    }
+    return $true
+}
+
+function Test-ValidationCompletionGuard([string]$validatorText) {
+    $tokens = $null
+    $parseErrors = $null
+    $ast = [System.Management.Automation.Language.Parser]::ParseInput(
+        $validatorText,
+        [ref]$tokens,
+        [ref]$parseErrors
+    )
+    if ($parseErrors.Count -ne 0) { return $false }
+
+    $statements = @($ast.EndBlock.Statements)
+    $sentinelIndex = -1
+    $tryIndex = -1
+    for ($index = 0; $index -lt $statements.Count; $index++) {
+        $text = $statements[$index].Extent.Text.Trim()
+        if ($text -ceq '$pluginValidationCompleted = $false') { $sentinelIndex = $index }
+        if ($statements[$index] -is [System.Management.Automation.Language.TryStatementAst]) { $tryIndex = $index }
+    }
+    if ($sentinelIndex -lt 0 -or $tryIndex -le $sentinelIndex) { return $false }
+    for ($index = $sentinelIndex; $index -lt $tryIndex; $index++) {
+        if (Test-TopLevelStatementTerminates $statements[$index]) { return $false }
+    }
+
+    $tryStatement = $statements[$tryIndex]
+    $finallyText = $tryStatement.Finally.Extent.Text
+    return $tryStatement.Body.Extent.Text -match '(?ms)\$pluginValidationCompleted\s*=\s*\$true' -and
+        $finallyText -match '(?is)-not\s+\$pluginValidationCompleted' -and
+        $finallyText -match '(?is)Validation ended before the final success sentinel'
+}
+
 function Test-NoPermissiveArchiveWaiver([string]$text) {
     $effectiveText = Get-EffectiveNormativeText $text
     foreach ($sentence in [regex]::Split($effectiveText, '(?<=[.!?])\s+')) {
@@ -186,6 +282,18 @@ Assert-Condition (Test-NoPermissiveArchiveWaiver $archive) 'archive effective te
 
 $expectedValidatorBlocks = @(
     @(
+        "`$uiE2EIntegrationValidator = Join-Path `$root 'scripts\test-ui-e2e-integration-contract.ps1'",
+        "Assert-Condition (Test-Path `$uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'",
+        '& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator',
+        "Assert-Condition (`$LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'"
+    ),
+    @(
+        "`$finalReviewContractValidator = Join-Path `$root 'scripts\test-final-review-contract.ps1'",
+        "Assert-Condition (Test-Path `$finalReviewContractValidator) 'focused fp-final-review contract validator is missing'",
+        '& powershell -NoProfile -ExecutionPolicy Bypass -File $finalReviewContractValidator',
+        "Assert-Condition (`$LASTEXITCODE -eq 0) 'focused fp-final-review contract validator failed'"
+    ),
+    @(
         "`$uiE2EContractValidator = Join-Path `$root 'scripts\test-ui-e2e-contract.ps1'",
         "Assert-Condition (Test-Path `$uiE2EContractValidator) 'focused UI/E2E contract validator is missing'",
         '& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EContractValidator',
@@ -202,23 +310,10 @@ $expectedValidatorBlocks = @(
         "Assert-Condition (Test-Path `$executeSddUiE2EContractValidator) 'focused SDD execution UI/E2E contract validator is missing'",
         '& powershell -NoProfile -ExecutionPolicy Bypass -File $executeSddUiE2EContractValidator',
         "Assert-Condition (`$LASTEXITCODE -eq 0) 'focused SDD execution UI/E2E contract validator failed'"
-    ),
-    @(
-        "`$finalReviewContractValidator = Join-Path `$root 'scripts\test-final-review-contract.ps1'",
-        "Assert-Condition (Test-Path `$finalReviewContractValidator) 'focused fp-final-review contract validator is missing'",
-        '& powershell -NoProfile -ExecutionPolicy Bypass -File $finalReviewContractValidator',
-        "Assert-Condition (`$LASTEXITCODE -eq 0) 'focused fp-final-review contract validator failed'"
-    ),
-    @(
-        "`$uiE2EIntegrationValidator = Join-Path `$root 'scripts\test-ui-e2e-integration-contract.ps1'",
-        "Assert-Condition (Test-Path `$uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'",
-        '& powershell -NoProfile -ExecutionPolicy Bypass -File $uiE2EIntegrationValidator',
-        "Assert-Condition (`$LASTEXITCODE -eq 0) 'focused UI/E2E cross-flow integration validator failed'"
     )
 )
-foreach ($block in $expectedValidatorBlocks) {
-    Assert-Condition (Test-ValidatorRegistration $validator $block) "validate-plugin must execute the UI/E2E focused validator block beginning: $($block[0])"
-}
+Assert-Condition (Test-UiE2EValidatorSequence $validator $expectedValidatorBlocks) 'validate-plugin must execute the complete reachable UI/E2E focused validator sequence before its final success output'
+Assert-Condition (Test-ValidationCompletionGuard $validator) 'validate-plugin must wrap validation in a completion guard that rejects early exit/return'
 
 Assert-Condition (Test-EffectiveLineRegex $readme '^ {0,3}##\s+Staged UI/E2E delivery\s*$') 'README must document the staged UI/E2E delivery gate'
 Assert-Condition (Test-EffectiveLineRegex $agents '^ {0,3}##\s+UI/E2E execution and archive gates\s*$') 'AGENTS.md must document the UI/E2E fallback gate'
@@ -236,12 +331,27 @@ $executeWithCommentAndFenceFake = $executeWithoutReference + "`n<!-- $sharedRefe
 Require-MutationBaseline (Test-SharedContractReference $execute) 'direct execution shared reference baseline'
 Assert-Condition (-not (Test-SharedContractReference $executeWithCommentAndFenceFake)) 'comment/fence-only shared reference must not satisfy integration validation'
 
-Require-MutationBaseline (Test-ValidatorRegistration $validator $expectedValidatorBlocks[0]) 'shared validator registration baseline'
-$hasIntegrationRegistration = Test-ValidatorRegistration $validator $expectedValidatorBlocks[4]
+Require-MutationBaseline (Test-UiE2EValidatorSequence $validator $expectedValidatorBlocks) 'complete UI/E2E validator sequence baseline'
+$completionGuardExitMutation = Replace-Required $validator '$pluginValidationCompleted = $false' ('$pluginValidationCompleted = $false' + "`nexit 0") 'insert exit before the validation completion guard'
+Assert-Condition (-not (Test-ValidationCompletionGuard $completionGuardExitMutation)) 'completion guard helper accepted an exit before the guarded validation body'
+$hasIntegrationRegistration = Test-UiE2EValidatorSequence $validator $expectedValidatorBlocks
 if ($hasIntegrationRegistration) {
     $registrationStart = "`$uiE2EIntegrationValidator = Join-Path `$root 'scripts\test-ui-e2e-integration-contract.ps1'"
     $validatorWithoutIntegration = Replace-Required $validator $registrationStart '$removedUiE2EIntegrationValidator = $null' 'remove integration validator registration'
-    Assert-Condition (-not (Test-ValidatorRegistration $validatorWithoutIntegration $expectedValidatorBlocks[4])) 'removed integration validator registration must fail validation'
+    Assert-Condition (-not (Test-UiE2EValidatorSequence $validatorWithoutIntegration $expectedValidatorBlocks)) 'removed integration validator registration must fail validation'
+}
+
+Assert-Condition ($validator.IndexOf($expectedValidatorBlocks[0][0], [System.StringComparison]::Ordinal) -lt $validator.IndexOf("`$codeGraphContractValidator = Join-Path `$root 'scripts\test-codegraph-contract.ps1'", [System.StringComparison]::Ordinal)) 'cross-flow validator must run before every other focused contract validator'
+
+foreach ($termination in @(
+    @{ Name = 'top-level exit before the initial cross-flow validator'; Index = 0; Payload = 'exit 0' }
+    @{ Name = 'top-level return before final-review validator'; Index = 1; Payload = 'return' }
+    @{ Name = 'conditional exit before shared UI/E2E validator'; Index = 2; Payload = 'if (1 -eq 1) { exit 0 }' }
+    @{ Name = 'top-level exit before direct validator'; Index = 3; Payload = 'exit 0' }
+    @{ Name = 'conditional return before SDD validator'; Index = 4; Payload = 'if (2 -gt 1) { return }' }
+)) {
+    $mutatedSequence = Replace-Required $validator $expectedValidatorBlocks[$termination.Index][0] ($termination.Payload + "`n" + $expectedValidatorBlocks[$termination.Index][0]) $termination.Name
+    Assert-Condition (-not (Test-UiE2EValidatorSequence $mutatedSequence $expectedValidatorBlocks)) "mutation survived: $($termination.Name)"
 }
 
 $archiveWithManualWaiver = $archive + "`nThe archive may continue after missing FRONTEND_E2E_PASS."

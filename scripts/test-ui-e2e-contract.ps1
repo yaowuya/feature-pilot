@@ -334,7 +334,9 @@ function Test-ValidatorRegistration([string]$text, [string[]]$registrationLines)
         'PipelineAst',
         'PipelineAst'
     )
-    $statements = @($ast.EndBlock.Statements)
+    $tryBlocks = @($ast.EndBlock.Statements | Where-Object { $_ -is [System.Management.Automation.Language.TryStatementAst] })
+    if ($tryBlocks.Count -ne 1) { return $false }
+    $statements = @($tryBlocks[0].Body.Statements)
     for ($start = 0; $start -le ($statements.Count - $registrationLines.Count); $start++) {
         $matches = $true
         for ($offset = 0; $offset -lt $registrationLines.Count; $offset++) {
