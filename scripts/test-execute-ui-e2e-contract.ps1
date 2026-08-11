@@ -267,9 +267,15 @@ $fencedVisualReview = Replace-Required $skill $visualReviewLine ('~~~' + $lf + $
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $fencedVisualReview) $gateHeading) $visualReviewLine)) 'mutation survived: fenced direct visual review rule'
 $visualReviewMayWrite = Replace-Required $skill 'must not modify files' 'may modify files' 'direct visual review may modify files'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $visualReviewMayWrite) $gateHeading) $visualReviewLine)) 'mutation survived: direct visual review may modify files'
-$cannotVerifyMayAdvance = Replace-Required $skill 'CANNOT_VERIFY' + $code + ' is ' + $code + 'BLOCKED' + $code + '.' 'CANNOT_VERIFY' + $code + ' may enter ' + $code + 'INTERACTION_READY' + $code + '.' 'direct cannot-verify may advance'
+$cannotVerifySource = 'CANNOT_VERIFY' + $code + ' is ' + $code + 'BLOCKED' + $code + '.'
+$cannotVerifyCounterexample = 'CANNOT_VERIFY' + $code + ' may enter ' + $code + 'INTERACTION_READY' + $code + '.'
+$cannotVerifyMayAdvance = Replace-Required $skill $cannotVerifySource $cannotVerifyCounterexample 'direct cannot-verify may advance'
+Assert-Condition ($cannotVerifyMayAdvance -ceq $skill.Replace($cannotVerifySource, $cannotVerifyCounterexample)) 'mutation fixture must replace the complete CANNOT_VERIFY status counterexample'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $cannotVerifyMayAdvance) $gateHeading) $visualReviewLine)) 'mutation survived: direct CANNOT_VERIFY may enter interaction'
-$visualFailureMaySkipStatic = Replace-Required $skill 'return only to ' + $code + 'STATIC_UI_READY' + $code 'may return to ' + $code + 'INTERACTION_READY' + $code 'direct visual failure skips static UI recovery'
+$visualFailureSource = 'return only to ' + $code + 'STATIC_UI_READY' + $code
+$visualFailureCounterexample = 'may return to ' + $code + 'INTERACTION_READY' + $code
+$visualFailureMaySkipStatic = Replace-Required $skill $visualFailureSource $visualFailureCounterexample 'direct visual failure skips static UI recovery'
+Assert-Condition ($visualFailureMaySkipStatic -ceq $skill.Replace($visualFailureSource, $visualFailureCounterexample)) 'mutation fixture must replace the complete visual-failure rollback counterexample'
 Assert-Condition (-not (Test-ExactLine (Get-ExactSecondLevelSection (Get-EffectiveNormativeText $visualFailureMaySkipStatic) $gateHeading) $visualReviewLine)) 'mutation survived: direct visual failure may skip STATIC_UI_READY recovery'
 $invalidBacktickOpening = [string]::new([char]96, 3) + 'text' + $code
 $invalidBacktickFixture = "## $gateHeading" + $lf + $invalidBacktickOpening + $lf + 'Exception: mock data is permitted.'
