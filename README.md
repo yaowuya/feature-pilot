@@ -2,7 +2,7 @@
 
 FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设计 → 计划 → 执行 → 归档”的完整链路。
 
-当前版本（`1.0.0`）同时提供 Claude Code 与 Codex 插件能力，并保留 Codex 可直接读取的 Markdown/AGENTS.md fallback；统一使用 `fp-*` 命名。详见 [1.0.0 release notes](docs/release_notes/1.0.0.md)。
+当前版本（`1.0.0`）同时提供 Claude Code、Codex 与 DeepSeek Harness 加载能力，并保留 Codex 可直接读取的 Markdown/AGENTS.md fallback；统一使用 `fp-*` 命名。详见 [1.0.0 release notes](docs/release_notes/1.0.0.md)。
 
 ## 1.0.0 发布重点
 
@@ -15,7 +15,7 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - **模块专项审查**：`fp-module-review` 面向一个大型功能模块或多个相关模块，使用稳定 Finding、逐项批准门禁和受控 TDD 修复持续收敛。
 - **Figma 真实运行时质量门禁**：有可信 Figma UI 设计时只以它作为 UI 参考；以 `FIGCAP-*` 功能账本、`PRES-*` 既有功能保护、独立只读审查和 real-runtime visual case 联合判定。缺可信浏览器能力时由客户选择复用/安装方式，未验证只可报告 `CANNOT_VERIFY`，不得宣称 Figma 改造完成。
 - **产物与语言规则**：PRD、proposal、design、plan 使用 compact-first 且 small/split 互斥；过程文档叙述默认中文，代码与精确技术/schema 术语保留必要英文。
-- **Claude Code + Codex 双入口**：两端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
+- **Claude Code + Codex + DeepSeek Harness 三入口**：各端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
 
 ## Claude Code 插件结构
 
@@ -23,7 +23,7 @@ FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设
 - `.claude-plugin/marketplace.json`：本地开发插件市场。
 - `.codex-plugin/plugin.json`：Codex 插件清单，加载同一套 `skills/`。
 - `commands/`：Claude Code 斜杠命令。
-- `skills/`：FeaturePilot 流程技能。
+- `skills/`：FeaturePilot 流程技能。Claude Code 与 Codex 从仓库直接加载；DeepSeek Harness 由 `sync-plugin-runtimes` 把它安装到用户技能根 `~/.dsh/skills`（`$DSH_HOME` 优先）再自动扫描。
 
 ## 核心命令
 
@@ -284,6 +284,26 @@ Codex 执行时应先读取匹配 skill，再遵循与 Claude Code 相同的阶�
 
 Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`、`fp-docs/intel/`、历史 changes/archive/history；generated intel 只是导航线索，不是当前事实来源。
 
+## DeepSeek Harness 使用方式
+
+DeepSeek Harness 没有 plugin.json/marketplace 概念，而是通过扫描固定文件系统技能根加载技能。FeaturePilot 由 `sync-plugin-runtimes` 把仓库 `skills/`（`fp-*` 与 `_shared/`）安装到用户技能根 `~/.dsh/skills`（`$DSH_HOME/skills` 优先），即可在每个 DSH 项目中被识别：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1
+```
+
+只验证、不写入：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1 -VerifyOnly
+```
+
+DSH 用 Chokidar 监听技能根，写入后新开会话即自动加载，无需重启（区别于 Claude Code / Codex 的缓存刷新）。
+
+DSH 中的使用方式与 Codex 一致：`/fp-*` 是技能名，不是 Claude Code 斜杠命令。在 DSH 输入框键入 `/fp-init`、`/fp-prd`、`/fp-start <slug>` 等，或在对话中直接要求使用 `fp:fp-start`、`fp:fp-prd` 等技能。DSH 的 `skill` 工具把 `${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前技能 base directory 的父目录（即 `~/.dsh/skills`），`_shared/` 与其同级，因此跨技能共享契约（`workspace-rules.md`、`artifact-layout.md`、`decision-ledger.md`、`codegraph.md`）可正常解析。
+
+DSH 同样遵守与 Codex 相同的阶段门禁和 lazy context 规则（见上节）。
+
 ## 1.0.0 版本范围
 
 已包含（`1.0.0`）：
@@ -293,6 +313,6 @@ Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`�
 - 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-final-review`、`fp-archive`。
 - 信息层规则：`manifest-only default`、按批准懒创建的 settings/intel、动态 SDD 上下文、project facts freshness，以及可选 CodeGraph 导航与写后同步边界。
 - 执行和审查：简化的 `fp-execute`、最多三次的 SDD 审查、Scope Matrix、命令安全、最终证据包与 Figma 真实运行时视觉验收。
-- Claude Code / Codex 双入口：插件运行时与 Markdown 技能说明保持同一套阶段门禁，并可通过本地同步 skill 校验两端缓存一致性。
+- Claude Code / Codex / DeepSeek Harness 三入口：插件运行时与 Markdown 技能说明保持同一套阶段门禁，并可通过本地同步 skill 校验各端缓存一致性。
 
-未包含独立 TypeScript CLI；当前版本优先交付 Claude Code 原生插件与 Codex 可读流程文档。
+未包含独立 TypeScript CLI；当前版本优先交付 Claude Code 原生插件、Codex 可读流程文档与 DeepSeek Harness 技能根安装。
