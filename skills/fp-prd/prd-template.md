@@ -19,12 +19,12 @@ Read this file only after the final PRD confirmation summary is approved and imm
 ```
 
 - Write fragments directly on semantic boundaries. Logical concatenation in fragment manifest order must pass logical template validation against the mandatory structure below: each required heading/table has exactly one owner and appears in the same order.
-- Keep each complete `3.N` feature block, including its five subsections, in one fragment. The owner of `3.N.5 原型` uniquely references `prototype.html`; indexes and other fragments do not duplicate that detail.
+- Keep each complete `3.N` feature block, including its four subsections, in one fragment. The owner of `3.N.4 原型` uniquely references `prototype.html`; indexes and other fragments do not duplicate that detail.
 
 ## Structure rules
 
 - Keep every heading and table below in the exact order. Do not rename, merge, remove, reorder, or add top-level sections.
-- Replace placeholders and add rows as needed. Repeat `3.2`, `3.3`, and later feature blocks with the same five subsections.
+- Replace placeholders and add rows as needed. Repeat `3.2`, `3.3`, and later feature blocks with the same four subsections.
 - Empty sections remain and say `不适用` or `无，原因：...`.
 - Complex interactions require Mermaid. For a simple flow, explain in chapter 2 why no diagram is needed.
 - `六、待确认问题` contains only non-blocking items; write `无` when empty.
@@ -75,13 +75,7 @@ flowchart TD
 |---|---|---|---|
 | <异常场景> | <条件> | <处理方式> | <提示文案> |
 
-#### 3.1.4 页面元素
-
-| 元素名 | 类型 | 说明 | 校验规则 |
-|---|---|---|---|
-| <元素名> | <输入框/选择器/按钮/表格/弹窗/其他> | <用途> | <必填/格式/长度/权限/状态> |
-
-#### 3.1.5 原型
+#### 3.1.4 原型
 
 - 原型文件：`prototype.html`（如生成）
 - 原型依据：<已有页面 / Figma / 截图 / UI/UX spec>
@@ -127,7 +121,7 @@ flowchart TD
 - Every Markdown file, including `00-index.md`, has at most 500 lines and 30,000 characters.
 - All six required sections and required nested headings remain in order; no extra top-level section exists.
 - Split-form logical template validation reads every fragment in manifest order and checks the same mandatory heading/table sequence as small form.
-- Every feature block has 功能说明 / 交互逻辑 / 异常处理 / 页面元素 / 原型.
+- Every feature block has 功能说明 / 交互逻辑 / 异常处理 / 原型.
 - Required tables retain their exact columns.
 - User story, goal, requirements, exceptions, permissions, logs, and tests align.
 - Complex flows have Mermaid; simple flows explain why no diagram is needed.

@@ -508,6 +508,9 @@ Assert-Condition (-not ($prdFrontmatter.Groups['body'].Value.Contains('provides 
 $prdOutputContract = [regex]::Match($prdSkillText, '(?s)## Output\s*(?<body>.*)\z').Groups['body'].Value
 Assert-Condition ($prdOutputContract -match '(?i)every successful.*(?:MUST|required|always)') 'fp-prd output contract must require the next-step prompt after every successful completion'
 Assert-Condition ($prdOutputContract.Contains('`/fp-start <slug>`')) 'fp-prd output contract must include the exact copyable /fp-start <slug> command'
+$prdTemplateText = Read-Utf8 (Join-Path $root 'skills\fp-prd\prd-template.md')
+Assert-Condition (-not $prdTemplateText.Contains('#### 3.1.4 页面元素')) 'new fp-prd template must not emit the page-elements subsection'
+Assert-Condition (-not $prdTemplateText.Contains('| 元素名 | 类型 | 说明 | 校验规则 |')) 'new fp-prd template must not emit the page-elements table'
 
 $startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
 $sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
@@ -840,7 +843,7 @@ foreach ($entry in $lazyResources.GetEnumerator()) {
 $resourceAnchors = @{
     'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only', 'dirty-after-write', 'post-write sync')
     'skills\fp-init\templates.md' = @('## Project Facts Freshness Metadata', 'fp-project-facts-freshness/v1', 'artifactSectionId', 'bodyHash', 'relativePath', 'fingerprint', 'metadata-only', 'stale/conflict is computed live', '## Selective refresh')
-    'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.5 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
+    'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.4 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
     'skills\fp-propose\proposal-template.md' = @('## Why', '## What Changes', '## Capabilities', '## Out of Scope', '## Impact')
     'skills\fp-brainstorm\design-template.md' = @('# <', '## ', '### API ', '#### API ')
     'skills\fp-plan\task-layout-template.md' = @('## Change-level overview', 'tasks/00-overview.md', '## Cross-end Dependency Edges', '## Progress Totals', 'derived from the unique owner checkboxes', '## Per-end split manifest', '## Fragment Manifest', '| Order | File | Kind | Owns |')
