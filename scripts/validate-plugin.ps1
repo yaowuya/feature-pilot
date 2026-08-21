@@ -1084,7 +1084,7 @@ $executeDirectSection = [regex]::Match($executeSkill, '(?s)## 直接执行契约
 Assert-Condition ($executeDirectSection.Success) 'fp-execute direct execution contract is missing'
 foreach ($anchor in @(
     '当前执行上下文直接完成'
-    '过程产物集合仅包含'
+    '.fp-execute/reviews/<timestamp>-figma-review.md'
     '一次 inline 自审'
     '不拥有 final review scope'
     '只提示运行独立的 `fp-final-review`'

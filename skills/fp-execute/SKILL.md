@@ -24,8 +24,8 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 
 ## 直接执行契约
 
-- 在当前执行上下文直接完成任务，不派发 fresh implementer、独立 task reviewer 或 fixer。
-- 过程产物集合仅包含 `.fp-execute/progress.md`、task-owner file 中的唯一 checkbox，以及双端计划已有 `tasks/00-overview.md` 的派生进度。
+- 在当前执行上下文直接完成任务；默认不派发 fresh implementer、独立 task reviewer 或 fixer。Figma-derived UI scope 或含 `FIGCAP-*` / `PRES-*` 的任务必须按下方 Figma independent review gate 派发 fresh independent read-only reviewer，不能由 inline 自审替代。
+- The process artifact set normally includes `.fp-execute/progress.md`, the unique task-owner checkbox, and a valid two-end plan's derived `tasks/00-overview.md`; Figma-derived UI scope or a task with required `FIGCAP-*` / `PRES-*` additionally requires `.fp-execute/reviews/<timestamp>-figma-review.md` as the independent Figma review artifact.
 - 每个任务执行 TDD、必要验证和一次 inline 自审；发现问题就在当前任务内修复并重新验证，不建立独立 review/fix 状态机。
 - `fp-execute` 不拥有 final review scope。全部任务完成后输出执行报告，只提示运行独立的 `fp-final-review`。
 - 只有用户明确要求 `fp-execute-sdd` 时才切换到 SDD；不要根据任务数量、模块跨度或风险自行切换。
@@ -109,7 +109,7 @@ For each required E2E case, create and maintain `.fp-execute/e2e/<task-id>/<case
 Real E2E has an absolute zero-mock rule. It must not use `page.route`, `route.fulfill`, MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, frontend store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow. For `business-flow`, prove the browser reaches the real core API, record `Mocked Core API: false`, observe the real persistence or permission result, and perform cleanup of test-created data through an approved normal flow or documented real-environment cleanup mechanism that does not replace the tested UI flow.
 
 Prefer a verified existing project runner, installed browser extension, or existing local `playwright-cli`. If none is available, stop at `BROWSER_CAPABILITY_GATE`: report the discovered capabilities and impacts, then let the customer choose an extension, a global local-CLI installation, or no installation. The customer must run the displayed exact command or explicitly authorize FeaturePilot to run that exact command for this occasion. Never silently install a tool or browser component, add/update project dependencies, alter a lockfile, overwrite/create project configuration, change CI, or upgrade unrelated dependencies. Record the selected capability, customer choice, command, resolved version, and artifacts in case evidence. No approved usable capability is `BLOCKED`, never a mock fallback.
-
+For Figma-derived UI scope or any task with required `FIGCAP-*` / `PRES-*`, before updating the unique task-owner checkbox or reporting this task complete, create `.fp-execute/reviews/<timestamp>-figma-review.md` using `figma-review-template.md` through a fresh independent read-only reviewer. The reviewer must inspect the approved Figma/static source, `figma-capabilities.md`, `figma-preservation.md`, Visual Cases, and actual diff. Only every required `FIGCAP-*`, core `PRES-*`, and core Visual Case `PASS`, with no unapproved behavior change, permits task completion; direct execution must not self-approve it.
 After a UI/E2E failure, diagnostic retries may continue only through attempt 3. A third failed attempt is `BLOCKED`; a fourth attempt is forbidden. Do not update the unique task-owner checkbox as complete or continue that task to final handoff while any required lifecycle gate, coverage condition, real-E2E result, cleanup, or mock check is `BLOCKED`.
 ## TDD 执行流程（每个任务）
 
