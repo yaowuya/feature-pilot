@@ -8,6 +8,8 @@ If any anchored plugin resource is missing or unreadable, stop, report the exact
 下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing design artifacts; it owns exclusive forms, manifests, hard limits, conversion, and historical-layout rejection.
+
+When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before Figma mapping or evidence planning. It owns UI Delivery Level, staged lifecycle, real frontend E2E, coverage, customer-selected browser capability, blocking, final-review, and archive rules.
 ---
 
 # FeaturePilot Figma
@@ -37,6 +39,13 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - `reference.png` 只能来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 只能来自 real target runtime 的实际 runtime route，使用 stable data 与 stable environment。`diff.png` 是 optional diff；missing diff 必须说明，且 must not hide 缺失 reference/current 的事实。
 - Code Connect 只是 component mapping 的 optional enhancement，受能力与许可影响；must not auto-create `.figma.ts`，must not change tsconfig，must not install dependencies。Code Connect absence does not block ordinary UI。
 
+## UI delivery and evidence mapping
+
+For every UI-bearing Figma mapping case, record the approved design source/Figma node and the source-derived condition or branch it represents, then associate its stable task ID, case ID, UI Delivery Level, runtime route, Visual Evidence case, and E2E case. A Figma node or approved static design source establishes visual provenance only; it is never real frontend E2E evidence. The later UI/E2E Delivery Contract links the existing Visual Evidence Manifest by `Task ID + Case ID` and does not duplicate visual-manifest fields.
+
+Derive `static-only`, `interactive`, or `business-flow` from the source-backed user-visible behavior rather than from implementation convenience. Preserve the shared contract's lifecycle and case rules: static-only maps to an evidence-backed E2E `N/A`, while interactive and business-flow map to required real browser E2E. A business-flow mapping identifies the real core API boundary, persistence/permission outcome, and cleanup expectation for the later plan; it must retain `Mocked Core API: false` in E2E evidence.
+
+Visual and E2E evidence are distinct channels. Continue to record approved source, component mapping, and Visual Checks for the visual channel; carry the route and source-derived condition forward so the frontend plan can create the UI/E2E Delivery Contract and canonical per-case coverage matrix. Do not derive E2E success from Figma data, an export, a reference image, or a local runtime screenshot.
 ## Browser capability gate
 
 状态名为 `BROWSER_CAPABILITY_GATE`。在需要真实运行时视觉或行为验证时，按以下顺序探测并复用可证明可用的能力：项目已有 browser runner、Playwright browser extension、本机已有 `playwright-cli`。不得因熟悉某个工具而替换客户现有 runner。
@@ -49,6 +58,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 必须 not install silently。客户的安装授权只覆盖本次展示的命令，不能延伸到其他工具、浏览器组件、项目依赖、lockfile、配置或 CI。客户选择暂不安装时，视觉结论为 `CANNOT_VERIFY`，不得称 Figma change complete 或视觉验收通过。
 
+`BROWSER_CAPABILITY_GATE` 的 extension/CLI 或已有项目 runner 可支撑 Figma 映射、能力/保全复核和需要的真实 E2E。若 UI/E2E Delivery Level 是 `interactive` 或 `business-flow`，必须通过客户已选择且可实际执行的浏览器能力收集 required real E2E；没有已批准且可用的能力时为 `BLOCKED`，不能自动安装、跳过、降级或产生 mock 例外。
 ## Existing-function preservation and capability preflight
 
 当任务在既有页面或组件上按 Figma 改造时，任何业务 UI 写入前必须完成以下 preflight。只有当前 active change 可安全确定时才写入其 `.fp-execute/`；无法确定 slug 时询问客户，不得把证据散落在仓库根目录，也不得创建项目级 `manifest.md`、settings 或 intel。

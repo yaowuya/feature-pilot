@@ -39,6 +39,8 @@ Findings to fix:
 
 A fixer may be dispatched only after review attempt 1 or 2 of 3. If the supplied attempt is 3 of 3, stop and report `BLOCKED` because the controller must classify the remaining findings instead. Do not request or imply a fourth review.
 
+For a required UI/E2E case, fix only the exact lifecycle, real-browser, coverage, cleanup, or mock finding. A core UI/E2E gap or mock violation must not be converted into review debt, `PASS_WITH_NOTES`, or a manual waiver; after the third failed attempt, report `BLOCKED`.
+
 1. Read all inputs.
 2. Confirm each finding is understood.
 3. Re-check the task brief's Relevant Project Information Layer section for task scope, or the resolved information-layer context for final scope, before applying fixes. If a stale-intel or stale-settings issue is discovered, surface it rather than patching around it.

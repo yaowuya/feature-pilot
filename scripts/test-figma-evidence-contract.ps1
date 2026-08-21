@@ -477,8 +477,8 @@ Assert-Anchors $taskReviewer @(
 ) 'task reviewer Figma quality contract'
 
 Assert-Anchors $executeSkill @(
-    'every required FIGCAP-* is PASS',
-    'every core PRES-* is PASS',
+    'every required `FIGCAP-*` is PASS',
+    'every core `PRES-*` is PASS',
     'capability non-pass',
     'preservation non-pass'
 ) 'SDD controller Figma quality contract'
@@ -622,11 +622,12 @@ Assert-Condition (
 ) 'generic screenshot/browser/manual-check path-or-reason escape hatch is still present'
 
 Assert-Anchors $planSkill @(
-    'project-configured',
-    'browser runner',
+    'existing project runner',
+    'browser extension',
+    'local `playwright-cli`',
+    'BROWSER_CAPABILITY_GATE',
     'do not silently install',
-    'explicit task',
-    'authorization',
+    'customer',
     'do not define a global pixel threshold'
 ) 'runner-neutral frontend planning'
 
@@ -726,7 +727,7 @@ foreach ($fixture in @(
     @{ Name = 'customer token'; Payload = ' Use --customer-token.' }
     @{ Name = 'unsafe fixture'; Payload = ' Use fixture: production database dump.' }
 )) {
-    $mutatedNeutrality = Insert-AfterRequired $planSkill 'project-configured Playwright/browser runner' $fixture.Payload $fixture.Name
+    $mutatedNeutrality = Insert-AfterRequired $planSkill 'do not define a global pixel threshold' $fixture.Payload $fixture.Name
     Assert-Condition (-not (Test-PublicNeutrality $mutatedNeutrality)) "mutation survived public neutrality: $($fixture.Name)"
 }
 

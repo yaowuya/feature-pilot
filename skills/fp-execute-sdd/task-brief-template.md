@@ -97,6 +97,26 @@ Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each planned case owns
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
+## UI/E2E Delivery Contract (frontend/UI only)
+
+Read the shared staged contract and resolve this table by the same stable Task ID + Case ID as the Visual Evidence Manifest. Do not copy visual-manifest fields: reference the visual row instead.
+
+| Case ID | Visual Evidence Manifest reference | UI Delivery Level | Source-derived condition / requirement | E2E Applicability | Lifecycle stage | E2E evidence root | Coverage matrix | E2E verifier handoff | Cleanup / blocker |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<canonical plan row and .fp-execute/visual/<task-id>/<case-id>/manifest.md>` | `static-only | interactive | business-flow` | `<source/requirement reference>` | `REQUIRED | N/A with rationale` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `.fp-execute/e2e/<task-id>/<case-id>/` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<independent verifier path/status or N/A>` | `<cleanup result or BLOCKED rationale>` |
+
+- `static-only` can be `N/A` only after visual pass and an evidence-backed reason. `interactive` and `business-flow` need the independent verifier's real-browser `FRONTEND_E2E_PASS`.
+- The implementer may prepare `INTERACTION_READY`, but never self-confirm `FRONTEND_E2E_PASS`; the controller dispatches the verifier after `VISUAL_REVIEW_PASS`.
+- This is recovery/verification evidence only. The task-owner checkbox remains the sole plan-completion authority.
+
+### Browser Capability Authority (interactive/business-flow only)
+
+| Case ID | Target frontend root | Browser capability | Customer approval / choice | Allowed real E2E test paths and scope | Runner/config status |
+| --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<exact frontend root>` | `<existing project runner / browser extension / local playwright-cli>` | `<reuse / customer-runs exact command / one-time FeaturePilot authorization / unavailable>` | `<exact allowed real-E2E test paths and task scope>` | `<existing runner/config path and preservation status>` |
+
+- The controller fills this authority record before verifier dispatch. A missing, unresolved, unavailable, or out-of-scope value is `BLOCKED`; the verifier must consume these values rather than infer them. The record never authorizes a project dependency, lockfile, configuration, CI, or browser-component change.
+
 ## Prior Interfaces Available
 
 List only interfaces already produced by completed tasks or existing code that this task may consume:
@@ -135,6 +155,7 @@ The report must include:
 - Required `FIGCAP-*` browser-visible results and required `PRES-*` before/after replay results.
 - Browser capability resolution and any non-PASS reason that prevents overall Figma completion.
 - Case-level Visual Evidence rows and `manifest.md`/`reference.png`/`current.png`/optional `diff.png` provenance, plus separate browser interaction evidence.
+- Separate UI/E2E Delivery Contract rows with lifecycle, independent verifier handoff/result, E2E/coverage evidence paths, cleanup, and `BLOCKED` rationale.
 - Commit SHA(s).
 - Known concerns or blockers.
 ```
