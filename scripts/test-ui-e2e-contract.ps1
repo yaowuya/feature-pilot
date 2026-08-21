@@ -395,7 +395,7 @@ $requiredHeadings = @(
     'Case Manifest and E2E Evidence',
     'Real Frontend E2E: No Mock Data or Requests',
     'Coverage Matrix',
-    'Automatic Playwright Bootstrap',
+    'Browser Capability Gate',
     'Retry, Blocking, Final Review, and Archive'
 )
 $canonicalExecutionBinding = 'This contract is mandatory for UI-bearing work in `fp-execute` and `fp-execute-sdd`.'
@@ -496,9 +496,9 @@ $canonicalNormativeLines = @(
     '- state transitions and concurrency; and',
     '- applicable API pagination, filtering, sorting, and compatibility.',
     'Each applicable condition must be `covered` or explicitly `N/A` / `BLOCKED` with rationale. `covered` records real evidence, `N/A` means the condition is not applicable, and `BLOCKED` means a required condition could not receive safe real-environment evidence.',
-    '## Automatic Playwright Bootstrap',
-    'Prefer the existing project runner. If it is missing, detect the target frontend root, workspace, lockfile, and package manager, then install `@playwright/test` as a development dependency and Chromium only in that target project. Reuse an existing configuration; create a minimal configuration and current-task skeleton only when none exists.',
-    'Never install globally, overwrite existing configuration, or upgrade unrelated dependencies. Record the commands, resolved version, and changed files in the E2E evidence. A bootstrap failure or no valid frontend root is `BLOCKED`, never a mock fallback.',
+    '## Browser Capability Gate',
+    'Prefer a verified existing project runner, then an installed browser extension, then an existing local `playwright-cli`. If none is available, enter `BROWSER_CAPABILITY_GATE`: report the discovered capabilities, missing prerequisite, browser download/network/disk impact, and project-file impact, then let the customer choose an extension, a global local-CLI installation, or no installation. Display the exact global-install command before it is run; the customer either runs it or explicitly authorizes FeaturePilot to run that exact command for this occasion.',
+    'Never silently install a tool or browser component, add or update project dependencies, alter a lockfile, overwrite/create project browser configuration, change CI, or upgrade unrelated dependencies. Record the selected capability, customer authorization when applicable, executed command, version, and resulting artifacts in E2E evidence. If a required E2E has no approved usable capability, it is `BLOCKED`, never a mock fallback.',
     '## Retry, Blocking, Final Review, and Archive',
     'Core visual/E2E gaps and any mock violation remain `BLOCKED` through 3 attempts. They cannot be converted into review debt, `N/A`, `PASS`, a manual approval, or a waived check. `FINAL_REVIEW` and `ARCHIVE` cannot waive these blockers.',
     'After a failure, diagnostic retries may continue only through attempt 3.',
@@ -551,8 +551,8 @@ Assert-Anchors $contract @(
     'FRONTEND_E2E_PASS',
     'E2E Applicability: REQUIRED | N/A',
     'Mocked Core API: false',
-    '@playwright/test',
-    'Chromium',
+    'BROWSER_CAPABILITY_GATE',
+    'playwright-cli',
     'coverage-matrix.md',
     'BLOCKED'
 ) 'shared UI/E2E contract'

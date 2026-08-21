@@ -296,24 +296,44 @@ function Test-PrdLogicalTemplate([string]$Text) {
             Fail-Layout 'PRD functional feature headings must stay between section three and section four'
         }
         $number = $feature.Groups['number'].Value
-        $labels = @(
+        $newLabels = @(
             (U '\u529f\u80fd\u8bf4\u660e')
             (U '\u4ea4\u4e92\u903b\u8f91')
             (U '\u5f02\u5e38\u5904\u7406')
-            (U '\u9875\u9762\u5143\u7d20')
             (U '\u539f\u578b')
         )
-        $required = for ($i = 1; $i -le 5; $i++) { "#### 3.$number.$i $($labels[$i - 1])" }
+        $pageElements = U '\u9875\u9762\u5143\u7d20'
+        $legacyLabels = @(
+            (U '\u529f\u80fd\u8bf4\u660e')
+            (U '\u4ea4\u4e92\u903b\u8f91')
+            (U '\u5f02\u5e38\u5904\u7406')
+            $pageElements
+            (U '\u539f\u578b')
+        )
         $featureEnd = $sectionFourStart
         if ($featureIndex + 1 -lt $features.Count -and $features[$featureIndex + 1].Index -lt $sectionFourStart) {
             $featureEnd = $features[$featureIndex + 1].Index
         }
         $featureBlock = $normalizedText.Substring($feature.Index, $featureEnd - $feature.Index)
+        $isLegacyPageElements = $featureBlock.IndexOf("#### 3.$number.4 $pageElements", [StringComparison]::Ordinal) -ge 0
+        $labels = if ($isLegacyPageElements) { $legacyLabels } else { $newLabels }
+        $required = for ($i = 1; $i -le $labels.Count; $i++) { "#### 3.$number.$i $($labels[$i - 1])" }
         Test-OrderedUniqueHeadings $featureBlock $required "PRD logical template is missing required feature fields for 3.$number"
+        if ($isLegacyPageElements) {
+            $elementColumns = @(
+                (U '\u5143\u7d20\u540d')
+                (U '\u7c7b\u578b')
+                (U '\u8bf4\u660e')
+                (U '\u6821\u9a8c\u89c4\u5219')
+            ) | ForEach-Object { [regex]::Escape($_) }
+            $elementColumns = $elementColumns -join '\s*\|\s*'
+            if ($featureBlock -notmatch "(?m)^\|\s*$elementColumns\s*\|\s*$") {
+                Fail-Layout "PRD legacy page-elements feature block is missing its required table for 3.$number"
+            }
+        }
     }
     $requiredTables = @(
         [pscustomobject]@{ Labels = @((U '\u5f02\u5e38\u573a\u666f'), (U '\u89e6\u53d1\u6761\u4ef6'), (U '\u7cfb\u7edf\u5904\u7406\u65b9\u5f0f'), (U '\u7528\u6237\u63d0\u793a')) }
-        [pscustomobject]@{ Labels = @((U '\u5143\u7d20\u540d'), (U '\u7c7b\u578b'), (U '\u8bf4\u660e'), (U '\u6821\u9a8c\u89c4\u5219')) }
         [pscustomobject]@{ Labels = @((U '\u64cd\u4f5c'), (U '\u662f\u5426\u8bb0\u5f55\u65e5\u5fd7'), (U '\u8bb0\u5f55\u4fe1\u606f')) }
         [pscustomobject]@{ Labels = @((U '\u573a\u666f'), (U '\u524d\u7f6e\u6761\u4ef6'), (U '\u64cd\u4f5c'), (U '\u9884\u671f\u7ed3\u679c')) }
     )

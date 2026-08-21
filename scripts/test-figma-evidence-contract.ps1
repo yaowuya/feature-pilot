@@ -120,9 +120,6 @@ $canonicalColumns = Get-MarkdownCells $canonicalHeader
 $canonicalVisualProvenance = 'Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.'
 $canonicalVisualGuardrails = 'Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.'
 $canonicalBrowserScreenshotSeparation = 'Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.'
-$canonicalUiE2EDeliveryHeader = '| Task ID | Case ID | Source-derived condition / requirement reference | UI Delivery Level | Runtime route reference / E2E route | E2E Applicability | Required lifecycle path / stage evidence | Coverage matrix | N/A / BLOCKED rationale |'
-$canonicalUiE2EDeliverySeparator = '| --- | --- | --- | --- | --- | --- | --- | --- | --- |'
-$canonicalUiE2EDeliveryColumns = Get-MarkdownCells $canonicalUiE2EDeliveryHeader
 $canonicalCoreBlockerDebt = 'Core source/runtime missing is CANNOT_VERIFY and a main-flow blocker; it never becomes review debt. At attempt 3, only a reproducible non-core cosmetic FAIL difference may become review debt; all other non-core FAIL/CANNOT_VERIFY cases are BLOCKER.'
 $visualDecisionHeader = '| Rule ID | Planned visual scope | Core source/runtime | Visual evidence verdict | Attempt | Reproducible non-core cosmetic FAIL | Disposition | Combined PASS eligible |'
 $visualDecisionSeparator = '| --- | --- | --- | --- | --- | --- | --- | --- |'
@@ -318,104 +315,6 @@ function Test-BrowserScreenshotSeparation([string]$text) {
         $text -notmatch '(?i)browser interaction evidence\s+is\s+not\s+separate\s+from\s+screenshot evidence'
 }
 
-function Test-CanonicalUiE2EDeliveryTable([string]$section) {
-    $tables = @(Get-MarkdownTables $section)
-    if ($tables.Count -ne 1) {
-        return $false
-    }
-
-    $table = $tables[0]
-    if (-not $table.Header.Equals($canonicalUiE2EDeliveryHeader, [System.StringComparison]::Ordinal) -or
-        -not $table.Separator.Equals($canonicalUiE2EDeliverySeparator, [System.StringComparison]::Ordinal)) {
-        return $false
-    }
-
-    $separatorCells = Get-MarkdownCells $table.Separator
-    $rowCells = Get-MarkdownCells $table.Row
-    if ($separatorCells.Count -ne $canonicalUiE2EDeliveryColumns.Count -or
-        $rowCells.Count -ne $canonicalUiE2EDeliveryColumns.Count -or
-        @($separatorCells | Where-Object { $_ -ne '---' }).Count -ne 0) {
-        return $false
-    }
-
-    $coverageIndex = [array]::IndexOf($canonicalUiE2EDeliveryColumns, 'Coverage matrix')
-    return (Normalize-MarkdownCell $rowCells[$coverageIndex]) -eq '.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md'
-}
-
-function Test-NoPermissiveException([string]$text, [string]$forbiddenTargetPattern) {
-    $permissionPattern = '(?:allow(?:ed|ing)?\b|permit(?:ted|ting)?\b|may\b(?!\s+not\b)|can\b(?!\s+not\b))'
-    $targetBeforePermission = '(?i)' + $forbiddenTargetPattern + '[^.!?;:\r\n]{0,120}' + $permissionPattern
-    $permissionBeforeTarget = '(?i)' + $permissionPattern + '[^.!?;:\r\n]{0,120}' + $forbiddenTargetPattern
-    return -not (
-        [regex]::IsMatch($text, $targetBeforePermission) -or
-        [regex]::IsMatch($text, $permissionBeforeTarget)
-    )
-}
-
-function Test-UiE2EPlanningGuardrails([string]$text) {
-    return (Test-ContainsAnchors $text @(
-        'static-only',
-        'interactive',
-        'business-flow',
-        'E2E Applicability: REQUIRED',
-        'Mocked Core API: false',
-        'real core API',
-        'real persistence or permission result',
-        'cleanup',
-        'SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS',
-        'INTERACTION_READY -> FRONTEND_E2E_PASS',
-        'page.route',
-        'route.fulfill',
-        'MSW',
-        'Cypress stubs/intercepts',
-        'fixture JSON',
-        'mock modules',
-        'hard-coded API data',
-        'store/localStorage business-data injection',
-        'database seed',
-        'direct backend/API writes',
-        'BLOCKED',
-        'happy paths and branches',
-        'validation and boundaries',
-        'loading, empty, error, and retry states',
-        'permissions and isolation',
-        'persistence and navigation',
-        'state transitions and concurrency',
-        'pagination, filtering, sorting, and compatibility'
-    )) -and
-        $text -notmatch '(?i)required E2E\s+(?:may|can|is)\s+(?:be\s+)?(?:SKIPPED|manual[- ]approved|waived)' -and
-        (Test-NoPermissiveException $text '(?:page\.route|route\.fulfill|route mocking|MSW|Cypress stubs/intercepts|fixture JSON|mock modules|hard-coded API data|store/localStorage business-data injection|database seed|direct backend/API writes)')
-}
-
-function Test-AutomaticPlaywrightBootstrap([string]$text) {
-    return (Test-ContainsAnchors $text @(
-        'existing project runner',
-        'target frontend root',
-        'workspace',
-        'lockfile',
-        'package manager',
-        '@playwright/test',
-        'Chromium',
-        'development dependency',
-        'Never install globally',
-        'overwrite existing configuration',
-        'upgrade unrelated dependencies',
-        'BLOCKED'
-    )) -and
-        $text -notmatch '(?i)do not silently install' -and
-        $text -notmatch '(?i)explicit task[^\r\n]{0,100}authorization' -and
-        (Test-NoPermissiveException $text '(?:global installation|install globally|global install)')
-}
-
-function Test-MinimalUiE2ELinking([string]$text) {
-    return (Test-ContainsAnchors $text @(
-        'Task ID + Case ID',
-        'Visual Evidence Manifest',
-        'does not duplicate'
-    )) -and
-        $text -notmatch '(?mi)^\|[^\r\n]*(?:Approved design source|Figma node|revision/time|Frame/variant|Viewport|DPR|Locale|Theme|Reference path|Current path|Diff path|Mask|Acceptance rule|Command/tool)'
-}
-
 $figma = Read-Utf8 'skills\fp-figma\SKILL.md'
 $figmaCommand = Read-Utf8 'commands\fp-figma.md'
 $preservationTemplate = Read-Utf8 'skills\fp-figma\figma-preservation-template.md'
@@ -479,14 +378,6 @@ Assert-Anchors $figma @(
     'install dependencies'
 ) 'fp-figma'
 
-Assert-Anchors $figma @(
-    'skills/_shared/ui-e2e-contract.md',
-    'UI Delivery Level',
-    'source-derived condition',
-    'case ID',
-    'runtime route',
-    'Visual and E2E evidence are distinct channels'
-) 'fp-figma UI/E2E mapping'
 Assert-Anchors $figma @(
     'Figma-only UI source',
     'prototype FUNCTION_SCOPE_ONLY',
@@ -586,8 +477,8 @@ Assert-Anchors $taskReviewer @(
 ) 'task reviewer Figma quality contract'
 
 Assert-Anchors $executeSkill @(
-    'every required FIGCAP-* is PASS',
-    'every core PRES-* is PASS',
+    'every required `FIGCAP-*` is PASS',
+    'every core `PRES-*` is PASS',
     'capability non-pass',
     'preservation non-pass'
 ) 'SDD controller Figma quality contract'
@@ -617,29 +508,9 @@ $plannedCaseAnchors = @(
 )
 Assert-Anchors $planSkill $plannedCaseAnchors 'frontend plan skill'
 Assert-Anchors $planTemplate $plannedCaseAnchors 'frontend plan template'
-Assert-Anchors $planSkill @(
-    'skills/_shared/ui-e2e-contract.md',
-    'UI/E2E Delivery Contract',
-    'source-derived condition',
-    'UI Delivery Level',
-    'runtime route',
-    '.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md'
-) 'frontend plan shared UI/E2E contract'
-Assert-Anchors $planTemplate @(
-    'UI/E2E Delivery Contract',
-    'Source-derived condition / requirement reference',
-    'UI Delivery Level',
-    'Runtime route',
-    'E2E Applicability',
-    'Required lifecycle path / stage evidence',
-    'Coverage matrix',
-    'N/A / BLOCKED rationale',
-    '.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md'
-) 'frontend plan UI/E2E delivery template'
 
 $planSkillOutput = Get-MarkdownSection $planSkill 'Planning rules' 'frontend plan skill'
 $planOutput = Get-MarkdownSection $planTemplate 'Visual Evidence Manifest' 'frontend plan template'
-$uiE2EDeliveryOutput = Get-MarkdownSection $planTemplate 'UI/E2E Delivery Contract' 'frontend plan template'
 $executeVisualOutput = Get-MarkdownSection $executeSkill 'Visual Evidence Contract' 'execute skill'
 $briefOutput = Get-MarkdownSection $brief 'Visual Evidence Manifest' 'task brief'
 $implementerOutput = Get-MarkdownSection $implementer 'Visual Evidence' 'implementer report'
@@ -662,13 +533,6 @@ foreach ($surface in @(
 )) {
     Assert-Condition (Test-CanonicalVisualTable $surface.Text) "$($surface.Name) is not the canonical parsed Visual Evidence table"
 }
-
-Assert-Condition (Test-CanonicalUiE2EDeliveryTable $uiE2EDeliveryOutput) 'frontend plan UI/E2E Delivery Contract is not the canonical parsed delivery table'
-Assert-Condition (Test-UiE2EPlanningGuardrails $planTemplate) 'frontend plan template lacks required staged real-E2E guardrails or source-derived coverage scope'
-Assert-Condition (Test-AutomaticPlaywrightBootstrap $planSkill) 'frontend plan skill lacks automatic local Playwright bootstrap guardrails'
-Assert-Condition (Test-MinimalUiE2ELinking $figma) 'fp-figma does not define a minimal non-duplicating visual/UI-E2E link'
-Assert-Condition (Test-MinimalUiE2ELinking $planSkill) 'frontend plan skill does not define a minimal non-duplicating visual/UI-E2E link'
-Assert-Condition (Test-MinimalUiE2ELinking $uiE2EDeliveryOutput) 'frontend plan delivery table duplicates visual-manifest responsibility'
 
 foreach ($surface in @(
     @{ Name = 'frontend plan skill'; Text = $planSkillOutput }
@@ -758,12 +622,12 @@ Assert-Condition (
 ) 'generic screenshot/browser/manual-check path-or-reason escape hatch is still present'
 
 Assert-Anchors $planSkill @(
-    'project-configured',
-    'browser runner',
     'existing project runner',
-    'target frontend root',
-    '@playwright/test',
-    'Chromium',
+    'browser extension',
+    'local `playwright-cli`',
+    'BROWSER_CAPABILITY_GATE',
+    'do not silently install',
+    'customer',
     'do not define a global pixel threshold'
 ) 'runner-neutral frontend planning'
 
@@ -817,32 +681,6 @@ $notSeparate = 'Evidence channels: browser interaction evidence is not separate 
 $mutatedBriefSeparation = Replace-Required $briefOutput $canonicalBrowserScreenshotSeparation $notSeparate 'task brief reverses browser/screenshot separation'
 Assert-Condition (-not (Test-BrowserScreenshotSeparation $mutatedBriefSeparation)) 'mutation survived: browser/screenshot separation may be negated'
 
-Require-MutationBaseline (Test-CanonicalUiE2EDeliveryTable $uiE2EDeliveryOutput) 'frontend plan UI/E2E delivery table'
-$mutatedUiE2ECoverage = Replace-Required $uiE2EDeliveryOutput '.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md' '.fp-execute/e2e/<task-id>/<case-id>/evidence.md' 'delivery table loses canonical coverage matrix path'
-Assert-Condition (-not (Test-CanonicalUiE2EDeliveryTable $mutatedUiE2ECoverage)) 'mutation survived: delivery table may replace canonical coverage matrix path'
-$mutatedUiE2EDuplicate = Insert-AfterRequired $uiE2EDeliveryOutput $canonicalUiE2EDeliveryHeader ' Approved design source |' 'delivery table adds visual provenance column'
-Assert-Condition (-not (Test-MinimalUiE2ELinking $mutatedUiE2EDuplicate)) 'mutation survived: delivery table may duplicate visual-manifest columns'
-
-Require-MutationBaseline (Test-UiE2EPlanningGuardrails $planTemplate) 'frontend plan real-E2E guardrails'
-$mutatedRouteMock = Replace-Required $planTemplate 'page.route' 'route mocking is permitted' 'template permits route mock'
-Assert-Condition (-not (Test-UiE2EPlanningGuardrails $mutatedRouteMock)) 'mutation survived: template may permit mocked E2E requests'
-$appendedRouteMockPermission = Insert-AfterRequired $planTemplate 'page.route' ' mocking is permitted for E2E.' 'template appends route mock permission'
-Assert-Condition (-not (Test-UiE2EPlanningGuardrails $appendedRouteMockPermission)) 'mutation survived: template may append a permissive page.route exception'
-$permissionBeforeRouteMock = $planTemplate + [Environment]::NewLine + 'Permitted E2E setup may use page.route mocking.'
-Assert-Condition (-not (Test-UiE2EPlanningGuardrails $permissionBeforeRouteMock)) 'mutation survived: template may place a permissive page.route exception before its target'
-$mutatedRequiredE2ESkip = Replace-Required $planTemplate 'required E2E cannot be SKIPPED, manual-approved, or waived' 'required E2E may be SKIPPED' 'template permits required E2E skip'
-Assert-Condition (-not (Test-UiE2EPlanningGuardrails $mutatedRequiredE2ESkip)) 'mutation survived: template may skip required E2E'
-
-Require-MutationBaseline (Test-AutomaticPlaywrightBootstrap $planSkill) 'frontend plan automatic Playwright bootstrap'
-$mutatedBootstrapPackage = Replace-Required $planSkill '@playwright/test' 'a browser test runner' 'bootstrap removes required local package'
-Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $mutatedBootstrapPackage)) 'mutation survived: bootstrap may omit @playwright/test'
-$mutatedBootstrapGlobal = Replace-Required $planSkill 'Never install globally' 'Install globally' 'bootstrap permits global installation'
-Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $mutatedBootstrapGlobal)) 'mutation survived: bootstrap may permit global installation'
-$appendedGlobalInstallPermission = Insert-AfterRequired $planSkill 'Never install globally' '. Global installation is permitted for E2E.' 'bootstrap appends global installation permission'
-Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $appendedGlobalInstallPermission)) 'mutation survived: bootstrap may append a permissive global-install exception'
-$permissionBeforeGlobalInstall = $planSkill + [Environment]::NewLine + 'Permitted bootstrap may use global installation.'
-Assert-Condition (-not (Test-AutomaticPlaywrightBootstrap $permissionBeforeGlobalInstall)) 'mutation survived: bootstrap may place a permissive global-install exception before its target'
-
 $mutatedReviewerVerdict = Insert-AfterRequired $reviewerOutput 'Visual evidence: PASS | FAIL | CANNOT_VERIFY' ([Environment]::NewLine + 'Visual evidence: SKIPPED') 'task reviewer appends fourth visual verdict'
 Assert-Condition (-not (Test-ExactVisualVerdict $mutatedReviewerVerdict)) 'mutation survived: task reviewer may append a fourth visual verdict'
 
@@ -889,7 +727,7 @@ foreach ($fixture in @(
     @{ Name = 'customer token'; Payload = ' Use --customer-token.' }
     @{ Name = 'unsafe fixture'; Payload = ' Use fixture: production database dump.' }
 )) {
-    $mutatedNeutrality = Insert-AfterRequired $planSkill 'project-configured Playwright/browser runner' $fixture.Payload $fixture.Name
+    $mutatedNeutrality = Insert-AfterRequired $planSkill 'do not define a global pixel threshold' $fixture.Payload $fixture.Name
     Assert-Condition (-not (Test-PublicNeutrality $mutatedNeutrality)) "mutation survived public neutrality: $($fixture.Name)"
 }
 

@@ -87,11 +87,11 @@ Store that matrix with the case evidence, source/requirement reference, applicab
 
 Each applicable condition must be `covered` or explicitly `N/A` / `BLOCKED` with rationale. `covered` records real evidence, `N/A` means the condition is not applicable, and `BLOCKED` means a required condition could not receive safe real-environment evidence.
 
-## Automatic Playwright Bootstrap
+## Browser Capability Gate
 
-Prefer the existing project runner. If it is missing, detect the target frontend root, workspace, lockfile, and package manager, then install `@playwright/test` as a development dependency and Chromium only in that target project. Reuse an existing configuration; create a minimal configuration and current-task skeleton only when none exists.
+Prefer a verified existing project runner, then an installed browser extension, then an existing local `playwright-cli`. If none is available, enter `BROWSER_CAPABILITY_GATE`: report the discovered capabilities, missing prerequisite, browser download/network/disk impact, and project-file impact, then let the customer choose an extension, a global local-CLI installation, or no installation. Display the exact global-install command before it is run; the customer either runs it or explicitly authorizes FeaturePilot to run that exact command for this occasion.
 
-Never install globally, overwrite existing configuration, or upgrade unrelated dependencies. Record the commands, resolved version, and changed files in the E2E evidence. A bootstrap failure or no valid frontend root is `BLOCKED`, never a mock fallback.
+Never silently install a tool or browser component, add or update project dependencies, alter a lockfile, overwrite/create project browser configuration, change CI, or upgrade unrelated dependencies. Record the selected capability, customer authorization when applicable, executed command, version, and resulting artifacts in E2E evidence. If a required E2E has no approved usable capability, it is `BLOCKED`, never a mock fallback.
 
 ## Retry, Blocking, Final Review, and Archive
 

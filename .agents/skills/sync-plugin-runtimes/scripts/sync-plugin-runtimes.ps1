@@ -147,6 +147,55 @@ function Assert-CoreMatches {
     }
 }
 
+function Get-SkillsFileMap {
+    param([Parameter(Mandatory)][string]$Root)
+
+    $resolvedRoot = Get-FullPath $Root
+    if (-not (Test-Path -LiteralPath $resolvedRoot -PathType Container)) {
+        throw "Skills root is missing: $resolvedRoot"
+    }
+    $map = @{}
+    foreach ($file in Get-ChildItem -LiteralPath $resolvedRoot -Recurse -File) {
+        $relative = $file.FullName.Substring($resolvedRoot.Length).TrimStart([char[]]'\/').Replace('\', '/')
+        $map[$relative] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+    return $map
+}
+
+function Get-DshSkillsRoot {
+    $dshHome = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $HOME '.dsh' }
+    return (Get-FullPath (Join-Path $dshHome 'skills'))
+}
+
+function Assert-SkillsMatch {
+    param(
+        [Parameter(Mandatory)][hashtable]$Expected,
+        [Parameter(Mandatory)][string]$ActualRoot,
+        [Parameter(Mandatory)][string]$Label
+    )
+
+    $actual = Get-SkillsFileMap -Root $ActualRoot
+    $differences = New-Object System.Collections.Generic.List[string]
+    foreach ($key in @($Expected.Keys | Sort-Object)) {
+        if (-not $actual.ContainsKey($key)) {
+            $differences.Add("missing: $key")
+        }
+        elseif ($Expected[$key] -ne $actual[$key]) {
+            $differences.Add("hash mismatch: $key")
+        }
+    }
+    $ownedPrefixes = @($Expected.Keys | ForEach-Object { ($_ -split '/')[0] } | Sort-Object -Unique)
+    foreach ($key in @($actual.Keys | Sort-Object)) {
+        $prefix = ($key -split '/')[0]
+        if ($prefix -in $ownedPrefixes -and -not $Expected.ContainsKey($key)) {
+            $differences.Add("unexpected: $key")
+        }
+    }
+    if ($differences.Count -gt 0) {
+        throw "$Label does not match the repository skills:`n - $($differences -join "`n - ")"
+    }
+}
+
 function Get-PluginIdentity {
     param([Parameter(Mandatory)][string]$Root)
 
@@ -372,6 +421,11 @@ $codexMarketplaceFile = Join-Path $HOME '.agents\plugins\marketplace.json'
 $claudeMarketplaceFile = Join-Path $HOME '.claude\plugins\known_marketplaces.json'
 $claudeInstalledFile = Join-Path $HOME '.claude\plugins\installed_plugins.json'
 $codexSelector = "$($identity.Name)@$CodexMarketplace"
+$dshSkillsRoot = Get-DshSkillsRoot
+if ((Test-SamePath $repositoryRoot $dshSkillsRoot) -or (Test-ChildPath $repositoryRoot $dshSkillsRoot) -or (Test-ChildPath $dshSkillsRoot $repositoryRoot)) {
+    throw "Unsafe DSH skills target relationship: repository=$repositoryRoot target=$dshSkillsRoot"
+}
+$dshSkillsExpected = Get-SkillsFileMap -Root (Join-Path $repositoryRoot 'skills')
 
 # Preflight every target identity before any mutation.
 $codexSource = Resolve-CodexSource -MarketplaceFile $codexMarketplaceFile -MarketplaceName $CodexMarketplace -PluginName $identity.Name -RepositoryRoot $repositoryRoot
@@ -389,6 +443,7 @@ if ($VerifyOnly) {
     $codexCache = Get-CodexCachePath -MarketplaceName $CodexMarketplace -PluginName $identity.Name -Version $identity.CodexVersion
     Assert-CoreMatches -Expected $repoMap -ActualRoot $codexCache -Label 'Codex cache'
     Assert-CoreMatches -Expected $repoMap -ActualRoot $claudeState.InstallPath -Label 'Claude cache'
+    Assert-SkillsMatch -Expected $dshSkillsExpected -ActualRoot $dshSkillsRoot -Label 'DSH skills root'
     if ((Get-CodexStatus $codexSelector) -ne 'installed, enabled') {
         throw "Codex plugin is not enabled: $codexSelector"
     }
@@ -425,6 +480,22 @@ else {
     }
     $codexCache = Get-CodexCachePath -MarketplaceName $CodexMarketplace -PluginName $identity.Name -Version $identity.CodexVersion
     Assert-CoreMatches -Expected $repoMap -ActualRoot $codexCache -Label 'Codex cache'
+
+    # DSH skills root sync: replace only the top-level entries this repository owns under skills/ (fp-* and _shared), never unrelated user skills.
+    if (-not (Test-Path -LiteralPath $dshSkillsRoot -PathType Container)) {
+        New-Item -ItemType Directory -Path $dshSkillsRoot -Force | Out-Null
+    }
+    foreach ($entry in Get-ChildItem -LiteralPath (Join-Path $repositoryRoot 'skills') -Force) {
+        $destination = Join-Path $dshSkillsRoot $entry.Name
+        if (-not (Test-ChildPath $dshSkillsRoot $destination)) {
+            throw "Refusing to write outside DSH skills root: $destination"
+        }
+        if (Test-Path -LiteralPath $destination) {
+            Remove-Item -LiteralPath $destination -Recurse -Force
+        }
+        Copy-Item -LiteralPath $entry.FullName -Destination $destination -Recurse -Force
+    }
+    Assert-SkillsMatch -Expected $dshSkillsExpected -ActualRoot $dshSkillsRoot -Label 'DSH skills root'
 }
 
 if ((Get-ClaudeStatus $claudeState.Selector) -ne 'enabled') {
@@ -437,5 +508,6 @@ Write-Output "Codex version: $($identity.CodexVersion)"
 Write-Output "Claude cache: $($claudeState.InstallPath)"
 Write-Output "Codex source: $codexSource"
 Write-Output "Codex cache: $codexCache"
-Write-Output 'Verification: repository, Codex source, Codex cache, and Claude cache match.'
-Write-Output 'Restart Claude Code and start a new Codex task to load the updated plugin skills.'
+Write-Output "DSH skills root: $dshSkillsRoot"
+Write-Output 'Verification: repository, Codex source, Codex cache, Claude cache, and DSH skills root match.'
+Write-Output 'Restart Claude Code and start a new Codex task to load the updated plugin skills. DSH picks up the new skills on its next session without a restart.'

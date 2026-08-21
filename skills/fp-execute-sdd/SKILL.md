@@ -5,11 +5,11 @@ description: Use when executing confirmed FeaturePilot implementation plans that
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, bootstrap, retry, and non-waivable blocking.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, customer-selected browser capability, retry, and non-waivable blocking.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract across controller and workers.
 ---
 
@@ -121,7 +121,7 @@ The controller must:
 3. Create a task brief file.
 4. Dispatch exactly one implementer subagent for that task.
 5. Wait for the implementer to finish.
-6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, confirm the brief-owned E2E bootstrap authority before dispatching the independent verifier; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
+6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, confirm the brief-owned customer-selected browser capability before dispatching the independent verifier; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
 7. Create a review package from the actual diff, implementer report, and independent E2E result.
 8. Dispatch exactly one read-only task reviewer.
 9. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
@@ -247,7 +247,7 @@ Each Case ID records Approved design source/Figma node plus revision/time, Frame
 
 `reference.png` must come from an approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` must come from the real target runtime and runtime route with stable data and stable environment. The optional diff may be absent only with a missing diff explanation and must not hide absent core source/runtime evidence. Browser interaction evidence is separate from screenshot evidence and must exercise the approved states.
 
-Use the project-configured browser runner/tool and inspected replay command. Never hard-code a framework, runner, storage root, URL, or global pixel threshold. Required E2E runner bootstrap follows the shared UI/E2E contract: project-local only, no unrelated upgrade or existing-config overwrite. Code Connect is optional enhancement only; never auto-create `.figma.ts` or alter tsconfig.
+Use the customer-selected usable browser capability and inspected replay command. Reuse an existing project runner, browser extension, or local CLI only when it is available; never hard-code a framework, runner, storage root, URL, or global pixel threshold. Never silently install or change project dependencies, lockfiles, browser configuration, CI, or unrelated configuration. Code Connect is optional enhancement only; never auto-create `.figma.ts` or alter tsconfig.
 
 Core visual acceptance without trustworthy source or trustworthy runtime evidence is `CANNOT_VERIFY` and a main-flow blocker. Missing evidence must not become review debt. At attempt 3 only reproducible non-core cosmetic differences may become review debt; core visual evidence gaps remain blocked.
 
@@ -263,7 +263,7 @@ The controller records `SOURCE_READY` from the source-derived condition/requirem
 - `static-only` may proceed from `VISUAL_REVIEW_PASS` to final review only with the evidence-backed `E2E Applicability: N/A` record; it must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
 - `interactive` and `business-flow` must progress `VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS` with independent real-browser E2E evidence; required E2E cannot be skipped, manually waived, or satisfied by a screenshot.
 
-Before every required E2E verifier launch, the controller must place the exact `Target frontend root`, `Allowed bootstrap / real E2E test paths and scope`, `Manifest / lockfile / config status`, and `Package manager` in the matching Task ID + Case ID brief UI/E2E record. If any value is missing, unresolved, or outside the approved task scope, record `BLOCKED` and do not dispatch the verifier.
+Before every required E2E verifier launch, the controller must place the exact `Browser capability`, `Customer approval / choice`, `Allowed real E2E test paths and scope`, and `Runner/config status` in the matching Task ID + Case ID brief UI/E2E record. If any value is missing, unresolved, unavailable, or outside the approved task scope, record `BLOCKED` and do not dispatch the verifier.
 
 For every required E2E case, dispatch one fresh independent `e2e-verifier` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/e2e-verifier-prompt.md`. The implementer may prepare `INTERACTION_READY` but must never self-confirm `FRONTEND_E2E_PASS`; the verifier runs only the real browser UI and records case evidence.
 
@@ -370,7 +370,7 @@ Apply exactly one Rule ID to every task review. The table is mutually exclusive 
 
 ## Visual decision application
 
-Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, every planned visual scope resolves to VISUAL_PASS, every required FIGCAP-* is PASS, every core PRES-* is PASS, and every required UI/E2E case has independent real-browser `FRONTEND_E2E_PASS` with covered/justified status and cleanup. A planned visual or required E2E FAIL/CANNOT_VERIFY, capability non-pass, or preservation non-pass cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the applicable visual or UI/E2E retry rule and Rule ID table.
+Combined task review verdict is PASS only when Spec Compliance is PASS, Code Quality is APPROVED, no Critical/Important finding remains, every planned visual scope resolves to VISUAL_PASS, every required `FIGCAP-*` is PASS, every core `PRES-*` is PASS, and every required UI/E2E case has independent real-browser `FRONTEND_E2E_PASS` with covered/justified status and cleanup. A planned visual or required E2E FAIL/CANNOT_VERIFY, capability non-pass, or preservation non-pass cannot merge into PASS merely because severity buckets are empty. CORE_GAP is always a main-flow blocker. Minor findings may be recorded without making the combined verdict fail. Any other combination is non-pass and must follow the applicable visual or UI/E2E retry rule and Rule ID table.
 
 Task non-pass transition table:
 - **Critical/Important finding:** append exact findings; at attempt 1 or 2 use the serial fixer flow below, regenerate the package, increment exactly once, and re-review.

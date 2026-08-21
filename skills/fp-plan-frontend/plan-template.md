@@ -21,7 +21,7 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 - Component library/design system: <source>
 - Script/style conventions: <source>
 - Visual source: <Figma / screenshot / existing page / settings>
-- Visual evidence runner: <project-configured browser runner/tool, or shared-contract automatic local Playwright bootstrap>
+- Visual evidence runner: <existing project runner / installed browser extension / local playwright-cli / customer choice pending; no silent installation or project dependency/config change>
 - Verification commands: <source>
 
 ## File Structure

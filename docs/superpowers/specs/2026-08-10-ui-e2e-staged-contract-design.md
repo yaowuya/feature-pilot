@@ -16,12 +16,12 @@ FeaturePilot 已有 Figma/source gate、case 级视觉证据、独立审查和�
 - 把 UI Case 的真实前端 E2E 从“可选验证命令”提升为可审查的任务/终审/归档契约。
 - 对有交互或业务链路的 Case 禁止所有 mock 数据、mock 接口和伪造状态。
 - 以需求、设计、任务、接口和已识别风险为来源，尽可能完整地覆盖 E2E 边界条件，而不是只跑主流程。
-- 目标项目没有 E2E 工具时，自动在目标前端项目内补齐 Playwright，不做全局安装或无关升级。
+- 目标项目没有可用 E2E 工具时，向客户展示浏览器能力选择和影响；只有客户选择并授权后才使用新增本机能力，无法取得可用能力时阻断 required E2E。
 
 非目标：
 
 - 不新增用户可见命令或第二套 UI 工作流。
-- 除自动补齐 Playwright 外，不硬编码项目 URL、包管理器、认证方案、存储路径、全局像素阈值或客户组件库。
+- 不硬编码项目 URL、包管理器、认证方案、存储路径、全局像素阈值或客户组件库；不自动安装工具、浏览器组件或修改客户项目依赖、lockfile、配置与 CI。
 - 不承诺复制 SDD-RIPER 的签名、防重放和固定浏览器探针能力。
 
 ## 2. 架构决策
@@ -138,17 +138,15 @@ Permission/Persistence Evidence: <observable real result or N/A with rationale>
 
 “尽可能完整”不以固定的场景数量衡量：每个从当前范围可观察、可达的条件都必须映射到真实 E2E 场景与实际证据，或有可审查的 `N/A`/`BLOCKED` 原因。缺少核心边界场景不能成为 review debt。
 
-## 7. Playwright 自动补齐
+## 7. Browser 能力选择
 
-当某个需要 E2E 的目标前端项目没有可用 browser/E2E runner 时，FeaturePilot 在执行预检阶段自动补齐 Playwright：
+当某个需要 E2E 的目标前端项目没有可用 browser/E2E runner 时，FeaturePilot 进入 `BROWSER_CAPABILITY_GATE`：
 
-1. 定位真实前端根目录，识别已有包管理器、lockfile、workspace 和测试配置。
-2. 在该前端项目内安装 `@playwright/test` 开发依赖，并安装 Chromium；禁止全局安装。
-3. 已有 E2E 配置优先复用；只有完全不存在时，创建最小配置和本次任务所需的首个 E2E 用例骨架。
-4. 不升级无关依赖、不覆盖已有配置，不把消费者项目以外的文件写入任务范围。
-5. 记录安装命令、版本、修改的依赖/lock/config 文件、浏览器安装结果和后续 runner 验证。
-
-用户已明确授权这项自动安装。若找不到可写前端项目、包管理器、网络/浏览器下载失败或配置仍不能运行，则记录真实错误并阻断 Case；不能回退到 mock。
+1. 按顺序探测并复用 existing project runner、已安装 browser extension 和本机已有 `playwright-cli`。
+2. 三者都不可用时，向客户报告发现结果、Node.js 前提、浏览器下载/网络/磁盘影响和项目文件影响，并让客户选择安装 browser extension、全局 local CLI 或不安装。
+3. local CLI 安装时展示精确命令；客户自行执行，或明确授权 FeaturePilot 仅执行该命令一次。
+4. 不自动修改目标项目依赖、lockfile、浏览器配置、CI 或测试栈，也不安装额外浏览器组件；已有配置只能复用。
+5. 记录客户选择、授权、实际命令、版本、可用性验证和后续 runner 证据；无可用且获批准能力时为 `BLOCKED`，不能回退到 mock。
 
 ## 8. 两种执行模式
 
@@ -174,7 +172,7 @@ Permission/Persistence Evidence: <observable real result or N/A with rationale>
 
 `fp-archive` 在移动变更前重复检查上述核心门禁。用户确认可以继续当前的普通未完成任务归档提示，但不能绕过任何未完成 UI/E2E 核心门禁；仅已完成 Case 或合法 `static-only/N/A` Case 可进入归档。
 
-Playwright 自动安装造成的依赖、lockfile、浏览器配置和 E2E 文件必须出现在计划 File Structure、任务 file scope、执行证据和终审 Scope Matrix 中。
+客户选择的 local CLI、browser extension 或既有 runner 及其相关证据必须出现在计划 File Structure、任务 file scope、执行证据和终审 Scope Matrix 中；不得把客户项目依赖、lockfile、浏览器配置或 CI 变更作为自动步骤。
 
 ## 10. 插件验证与文档
 
@@ -185,7 +183,7 @@ Playwright 自动安装造成的依赖、lockfile、浏览器配置和 E2E 文�
 - 共享规则被所有六个入口读取；
 - 三种交付级别、严格状态顺序和合法 `N/A`；
 - `fp-execute` 与 `fp-execute-sdd` 的同等硬门禁；
-- 自动安装 Playwright 的前端本地、最小修改、无全局安装边界；
+- `BROWSER_CAPABILITY_GATE` 的已有 runner / extension / local CLI 选择、客户授权、无静默安装和无项目依赖/配置改写边界；
 - 零 mock 规则及对 route/intercept/fixture/stub/mock/seed/store 注入等的拒绝；
 - E2E 覆盖矩阵必须逐类判定、不能只接受主流程；
 - `fp-final-review` 与 `fp-archive` 对缺失核心 E2E 的阻断；
@@ -199,7 +197,7 @@ Playwright 自动安装造成的依赖、lockfile、浏览器配置和 E2E 文�
 
 1. 计划可为每个视觉 Case 选择唯一交付级别，并生成必需证据/覆盖矩阵路径。
 2. 两个执行 skill 都不能在视觉通过前完成交互/E2E，也不能在 required E2E 缺失时完成任务。
-3. 缺失 runner 会自动在目标前端项目安装 Playwright；失败会留下准确阻断证据。
+3. 缺失 runner 时会进入客户选择的浏览器能力门禁；没有可用且获批准能力时留下准确阻断证据，不修改目标项目依赖或配置。
 4. 任何 mock 数据或 mock 接口使真实 E2E Case 失效。
 5. 终审和归档都无法把未通过的核心 UI/E2E Case 变成可归档状态。
 6. `scripts/validate-plugin.ps1` 和新增/扩展的契约测试通过，且变异样例被正确拒绝。

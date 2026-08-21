@@ -109,13 +109,13 @@ Read the shared staged contract and resolve this table by the same stable Task I
 - The implementer may prepare `INTERACTION_READY`, but never self-confirm `FRONTEND_E2E_PASS`; the controller dispatches the verifier after `VISUAL_REVIEW_PASS`.
 - This is recovery/verification evidence only. The task-owner checkbox remains the sole plan-completion authority.
 
-### E2E Bootstrap Authority (interactive/business-flow only)
+### Browser Capability Authority (interactive/business-flow only)
 
-| Case ID | Target frontend root | Allowed bootstrap / real E2E test paths and scope | Manifest / lockfile / config status | Package manager |
-| --- | --- | --- | --- | --- |
-| `<case-id>` | `<exact frontend root>` | `<exact allowed real-E2E test/bootstrap paths and task scope>` | `<manifest/lockfile/config path, existence, and preservation status>` | `<detected package manager and workspace command>` |
+| Case ID | Target frontend root | Browser capability | Customer approval / choice | Allowed real E2E test paths and scope | Runner/config status |
+| --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<exact frontend root>` | `<existing project runner / browser extension / local playwright-cli>` | `<reuse / customer-runs exact command / one-time FeaturePilot authorization / unavailable>` | `<exact allowed real-E2E test paths and task scope>` | `<existing runner/config path and preservation status>` |
 
-- The controller fills this authority record before verifier dispatch. A missing, unresolved, or out-of-scope value is `BLOCKED`; the verifier must consume these values rather than infer them.
+- The controller fills this authority record before verifier dispatch. A missing, unresolved, unavailable, or out-of-scope value is `BLOCKED`; the verifier must consume these values rather than infer them. The record never authorizes a project dependency, lockfile, configuration, CI, or browser-component change.
 
 ## Prior Interfaces Available
 

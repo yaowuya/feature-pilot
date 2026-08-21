@@ -44,7 +44,7 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 
 Every UI-bearing task declares `static-only`, `interactive`, or `business-flow`. The Visual Evidence Manifest and UI/E2E Delivery Contract are separate and link only by `Task ID + Case ID`; do not duplicate visual evidence. A `static-only` case may use E2E `N/A` only after visual pass and with an evidence-backed reason.
 
-`interactive` and `business-flow` require real browser E2E with a zero-mock rule and source-derived branch/boundary coverage, not only the happy path. If the target frontend project has no usable runner, automatically bootstrap `@playwright/test` and Chromium in that target frontend project; never install globally or upgrade unrelated dependencies. A `business-flow` must prove the real core API, real persistence or permission result, and cleanup. A core UI/E2E blocker cannot be waived or overridden before archive.
+`interactive` and `business-flow` require real browser E2E with a zero-mock rule and source-derived branch/boundary coverage, not only the happy path. Prefer an existing project runner, installed browser extension, or existing local `playwright-cli`. If none is usable, present `BROWSER_CAPABILITY_GATE` and let the customer choose an extension, a global local-CLI installation, or no installation; never install or change project dependencies, lockfiles, configuration, CI, or browser components silently. A `business-flow` must prove the real core API, real persistence or permission result, and cleanup. A core UI/E2E blocker cannot be waived or overridden before archive.
 
 ## Workspace and settings
 

@@ -456,6 +456,7 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText -match "(?m)^name:\s*$([regex]::Escape($skill.Name))\s*$") "$($skill.Name)/SKILL.md frontmatter name does not match its directory"
     Assert-Condition (-not $skillText.Contains('${CLAUDE_SKILL_DIR}')) "$($skill.Name)/SKILL.md uses unsupported CLAUDE_SKILL_DIR instead of an official plugin root"
     Assert-Condition ($skillText.Contains('在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径')) "$($skill.Name)/SKILL.md lacks the Codex installed-skill path mapping"
+    Assert-Condition ($skillText.Contains('在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录')) "$($skill.Name)/SKILL.md lacks the DeepSeek Harness skill root path mapping"
     $anchoredWorkspaceContract = '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`'
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
@@ -530,6 +531,9 @@ Assert-Condition (-not ($prdFrontmatter.Groups['body'].Value.Contains('provides 
 $prdOutputContract = [regex]::Match($prdSkillText, '(?s)## Output\s*(?<body>.*)\z').Groups['body'].Value
 Assert-Condition ($prdOutputContract -match '(?i)every successful.*(?:MUST|required|always)') 'fp-prd output contract must require the next-step prompt after every successful completion'
 Assert-Condition ($prdOutputContract.Contains('`/fp-start <slug>`')) 'fp-prd output contract must include the exact copyable /fp-start <slug> command'
+$prdTemplateText = Read-Utf8 (Join-Path $root 'skills\fp-prd\prd-template.md')
+Assert-Condition (-not $prdTemplateText.Contains('#### 3.1.4 页面元素')) 'new fp-prd template must not emit the page-elements subsection'
+Assert-Condition (-not $prdTemplateText.Contains('| 元素名 | 类型 | 说明 | 校验规则 |')) 'new fp-prd template must not emit the page-elements table'
 
 $startSkillText = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
 $sddSkillText = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
@@ -862,7 +866,7 @@ foreach ($entry in $lazyResources.GetEnumerator()) {
 $resourceAnchors = @{
     'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only', 'dirty-after-write', 'post-write sync')
     'skills\fp-init\templates.md' = @('## Project Facts Freshness Metadata', 'fp-project-facts-freshness/v1', 'artifactSectionId', 'bodyHash', 'relativePath', 'fingerprint', 'metadata-only', 'stale/conflict is computed live', '## Selective refresh')
-    'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.5 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
+    'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.4 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
     'skills\fp-propose\proposal-template.md' = @('## Why', '## What Changes', '## Capabilities', '## Out of Scope', '## Impact')
     'skills\fp-brainstorm\design-template.md' = @('# <', '## ', '### API ', '#### API ')
     'skills\fp-plan\task-layout-template.md' = @('## Change-level overview', 'tasks/00-overview.md', '## Cross-end Dependency Edges', '## Progress Totals', 'derived from the unique owner checkboxes', '## Per-end split manifest', '## Fragment Manifest', '| Order | File | Kind | Owns |')
@@ -1080,7 +1084,7 @@ $executeDirectSection = [regex]::Match($executeSkill, '(?s)## 直接执行契约
 Assert-Condition ($executeDirectSection.Success) 'fp-execute direct execution contract is missing'
 foreach ($anchor in @(
     '当前执行上下文直接完成'
-    '过程产物集合仅包含'
+    '.fp-execute/reviews/<timestamp>-figma-review.md'
     '一次 inline 自审'
     '不拥有 final review scope'
     '只提示运行独立的 `fp-final-review`'

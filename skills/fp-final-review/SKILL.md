@@ -5,7 +5,7 @@ description: Use when performing a final whole-branch review of an implemented F
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
@@ -197,7 +197,6 @@ Record `Visual evidence: PASS | FAIL | CANNOT_VERIFY`. Core visual acceptance wi
 Use only the project-configured browser runner/tool and case-specific Acceptance rule. Do not assume a framework, command, URL, storage root, or global pixel threshold; do not silently install dependencies. Code Connect is an optional enhancement and absence does not block ordinary UI review. Browser capability is reused or explicitly customer-approved; installation is never inferred.
 
 Overall Figma completion is impossible when any required `FIGCAP-*` or core `PRES-*` is `FAIL`, `CANNOT_VERIFY`, or `BLOCKED`, even when screenshots pass. Figma `PASS` requires every required `FIGCAP-*`, core `PRES-*`, and core visual Case to be `PASS` with no unapproved behavior change.
-
 Record `Figma Completion Status: COMPLETE | INCOMPLETE | BLOCKED`. For Figma-derived UI scope, any required `FIGCAP-*`, core `PRES-*`, or core visual Case that is `INCOMPLETE`, `CANNOT_VERIFY`, `FAIL`, or `BLOCKED` makes the final verdict `FAIL` or `BLOCKED`; it cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
 
 Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.

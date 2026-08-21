@@ -5,13 +5,13 @@ description: Use when generating frontend FeaturePilot task plans from the resol
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing the frontend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
 
-When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before deriving frontend tasks. It owns the UI Delivery Level, allowed staged lifecycle, real frontend E2E and zero-mock rule, coverage matrix, local Playwright bootstrap, retry, blocking, final-review, and archive rules.
+When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before deriving frontend tasks. It owns the UI Delivery Level, allowed staged lifecycle, real frontend E2E, coverage, customer-selected browser capability, blocking, final-review, and archive rules.
 ---
 
 # FeaturePilot Frontend Plan
@@ -93,7 +93,7 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 - UI/E2E Delivery Contract 只拥有交付级别、来源条件、E2E applicability、阶段、E2E coverage 与 N/A / BLOCKED 决策；approved design source、Figma mapping、viewport/fixture、reference/current/diff、mask、visual acceptance 和 visual command 均继续由 Visual Evidence Manifest 唯一拥有。
 - Source-derived coverage 必须逐 case 映射需求、Figma/design、当前代码和真实可观察分支。`static-only` 仅可在可信视觉通过后以有证据理由记录 E2E `N/A`；`interactive` 与 `business-flow` 均为 `REQUIRED`，不得跳过、人工豁免或以截图替代。business-flow 还必须计划 real core API、`Mocked Core API: false`、真实 persistence/permission result 及 cleanup。
 - 在每个 UI task 的步骤中明确分阶段：`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS`；`interactive` 和 `business-flow` 必须继续 `INTERACTION_READY -> FRONTEND_E2E_PASS`。Visual 和真实前端 E2E 是独立 artifact；真实 E2E 禁止 route/intercept、MSW、Cypress stubs/intercepts、fixture JSON、mock module、hard-coded API data、store/localStorage business-data injection、database seed 或绕开 UI 的 direct backend/API write。不能在真实环境安全触发的 in-scope condition 为 `BLOCKED`，不得改标为 `N/A` 或使用 mock。
-- 优先使用 existing project runner 或 project-configured Playwright/browser runner 或等价浏览器工具，不硬编码框架或命令，do not define a global pixel threshold。若 runner 缺失，按 shared contract 自动检测 target frontend root、workspace、lockfile 和 package manager，在目标项目内将 `@playwright/test` 作为 development dependency 安装并安装 Chromium；Never install globally, overwrite existing configuration, or upgrade unrelated dependencies。记录 resolved version、commands 和 changed files；无有效 frontend root 或 bootstrap 失败为 `BLOCKED`。
+- 优先使用 existing project runner、已安装 browser extension 或本机已有 local CLI，不硬编码框架或命令，do not define a global pixel threshold。若三者都不可用，按 `BROWSER_CAPABILITY_GATE` 向客户展示已发现能力、影响与精确可选安装命令；只有客户自行执行或明确授权当前精确命令后才可继续。不得自动（do not silently install）添加项目依赖、修改 lockfile、配置、CI 或浏览器组件；无可用且获批准能力时为 `BLOCKED`。
 
 - Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.

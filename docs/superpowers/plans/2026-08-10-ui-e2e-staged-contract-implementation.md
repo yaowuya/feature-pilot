@@ -6,7 +6,7 @@
 
 **Architecture:** 新建唯一的 `skills/_shared/ui-e2e-contract.md`，让 Figma、前端计划、直接执行、SDD 执行、终审和归档共同读取。每个已计划 UI Case 先完成静态视觉，再完成交互和零 mock 的真实前端 E2E；终审与归档从 Case manifest、E2E evidence 和覆盖矩阵回查，不依赖聊天结论。
 
-**Tech Stack:** Markdown Agent Skills、PowerShell 5 契约测试、目标项目内的 `@playwright/test` 自动 bootstrap、Git。
+**Tech Stack:** Markdown Agent Skills、PowerShell 5 契约测试、客户选择的既有 runner / browser extension / 本机 `playwright-cli`、Git。
 
 ---
 
@@ -14,7 +14,7 @@
 
 | Path | Action | Responsibility |
 | --- | --- | --- |
-| `skills/_shared/ui-e2e-contract.md` | Create | UI Case 级别、状态机、零 mock、真实 E2E、覆盖矩阵和 Playwright bootstrap 的唯一规则来源。 |
+| `skills/_shared/ui-e2e-contract.md` | Create | UI Case 级别、状态机、零 mock、真实 E2E、覆盖矩阵和客户选择浏览器能力的唯一规则来源。 |
 | `skills/fp-figma/SKILL.md` | Modify | 将设计源和 Visual Checks 交给后续 UI/E2E 契约。 |
 | `skills/fp-plan-frontend/SKILL.md` | Modify | 要求每个视觉 Case 选择交付级别并计划 E2E 覆盖。 |
 | `skills/fp-plan-frontend/plan-template.md` | Modify | 增加独立的 UI/E2E Delivery Contract 表，不改变既有视觉表的列。 |
@@ -24,7 +24,7 @@
 | `skills/fp-final-review/{SKILL,final-reviewer,final-review-template,final-review-package-template}.md` | Modify | 对每个 UI Case 强制回查 E2E 和覆盖矩阵。 |
 | `skills/fp-archive/SKILL.md` | Modify | 禁止确认绕过未通过的核心 UI/E2E Gate。 |
 | `scripts/test-ui-e2e-contract.ps1` | Create | 新共享契约、状态、零 mock、覆盖、终审和归档的 focused regression test。 |
-| `scripts/test-figma-evidence-contract.ps1` | Modify | 将原先“缺 runner 必须等待授权”改为自动 Playwright bootstrap，保留 runner 中立性。 |
+| `scripts/test-figma-evidence-contract.ps1` | Modify | 保留客户选择的浏览器能力、禁止静默安装与 runner 中立性。 |
 | `scripts/test-final-review-contract.ps1` | Modify | 锁定最终审查的 UI/E2E 硬门禁。 |
 | `scripts/validate-plugin.ps1` | Modify | 运行新的 focused UI/E2E 契约测试。 |
 | `README.md`, `AGENTS.md` | Modify | 对齐插件公开流程和 Markdown fallback 规则。 |
@@ -35,7 +35,7 @@
 - 既有 Visual Evidence Manifest 的列和 source/runtime provenance 保持不变；UI/E2E 字段放在独立 section，避免破坏已有 canonical table。
 - `interactive` 与 `business-flow` 的真实前端 E2E 禁止任何 mock、stub、fixture JSON、route/intercept、mock module、store 注入、localStorage 伪造业务数据和数据库 seed。
 - 视觉证据的稳定非敏感 fixture 与真实 E2E 数据严格分离，不能互相替代。
-- 没有 E2E runner 时只在识别出的前端项目内安装 `@playwright/test` 和 Chromium；不做全局安装、不升级无关依赖、不覆盖已有配置。
+- 没有 E2E runner 时必须进入 `BROWSER_CAPABILITY_GATE`：优先复用 existing runner / extension / local CLI；三者缺失时仅在客户选择并批准后才按展示的精确全局命令使用 local CLI，绝不修改项目依赖、lockfile、配置、CI 或浏览器组件。
 - 每个仍在范围内但无法在真实环境安全触发的边界条件必须写为 `blocked`，不能伪装为 `N/A` 或 `PASS_WITH_NOTES`。
 - 所有修改后的 `SKILL.md` 保持在 500 行和 30,000 字符以内；不修改插件版本。
 
@@ -62,7 +62,7 @@ Assert-Anchors $shared @(
     'SOURCE_READY', 'STATIC_UI_READY', 'VISUAL_REVIEW_PASS',
     'INTERACTION_READY', 'FRONTEND_E2E_PASS',
     'E2E Applicability: REQUIRED | N/A',
-    'Mocked Core API: false', '@playwright/test', 'Chromium',
+    'Mocked Core API: false', 'BROWSER_CAPABILITY_GATE', 'playwright-cli',
     'coverage-matrix.md', 'BLOCKED'
 ) 'shared UI/E2E contract'
 ```
@@ -88,7 +88,7 @@ Expected: FAIL，包含 `shared UI/E2E contract is missing`，而不是 PowerShe
 ## Case Manifest and E2E Evidence
 ## Real Frontend E2E: No Mock Data or Requests
 ## Coverage Matrix
-## Automatic Playwright Bootstrap
+## Browser capability gate
 ## Retry, Blocking, Final Review, and Archive
 ```
 
@@ -96,7 +96,7 @@ Expected: FAIL，包含 `shared UI/E2E contract is missing`，而不是 PowerShe
 
 - [ ] **Step 4: 定义项目内 Playwright bootstrap**
 
-在共享契约中规定：先复用项目 runner；没有 runner 时识别前端 root、workspace、lockfile 和包管理器，然后在该 root 添加 `@playwright/test` dev dependency 并安装 Chromium。只在没有配置时创建最小配置和当前任务 E2E 骨架；记录实际命令、版本、变更文件和浏览器安装结果；无前端 root、安装失败或仍不能执行时为 `BLOCKED`。
+在共享契约中规定：优先复用 existing project runner、已安装 browser extension 或本机已有 `playwright-cli`。三者缺失时进入 `BROWSER_CAPABILITY_GATE`，展示精确命令与影响；客户自行执行或一次性明确授权后才能执行全局 local CLI 安装。不得创建或改写项目依赖、lockfile、配置、CI 或浏览器组件；无获批准可用能力时为 `BLOCKED`。
 
 - [ ] **Step 5: 运行 focused GREEN**
 
@@ -147,7 +147,7 @@ Run the focused test. Expected: FAIL，逐一列出尚未接入的 Figma/plan su
 
 - [ ] **Step 4: 更新既有视觉契约测试的 runner 预期**
 
-在 `test-figma-evidence-contract.ps1` 中把旧的 `do not silently install` / `explicit task` / `authorization` anchors 改为：优先项目 runner、runner 缺失时自动 bootstrap、`@playwright/test`、Chromium、仅目标前端项目、无全局安装、无无关升级。保留 `Test-PublicNeutrality` 对具体包管理器命令、客户 URL、存储路径和生产数据 fixture 的拒绝；不要在公共规则中硬编码 `npm`、`pnpm`、`yarn` 或 `npx` 命令。
+在 `test-figma-evidence-contract.ps1` 中保留 `do not silently install`、`explicit task` 与 `authorization` anchors，并要求 existing project runner、browser extension、local `playwright-cli`、`BROWSER_CAPABILITY_GATE`、客户选择和无项目依赖/配置改写。保留 `Test-PublicNeutrality` 对具体包管理器命令、客户 URL、存储路径和生产数据 fixture 的拒绝；不要在公共规则中硬编码 `npm`、`pnpm`、`yarn` 或 `npx` 命令。
 
 - [ ] **Step 5: 运行 planning GREEN**
 

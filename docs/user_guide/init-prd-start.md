@@ -388,4 +388,4 @@ FeaturePilot 会提示建议 `/fp-init`，但不会强制停止。后续如需�
 
 每个 UI-bearing task 声明 `static-only`、`interactive` 或 `business-flow`。Visual Evidence Manifest 与 UI/E2E Delivery Contract 是两份独立记录，只按 `Task ID + Case ID` 关联；不要重复视觉证据。`static-only` 只有在视觉通过后并记录 evidence-backed reason 时，才可将 E2E 记为 `N/A`。
 
-`interactive` 和 `business-flow` 必须运行 real browser E2E，并遵守 zero-mock rule；覆盖范围来自需求与源码分支/边界，不限于主流程。目标前端项目没有可用 runner 时，FeaturePilot 自动 bootstrap `@playwright/test`，并将 Chromium 安装到 target frontend project 内，不全局安装，也不升级无关依赖。`business-flow` 还要证明 real core API、real persistence or permission result 与 cleanup。Core UI/E2E blocker cannot be waived or overridden before archive。
+`interactive` 和 `business-flow` 必须运行 real browser E2E，并遵守 zero-mock rule；覆盖范围来自需求与源码分支/边界，不限于主流程。优先复用 existing project runner、已安装 browser extension 或本机已有 `playwright-cli`。三者均不可用时，FeaturePilot 进入 `BROWSER_CAPABILITY_GATE`，向客户展示影响和精确可选安装命令，并由客户选择 extension、全局 local CLI 或暂不安装；不得静默安装（never silently install）或修改目标项目依赖、lockfile、配置、CI 或浏览器组件。`business-flow` 还要证明 real core API、real persistence or permission result 与 cleanup。Core UI/E2E blocker cannot be waived or overridden before archive。

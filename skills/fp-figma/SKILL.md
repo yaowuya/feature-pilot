@@ -5,11 +5,11 @@ description: 根据 Figma 链接生成或完善项目当前前端框架的 UI �
 ## FeaturePilot workspace and information layer
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing design artifacts; it owns exclusive forms, manifests, hard limits, conversion, and historical-layout rejection.
 
-When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before Figma mapping or evidence planning. It owns UI Delivery Level, staged lifecycle, real frontend E2E, coverage, bootstrap, blocking, final-review, and archive rules.
+When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before Figma mapping or evidence planning. It owns UI Delivery Level, staged lifecycle, real frontend E2E, coverage, customer-selected browser capability, blocking, final-review, and archive rules.
 ---
 
 # FeaturePilot Figma
@@ -58,8 +58,7 @@ Visual and E2E evidence are distinct channels. Continue to record approved sourc
 
 必须 not install silently。客户的安装授权只覆盖本次展示的命令，不能延伸到其他工具、浏览器组件、项目依赖、lockfile、配置或 CI。客户选择暂不安装时，视觉结论为 `CANNOT_VERIFY`，不得称 Figma change complete 或视觉验收通过。
 
-`BROWSER_CAPABILITY_GATE` 的 extension/CLI 选择只可支撑 Figma 映射、能力或保全复核。若 UI/E2E Delivery Level 是 `interactive` 或 `business-flow`，必须改按共享 UI/E2E 契约在目标前端项目内自动 bootstrap `@playwright/test` 和 Chromium；全局 `@playwright/cli` 不能替代 required real E2E，也不能产生跳过、降级或 mock 例外。
-
+`BROWSER_CAPABILITY_GATE` 的 extension/CLI 或已有项目 runner 可支撑 Figma 映射、能力/保全复核和需要的真实 E2E。若 UI/E2E Delivery Level 是 `interactive` 或 `business-flow`，必须通过客户已选择且可实际执行的浏览器能力收集 required real E2E；没有已批准且可用的能力时为 `BLOCKED`，不能自动安装、跳过、降级或产生 mock 例外。
 ## Existing-function preservation and capability preflight
 
 当任务在既有页面或组件上按 Figma 改造时，任何业务 UI 写入前必须完成以下 preflight。只有当前 active change 可安全确定时才写入其 `.fp-execute/`；无法确定 slug 时询问客户，不得把证据散落在仓库根目录，也不得创建项目级 `manifest.md`、settings 或 intel。
