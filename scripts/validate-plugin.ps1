@@ -516,6 +516,11 @@ Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contr
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-explore contract validator failed'
 
+$eli5ContractValidator = Join-Path $root 'scripts\test-eli5-contract.ps1'
+Assert-Condition (Test-Path $eli5ContractValidator) 'focused fp-eli5 contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $eli5ContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-eli5 contract validator failed'
+
 $decisionGateContractValidator = Join-Path $root 'scripts\test-decision-gate-contract.ps1'
 Assert-Condition (Test-Path $decisionGateContractValidator) 'focused decision-gate contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator

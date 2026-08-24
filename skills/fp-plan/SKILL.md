@@ -86,6 +86,24 @@ Pass the resolved logical proposal content, resolved logical design content, can
 - 哪一端被明确跳过，以及跳过原因。
 - 每个 task ID 的唯一 owner file，以及跨端依赖摘要。
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 若用户在计划确认前显式要求通俗解释当前计划、task ownership、依赖顺序，或明确接受一次图解建议，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-plan
+topic: <exact current plan/task ownership/dependencies>
+active-slug: <exact current slug>
+pending-gate: <exact explicit plan confirmation prompt>
+allowed-sources:
+  - <confirmed proposal/design, canonical plan entries, task-owner files, dependencies, and completion-check summary>
+return-to: <fp-plan + explicit plan confirmation>
+-->
+```
+
+图解不得改写计划、更新 task checkbox、解决 planning blocker、确认计划或选择/启动执行入口。返回后计划仍未确认，重新呈现同一个 explicit plan confirmation 并等待用户显式答复。
+
 输出计划摘要后，明确询问用户是否确认计划。
 
 写出每端所选的 canonical small file 或 split directory 只表示计划草案已生成，不等于用户确认。没有用户明确确认前，不得进入 `fp-execute`、`fp-execute-sdd`，也不得修改业务代码。
