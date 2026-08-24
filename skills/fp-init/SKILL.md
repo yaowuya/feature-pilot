@@ -57,6 +57,24 @@ fp-docs/
 
 ## Process
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 仅当用户显式要求通俗解释当前 init 决策，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，通过当前运行时原生技能机制加载 `fp:fp-eli5`，并传入恰好一个块。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-init
+topic: <exact current init choice>
+active-slug: N/A
+pending-gate: <exact install/MCP/build/refresh/manifest/settings/discovery/write-scope prompt>
+allowed-sources:
+  - <current prompt, live detection/results already read, original options, and exact proposed diff/write list>
+return-to: <fp-init + exact same pending-gate>
+-->
+```
+
+解释不得合并或代替 CodeGraph install、MCP、首次建图、stale refresh、manifest diff、每个 settings、discovery 或 human-owned write scope 的独立授权。`fp-eli5` 返回后不更新任何状态、文件或批准；重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
+
 ### 1. Locate or create workspace
 
 Treat the target project repository root as the FeaturePilot project root. `fp-init` must create and manage `fp-docs/` only at:

@@ -56,6 +56,24 @@ For every item in the PRD Blocking Decisions list, classify it into one of three
 
 **HARD RULE:** The assistant must NEVER self-answer Bucket C items. Bucket C items can only be resolved by the user's explicit answer.
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 仅当用户显式要求解释 Phase 1 的当前 A/B review item、当前唯一 Bucket C 问题，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-prd-grill-me
+topic: <exact current A/B review item or sole C question>
+active-slug: <current PRD slug or N/A>
+pending-gate: <exact Phase 1 batch confirmation or current C N/Total>
+allowed-sources:
+  - <current PRD input, confirmed facts, exact options/impacts/recommendation, and bounded verified code facts>
+return-to: <fp-prd-grill-me + same review item/question>
+-->
+```
+
+图解不得重分类或代答 Bucket C，不得把 recommendation 当答案，不得提前呈现下一题，也不得把 interview completion 当作 PRD/prototype write approval。返回后保持原分类和回答状态，重新呈现同一 review item/question 并等待用户显式答复。
+
 ### Phase 1: Batch Review (Buckets A/B)
 
 1. Explore code facts and read relevant settings.

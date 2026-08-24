@@ -43,6 +43,24 @@ If it is missing:
 - **范围纪律**：不得跳过 proposal/design/plan 直接实现；只有在“小需求分流”中判断适合 `fp-quick` 且用户明确确认后，才允许切换到 `fp-quick`。
 - **失败处理**：在 Claude Code 中，子 skill 不可用或调用失败时停在当前门禁并报告，不进入文件 fallback。索引或目标目录缺失时，先说明实际发现，再按下文对应的 artifact 规则处理。只有第一个契约明确限定的非 Claude Code Codex/Markdown 环境可读取 FeaturePilot 分发源码中的 skill 文件继续；不要假装已调用或已生成。
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 仅当用户显式要求解释当前 routing、stage artifact、checkpoint，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-start
+topic: <exact current routing/stage artifact/checkpoint>
+active-slug: <caller-resolved slug or N/A>
+pending-gate: <exact quick/full, proposal, design, plan, or SDD-mode gate>
+allowed-sources:
+  - <current argument, current canonical artifacts, and already-verified ledger/checkpoint evidence and summary>
+return-to: <fp-start + same stage gate>
+-->
+```
+
+图解不得替代 quick/full 选择、proposal/design/plan post-write confirmation、resume evidence 或 SDD continuation mode，不得加载下一阶段。返回后保持 stage 和 gate 不变，重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
+
 ## Shared canonical artifact resolution
 
 Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts:

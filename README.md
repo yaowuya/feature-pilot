@@ -37,6 +37,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 |---|---|
 | `commands/fp-init.md` | 以 `manifest-only default` 初始化 `fp-docs/manifest.md`；经批准后再懒创建 settings、project facts 或 human-owned knowledge；可选配置 CodeGraph/项目族示例 |
 | `commands/fp-explore.md` | 只读调查当前代码事实、行为、约束、风险和可选方案；支持空输入的有界项目概览，不创建产物、不进入实现 |
+| `commands/fp-eli5.md` | 显式按需生成零基础专业图解；仓库主题单向复用现有 `fp-explore` standalone，默认不写仓库 |
 | `commands/fp-prd.md` | 仅在明确调用或明确要求编写 PRD 时启动访谈；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
 | `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路 |
 | `commands/fp-propose.md` | 仅生成并确认开发提案的逻辑形式：小型 `proposal.md` 或拆分 `proposal/00-index.md` 及其 manifest 分片 |
@@ -52,6 +53,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 
 - `fp-init`：新项目默认只创建 `fp-docs/manifest.md`；可选 settings 逐项批准，discovery 只生成 `intel/project-facts.md` 与 metadata-only `.freshness.json`，项目级 `unknowns.md`/`decisions.md` 有实际内容并批准后才懒创建。
 - `fp-explore`：公共自然语言探索入口，也是 `fp-prd`、`fp-start`、`fp-quick` 的共享只读调查能力；内部调用使用结构化 profile，但产品决策、确认、写入和实现始终由调用方负责。
+- `fp-eli5`：只在显式 `/fp-eli5`、`$fp-eli5` 或明确图解请求下运行；普通概念直接解释，仓库主题由它单向调用未修改的 `fp-explore` public standalone。宿主支持时使用临时 HTML artifact，否则降级为 Markdown + Mermaid，再降级为纯文本；no repository write by default，图解不构成需求、确认或验证证据。
 - `fp-prd` / `fp-prd-grill-me`：显式 PRD 编写意图下的需求澄清；支持默认 PRD-first 与 Prototype-first（先生成 `prototype.html`，确认后再沉淀 PRD）。
 - `fp-start`：完整阶段门禁调度入口，可以接住 `fp-prd` 产出的 PRD。
 - `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md` 及其 manifest 分片，两种形式互斥。
@@ -139,12 +141,13 @@ FeaturePilot 的默认使用方式尽量轻量。完整主线指南见 [`docs/us
 - [`fp-module-review` 用户指南](docs/user_guide/fp-module-review.md)：对大型或多个相关模块分 wave 审查，登记稳定 Finding，并在批准后执行受控修复。
 
 1. **可选探索**：运行 `/fp-explore <问题>` 调查当前实现或比较方案；空输入只做有界项目概览。探索不创建 FeaturePilot 产物，也不修改代码。
-2. **可选初始化**：运行 `/fp-init`，可选安装 CodeGraph 并构建代码图，默认仅创建 manifest；settings、project facts、human-owned unknowns/decisions 都在各自明确批准后按需创建。
-3. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
-4. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
-5. **覆盖率专项**：运行 `/fp-coverage <目标>`，复用项目现有 test/coverage 工具并冻结统计口径；局部结果和历史报告只用于选批次，过程状态、`coverage.xml`、`htmlcov/` 及其他 coverage 报告统一进入 `fp-docs/changes/<slug>-coverage/`，完成需要 fresh full-suite `exit code = 0` 与 exact coverage 同时达标。缺少 coverage 工具时不会只给终止型 `BLOCKED`：流程保持 `RESOLVING` + `CANNOT_VERIFY`，展示包含精确依赖、命令、修改文件、source 和报告路径的 `coverage-tooling-bootstrap` 批准门禁；用户批准后才持久化依赖和最小配置并重新运行 fresh baseline。Django 无既有 coverage 方案时推荐 `pytest + pytest-cov`（已有 pytest 时只补 `pytest-cov`，`pytest-django` 按需）。
-6. **模块专项审查**：运行 `/fp-module-review <一个大型模块或多个相关模块>`，建立独立 `fp-docs/module-reviews/<slug>/` 工作区，按稳定 Finding 和行为变化批准门禁持续审查、修复与复验；它不替代归档前的 `fp-final-review`。
-7. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
+2. **可选图解**：显式运行 `/fp-eli5 <主题>` 获取零基础专业解释；仓库主题先由现有 `fp-explore` standalone 取证，结果按宿主能力使用 HTML artifact、Markdown + Mermaid 或纯文本，默认不写仓库且不推进任何门禁。
+3. **可选初始化**：运行 `/fp-init`，可选安装 CodeGraph 并构建代码图，默认仅创建 manifest；settings、project facts、human-owned unknowns/decisions 都在各自明确批准后按需创建。
+4. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
+5. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
+6. **覆盖率专项**：运行 `/fp-coverage <目标>`，复用项目现有 test/coverage 工具并冻结统计口径；局部结果和历史报告只用于选批次，过程状态、`coverage.xml`、`htmlcov/` 及其他 coverage 报告统一进入 `fp-docs/changes/<slug>-coverage/`，完成需要 fresh full-suite `exit code = 0` 与 exact coverage 同时达标。缺少 coverage 工具时不会只给终止型 `BLOCKED`：流程保持 `RESOLVING` + `CANNOT_VERIFY`，展示包含精确依赖、命令、修改文件、source 和报告路径的 `coverage-tooling-bootstrap` 批准门禁；用户批准后才持久化依赖和最小配置并重新运行 fresh baseline。Django 无既有 coverage 方案时推荐 `pytest + pytest-cov`（已有 pytest 时只补 `pytest-cov`，`pytest-django` 按需）。
+7. **模块专项审查**：运行 `/fp-module-review <一个大型模块或多个相关模块>`，建立独立 `fp-docs/module-reviews/<slug>/` 工作区，按稳定 Finding 和行为变化批准门禁持续审查、修复与复验；它不替代归档前的 `fp-final-review`。
+8. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，`fp-start` 才进入复杂模式；不会仅根据计划规模或风险自动切换。该模式会使用任务说明、全新上下文实现代理、逐任务审查、修复循环和最终整分支审查。
 
@@ -262,6 +265,7 @@ Consumer 先检测 canonical 小型文件与 split directory 的 `00-index.md`�
 ```text
 /fp-init
 /fp-explore 当前审批流的入口和权限边界是什么
+/fp-eli5 当前权限校验调用链
 /fp-prd 我想做一个批量审批体验优化
 /fp-start <prd-slug 或 功能描述>
 /fp-coverage 将项目现有 combined unit test coverage 提升到 <目标阈值>

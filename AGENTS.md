@@ -14,6 +14,7 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 |---|---|
 | Initialize workspace/config | `skills/fp-init/SKILL.md` |
 | Read-only exploration of repository facts, behavior, constraints, risks, or options | `skills/fp-explore/SKILL.md` |
+| Explicit `/fp-eli5`, `$fp-eli5`, or explicit request for a zero-background visual explanation | `skills/fp-eli5/SKILL.md` |
 | Full feature workflow | `skills/fp-start/SKILL.md` |
 | Explicit `/fp-prd`, `$fp-prd`, or explicit request to create, write, revise, or complete a PRD or product requirements document | `skills/fp-prd/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
@@ -38,6 +39,7 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 - If tests can run but coverage tooling is missing, `fp-coverage` remains `RESOLVING` with `CANNOT_VERIFY` and presents an approval-gated `coverage-tooling-bootstrap` instead of only terminating as `BLOCKED`. Prefer the existing coverage toolchain and runner. With a proven Django project and no existing coverage solution, recommend only `pytest-cov` when pytest already exists, otherwise `pytest + pytest-cov`; add `pytest-django` only when tests need that integration. Before approval list exact dependencies, install command, dependency/lock/config files, production source, baseline/final commands, report paths, and rollback boundary. After approval, persist the dependency declaration, change only the reviewed coverage tooling/config, and run a fresh baseline; never silently install, upgrade unrelated packages, or reuse pre-bootstrap evidence.
 - Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
 - `fp-explore` accepts natural-language public input and remains read-only: it never writes artifacts, implements changes, or automatically dispatches another workflow. Its internal structured profiles may be invoked only by `fp-prd`, `fp-start`, and `fp-quick`, which retain their own product, routing, approval, and implementation gates.
+- `fp-eli5` activates only for an explicit `/fp-eli5`, `$fp-eli5`, explicit zero-background visual-explanation request, or an accepted JIT explanation offer. Generic topics are explained directly; repository topics call the unchanged `fp-explore` public standalone in one direction. Use a temporary HTML artifact only when the host explicitly supports it, otherwise fall back to Markdown + Mermaid and then text; no repository write by default. An explanation never counts as a requirement, decision, approval, write authorization, task completion, verdict, or verification result.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
 
 ## UI/E2E execution and archive gates
@@ -125,11 +127,12 @@ When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and 
 Preferred path:
 
 1. `/fp-explore <question>` when the user wants read-only investigation or option comparison before choosing a workflow; empty input performs bounded orientation only.
-2. `/fp-init` when the project has no workspace or needs refresh. New projects use the `manifest-only default`; settings, project facts, and human-owned knowledge are optional and created only through their approval gates.
-3. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
-4. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
-5. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
-6. If `fp-init` detects a likely Canway/CW project, it may only ask whether to adopt labelled examples from `examples/canway-cw/fp-docs/settings/` as editable target-project settings. It must not auto-copy them, overwrite existing files, or treat them as public defaults.
+2. `/fp-eli5 <topic>` only for an explicit zero-background visual explanation. It never advances a FeaturePilot gate and uses capability-adaptive HTML artifact, Markdown + Mermaid, or text output without writing the repository.
+3. `/fp-init` when the project has no workspace or needs refresh. New projects use the `manifest-only default`; settings, project facts, and human-owned knowledge are optional and created only through their approval gates.
+4. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
+5. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
+6. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
+7. If `fp-init` detects a likely Canway/CW project, it may only ask whether to adopt labelled examples from `examples/canway-cw/fp-docs/settings/` as editable target-project settings. It must not auto-copy them, overwrite existing files, or treat them as public defaults.
 
 For the user-facing init/prd/start guide, see `docs/user_guide/init-prd-start.md`.
 

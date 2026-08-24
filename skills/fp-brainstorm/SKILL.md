@@ -36,6 +36,24 @@ If the proposal Handoff Decision Ledger or its Pre-write Confirmation Evidence i
 - 每次用户回答后，记录对应 decision ID、选择、Source 和 Evidence / explicit confirmation。generic confirmation does not resolve `needs-user-confirmation`；同一条消息可以确认多项，但必须逐一列出 ID 与选择。
 - form、exact target paths、conversion/removal 也必须成为 design-required 台账行。只有所有 design-required 行终态后，才可进入写入前授权。
 
+**JIT `fp-eli5` handoff：**
+
+This is an explicit-only JIT path. 仅当用户显式要求解释当前架构决定、trade-off、设计章节、pre-write checkpoint，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-brainstorm
+topic: <exact current D-NNN/option/tradeoff/section>
+active-slug: <exact current slug>
+pending-gate: <exact D-NNN or section/pre-write gate>
+allowed-sources:
+  - <resolved proposal, inherited terminal decisions, verified code/settings, and current options/tradeoffs/content>
+return-to: <fp-brainstorm + same D-NNN/checkpoint>
+-->
+```
+
+图解不得改变任何 Decision Ledger status，不得把 agent recommendation 当 user confirmation，不得替代章节审阅、form/exact-path/conversion 决策或 separate write authorization。返回后恢复同一 `D-NNN`/checkpoint 并等待用户显式答复。
+
 问题维度（根据功能范围选择，不必全问）：
 
 **后端维度：**
