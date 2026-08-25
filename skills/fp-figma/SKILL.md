@@ -4,8 +4,7 @@ description: 根据 Figma 链接生成或完善项目当前前端框架的 UI �
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing design artifacts; it owns exclusive forms, manifests, hard limits, conversion, and historical-layout rejection.
 
@@ -21,7 +20,7 @@ When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract
 ## 基本规则
 
 - Figma 相关流程统一使用 `fp-figma`；禁止切换到全局 `figma-to-vue` 或其他同类 skill。
-- 同时遵循 `fp-docs/settings/frontend.md`、`fp-docs/settings/prototype-style.md`（仅在没有可信 Figma UI 设计时用于功能范围）、`fp-docs/settings/agent.md` 中的通用策略、`fp-ui-spec`、`fp-ux-spec`。
+- 同时遵循 `fp-docs/settings/frontend.md`、`fp-docs/settings/prototype-style.md`（仅在没有可信 Figma UI 设计时用于功能范围）、`fp-docs/settings/agent.md` 中的通用策略、`fp-frontend-spec`。
 - 优先使用项目 settings 或现有代码中确认的组件库；没有配置时使用中性组件映射，不假设任何客户专属前缀；确实无对应组件才允许自行封装，并写明原因。
 - 遵循项目现有前端框架和脚本/状态管理写法；不得假设 Vue、React 或特定语法。
 - 优先使用 Flex / Grid，避免滥用 `position: absolute`；Figma 里的绝对坐标只能作为测量参考，不能直接复制成脆弱布局。

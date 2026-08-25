@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $pluginValidationCompleted = $false
@@ -246,6 +246,13 @@ foreach ($anchor in @('target repository root', 'fp-docs/manifest.md', 'smallest
 foreach ($anchor in @('Process document language', 'Chinese by default', 'current explicit user instruction', 'target-project setting', 'necessary English')) {
     Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing process-document language rule: $anchor"
 }
+foreach ($anchor in @(
+    'If any anchored plugin resource is missing or unreadable',
+    '在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径',
+    '在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录'
+)) {
+    Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing plugin-resource anchoring rule: $anchor"
+}
 
 Assert-Condition (Test-Path $codeGraphPath) 'shared CodeGraph contract is missing'
 $codeGraphText = Read-Utf8 $codeGraphPath
@@ -455,8 +462,7 @@ foreach ($skill in $skills) {
     Assert-Condition ($lineCount -le 500) "$($skill.Name)/SKILL.md has $lineCount lines (limit: 500)"
     Assert-Condition ($skillText -match "(?m)^name:\s*$([regex]::Escape($skill.Name))\s*$") "$($skill.Name)/SKILL.md frontmatter name does not match its directory"
     Assert-Condition (-not $skillText.Contains('${CLAUDE_SKILL_DIR}')) "$($skill.Name)/SKILL.md uses unsupported CLAUDE_SKILL_DIR instead of an official plugin root"
-    Assert-Condition ($skillText.Contains('在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径')) "$($skill.Name)/SKILL.md lacks the Codex installed-skill path mapping"
-    Assert-Condition ($skillText.Contains('在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录')) "$($skill.Name)/SKILL.md lacks the DeepSeek Harness skill root path mapping"
+    Assert-Condition ($skillText.Contains('插件资源锚定')) "$($skill.Name)/SKILL.md lacks the shared plugin-resource anchoring pointer"
     $anchoredWorkspaceContract = '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`'
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
@@ -761,8 +767,7 @@ $designArtifactContracts = @{
     'skills\fp-brainstorm\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-brainstorm\design-template.md' = 'artifact-layout contract already loaded by `fp-brainstorm`'
     'skills\fp-figma\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
-    'skills\fp-ui-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
-    'skills\fp-ux-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-frontend-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'commands\fp-brainstorm.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
 }
 
@@ -775,8 +780,7 @@ foreach ($entry in $designArtifactContracts.GetEnumerator()) {
 $brainstormSkillText = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\SKILL.md')
 $brainstormTemplate = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\design-template.md')
 $figmaDesignSkill = Read-Utf8 (Join-Path $root 'skills\fp-figma\SKILL.md')
-$uiSpecSkill = Read-Utf8 (Join-Path $root 'skills\fp-ui-spec\SKILL.md')
-$uxSpecSkill = Read-Utf8 (Join-Path $root 'skills\fp-ux-spec\SKILL.md')
+$frontendSpecSkill = Read-Utf8 (Join-Path $root 'skills\fp-frontend-spec\SKILL.md')
 $brainstormCommand = Read-Utf8 (Join-Path $root 'commands\fp-brainstorm.md')
 
 foreach ($anchor in @('design/backend.md', 'design/backend/00-index.md', 'design/frontend.md', 'design/frontend/00-index.md', 'mutually exclusive', 'canonical entry', 'Pre-write gate includes design index', 'explicit pre-write gate', 'exact target paths', 'Post-write handoff', 'Post-write verification rejects', 'incomplete manifests', 'duplicate visual ownership', 'Resume boundary', 'partial conversion', 'current slug', 'exact paths', 'historical', 'explicit approval', 'obsolete path')) {
@@ -792,10 +796,9 @@ foreach ($anchor in @('design/frontend.md', 'design/frontend/00-index.md', 'desi
     Assert-Condition ($figmaDesignSkill.Contains($anchor)) "fp-figma is missing its chosen-form write or bounded compatibility contract: $anchor"
 }
 foreach ($entry in @(
-    @{ Name = 'fp-ui-spec'; Text = $uiSpecSkill; Owner = 'unique visual owner' }
-    @{ Name = 'fp-ux-spec'; Text = $uxSpecSkill; Owner = 'unique visual/interaction owner' }
+    @{ Name = 'fp-frontend-spec'; Text = $frontendSpecSkill; Owner = 'unique visual owner and the unique visual/interaction owner' }
 )) {
-    foreach ($anchor in @('Resolve the chosen canonical frontend representation', 'design/frontend.md', 'design/frontend/00-index.md', 'design/00-index.md', 'Producer dual-form input is a structural conflict and must be rejected', 'exactly one detailed owner', $entry.Owner)) {
+    foreach ($anchor in @('Resolve the chosen canonical frontend representation', 'design/frontend.md', 'design/frontend/00-index.md', 'design/00-index.md', 'Producer dual-form input is a structural conflict and must be rejected', 'exactly one detailed owner', 'unique visual owner', 'unique visual/interaction owner')) {
         Assert-Condition ($entry.Text.Contains($anchor)) "$($entry.Name) is missing its canonical frontend resolution or unique-owner contract: $anchor"
     }
 }
@@ -917,9 +920,7 @@ $skillAnchors = @{
     'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/', 'dirty-after-write', 'post-write-sync', 'must not block completion')
     'fp-archive' = @('history/history.md', 'blocked', 'proposal.md')
     'fp-figma' = @('Figma', 'Flex / Grid', 'Visual Checks', 'settings/frontend.md')
-    'fp-ui-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')
-    'fp-ux-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')
-    'fp-grill-me' = @('recommendation is not', 'codebase', 'explicit user confirmation')
+    'fp-frontend-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')
 }
 
 foreach ($entry in $skillAnchors.GetEnumerator()) {
@@ -1270,8 +1271,7 @@ foreach ($noCompatibilityPath in @(
     'skills\fp-plan-backend\SKILL.md'
     'skills\fp-plan-frontend\SKILL.md'
     'skills\_shared\workspace-rules.md'
-    'skills\fp-ui-spec\SKILL.md'
-    'skills\fp-ux-spec\SKILL.md'
+    'skills\fp-frontend-spec\SKILL.md'
 )) {
     $noCompatibilityText = Read-Utf8 (Join-Path $root $noCompatibilityPath)
     Assert-Condition ($noCompatibilityText -notmatch '(?i)\blegacy compatibility\b') "$noCompatibilityPath still advertises legacy compatibility"

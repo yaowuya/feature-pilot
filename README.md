@@ -319,7 +319,7 @@ DSH 同样遵守与 Codex 相同的阶段门禁和 lazy context 规则（见上�
 已包含（`1.0.0`）：
 
 - 初始化：`fp-init`。
-- 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-grill-me`、`fp-propose`、`fp-brainstorm`；包含 PRD-first、Prototype-first、PRD interview gate、mandatory PRD template、prototype style extraction/lazy consumption。
+- 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-propose`、`fp-brainstorm`；包含 PRD-first、Prototype-first、PRD interview gate、mandatory PRD template、prototype style extraction/lazy consumption。
 - 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-final-review`、`fp-archive`。
 - 信息层规则：`manifest-only default`、按批准懒创建的 settings/intel、动态 SDD 上下文、project facts freshness，以及可选 CodeGraph 导航与写后同步边界。
 - 执行和审查：简化的 `fp-execute`、最多三次的 SDD 审查、Scope Matrix、命令安全、最终证据包与 Figma 真实运行时视觉验收。

@@ -2,6 +2,11 @@
 
 Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills reference it; do not reload it in the same workflow.
 
+## Plugin resource anchoring
+
+If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+
 ## Root and read order
 
 1. Treat the target repository root as the FeaturePilot project root. Look for `fp-docs/` only directly under that root; never inherit a parent workspace.

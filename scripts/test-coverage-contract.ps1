@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -203,8 +203,7 @@ foreach ($anchor in @(
     'name: fp-coverage',
     'Use when',
     '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`',
-    'available-skill',
-    '`skills/...`',
+    '插件资源锚定',
     'RESOLVING',
     'BASELINING',
     'TRIAGING',

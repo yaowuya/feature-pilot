@@ -4,8 +4,7 @@ description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta sp
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before architecture questions; it owns the Decision Ledger status set, per-item confirmation, separate write authorization, persisted terminal evidence, and recovery behavior.
 ---
@@ -68,14 +67,13 @@ return-to: <fp-brainstorm + same D-NNN/checkpoint>
 > **⚠️ 涉及前端 UI 时，必须加载并遵循以下 skill（作为设计约束）：**
 > - **Figma 入口必须唯一**：凡是涉及 Figma 链接、截图还原、设计稿解析，**只允许使用本插件内的 `fp-figma` skill**；**禁止使用全局 `figma-to-vue` 或其他同类 skill**，避免规范分叉。
 > - `fp-docs/settings/agent.md` — 可选项目配置；如其中声明组件库、设计系统或组件映射，必须优先遵循；确实无对应组件才允许自行封装，并在 design 文档中注明原因
-> - `fp-ui-spec` skill — 色彩 token、排版字号、导航/表单组件视觉状态
-> - `fp-ux-spec` skill — 表单校验时机、表格操作、按钮规则、删除确认、消息通知等
+> - `fp-frontend-spec` skill — 色彩 token、排版字号、表单校验时机、表格操作、按钮规则等 UI/UX 规范
 > canonical frontend design 的详细内容所有者中，所有颜色、尺寸、交互行为必须引用规范中的值，不得自行发明。
 >
 > **Just-in-time Visual 使用原则（只在需要时打开视觉链路）：**
 > - 只有当本次需求实际涉及 UI、Figma、截图还原、视觉走查或用户明确要求视觉验收时，才进入 Figma / browser / local viewer / 截图链路；纯后端、纯接口、纯脚本任务不得为了“完整流程”启动视觉工具。
 > - 设计阶段只提取视觉事实与约束：Figma 节点、截图事实、现有页面视觉模式、项目组件映射、布局策略和 Visual Checks；不得在 brainstorm 阶段直接修改业务 UI 代码。
-> - 若没有 Figma 或截图，Visual Checks 必须来源于 `fp-ui-spec`、`fp-ux-spec` 和相邻真实页面，不允许凭感觉补颜色、间距、交互。
+> - 若没有 Figma 或截图，Visual Checks 必须来源于 `fp-frontend-spec` 和相邻真实页面，不允许凭感觉补颜色、间距、交互。
 > - 若后续计划/执行需要本地预览，只允许在实现到可运行页面后按 Visual Checks 做最小必要验证；不要提前启动 local viewer。
 
 - **先复用已确认视觉来源**：若 proposal Decision Ledger 或 PRD 已精确确认 Figma 链接、无 Figma 或截图来源，且与当前范围不冲突，将它记录为对应 `D-NNN` 的继承终态并直接应用该策略；`do not repeat the Figma question`。只有当 `inherited visual source is absent, conflicting, or ambiguous` 时，才创建 `needs-user-confirmation` 行并询问下列问题。
@@ -86,7 +84,7 @@ return-to: <fp-brainstorm + same D-NNN/checkpoint>
 
   > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
   > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出 `Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用项目组件的自封装理由、`Visual Checks`。这些详细小节只写入选定 frontend form 的一个详细内容所有者。**不得改用全局 `figma-to-vue`**。
-  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-ui-spec` + `fp-ux-spec` skill 的规范和相邻真实页面搭建；仍必须在选定 frontend form 的一个详细内容所有者中写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
+  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-frontend-spec` 的规范和相邻真实页面搭建；仍必须在选定 frontend form 的一个详细内容所有者中写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
   > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在选定 frontend form 的一个详细内容所有者中写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
