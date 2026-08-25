@@ -48,11 +48,8 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 5. 全部任务完成后输出执行报告，提示运行独立的 `fp-final-review`；不要在本 skill 内执行最终审查。
 ## Canonical 输入解析
 
-1. 作为 canonical-first Consumer 而不是 Producer，先检测每个 small/split 候选，再读取唯一 canonical form：`prd.md` 或 `prd/00-index.md`；`proposal.md` 或 `proposal/00-index.md`；`design/backend.md` 或 `design/backend/00-index.md`；`design/frontend.md` 或 `design/frontend/00-index.md`。
-2. Detect both alternatives before reading either: `tasks/backend/00-index.md` or `tasks/plan-backend.md`; `tasks/frontend/00-index.md` or `tasks/plan-frontend.md`. Split form 按 manifest order 读取全部 fragments；missing、duplicate 或 unindexed fragment 都是 structural conflict。
-3. 只有 `tasks`-kind fragment 可以拥有 checkbox；每个 task ID 使用一个 unique task owner。验证端内与跨端依赖存在且无环。
-4. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist；A single-end plan never has an overview。双端 overview 的进度是从 owner checkboxes 计算的 derived progress summary。
-5. Root-level `design-backend.md` / `design-frontend.md`、indexless split、historical path 或 small/split dual form 都必须在执行前阻塞；`fp-execute` 不迁移需求、设计或计划产物。
+按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 的 canonical-first Consumer（而不是 Producer）规则解析：detect both alternatives before reading either，再读取唯一 canonical form（`prd.md`/`prd/00-index.md`、`proposal.md`/`proposal/00-index.md`、`design/backend.md`/`design/backend/00-index.md`、`design/frontend.md`/`design/frontend/00-index.md`、`tasks/plan-backend.md`/`tasks/backend/00-index.md`、`tasks/plan-frontend.md`/`tasks/frontend/00-index.md`）。Split form 按 manifest order 读取全部 fragments; missing、duplicate 或 unindexed fragment 都是 structural conflict。只有 `tasks`-kind fragment 可以拥有 checkbox；每个 task ID 使用一个 unique task owner；验证端内与跨端依赖存在且无环。`tasks/00-overview.md` exists exactly when both backend and frontend plans exist；A single-end plan never has an overview；双端 overview 的进度是从 owner checkboxes 计算的 derived progress summary。Root-level `design-backend.md` / `design-frontend.md`、indexless split、historical path 或 small/split dual form 都必须在执行前阻塞；`fp-execute` 不迁移需求、设计或计划产物。
+
 ## 执行状态
 
 在 `fp-docs/changes/<slug>/.fp-execute/progress.md` 维护简单的恢复证据。如果任务文件不在标准 change 目录，则在任务文件同级创建 `.fp-execute/progress.md`。

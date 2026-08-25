@@ -32,13 +32,9 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before check
 
 借鉴 OpenSpec 的归档安全设计，归档前必须检查：
 
-1. canonical-first Consumer: Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`。
-2. Producer output 应只有一种 canonical form。归档 Consumer 把 indexless split、任何 historical path 和任何 dual form 都作为 structural conflict 阻塞。There is no read-only compatibility；必须先迁移为唯一 canonical form 并删除 obsolete paths。
-3. Split `00-index.md` 是 sole canonical entry；解析 manifest 并按 exact manifest order 读取所有 listed fragments。缺失/重复 entry、duplicate owner 或 unindexed fragment 都阻塞；不得使用 recursive glob、正文链接或文件系统顺序。
-4. Split plan 只有 manifest Kind=`tasks` 的 `tasks`-kind fragments 是 task-owner files。每个 ID/checkbox 必须有一个 unique task owner；index、context/interface/coverage 和 overview 禁止 executable checkbox。Missing reference、duplicate ID/checkbox 或 dependency cycle 都阻塞。
-5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. 仅两端 overview 才校验 cross-end edges/cycles，并从 owner checkbox 重算 derived progress；single-end 不创建、不要求、不重算 overview。
-6. 只在解析出的 task-owner files 中检查未完成 checkbox；再检查 `.fp-execute/progress.md` 的 unfinished/blocked/failed 记录。ledger 只是恢复证据，冲突时结合 git、实际文件和验证结果对账。
-7. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
+1. canonical-first Consumer（对面是 Producer）：按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 解析 mutually exclusive 唯一 canonical form：detect both alternatives before reading either（`prd.md`/`prd/00-index.md`、`proposal.md`/`proposal/00-index.md`、`design/backend.md`/`design/backend/00-index.md`、`design/frontend.md`/`design/frontend/00-index.md`、`tasks/plan-backend.md`/`tasks/backend/00-index.md`、`tasks/plan-frontend.md`/`tasks/frontend/00-index.md`）；split 按 manifest order 读取 fragments。`tasks/00-overview.md` exists exactly when both backend and frontend plans exist; A single-end plan never has an overview。indexless split、任何 historical path、dual form、缺失/重复 manifest entry、duplicate owner、unindexed fragment、`tasks`-kind 之外的 executable checkbox、task ID/checkbox 无 unique task owner 或重复、dependency cycle，都作为 structural conflict 阻塞。There is no read-only compatibility；必须先迁移为唯一 canonical form 并删除 obsolete paths。
+2. 只在解析出的 task-owner files 中检查未完成 checkbox；再检查 `.fp-execute/progress.md` 的 unfinished/blocked/failed 记录。ledger 只是恢复证据，冲突时结合 git、实际文件和验证结果对账。
+3. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
 
 ### Step 2.1: UI/E2E Final Gate
 
