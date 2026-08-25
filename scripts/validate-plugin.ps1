@@ -697,10 +697,10 @@ foreach ($entry in $requirementProducerContracts.GetEnumerator()) {
 }
 
 $compactFirstContracts = @{
-    'skills\fp-prd\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd\SKILL.md' = @('default to the small form')
     'skills\fp-prd\prd-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
-    'skills\fp-prd-grill-me\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
-    'skills\fp-propose\SKILL.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
+    'skills\fp-prd-grill-me\SKILL.md' = @('default to the small form')
+    'skills\fp-propose\SKILL.md' = @('default to the small form')
     'skills\fp-propose\proposal-template.md' = @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves')
     'skills\fp-brainstorm\SKILL.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
     'skills\fp-brainstorm\design-template.md' = @('默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')
@@ -715,6 +715,11 @@ foreach ($relativePath in $compactFirstFiles) {
     foreach ($anchor in $compactFirstContracts[$relativePath]) {
         Assert-Condition ($text.Contains($anchor)) "$relativePath is missing compact-first contract anchor: $anchor"
     }
+}
+
+$compactFirstShared = Read-Utf8 (Join-Path $root 'skills\_shared\artifact-layout.md')
+foreach ($anchor in @('default to the small form', '500 lines', '30,000 characters', 'user explicitly approves split form', 'applicable target-project setting explicitly requires it', 'do not trigger split form by themselves', '默认选择 small form', '500 行', '30,000 字符', '用户明确批准 split form', '目标项目设置明确要求 split form', '不单独触发拆分')) {
+    Assert-Condition ($compactFirstShared.Contains($anchor)) "shared artifact-layout contract is missing form-selection gate: $anchor"
 }
 
 $processLanguageContracts = @{

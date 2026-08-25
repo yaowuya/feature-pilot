@@ -52,6 +52,10 @@ Select split form only when at least one of these conditions is true:
 
 The presence of multiple features, subsystems, page areas, task groups, or ownership domains does not by itself trigger split form. Once split form is selected, use those semantic boundaries to define fragments and write the final structure directly; do not generate a monolith and mechanically cut it later.
 
+Canonical gate wording: for form selection, default to the small form. Use split form only when the small form is expected to exceed either hard limit (500 lines / 30,000 characters), the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains do not trigger split form by themselves; they only frame fragment boundaries after split form has been selected.
+
+中文规范表述：默认选择 small form；只有预计 small form 超过 500 行或 30,000 字符、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分；多个 feature、子系统、页面区域、任务组或 ownership domain 不单独触发拆分，只在已选 split form 后用于分片边界。
+
 Every produced Markdown file, including an index or fragment, must contain no
 more than 500 lines and no more than 30,000 characters. Crossing either limit
 requires another semantic split. These are hard fallback limits, not targets.
