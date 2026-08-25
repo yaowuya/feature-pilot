@@ -96,7 +96,7 @@ codegraph sync <project-root> --quiet
 
 ### 可选设置文件
 
-`/fp-init` 会逐项询问是否生成可选 settings，只有批准后才创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
+`/fp-init` 会一次列出可选 settings（agent/frontend/backend/prototype-style），逐文件确认后只为被批准的文件创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
 
 建议原则：
 

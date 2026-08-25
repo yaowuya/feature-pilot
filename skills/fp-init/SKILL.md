@@ -184,94 +184,28 @@ After checking project docs, run only a small read-only project-family signal ch
 
 `after-resolving-manifest-disposition`：完成 manifest disposition（首次创建、已批准更新或未修改）并处理已接受的 project-family example 后，再提供可选 settings；不得把进入本阶段表述为已有 manifest 必然已更新。
 
-#### 7-a. Offer `settings/agent.md`
-
-Ask:
+用**一次多选询问**列出全部可选 settings。`settings-created-only-after-explicit-approval` 仍逐文件生效：只有用户明确选择生成的文件才创建对应目录/文件。
 
 ```markdown
-是否需要生成 `fp-docs/settings/agent.md`（轻量 FeaturePilot policy adapter）？
+是否需要生成以下可选的 `fp-docs/settings/` 文件？请列出要生成的文件（其余跳过，每个文件独立选择）。
 
-该文件仅包含通用工作流策略：
-- 权威项目文档引用
-- 工作流偏好
-- 通用允许/禁止区域
-- 通用验证期望
-- 跨领域安全/数据说明
-
-前端细节进 `fp-docs/settings/frontend.md`，后端细节进 `fp-docs/settings/backend.md`。
-
-选项：
-1. 生成 — 创建轻量 adapter 模板，你可以后续编辑。
-2. 跳过 — 后续从当前代码和 manifest 推断即可。
+1. `settings/agent.md`（轻量 FeaturePilot policy adapter）— 仅通用工作流策略：权威项目文档引用、工作流偏好、通用允许/禁止区域、通用验证期望、跨领域安全/数据说明。前端细节进 frontend.md，后端细节进 backend.md。
+   → 生成 / 跳过
+2. `settings/frontend.md` — 前端框架与源代码位置、组件库与导入规则、设计 token 来源、路由/状态/API-client 模式、Figma 映射规则、本地预览与视觉验收期望、前端特有 Unknowns。
+   → 生成（根据项目现有前端代码和依赖推断模板供你确认）/ 跳过
+3. `settings/backend.md` — 后端框架与源代码位置、API/服务/数据模式、请求/响应/错误格式约定、认证/权限/隔离规则、后台任务与运维约定、后端特有 Unknowns。
+   → 生成（根据项目现有后端代码和依赖推断模板供你确认）/ 跳过
+4. `settings/prototype-style.md`（HTML 原型视觉风格参考）— 原型适用场景、页面骨架与布局模式、颜色/字体/间距 token、常用组件/表格/表单/弹窗/抽屉风格、原型交互与文案规则。
+   → 生成（根据已有原型、截图、Figma 或相邻页面提炼初始草稿；不确定项写 Unknown）/ 跳过
+```
 ```
 
-If the user chooses to generate, write the `FeaturePilot Agent Settings` template from `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md`.
+每个被确认生成的文件都从 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 读取对应模板写入：
 
-#### 7-b. Offer `settings/frontend.md`
-
-Ask:
-
-```markdown
-是否需要生成 `fp-docs/settings/frontend.md`？
-
-该文件包含：
-- 前端框架与源代码位置
-- 组件库与导入规则
-- 设计 token 来源
-- 路由/状态/API-client 模式
-- Figma 映射规则
-- 本地预览与视觉验收期望
-- 前端特有 Unknowns
-
-选项：
-1. 生成 — 根据项目现有前端代码和依赖推断模板供你确认。
-2. 跳过 — 后续前端设计步骤会从当前代码推断。
-```
-
-If the user chooses to generate, read lightweight project frontend facts and write the `FeaturePilot Frontend Settings` template from `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md`.
-
-#### 7-c. Offer `settings/backend.md`
-
-Ask:
-
-```markdown
-是否需要生成 `fp-docs/settings/backend.md`？
-
-该文件包含：
-- 后端框架与源代码位置
-- API / 服务 / 数据模式
-- 请求/响应/错误格式约定
-- 认证/权限/隔离规则
-- 后台任务与运维约定
-- 后端特有 Unknowns
-
-选项：
-1. 生成 — 根据项目现有后端代码和依赖推断模板供你确认。
-2. 跳过 — 后续后端设计步骤会从当前代码推断。
-```
-
-If the user chooses to generate, write the `FeaturePilot Backend Settings` template from `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md`.
-
-#### 7-d. Offer `settings/prototype-style.md`
-
-Ask:
-
-```markdown
-是否需要生成 `fp-docs/settings/prototype-style.md`（HTML 原型视觉风格参考）？
-
-该文件用于后续 `/fp-prd` 生成 `prototype.html` 时保持项目原型风格一致，包含：
-- 原型适用场景
-- 页面骨架与布局模式
-- 颜色、字体、间距 token
-- 常用组件/表格/表单/弹窗/抽屉风格
-- 原型交互与文案规则
-
-选项：
-1. 生成 — 根据已有原型、截图、Figma 或相邻页面提炼初始草稿；不确定项写 Unknown。
-2. 跳过 — 后续首个原型确认后再提取。
-```
-
-If the user chooses to generate, write the `FeaturePilot Prototype Style` template from `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md`.
+- `settings/agent.md` → `FeaturePilot Agent Settings` 模板。
+- `settings/frontend.md` → 先读取轻量项目前端事实，再写 `FeaturePilot Frontend Settings` 模板。
+- `settings/backend.md` → `FeaturePilot Backend Settings` 模板。
+- `settings/prototype-style.md` → `FeaturePilot Prototype Style` 模板。
 
 ### 8. Ask about lightweight discovery
 
