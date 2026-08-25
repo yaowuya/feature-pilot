@@ -116,7 +116,7 @@ flowchart LR
 npm install -g @colbymchenry/codegraph@latest
 ```
 
-Agent MCP 配置会单独确认；CLI 已预装时，首次为项目构建 `.codegraph/` 也会单独确认。建图完成后，FeaturePilot 的代码调查按 `MCP → CLI → 原有搜索` 选择路径，每个工作流最多做一次健康检查和一次必要同步。CodeGraph 是可选导航层，任何安装、配置、建图、同步或查询失败都会回退到原有渐进式搜索；图结果不会替代当前源码、测试和命令输出。
+对应当前 CLI 状态，CodeGraph 的安装 / Agent MCP 配置 / 首次建图由一次批准覆盖并按顺序逐步汇报（MCP 会修改用户级配置，须在选项中明确）。建图完成后，FeaturePilot 的代码调查按 `MCP → CLI → 原有搜索` 选择路径，每个工作流最多做一次健康检查和一次必要同步。CodeGraph 是可选导航层，任何安装、配置、建图、同步或查询失败都会回退到原有渐进式搜索；图结果不会替代当前源码、测试和命令输出。
 
 再次运行 `fp-init` 时，如果已有 `fp-docs/manifest.md`，流程进入 `refresh-existing-information-layer`。它根据 `.freshness.json` 中的 source fingerprint/body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`；metadata 不保存 stale verdict。旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 只保留一版只读兼容，不创建、刷新或要求。
 

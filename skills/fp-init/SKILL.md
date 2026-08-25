@@ -90,54 +90,38 @@ Do **not** create `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/` o
 
 ### 2. Offer optional CodeGraph setup
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` now. Only this section may install CodeGraph or build a project code map, and only after the confirmations below. CodeGraph remains optional; every unavailable or failed path continues normal init.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` now. Only this section may install CodeGraph, configure Agent MCP, or build a project code map, and only after the single confirmation below for the current CLI state. CodeGraph remains optional; every unavailable or failed path continues normal init.
 
 First detect `codegraph --version`. If normal command resolution fails and npm is available, use `npm prefix -g` only to check the platform launcher documented in the shared contract.
 
-#### 2-a. CLI unavailable
+#### 2-a. CLI unavailable — one decision (install + MCP + first build)
 
-Ask one decision:
-
-```markdown
-未检测到可用的 CodeGraph CLI。是否为 FeaturePilot 配置可选代码地图？
-
-1. 自动安装（推荐）（`auto-install`）— 使用 npm 全局安装；会写入 npm 全局目录。选择后也授权为当前项目执行首次建图。
-2. 展示安装步骤（`show-install-steps`）— 只展示 npm 前置条件、安装、可选 MCP 配置和建图命令，本轮不执行。
-3. 跳过（`skip-codegraph`）— 不安装、不配置、不建图，继续普通 init。
-```
-
-`auto-install includes first graph build`：用户选择自动安装后，仍须遵守宿主环境的联网和全局写入审批；只允许执行：
-
-```text
-npm install -g @colbymchenry/codegraph@latest
-```
-
-执行前运行 `npm --version`。npm 不可用时不得自动安装 Node.js，也不得改用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx`；说明 Node.js/npm 前置条件和上述 npm 命令，将 CodeGraph 记为 `unavailable`，然后继续普通 init。
-
-安装后先验证 `codegraph --version`。当前进程的 `PATH` 尚未刷新时，运行 `npm prefix -g` 并使用共享合同中的 Windows 或 macOS/Linux launcher 再验证。仍不可用时不得宣称安装成功，不继续 MCP 配置或建图。
-
-选择 `show-install-steps` 时只展示以下顺序，不运行命令：安装 Node.js/npm 前置条件、唯一 npm 安装命令、可选 Agent MCP 命令、`codegraph init <project-root>`。选择 `skip-codegraph` 时不展示冗长步骤，也不执行任何 CodeGraph 命令。
-
-#### 2-b. Separate Agent MCP confirmation
-
-CLI 已验证可用后，单独询问：
+Ask one decision; it covers every side effect of the current clean install path:
 
 ```markdown
-是否允许 CodeGraph 配置检测到的 Claude Code/Codex MCP？该操作可能修改用户级 MCP 和 instructions 配置。
+未检测到可用的 CodeGraph CLI。是否为 FeaturePilot 配置可选代码地图？一次批准涵盖：npm 全局安装、Agent MCP 配置（会修改用户级 MCP/instructions 配置）与当前项目首次建图；各步按顺序执行并逐步汇报，任一步失败即回退并继续普通 init。
 
-1. 配置 MCP — 运行 `codegraph install --target=auto --location=global --yes`。
-2. 跳过 MCP — 保留 CLI 能力，不影响当前项目建图。
+1. 自动安装并配置（推荐）（`auto-install`）— 依次执行唯一允许的安装命令 `npm install -g @colbymchenry/codegraph@latest`（写入 npm 全局目录）→ 验证 `codegraph --version` → Agent MCP 配置 `codegraph install --target=auto --location=global --yes` → 首次建图 `codegraph init <project-root>`。
+2. 仅自动安装并建图（不配置 MCP）（`auto-install`）— 执行安装命令 → 验证版本 → `codegraph init <project-root>`，不修改用户级配置。
+3. 展示安装步骤（`show-install-steps`）— 只展示 npm 前置条件、安装、可选 MCP 和建图命令，本轮不执行。
+4. 跳过（`skip-codegraph`）— 不安装、不配置、不建图，继续普通 init。
 ```
 
-只有明确选择配置后才执行。成功后提示用户重启相应 Agent；当前工作流不等待 MCP 热加载，继续使用 CLI。
+`auto-install includes first graph build`：两种自动安装选项都包含当前项目首次建图授权。执行前运行 `npm --version`。npm 不可用时不得自动安装 Node.js，也不得改用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx`；说明 Node.js/npm 前置条件和上述 npm 命令，将 CodeGraph 记为 `unavailable`，然后继续普通 init。
 
-#### 2-c. Build or reuse the project graph
+安装后先验证 `codegraph --version`。当前进程的 `PATH` 尚未刷新时，运行 `npm prefix -g` 并通过共享合同中的 Windows 或 macOS/Linux launcher 再次验证。仍不可用时不得宣称安装成功，也不得继续 MCP 配置或建图。选择安装 MCP 的选项后在安装验证通过时执行上述 MCP 命令并提示重启对应 Agent；当前工作流不等待 MCP 热加载，继续使用 CLI。选择 `show-install-steps` 时只展示、不执行；选择 `skip-codegraph` 时不展示冗长步骤。
 
-只检查 `<project-root>/.codegraph/`，不得向上查找父目录索引。
+#### 2-b. CLI available — one decision (MCP + build merged)
 
-- 本轮 `auto-install` 成功且没有项目图：直接运行 `codegraph init <project-root>`，因为自动安装选择已包含首次建图授权。
-- `preinstalled-cli-requires-build-confirmation`：CLI 原本已安装但没有项目图时，单独询问是否构建；只有明确同意后才运行 `codegraph init <project-root>`。
-- `show-install-steps` 或 `skip-codegraph`：不建图。
+CLI 已验证可用。只检查 `<project-root>/.codegraph/`，不得向上查找父目录索引。若尚无项目图，或需要配置 Agent MCP，询问一个决定（`cli-available-single-confirmation`），一次批准覆盖 MCP 配置与首次建图：
+
+```markdown
+检测到 CodeGraph CLI。如何处理代码地图与 Agent MCP？
+
+1. 配置 MCP 并建图（推荐）— 依次执行 `codegraph install --target=auto --location=global --yes`（会修改用户级配置）与 `codegraph init <project-root>`（如尚无项目图）。
+2. 仅建图 — 只运行 `codegraph init <project-root>`，不配置 MCP。
+3. 跳过 — 不配置、不建图。
+```
 
 首次建图完成或发现已有 `.codegraph/` 后，本轮最多执行一次：
 

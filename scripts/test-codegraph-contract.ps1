@@ -83,7 +83,7 @@ foreach ($anchor in @(
     'codegraph init <project-root>',
     'codegraph status <project-root> --json',
     'auto-install includes first graph build',
-    'preinstalled-cli-requires-build-confirmation',
+    'cli-available-single-confirmation',
     'refresh-existing-information-layer',
     'stale-generated-intel',
     'refresh-stale-intel',

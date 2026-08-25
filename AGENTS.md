@@ -89,7 +89,7 @@ CodeGraph 是可选的本地代码地图，不是 FeaturePilot 的前置依赖�
 npm install -g @colbymchenry/codegraph@latest
 ```
 
-不得使用 `irm`、`curl`、远程安装脚本或 `npx`。缺少 npm 时不得自动安装 Node.js。Agent MCP 配置必须与 CLI 安装分开确认；CLI 原本已安装但项目没有 `.codegraph/` 时，首次建图也必须单独确认。自动安装选择本身包含当前项目首次建图授权。
+不得使用 `irm`、`curl`、远程安装脚本或 `npx`。缺少 npm 时不得自动安装 Node.js。对应当前 CLI 状态，`fp-init` 的安装 / Agent MCP 配置 / 首次建图由一次批准覆盖并按顺序逐步汇报（MCP 会修改用户级配置，须在选项中明确）；CLI 已安装时 MCP 配置与首次建图合并为一次确认。自动安装选择本身包含当前项目首次建图授权。
 
 需要代码定位、符号关系、调用链、数据流或影响范围时，按需读取 `skills/_shared/codegraph.md`。后续调查遵循 `MCP → CLI → 原有搜索`，每个工作流最多一次健康检查和一次必要同步。CodeGraph 失败不得阻塞 FeaturePilot；图结果只作 `navigation-hint-only`，关键结论必须回到当前源码、测试和命令输出复核。
 
