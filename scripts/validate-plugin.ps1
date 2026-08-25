@@ -768,7 +768,6 @@ $designArtifactContracts = @{
     'skills\fp-brainstorm\design-template.md' = 'artifact-layout contract already loaded by `fp-brainstorm`'
     'skills\fp-figma\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-frontend-spec\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
-    'commands\fp-brainstorm.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
 }
 
 foreach ($entry in $designArtifactContracts.GetEnumerator()) {
@@ -781,7 +780,6 @@ $brainstormSkillText = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\SKILL.md
 $brainstormTemplate = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\design-template.md')
 $figmaDesignSkill = Read-Utf8 (Join-Path $root 'skills\fp-figma\SKILL.md')
 $frontendSpecSkill = Read-Utf8 (Join-Path $root 'skills\fp-frontend-spec\SKILL.md')
-$brainstormCommand = Read-Utf8 (Join-Path $root 'commands\fp-brainstorm.md')
 
 foreach ($anchor in @('design/backend.md', 'design/backend/00-index.md', 'design/frontend.md', 'design/frontend/00-index.md', 'mutually exclusive', 'canonical entry', 'Pre-write gate includes design index', 'explicit pre-write gate', 'exact target paths', 'Post-write handoff', 'Post-write verification rejects', 'incomplete manifests', 'duplicate visual ownership', 'Resume boundary', 'partial conversion', 'current slug', 'exact paths', 'historical', 'explicit approval', 'obsolete path')) {
     Assert-Condition ($brainstormSkillText.Contains($anchor)) "fp-brainstorm is missing its per-file design producer contract: $anchor"
@@ -802,28 +800,9 @@ foreach ($entry in @(
         Assert-Condition ($entry.Text.Contains($anchor)) "$($entry.Name) is missing its canonical frontend resolution or unique-owner contract: $anchor"
     }
 }
-$brainstormCommandContractAnchors = @(
-    'mutually exclusive form'
-    'backend.md'
-    'backend/00-index.md'
-    'frontend.md'
-    'frontend/00-index.md'
-    '默认预选 small form'
-    '500 lines'
-    '30,000 characters'
-    '用户明确批准'
-    '目标项目设置明确要求'
-    '语义边界仅用于拆分后的分片'
-    '过程文档叙述性内容默认使用中文'
-    '保留必要英文'
-)
-foreach ($anchor in $brainstormCommandContractAnchors) {
-    Assert-Condition ($brainstormCommand.Contains($anchor)) "fp-brainstorm command checksum is missing: $anchor"
-}
-$regressedBrainstormCommand = $brainstormCommand.Replace('用户明确批准', '')
-Assert-Condition (-not (Test-ContainsEveryAnchor $regressedBrainstormCommand $brainstormCommandContractAnchors)) 'fp-brainstorm regression fixture without the explicit user split gate still satisfies the command contract'
-Assert-Condition (-not (Test-SemanticAutoSplitTrigger $brainstormCommand)) 'fp-brainstorm command retains a semantic auto-split trigger'
-Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $brainstormCommand)) 'fp-brainstorm command retains obsolete semantic-first/语义优先 guidance'
+
+Assert-Condition (-not (Test-SemanticAutoSplitTrigger $brainstormSkillText)) 'fp-brainstorm retains a semantic auto-split trigger'
+Assert-Condition (-not (Test-ObsoleteSemanticFirstGuidance $brainstormSkillText)) 'fp-brainstorm retains obsolete semantic-first/语义优先 guidance'
 
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'Keep the stable entrypoint summary and write details to design/frontend/00-index.md.') 'dual-form recipe detector misses the former stable-summary split recipe'
 Assert-Condition (Test-ForbiddenDesignDualRecipe 'design/frontend/00-index.md lists fragments; design/frontend.md links the end-local index.') 'dual-form recipe detector misses the former index-linking recipe'

@@ -109,4 +109,4 @@ return-to: <fp-plan + explicit plan confirmation>
 
 用户确认后输出：`✅ 执行计划已确认，进入执行阶段`
 
-默认推荐使用 `fp-execute` 在当前上下文直接完成计划，并使用 `automationMode=full` 连续执行；用户明确要求逐任务确认时改用 `automationMode=semi`。只有用户明确要求 `fp-execute-sdd`、SDD 或多代理隔离执行时，才把执行入口交给 `fp-execute-sdd`，不要根据任务数量、模块跨度或风险自动切换。
+执行入口：推荐使用 `fp-execute` 在当前上下文直接完成计划；只有用户明确要求 `fp-execute-sdd`、SDD 或多代理隔离执行时才切换，不按任务数量或复杂度自动切换。自动化模式与二选一路由由外层 `fp-start` 阶段 4 统一裁决，本 skill 不展开执行模式细节。

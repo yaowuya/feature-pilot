@@ -39,9 +39,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 | `commands/fp-explore.md` | 只读调查当前代码事实、行为、约束、风险和可选方案；支持空输入的有界项目概览，不创建产物、不进入实现 |
 | `commands/fp-eli5.md` | 显式按需生成零基础专业图解；仓库主题单向复用现有 `fp-explore` standalone，默认不写仓库 |
 | `commands/fp-prd.md` | 仅在明确调用或明确要求编写 PRD 时启动访谈；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
-| `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路 |
-| `commands/fp-propose.md` | 仅生成并确认开发提案的逻辑形式：小型 `proposal.md` 或拆分 `proposal/00-index.md` 及其 manifest 分片 |
-| `commands/fp-brainstorm.md` | 基于已确认提案生成技术设计 |
+| `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路；中段恢复（propose/brainstorm/plan）也统一经 `/fp-start <slug>` 进入 |
 | `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
 | `commands/fp-coverage.md` | 先固定覆盖率统计口径，再按可恢复的模块级批次补充测试，最终以最新完整测试全部通过且精确覆盖率达标作为双重验收门禁 |
 | `commands/fp-module-review.md` | 大型或多模块专项审查、Finding 门禁与受控修复 |

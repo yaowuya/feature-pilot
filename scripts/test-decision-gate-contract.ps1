@@ -179,8 +179,6 @@ $brainstormSkillPath = Join-Path $root 'skills\fp-brainstorm\SKILL.md'
 $designTemplatePath = Join-Path $root 'skills\fp-brainstorm\design-template.md'
 $startSkillPath = Join-Path $root 'skills\fp-start\SKILL.md'
 $decisionLedgerPath = Join-Path $root 'skills\_shared\decision-ledger.md'
-$proposeCommandPath = Join-Path $root 'commands\fp-propose.md'
-$brainstormCommandPath = Join-Path $root 'commands\fp-brainstorm.md'
 $startCommandPath = Join-Path $root 'commands\fp-start.md'
 $validatorPath = Join-Path $root 'scripts\validate-plugin.ps1'
 
@@ -191,8 +189,6 @@ foreach ($path in @(
     $designTemplatePath,
     $startSkillPath,
     $decisionLedgerPath,
-    $proposeCommandPath,
-    $brainstormCommandPath,
     $startCommandPath,
     $validatorPath
 )) {
@@ -205,8 +201,6 @@ $brainstormSkill = Read-Utf8 $brainstormSkillPath
 $designTemplate = Read-Utf8 $designTemplatePath
 $startSkill = Read-Utf8 $startSkillPath
 $decisionLedger = Read-Utf8 $decisionLedgerPath
-$proposeCommand = Read-Utf8 $proposeCommandPath
-$brainstormCommand = Read-Utf8 $brainstormCommandPath
 $startCommand = Read-Utf8 $startCommandPath
 $validator = Read-Utf8 $validatorPath
 
@@ -374,13 +368,7 @@ Assert-Anchors $brainstormSkill @(
 Assert-Anchors $brainstormSkill @('globally unique D-NNN sequence') 'fp-brainstorm cross-end decision ownership'
 Assert-Anchors $startSkill @('globally unique D-NNN sequence', 'Covered IDs') 'fp-start cross-end decision recovery'
 
-foreach ($surface in @(
-    @{ Name = 'commands/fp-propose.md'; Text = $proposeCommand },
-    @{ Name = 'commands/fp-brainstorm.md'; Text = $brainstormCommand },
-    @{ Name = 'commands/fp-start.md'; Text = $startCommand }
-)) {
-    Assert-Anchors $surface.Text @('Decision Ledger', 'per-item confirmation') $surface.Name
-}
+Assert-Anchors $startCommand @('Decision Ledger', 'per-item confirmation') 'commands/fp-start.md'
 
 Assert-Anchors $startCommand @('fresh implementer/reviewer isolation') 'commands/fp-start.md SDD trigger'
 Assert-Anchors $validator @(
