@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 function Assert-Condition([bool]$Condition, [string]$Message) {
     if (-not $Condition) { throw "Test failed: $Message" }
