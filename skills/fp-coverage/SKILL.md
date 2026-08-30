@@ -1,6 +1,6 @@
 ---
 name: fp-coverage
-description: Use when a user asks to raise unit-test, line, branch, statement, or combined coverage to a target, close coverage gaps, establish a coverage gate, or resume an interrupted coverage-improvement effort.
+description: Use when a user asks to raise unit-test, line, branch, statement, function, instruction, or combined coverage to an explicit target, close measured coverage gaps through behavior tests, or resume an interrupted coverage-improvement effort.
 ---
 
 ## FeaturePilot workspace

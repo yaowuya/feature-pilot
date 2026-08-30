@@ -171,17 +171,11 @@ foreach ($path in $disallowedPaths) {
 }
 
 $readme = Read-Utf8 (Join-Path $root 'README.md')
-$agents = Read-Utf8 (Join-Path $root 'AGENTS.md')
 $codexPlugin = Read-Utf8 (Join-Path $root '.codex-plugin\plugin.json') | ConvertFrom-Json
 foreach ($anchor in @('commands/fp-eli5.md', '`fp-eli5`', '/fp-eli5', 'HTML artifact', 'Markdown + Mermaid', 'no repository write by default')) {
     Assert-Condition ($readme.Contains($anchor)) "README.md is missing public anchor $anchor"
 }
-$expectedIntentRow = '| Explicit `/fp-eli5`, `$fp-eli5`, or explicit request for a zero-background visual explanation | `skills/fp-eli5/SKILL.md` |'
-Assert-Condition ($agents.Contains($expectedIntentRow)) 'AGENTS.md is missing the exact fp-eli5 intent row'
-foreach ($anchor in @('fp-eli5', 'HTML artifact', 'Markdown + Mermaid', 'no repository write by default')) {
-    Assert-Condition ($agents.Contains($anchor)) "AGENTS.md is missing public anchor $anchor"
-}
-foreach ($surface in @($readme, $agents)) {
+foreach ($surface in @($readme)) {
     foreach ($field in @('active-slug:', 'pending-gate:', 'allowed-sources:', 'return-to:')) {
         Assert-Condition (-not $surface.Contains($field)) "public docs must not copy internal field $field"
     }

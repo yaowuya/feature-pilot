@@ -1,6 +1,6 @@
 ---
 name: fp-brainstorm
-description: 通过苏格拉底式提问，基于 proposal.md 和可选 delta spec 生成按实际范围拆分的技术设计文件
+description: Use when an approved FeaturePilot proposal needs backend and/or frontend technical design before task planning.
 ---
 ## FeaturePilot workspace and information layer
 

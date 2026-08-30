@@ -1,6 +1,6 @@
 ---
 name: fp-propose
-description: 为新功能变更生成并确认 proposal.md 提案文档
+description: Use when a FeaturePilot change needs a reviewable proposal derived from an approved PRD or confirmed feature description before technical design.
 ---
 ## FeaturePilot workspace and information layer
 

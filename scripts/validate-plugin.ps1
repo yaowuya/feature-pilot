@@ -293,20 +293,11 @@ Assert-Condition ($artifactLayoutText.Contains('exact `## Fragment Manifest` sec
 Assert-Condition ($artifactLayoutText.Contains('must declare every such edge exactly once') -and $artifactLayoutText.Contains('never substitutes for or adds an edge')) 'shared artifact-layout contract does not require exact owner-graph edge declarations'
 
 $publicSurfaces = @(
-    [pscustomobject]@{ Name = 'AGENTS.md'; Text = Read-Utf8 (Join-Path $root 'AGENTS.md') }
     [pscustomobject]@{ Name = 'README.md'; Text = Read-Utf8 (Join-Path $root 'README.md') }
     [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
     [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = [string]$codexPlugin.interface.longDescription }
 )
 $publicContractExpectations = @{
-    'AGENTS.md' = @(
-        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
-        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
-        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
-        '过程文档的叙述性内容默认使用中文'
-        '保留必要英文'
-        '当前用户明确语言指令优先于目标项目设置'
-    )
     'README.md' = @(
         '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
         '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
@@ -346,12 +337,12 @@ $publicArtifactAnchors = @(
     'no read-only compatibility'
 )
 $fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split form."
-Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['README.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
 Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) 'public auto-split mutation fixture lost a shared public artifact anchor'
-$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['AGENTS.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
+$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['README.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
 Assert-Condition (-not $fullAnchorPublicContractAccepted) 'public validation predicate accepts a full-anchor surface with appended `Multiple subsystems default to split form.`'
 $missingSemanticScopesMutation = $publicSurfaces[0].Text.Replace('功能、子系统、页面区域、任务组或 ', '')
-Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['AGENTS.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
+Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['README.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
 Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
 Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`n语义优先")) 'obsolete guidance detector misses Chinese 语义优先 wording'
 foreach ($surface in $publicSurfaces) {
@@ -418,10 +409,6 @@ foreach ($surface in $publicSurfaces) {
         Assert-Condition (-not $surface.Text.Contains($obsoleteTrigger)) "$($surface.Name) still contains an obsolete adjacent fp-prd trigger sentence"
     }
 }
-$agentsText = Read-Utf8 (Join-Path $root 'AGENTS.md')
-$expectedAgentsPrdIntentRow = '| Explicit `/fp-prd`, `$fp-prd`, or explicit request to create, write, revise, or complete a PRD or product requirements document | `skills/fp-prd/SKILL.md` |'
-$agentsPrdIntentRows = @([regex]::Matches($agentsText, '(?m)^\|[^\r\n]*`skills/fp-prd/SKILL\.md`\s*\|\s*$') | ForEach-Object { $_.Value.Trim() })
-Assert-Condition ($agentsPrdIntentRows.Count -eq 1 -and $agentsPrdIntentRows[0] -ceq $expectedAgentsPrdIntentRow) 'AGENTS.md fp-prd intent row must use the exact canonical positive trigger set'
 foreach ($surface in $publicSurfaces) {
     foreach ($anchor in $publicArtifactAnchors) {
         Assert-Condition ($surface.Text.Contains($anchor)) "$($surface.Name) is missing the public artifact/discovery contract: $anchor"
@@ -450,6 +437,15 @@ foreach ($command in $commands) {
     Assert-Condition ($commandLines -le 20) "$($command.Name) is no longer a thin adapter ($commandLines lines)"
 }
 
+$expectedTriggerOnlyDescriptions = @{
+    'fp-archive' = 'Use when a completed FeaturePilot change has passed final review and the user wants to archive its artifacts and update project history.'
+    'fp-brainstorm' = 'Use when an approved FeaturePilot proposal needs backend and/or frontend technical design before task planning.'
+    'fp-explore' = 'Use when a user asks to investigate repository facts, behavior, options, constraints, or risks without modifying files or advancing a FeaturePilot workflow.'
+    'fp-propose' = 'Use when a FeaturePilot change needs a reviewable proposal derived from an approved PRD or confirmed feature description before technical design.'
+    'fp-quick' = 'Use when a user wants a small, local feature change, bug fix, or refinement handled without the full FeaturePilot proposal-design-plan document chain.'
+    'fp-start' = 'Use when a user asks to run or resume the full FeaturePilot workflow for a feature after any required PRD work.'
+}
+
 foreach ($skill in $skills) {
     $skillPath = Join-Path $skill.FullName 'SKILL.md'
     $skillText = Read-Utf8 $skillPath
@@ -458,6 +454,10 @@ foreach ($skill in $skills) {
     $frontmatterKeys = @([regex]::Matches($frontmatter.Groups['body'].Value, '(?m)^([a-zA-Z0-9_-]+):') | ForEach-Object { $_.Groups[1].Value })
     Assert-Condition ($frontmatterKeys.Count -eq 2 -and $frontmatterKeys -contains 'name' -and $frontmatterKeys -contains 'description') "$($skill.Name)/SKILL.md frontmatter must contain only name and description"
     Assert-Condition ($frontmatter.Groups['body'].Value -match '(?m)^description:\s*\S') "$($skill.Name)/SKILL.md has no description"
+    if ($expectedTriggerOnlyDescriptions.ContainsKey($skill.Name)) {
+        $actualDescription = [regex]::Match($frontmatter.Groups['body'].Value, '(?m)^description:\s*(?<value>.+)$').Groups['value'].Value.Trim()
+        Assert-Condition ($actualDescription -ceq $expectedTriggerOnlyDescriptions[$skill.Name]) "$($skill.Name)/SKILL.md description must be a trigger-only context pointer"
+    }
     $lineCount = @($skillText -split "`r?`n").Count
     Assert-Condition ($lineCount -le 500) "$($skill.Name)/SKILL.md has $lineCount lines (limit: 500)"
     Assert-Condition ($skillText -match "(?m)^name:\s*$([regex]::Escape($skill.Name))\s*$") "$($skill.Name)/SKILL.md frontmatter name does not match its directory"
@@ -466,6 +466,11 @@ foreach ($skill in $skills) {
     $anchoredWorkspaceContract = '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`'
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
+
+$agentsRouterValidator = Join-Path $root 'scripts\test-agents-router-contract.ps1'
+Assert-Condition (Test-Path $agentsRouterValidator) 'focused AGENTS router validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $agentsRouterValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused AGENTS router validator failed'
 
 $uiE2EIntegrationValidator = Join-Path $root 'scripts\test-ui-e2e-integration-contract.ps1'
 Assert-Condition (Test-Path $uiE2EIntegrationValidator) 'focused UI/E2E cross-flow integration validator is missing'
@@ -635,6 +640,10 @@ foreach ($anchor in @(
     Assert-Condition ($sddFinalReviewSection.Groups['body'].Value.Contains($anchor)) "fp-execute-sdd final review mapping is incomplete: $anchor"
 }
 Assert-Condition (-not $sddFinalReviewSection.Groups['body'].Value.Contains('Otherwise dispatch `task-reviewer-prompt.md` at whole-change scope')) 'fp-execute-sdd still uses a task-schema fallback for final review'
+
+$expectedSddDescription = 'description: Use when a user explicitly requests fp-execute-sdd for a confirmed FeaturePilot plan, or resumes an existing SDD execution recorded in progress.md.'
+Assert-Condition ($sddSkillText.Contains($expectedSddDescription)) 'fp-execute-sdd discovery pointer permits complexity-based implicit routing'
+Assert-Condition ($sddSkillText.Contains('Explicit SDD intent is the invocation gate; complexity is decision context only.')) 'fp-execute-sdd body does not preserve explicit-only routing ownership'
 
 foreach ($anchor in @(
     'Default execution path'

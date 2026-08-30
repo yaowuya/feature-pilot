@@ -1,6 +1,6 @@
 ---
 name: fp-quick
-description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-explore 的 quick profile 获取候选文件、复用模式、验证路径、风险和范围证据，不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则每轮最多问一个实质性问题，如无疑问则输出内联实现计划并等待用户确认，确认后按计划实现与验证。
+description: Use when a user wants a small, local feature change, bug fix, or refinement handled without the full FeaturePilot proposal-design-plan document chain.
 ---
 ## FeaturePilot workspace and information layer
 

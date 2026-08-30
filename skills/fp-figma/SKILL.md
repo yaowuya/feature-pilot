@@ -1,6 +1,6 @@
 ---
 name: fp-figma
-description: 根据 Figma 链接生成或完善项目当前前端框架的 UI 实现，遵循项目本地 `fp-docs/settings/frontend.md`、`prototype-style.md` 和通用 `agent.md` 中声明的 UI/UX 规范
+description: Use when implementing or refining UI from a user-provided Figma node URL in a FeaturePilot project.
 ---
 ## FeaturePilot workspace and information layer
 
@@ -19,7 +19,7 @@ When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract
 
 ## 基本规则
 
-- Figma 相关流程统一使用 `fp-figma`；禁止切换到全局 `figma-to-vue` 或其他同类 skill。
+- `fp-figma` owns FeaturePilot orchestration. Load official Figma prerequisite guidance when a specific MCP call requires it, then return to this workflow.
 - 同时遵循 `fp-docs/settings/frontend.md`、`fp-docs/settings/prototype-style.md`（仅在没有可信 Figma UI 设计时用于功能范围）、`fp-docs/settings/agent.md` 中的通用策略、`fp-frontend-spec`。
 - 优先使用项目 settings 或现有代码中确认的组件库；没有配置时使用中性组件映射，不假设任何客户专属前缀；确实无对应组件才允许自行封装，并写明原因。
 - 遵循项目现有前端框架和脚本/状态管理写法；不得假设 Vue、React 或特定语法。
@@ -33,7 +33,7 @@ When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract
 
 - **Figma-only UI source:** 有可信 Figma UI 设计时，Figma UI 设计是唯一 UI/视觉/布局/尺寸/token/状态表现/交互呈现来源。当前真实代码、已有测试和真实浏览器行为仅用于既有功能保护基线；原型不得作为 UI 视觉、布局、呈现或还原判断的参考。prototype must not be a UI visual reference.
 - 没有可信 Figma UI 设计时，prototype FUNCTION_SCOPE_ONLY：原型只可辅助确认功能与交互范围，不得作为像素级视觉来源；视觉还原只能是 `CANNOT_VERIFY`。
-- 当 Figma MCP 可用时，before implementation 必须针对用户指定的 specified node 调用 `get_design_context`，并记录 Figma node、revision/time、frame/variant，以及可用的 variables、Auto Layout、assets 和组件信息；只读取当前范围。调用失败或信息不可得时如实标为 unavailable，do not fabricate。
+- 当 Figma MCP 可用时，before calling `get_design_context`，必须加载 `figma:figma-design-to-code`；若该 skill 不可用，则读取 `skill://figma/figma-design-to-code/SKILL.md`。这是 `fp-figma` 内部的 mandatory tool guidance，不替代本工作流。随后针对用户指定的 specified node 调用 `get_design_context`，并在 before implementation 记录 Figma node、revision/time、frame/variant，以及可用的 variables、Auto Layout、assets 和组件信息；只读取当前范围。调用失败或信息不可得时如实标为 unavailable，do not fabricate。
 - 当 Figma MCP 不可用时，只有用户或已批准产物中的 explicitly approved source（Figma 导出或其他静态设计源）才可继续；没有可信 source 是 blocker，不得从记忆、代码或本地 runtime screenshot 反推并冒充设计上下文。
 - `reference.png` 只能来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 只能来自 real target runtime 的实际 runtime route，使用 stable data 与 stable environment。`diff.png` 是 optional diff；missing diff 必须说明，且 must not hide 缺失 reference/current 的事实。
 - Code Connect 只是 component mapping 的 optional enhancement，受能力与许可影响；must not auto-create `.figma.ts`，must not change tsconfig，must not install dependencies。Code Connect absence does not block ordinary UI。

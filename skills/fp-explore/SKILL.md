@@ -1,6 +1,6 @@
 ---
 name: fp-explore
-description: Explore repository facts, behavior, options, constraints, and risks without modifying files or advancing a FeaturePilot workflow.
+description: Use when a user asks to investigate repository facts, behavior, options, constraints, or risks without modifying files or advancing a FeaturePilot workflow.
 ---
 ## FeaturePilot workspace and information layer
 

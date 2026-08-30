@@ -48,6 +48,8 @@ $frontmatterKeys = @([regex]::Matches($frontmatter.Groups['body'].Value, '(?m)^(
 Assert-Condition ($frontmatterKeys.Count -eq 2 -and $frontmatterKeys -contains 'name' -and $frontmatterKeys -contains 'description') 'Canonical skill frontmatter must contain only name and description'
 Assert-Condition ($canonical -match '(?m)^name:\s*sync-plugin-runtimes\s*$') 'Canonical skill name does not match its directory'
 Assert-Condition ($canonical -match '(?m)^description:\s*Use when .+') 'Canonical skill description must be trigger-only and start with Use when'
+Assert-Condition ($canonical -match '(?m)^description:.*DeepSeek Harness') 'Canonical skill description must expose the DeepSeek Harness trigger'
+Assert-Condition ($adapter -match '(?m)^description:.*DeepSeek Harness') 'Claude adapter description must preserve the DeepSeek Harness trigger'
 
 foreach ($anchor in @(
     'scripts/sync-plugin-runtimes.ps1'

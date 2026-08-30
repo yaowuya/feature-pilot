@@ -9,6 +9,7 @@ description: Use when performing a final whole-branch review of an implemented F
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving review inputs; it is the normative layout and validation contract.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before reviewing UI-bearing work; it owns the staged UI/E2E lifecycle, zero-mock rule, coverage matrix, and non-waivable archive boundary.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` once before resolving direct or SDD review identity, phase, scope, shared gates, package evidence, or report output; it owns the common final-review schemas and invariants.
 Apply the shared `Process document language` contract when writing the final review report. This reminder does not alter the exact `PASS`, `PASS_WITH_NOTES`, `FAIL`, or `BLOCKED` verdict semantics.
 ---
 

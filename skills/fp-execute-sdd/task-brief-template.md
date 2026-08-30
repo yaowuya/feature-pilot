@@ -101,12 +101,13 @@ Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each planned case owns
 
 Read the shared staged contract and resolve this table by the same stable Task ID + Case ID as the Visual Evidence Manifest. Do not copy visual-manifest fields: reference the visual row instead.
 
-| Case ID | Visual Evidence Manifest reference | UI Delivery Level | Source-derived condition / requirement | E2E Applicability | Lifecycle stage | E2E evidence root | Coverage matrix | E2E verifier handoff | Cleanup / blocker |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `<case-id>` | `<canonical plan row and .fp-execute/visual/<task-id>/<case-id>/manifest.md>` | `static-only | interactive | business-flow` | `<source/requirement reference>` | `REQUIRED | N/A with rationale` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `.fp-execute/e2e/<task-id>/<case-id>/` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` | `<independent verifier path/status or N/A>` | `<cleanup result or BLOCKED rationale>` |
+| Case ID | Visual Evidence Manifest reference | UI Delivery Level | Source-derived condition / requirement | E2E Applicability | Lifecycle stage | Visual reviewer handoff | E2E evidence root | Coverage matrix | E2E verifier handoff | Cleanup / blocker |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<canonical plan row and .fp-execute/visual/<task-id>/<case-id>/manifest.md>` | `static-only | interactive | business-flow` | `<source/requirement reference>` | `REQUIRED | N/A with rationale` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `.fp-execute/reviews/<task-id>-<case-id>-visual-review-<visual-attempt>.md` / `<pending or verdict>` | `.fp-execute/e2e/<task-id>/<case-id>/` or `N/A` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` or `N/A` | `<independent verifier path/status or N/A>` | `<cleanup result or BLOCKED rationale>` |
 
-- `static-only` can be `N/A` only after visual pass and an evidence-backed reason. `interactive` and `business-flow` need the independent verifier's real-browser `FRONTEND_E2E_PASS`.
-- The implementer may prepare `INTERACTION_READY`, but never self-confirm `FRONTEND_E2E_PASS`; the controller dispatches the verifier after `VISUAL_REVIEW_PASS`.
+- The controller persists `<visual-attempt>` per Task ID + Case ID independently from task-review `reviewAttempt` / `reviewScopeId`, initializes it to 0, increments it immediately before each visual dispatch, and permits dispatched values 1..3 only. It passes current reviewed HEAD to the visual reviewer. Each visual review artifact records start/end plus SHA-256 for manifest/reference/current/optional diff and is never overwritten; visual retries do not consume task-review attempts. Freshness failure after visual attempt 3 is `BLOCKED` and never creates attempt 4.
+- `static-only` records both E2E path fields as `N/A` and creates no E2E scaffolding; this is valid only after visual pass and an evidence-backed reason. `interactive` and `business-flow` need the independent verifier's real-browser `FRONTEND_E2E_PASS`.
+- The implementer produces `STATIC_UI_READY` evidence but never self-confirms `VISUAL_REVIEW_PASS`; the controller dispatches the fresh visual reviewer and persists its case-level artifact first. The implementer may prepare `INTERACTION_READY`, but never self-confirm `FRONTEND_E2E_PASS`; the controller dispatches the E2E verifier only after `VISUAL_REVIEW_PASS`.
 - This is recovery/verification evidence only. The task-owner checkbox remains the sole plan-completion authority.
 
 ### Browser Capability Authority (interactive/business-flow only)
@@ -155,7 +156,7 @@ The report must include:
 - Required `FIGCAP-*` browser-visible results and required `PRES-*` before/after replay results.
 - Browser capability resolution and any non-PASS reason that prevents overall Figma completion.
 - Case-level Visual Evidence rows and `manifest.md`/`reference.png`/`current.png`/optional `diff.png` provenance, plus separate browser interaction evidence.
-- Separate UI/E2E Delivery Contract rows with lifecycle, independent verifier handoff/result, E2E/coverage evidence paths, cleanup, and `BLOCKED` rationale.
+- Separate UI/E2E Delivery Contract rows with lifecycle, fresh visual-review handoff/result, independent E2E verifier handoff/result, E2E/coverage evidence paths, cleanup, and `BLOCKED` rationale.
 - Commit SHA(s).
 - Known concerns or blockers.
 ```

@@ -1,6 +1,6 @@
 ---
 name: fp-archive
-description: 归档已完成的变更：移动变更目录，更新 history.md
+description: Use when a completed FeaturePilot change has passed final review and the user wants to archive its artifacts and update project history.
 ---
 ## FeaturePilot workspace and information layer
 
@@ -9,6 +9,7 @@ description: 归档已完成的变更：移动变更目录，更新 history.md
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, stale-intel evidence, compatibility, and the archive-only ownership boundary.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving the archive candidate; it is the normative layout and validation contract.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before checking a UI-bearing archive candidate; it owns the non-waivable UI/E2E archive boundary.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` once before interpreting the latest final-review report identity, scope, Figma/Visual evidence, or UI/E2E gate; archive still owns snapshot freshness, user confirmation, the move, and history update.
 
 叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段以及契约要求精确匹配的英文 schema 标题保留必要英文。若用户或目标项目设置明确指定其他语言，按共享优先级执行。
 ---

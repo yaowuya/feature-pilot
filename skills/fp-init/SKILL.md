@@ -18,7 +18,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - `new-project-manifest-only`：新项目信息层默认只有 `fp-docs/manifest.md`，不预建 `settings/`、`intel/` 或任何骨架文件。
 - Explain the workflow: `/fp-prd` clarifies requirements; `/fp-start` picks up a PRD or feature description and drives design → plan → execution.
 - Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), `fp-docs/settings/backend.md` (backend/API/data/security), and/or `fp-docs/settings/prototype-style.md` (prototype visual style reference) with user confirmation.
-- Optionally install CodeGraph through npm, configure Agent MCP separately, and build a project-local code map with explicit user authorization.
+- `codegraph-current-state-single-decision`：根据当前 CLI 状态，用一次选择覆盖获选路径中的 npm 安装、Agent MCP 配置与首次建图，并逐步汇报。
 - `approved-discovery-project-facts-only`：批准 discovery 后，生成的 Markdown 事实缓存最多只有 `fp-docs/intel/project-facts.md`，并配套 metadata-only 的 `fp-docs/intel/.freshness.json`。
 - `unknowns-and-decisions-human-owned-lazy`：只有本流程获得明确写入范围批准且确有项目级内容时，才创建 `intel/unknowns.md` 或 `intel/decisions.md`。
 - Never overwrite existing customer manifest/settings/intel without explicit approval.
@@ -72,7 +72,7 @@ return-to: <fp-init + exact same pending-gate>
 -->
 ```
 
-解释不得合并或代替 CodeGraph install、MCP、首次建图、stale refresh、manifest diff、每个 settings、discovery 或 human-owned write scope 的独立授权。`fp-eli5` 返回后不更新任何状态、文件或批准；重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
+解释不得合并或代替 `codegraph-current-state-single-decision`、stale refresh、manifest diff、每个 settings、discovery 或 human-owned write scope 的各自授权。`fp-eli5` 返回后不更新任何状态、文件或批准；重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
 
 ### 1. Locate or create workspace
 
@@ -102,7 +102,7 @@ Ask one decision; it covers every side effect of the current clean install path:
 未检测到可用的 CodeGraph CLI。是否为 FeaturePilot 配置可选代码地图？一次批准涵盖：npm 全局安装、Agent MCP 配置（会修改用户级 MCP/instructions 配置）与当前项目首次建图；各步按顺序执行并逐步汇报，任一步失败即回退并继续普通 init。
 
 1. 自动安装并配置（推荐）（`auto-install`）— 依次执行唯一允许的安装命令 `npm install -g @colbymchenry/codegraph@latest`（写入 npm 全局目录）→ 验证 `codegraph --version` → Agent MCP 配置 `codegraph install --target=auto --location=global --yes` → 首次建图 `codegraph init <project-root>`。
-2. 仅自动安装并建图（不配置 MCP）（`auto-install`）— 执行安装命令 → 验证版本 → `codegraph init <project-root>`，不修改用户级配置。
+2. 仅自动安装并建图（不配置 MCP）（`auto-install-no-mcp`）— 执行安装命令 → 验证版本 → `codegraph init <project-root>`，不修改用户级配置。
 3. 展示安装步骤（`show-install-steps`）— 只展示 npm 前置条件、安装、可选 MCP 和建图命令，本轮不执行。
 4. 跳过（`skip-codegraph`）— 不安装、不配置、不建图，继续普通 init。
 ```

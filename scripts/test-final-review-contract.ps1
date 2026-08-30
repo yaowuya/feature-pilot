@@ -66,6 +66,35 @@ function Test-DispatchCommitContract([string]$text) {
     return $true
 }
 
+function Test-SharedFinalReviewReference([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    return $active.Contains('${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md')
+}
+
+function Test-NoLocalSharedInvariantDuplication([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    foreach ($invariant in @(
+        'Review the complete branch inventory first'
+        '- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.'
+        'Before emitting the UI/E2E gate, reconcile the reviewed target snapshot'
+        '`N/A` is valid only with zero UI-bearing inventory rows'
+        '- `N/A` means the UI Case Inventory has zero UI-bearing sources'
+        'Write-mode and side-effect commands such as'
+        'Treat `--fix`, `--write`'
+        'CodeGraph `explore`, `impact`, and `affected`'
+    )) {
+        if ($active.Contains($invariant)) { return $false }
+    }
+    return $true
+}
+
+function Test-DirectModeDispatchBranch([string]$text) {
+    $active = Get-ActiveMarkdown $text
+    return $active.Contains('When `reviewPhase=N/A-direct`, record the SDD dispatch checks as `N/A-direct`.') -and
+        $active.Contains('Require `reviewedTargetHead=packageParentHead=dispatchHead=HEAD` and `evidenceCommitHead=N/A`.') -and
+        $active.Contains('Do not run the SDD parent/count/allowed-delta assertions in direct mode.')
+}
+
 function Test-PhaseResumeContract([string]$text) {
     foreach ($anchor in @(
         'reviewPhase',
@@ -171,8 +200,7 @@ function Test-UiE2EArtifactGate([string]$text) {
         ($body -match '(?is)\| Task ID \| Case ID \| UI Delivery Level \| Required stage \| Actual stage \|'),
         ($body -match '(?is)\.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix\.md'),
         ($body -match '(?is)Mocked Core API'),
-        ($body -match '(?is)Cleanup'),
-        ($body -match '(?is)(?:cannot|must not).{0,200}(?:PASS_WITH_NOTES|review debt|manual (?:override|approval)|waiv(?:e|ed))')
+        ($body -match '(?is)Cleanup')
     )
     return -not ($checks -contains $false)
 }
@@ -212,8 +240,7 @@ function Test-UiCaseInventoryArtifact([string]$text) {
     $section = [regex]::Match($active, '(?ms)^## UI Case Inventory / N/A Reconciliation[ \t]*\r?\n(?<body>.*?)(?=^## |\z)')
     if (-not $section.Success) { return $false }
     $body = $section.Groups['body'].Value
-    return $body -match '(?is)\| Source owner / diff evidence \| UI classification \| Task ID \| Case ID \| Disposition \|' -and
-        $body -match '(?is)N/A.{0,360}(?:zero|no) UI.{0,360}(?:mapped-current|unowned)'
+    return $body -match '(?is)\| Source owner / diff evidence \| UI classification \| Task ID \| Case ID \| Disposition \|'
 }
 
 function Test-NoPermissiveFinalDisposition([string]$text) {
@@ -240,8 +267,7 @@ function Test-FigmaFinalArtifact([string]$text) {
     $section = [regex]::Match($active, '(?ms)^#{2,3} Figma Completion Gate[ \t]*\r?\n(?<body>.*?)(?=^## |\z)')
     if (-not $section.Success) { return $false }
     $body = $section.Groups['body'].Value
-    return $body -match '(?is)Figma Completion Status.{0,260}(?:FIGCAP|PRES).{0,260}(?:FAIL|CANNOT_VERIFY|BLOCKED|INCOMPLETE).{0,260}(?:FAIL|BLOCKED)' -and
-        (Test-NoPermissiveFinalDisposition $body)
+    return $body -match '(?is)Figma Completion Status.{0,120}COMPLETE.{0,120}INCOMPLETE.{0,120}BLOCKED'
 }
 
 function Test-ArchiveFigmaHardGate([string]$text) {
@@ -264,6 +290,7 @@ $reviewSkillPath = Join-Path $root 'skills\fp-final-review\SKILL.md'
 $reviewerPath = Join-Path $root 'skills\fp-final-review\final-reviewer.md'
 $reportTemplatePath = Join-Path $root 'skills\fp-final-review\final-review-template.md'
 $finalPackagePath = Join-Path $root 'skills\fp-final-review\final-review-package-template.md'
+$sharedReviewContractPath = Join-Path $root 'skills\fp-final-review\final-review-contract.md'
 $sddSkillPath = Join-Path $root 'skills\fp-execute-sdd\SKILL.md'
 $sddPackagePath = Join-Path $root 'skills\fp-execute-sdd\review-package-template.md'
 $codeGraphPath = Join-Path $root 'skills\_shared\codegraph.md'
@@ -276,6 +303,7 @@ foreach ($requiredPath in @(
     $reviewerPath,
     $reportTemplatePath,
     $finalPackagePath,
+    $sharedReviewContractPath,
     $sddSkillPath,
     $sddPackagePath,
     $codeGraphPath,
@@ -290,6 +318,7 @@ $reviewSkill = Read-Utf8 $reviewSkillPath
 $reviewer = Read-Utf8 $reviewerPath
 $reportTemplate = Read-Utf8 $reportTemplatePath
 $finalPackage = Read-Utf8 $finalPackagePath
+$sharedReviewContract = Read-Utf8 $sharedReviewContractPath
 $sddSkill = Read-Utf8 $sddSkillPath
 $sddPackage = Read-Utf8 $sddPackagePath
 $codeGraph = Read-Utf8 $codeGraphPath
@@ -299,6 +328,112 @@ $archiveSkill = Read-Utf8 $archiveSkillPath
 $activeReviewer = Get-ActiveMarkdown $reviewer
 $activeReportTemplate = Get-ActiveMarkdown $reportTemplate
 $activeFinalPackage = Get-ActiveMarkdown $finalPackage
+
+Assert-Condition (@($sharedReviewContract -split "`r?`n").Count -le 500) 'shared final-review contract exceeds 500 lines'
+Assert-Condition ($sharedReviewContract.Length -le 30000) 'shared final-review contract exceeds 30,000 characters'
+foreach ($heading in @(
+    '# FeaturePilot Final Review Shared Contract'
+    '## Review Identity and Phase'
+    '## Scope and Ownership'
+    '## Every-Attempt Gates'
+    '## Command Safety'
+    '## CodeGraph Candidate Verification'
+    '## Figma Capability and Preservation'
+    '## Visual Evidence'
+    '## UI Case Inventory / N/A Reconciliation'
+    '## UI/E2E Gate'
+)) {
+    Assert-Condition ($sharedReviewContract.Contains($heading)) "shared final-review contract lost heading: $heading"
+}
+foreach ($anchor in @(
+    'reviewScopeId'
+    'reviewAttempt'
+    'maxReviewAttempts=3'
+    'reviewedTargetHead'
+    'packageParentHead'
+    'evidenceCommitHead'
+    'dispatchHead'
+    'N/A-direct'
+    'pending-dispatch'
+    'review-completed'
+    'result-committed'
+    'mapped-current'
+    'cross-change-only'
+    'shared'
+    'unowned/unmapped'
+    'SAFE | UNSAFE | UNKNOWN'
+    'FIGCAP-*'
+    'PRES-*'
+    'Visual evidence: PASS | FAIL | CANNOT_VERIFY'
+    'Task ID + Case ID'
+    'UI/E2E Gate: PASS | N/A | FAIL | BLOCKED'
+)) {
+    Assert-Condition ($sharedReviewContract.Contains($anchor)) "shared final-review contract lost invariant: $anchor"
+}
+
+$sharedProjectionHeaders = @(
+    '| Declared path/contract | Observed diff path | Mapping | Classification | Relevant change owner | Evidence |'
+    '| Path | Candidate lookup | Canonical owner proof | Resolved owners | Classification |'
+    '| Gate | Result | Evidence |'
+    '| Command | Safety | Definition evidence | Result | Notes |'
+    '| Query/helper | Candidates | Current-source verification | Native search / test / command evidence | Fallback |'
+    '| Source owner / diff evidence | UI classification | Task ID | Case ID | Disposition |'
+    '| Task ID | Case ID | UI Delivery Level | Required stage | Actual stage | Visual evidence reference | E2E applicability / result | Matrix / evidence paths | Mocked Core API | Cleanup | Business result | Blocking condition |'
+)
+foreach ($header in $sharedProjectionHeaders) {
+    Assert-Condition ($sharedReviewContract.Contains($header)) "shared final-review contract lost projection header: $header"
+}
+$surfaceSpecificProjections = @(
+    @{ Name = 'package command'; Surface = $finalPackage; Header = '| Command | Classification | Definition inspected | Mutation reason / safe proof | Result |' }
+    @{ Name = 'report command'; Surface = $reportTemplate; Header = '| Command | Safety | Definition evidence | Result | Notes |' }
+    @{ Name = 'package CodeGraph'; Surface = $finalPackage; Header = '| Query/helper | Candidate paths/symbols | Current-source verification | Native search/test/command proof | Fallback |' }
+    @{ Name = 'report CodeGraph'; Surface = $reportTemplate; Header = '| Query/helper | Candidates | Current-source verification | Native search / test / command evidence | Fallback |' }
+    @{ Name = 'package Figma'; Surface = $finalPackage; Header = '| ID | Required observable result / existing behavior | Owner task/file | Before baseline | After replay | Status | Evidence |' }
+    @{ Name = 'report Figma'; Surface = $reportTemplate; Header = '| ID | Source / required observable result | Owner task/file | Runtime evidence | Status | Review evidence |' }
+)
+foreach ($projection in $surfaceSpecificProjections) {
+    Assert-Condition ($sharedReviewContract.Contains($projection.Header)) "shared final-review contract lost $($projection.Name) projection"
+    Assert-Condition ($projection.Surface.Contains($projection.Header)) "$($projection.Name) projection drifted from the shared contract"
+}
+$packageCommandHeader = '| Command | Classification | Definition inspected | Mutation reason / safe proof | Result |'
+$packageCommandDrift = $finalPackage.Replace($packageCommandHeader, '| Command | Classification | Drifted | Result |')
+Assert-Condition ($packageCommandDrift -ne $finalPackage -and -not $packageCommandDrift.Contains($packageCommandHeader)) 'projection-drift mutation did not invalidate the package command projection'
+foreach ($surface in @(
+    @{ Name = 'fp-final-review'; Text = $reviewSkill }
+    @{ Name = 'final reviewer'; Text = $reviewer }
+    @{ Name = 'final package template'; Text = $finalPackage }
+    @{ Name = 'final report template'; Text = $reportTemplate }
+    @{ Name = 'fp-execute-sdd'; Text = $sddSkill }
+    @{ Name = 'fp-archive'; Text = $archiveSkill }
+)) {
+    Assert-Condition (Test-SharedFinalReviewReference $surface.Text) "$($surface.Name) does not actively load the shared final-review contract"
+}
+Assert-Condition ($finalPackage.Contains('creating or resuming an SDD final-review package') -and $finalPackage.Contains('pending-dispatch') -and $finalPackage.Contains('review-completed') -and $finalPackage.Contains('result-committed') -and $finalPackage.Contains('fixing') -and $finalPackage.Contains('complete')) 'final package pointer is not branch-complete across SDD phases'
+Assert-Condition ($reportTemplate.Contains('writing or resuming a final-review report') -and $reportTemplate.Contains('N/A-direct') -and $reportTemplate.Contains('SDD')) 'final report pointer is not branch-complete across direct and SDD modes'
+
+foreach ($surface in @(
+    @{ Name = 'final package template'; Text = $finalPackage }
+    @{ Name = 'final report template'; Text = $reportTemplate }
+)) {
+    Assert-Condition (Test-NoLocalSharedInvariantDuplication $surface.Text) "$($surface.Name) still duplicates a shared invariant"
+}
+$localInvariantMutation = $reportTemplate + "`n- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime."
+Assert-Condition (-not (Test-NoLocalSharedInvariantDuplication $localInvariantMutation)) 'local-duplication detector accepted a copied shared visual invariant'
+
+foreach ($surface in @(
+    @{ Name = 'final package template'; Text = $finalPackage }
+    @{ Name = 'final report template'; Text = $reportTemplate }
+)) {
+    foreach ($header in @(
+        '| Declared path/contract | Observed diff path | Mapping | Classification | Relevant change owner | Evidence |'
+        '| Path | Candidate lookup | Canonical owner proof | Resolved owners | Classification |'
+        '| Gate | Result | Evidence |'
+        '| Source owner / diff evidence | UI classification | Task ID | Case ID | Disposition |'
+        '| Task ID | Case ID | UI Delivery Level | Required stage | Actual stage | Visual evidence reference | E2E applicability / result | Matrix / evidence paths | Mocked Core API | Cleanup | Business result | Blocking condition |'
+    )) {
+        Assert-Condition ($surface.Text.Contains($header)) "$($surface.Name) lost local projection header: $header"
+    }
+}
 
 Assert-Condition (-not (Test-Path (Join-Path $root 'commands\fp-review.md'))) 'old fp-review command still exists'
 Assert-Condition (-not (Test-Path (Join-Path $root 'skills\fp-review'))) 'old fp-review skill directory still exists'
@@ -316,6 +451,7 @@ $reviewInputs = @(
 )
 Assert-Anchors $reviewSkill $reviewInputs 'fp-final-review input contract'
 Assert-Anchors $reviewer $reviewInputs 'final reviewer input contract'
+Assert-Condition ($reviewer.Contains('- reviewPhase: {PENDING_DISPATCH_OR_REVIEW_COMPLETED_OR_RESULT_COMMITTED_OR_FIXING_OR_COMPLETE_OR_NA_DIRECT}')) 'final reviewer input contract omits a valid review phase'
 Assert-Anchors $finalPackage $reviewInputs 'final review package'
 Assert-Condition ($reviewSkill.Contains('maxReviewAttempts=3') -and $reviewer.Contains('maxReviewAttempts=3')) 'review attempt ceiling is not fixed at 3'
 Assert-Anchors $reviewSkill @('independent final scope', 'attempt 1', 'does not auto-fix', 'does not auto-retry') 'direct fp-final-review defaults'
@@ -343,9 +479,7 @@ Assert-Anchors $finalPackage $scopeColumns 'final package Scope Matrix schema'
 Assert-Anchors $reportTemplate $scopeColumns 'final report Scope Matrix schema'
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
-    @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
-    @{ Name = 'final report'; Text = $reportTemplate }
+    @{ Name = 'final reviewer'; Text = $reviewer }
 )) {
     Assert-Anchors $surface.Text @('Scope Matrix', 'declared', 'observed', 'mapped', 'unmapped', 'missing', 'mapped-current', 'cross-change-only', 'shared', 'unowned/unmapped', 'branch inventory/counts', 'selected change', 'each relevant change contract', 'current verdict') $surface.Name
     Assert-Condition ($surface.Text -match '(?is)mapped-current.{0,260}(?:selected change|current change).{0,260}(?:affects|impact)[^\r\n]{0,80}(?:current )?verdict') "$($surface.Name) does not make mapped-current affect the selected-change verdict"
@@ -355,12 +489,12 @@ foreach ($surface in @(
     Assert-Condition ($surface.Text -match '(?is)shared.{0,300}each relevant change contract.{0,260}(?:affects|impact)[^\r\n]{0,80}(?:current )?verdict') "$($surface.Name) does not review shared paths against every relevant contract/current verdict"
     Assert-Condition ($surface.Text -match '(?is)unowned/unmapped.{0,300}(?:scope finding|finding).{0,220}(?:affects|impact)[^\r\n]{0,80}(?:current )?verdict') "$($surface.Name) does not keep unowned risk in the current verdict"
 }
+Assert-Condition (Test-OwnerDiscoveryContract $sharedReviewContract) 'shared final-review contract is missing bounded sibling owner discovery'
+Assert-Condition (Test-CrossChangeIsolationContract $sharedReviewContract) 'shared final-review contract does not isolate cross-change-only paths'
 Assert-Anchors $reviewSkill @('complete branch inventory', 'selected change + shared + unowned') 'change-scoped verdict boundary'
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
-    @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
-    @{ Name = 'final report'; Text = $reportTemplate }
+    @{ Name = 'final reviewer'; Text = $reviewer }
 )) {
     Assert-Condition (Test-OwnerDiscoveryContract $surface.Text) "$($surface.Name) is missing bounded sibling owner discovery"
     Assert-Condition (Test-CrossChangeIsolationContract $surface.Text) "$($surface.Name) does not isolate proven cross-change-only paths"
@@ -392,11 +526,12 @@ Assert-Anchors $reviewer @('packageParentHead == reviewedTargetHead', 'evidenceC
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
-    @{ Name = 'final report'; Text = $reportTemplate }
+    @{ Name = 'shared final-review contract'; Text = $sharedReviewContract }
 )) {
     Assert-Condition (Test-DispatchCommitContract $surface.Text) "$($surface.Name) is missing parent/count/allowed-delta verification"
 }
+Assert-Condition (Test-DirectModeDispatchBranch $sharedReviewContract) 'shared final-review contract does not make the SDD one-commit checks conditional in direct mode'
+
 Assert-Condition ($finalPackage.Contains('- evidenceCommitHead: `POST_COMMIT_EXTERNAL`')) 'final package must use an external evidence-commit sentinel'
 Assert-Condition ($finalPackage.Contains('- dispatchHead: `POST_COMMIT_EXTERNAL`')) 'final package must use an external dispatch-head sentinel'
 Assert-Anchors $finalPackage @('self-reference', 'must not embed', 'never rewrite the package', 'packageParentHead = reviewedTargetHead', 'target dirty fingerprint: `CLEAN`') 'final package self-reference prohibition'
@@ -404,6 +539,8 @@ Assert-Anchors $finalPackage @('self-reference', 'must not embed', 'never rewrit
 $finalFlow = [regex]::Match($sddSkill, '(?s)## Completion and Final Review\s*(?<body>.*?)\s*## CodeGraph write freshness')
 Assert-Condition $finalFlow.Success 'fp-execute-sdd final-review flow is missing'
 $flowText = $finalFlow.Groups['body'].Value
+$resumeBranch = [regex]::Match($flowText, '(?s)Branch by phase:\s*(?<body>.*?)(?=\s*A result commit records)')
+Assert-Condition ($resumeBranch.Success -and $resumeBranch.Groups['body'].Value.Contains('- `result-committed`, `fixing`, or `complete`:')) 'fp-execute-sdd resume router omits the complete phase'
 Assert-Condition (Test-FinalFlowOrder $flowText) 'fp-execute-sdd final-review order is invalid'
 Assert-Anchors $flowText @(
     'packageParentHead=reviewedTargetHead',
@@ -420,8 +557,7 @@ Assert-Anchors $flowText @(
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
-    @{ Name = 'final report'; Text = $reportTemplate },
+    @{ Name = 'shared final-review contract'; Text = $sharedReviewContract },
     @{ Name = 'fp-execute-sdd'; Text = $sddSkill }
 )) {
     Assert-Condition (Test-PhaseResumeContract $surface.Text) "$($surface.Name) is missing phase-aware resume semantics"
@@ -430,7 +566,7 @@ foreach ($surface in @(
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
+    @{ Name = 'shared final-review contract'; Text = $sharedReviewContract },
     @{ Name = 'SDD review package'; Text = $sddPackage }
 )) {
     Assert-Anchors $surface.Text @('SAFE', 'UNSAFE', 'UNKNOWN', '--fix', '--write', 'snapshot update', 'migration', 'seed', 'formatter', 'generator', 'cache', 'coverage', 'dist', 'unknown wrapper', 'service', 'database', 'external mutation', 'must not run') $surface.Name
@@ -439,7 +575,6 @@ foreach ($surface in @(
 foreach ($surface in @(
     @{ Name = 'fp-final-review'; Text = $reviewSkill },
     @{ Name = 'final reviewer'; Text = $reviewer },
-    @{ Name = 'final package'; Text = $finalPackage },
     @{ Name = 'CodeGraph shared contract'; Text = $codeGraph }
 )) {
     Assert-Anchors $surface.Text @('explore', 'impact', 'affected', 'candidate', 'current source', 'native search', 'fallback', 'must not block') $surface.Name
@@ -457,13 +592,16 @@ Assert-Condition (Test-UiE2EFinalGate $reviewSkill) 'fp-final-review is missing 
 Assert-Condition (Test-UiE2EReviewerGate $reviewer) 'final reviewer prompt is missing active UI/E2E gate verification fields'
 Assert-Condition (Test-UiE2EArtifactGate $reportTemplate) 'final report must keep an active dedicated UI/E2E Gate table and matrix path'
 Assert-Condition (Test-UiE2EArtifactGate $finalPackage) 'final package must keep an active dedicated UI/E2E Gate table and matrix path'
+Assert-Condition ($sharedReviewContract.Contains('UI/E2E Gate: PASS | N/A | FAIL | BLOCKED') -and $sharedReviewContract.Contains('cannot become `PASS`, `PASS_WITH_NOTES`, review debt, manual override, or waiver')) 'shared final-review contract permits a UI/E2E non-pass bypass'
 Assert-Condition (Test-ArchiveUiE2EHardGate $archiveSkill) 'fp-archive must reject non-waivable UI/E2E core gaps before confirmation'
 Assert-Condition (Test-UiCaseInventoryContract $reviewSkill) 'fp-final-review must reconcile every UI-bearing source before it can issue E2E N/A'
 Assert-Condition (Test-UiCaseInventoryContract $reviewer) 'final reviewer must reconcile every UI-bearing source before it can issue E2E N/A'
 Assert-Condition (Test-UiCaseInventoryArtifact $reportTemplate) 'final report must keep an active UI Case Inventory / N/A Reconciliation table'
 Assert-Condition (Test-UiCaseInventoryArtifact $finalPackage) 'final package must keep an active UI Case Inventory / N/A Reconciliation table'
+Assert-Condition ($sharedReviewContract.Contains('`N/A` is valid only when the inventory proves zero UI-bearing sources, no Figma UI scope, no mapped-current or unowned frontend diff, and evidence covers the reviewed target snapshot.')) 'shared final-review contract lost the UI inventory N/A predicate'
 Assert-Condition (Test-FigmaFinalHardGate $reviewSkill) 'fp-final-review must make Figma capability/preservation non-pass a final blocker'
 Assert-Condition (Test-FigmaFinalHardGate $reviewer) 'final reviewer must make Figma capability/preservation non-pass a final blocker'
+Assert-Condition (Test-FigmaFinalHardGate $sharedReviewContract) 'shared final-review contract must make Figma capability/preservation non-pass a final blocker'
 Assert-Condition (Test-FigmaFinalArtifact $reportTemplate) 'final report must keep an active Figma Completion Gate'
 Assert-Condition (Test-FigmaFinalArtifact $finalPackage) 'final package must keep an active Figma Completion Gate'
 Assert-Condition (Test-ArchiveFigmaHardGate $archiveSkill) 'fp-archive must reject incomplete Figma capability/preservation evidence before confirmation'
@@ -481,9 +619,9 @@ Assert-Condition (-not (Test-FigmaFinalHardGate $figmaVerdictMutation)) 'Figma f
 $figmaAppendMutation = $reviewSkill.Replace('Provenance: reference.png', 'Exception: a failed FIGCAP may be converted to PASS_WITH_NOTES after manual approval; this is not recommended.`n`nProvenance: reference.png')
 Assert-Condition ($figmaAppendMutation -ne $reviewSkill) 'Figma permission mutation fixture did not mutate the review skill'
 Assert-Condition (-not (Test-FigmaFinalHardGate $figmaAppendMutation)) 'Figma final helper accepted an appended permission bypass'
-$figmaArtifactMutation = $reportTemplate.Replace('it cannot be `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check', 'it may be `PASS_WITH_NOTES` after manual approval')
-Assert-Condition ($figmaArtifactMutation -ne $reportTemplate) 'Figma artifact mutation fixture did not mutate the report template'
-Assert-Condition (-not (Test-FigmaFinalArtifact $figmaArtifactMutation)) 'Figma artifact helper accepted a permission bypass'
+$figmaArtifactMutation = $sharedReviewContract.Replace('it cannot become `PASS`, `PASS_WITH_NOTES`, review debt, manual approval, or waiver', 'it may become `PASS_WITH_NOTES` after manual approval')
+Assert-Condition ($figmaArtifactMutation -ne $sharedReviewContract) 'Figma shared-contract mutation fixture did not mutate the owner'
+Assert-Condition (-not (Test-FigmaFinalHardGate $figmaArtifactMutation)) 'Figma shared contract accepted a permission bypass'
 
 $archiveFigmaGateRemoved = $archiveSkill.Replace('### Step 2.2: Figma Completion Gate', '### Removed Figma Completion Gate')
 Assert-Condition ($archiveFigmaGateRemoved -ne $archiveSkill) 'archive Figma heading mutation fixture did not mutate the archive skill'

@@ -1,6 +1,6 @@
 ---
 name: fp-start
-description: 启动并严格执行全流程开发向导（propose → brainstorm → plan → execute）。用于中大型或需要 FeaturePilot 留痕的需求；必须按阶段门禁执行，显式加载 fp-propose、fp-brainstorm、fp-plan、fp-execute 子 skill，生成并核验对应产物，等待用户确认后才能进入下一阶段。
+description: Use when a user asks to run or resume the full FeaturePilot workflow for a feature after any required PRD work.
 ---
 ## FeaturePilot workspace and information layer
 

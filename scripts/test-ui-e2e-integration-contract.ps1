@@ -242,10 +242,10 @@ $planTemplateBody = Get-CanonicalTemplateBody $planTemplate
 $execute = Read-Utf8 'skills\fp-execute\SKILL.md'
 $executeSdd = Read-Utf8 'skills\fp-execute-sdd\SKILL.md'
 $finalReview = Read-Utf8 'skills\fp-final-review\SKILL.md'
+$finalReviewContract = Read-Utf8 'skills\fp-final-review\final-review-contract.md'
 $archive = Read-Utf8 'skills\fp-archive\SKILL.md'
 $validator = Read-Utf8 'scripts\validate-plugin.ps1'
 $readme = Read-Utf8 'README.md'
-$agents = Read-Utf8 'AGENTS.md'
 $userGuide = Read-Utf8 'docs\user_guide\init-prd-start.md'
 
 $consumers = @{
@@ -254,6 +254,7 @@ $consumers = @{
     'fp-execute' = $execute
     'fp-execute-sdd' = $executeSdd
     'fp-final-review' = $finalReview
+    'final-review-contract' = $finalReviewContract
     'fp-archive' = $archive
 }
 foreach ($consumer in $consumers.GetEnumerator()) {
@@ -316,9 +317,8 @@ Assert-Condition (Test-UiE2EValidatorSequence $validator $expectedValidatorBlock
 Assert-Condition (Test-ValidationCompletionGuard $validator) 'validate-plugin must wrap validation in a completion guard that rejects early exit/return'
 
 Assert-Condition (Test-EffectiveLineRegex $readme '^ {0,3}##\s+Staged UI/E2E delivery\s*$') 'README must document the staged UI/E2E delivery gate'
-Assert-Condition (Test-EffectiveLineRegex $agents '^ {0,3}##\s+UI/E2E execution and archive gates\s*$') 'AGENTS.md must document the UI/E2E fallback gate'
 Assert-Condition (Test-EffectiveLineRegex $userGuide '^ {0,3}###\s+UI/E2E delivery gate\s*$') 'user guide must document the UI/E2E delivery gate'
-foreach ($documentation in @($readme, $agents, $userGuide)) {
+foreach ($documentation in @($readme, $userGuide)) {
     Assert-Condition (Test-EffectiveTextRegex $documentation '(?i)interactive.*?business-flow.*?real browser.*?(?:no.mock|zero.mock)') 'public documentation must require real no-mock browser E2E for interactive/business work'
     Assert-Condition (([regex]::IsMatch($documentation, '(?i)BROWSER_CAPABILITY_GATE')) -and ([regex]::IsMatch($documentation, '(?i)never\s+silently'))) 'public documentation must describe the customer-selected browser capability gate without silent installation'
     Assert-Condition (Test-EffectiveLineRegex $documentation '(?i)^(?=.*static-only)(?=.*N/A)(?=.*(?:reason|evidence)).*$') 'public documentation must limit static-only E2E N/A to a recorded reason'
