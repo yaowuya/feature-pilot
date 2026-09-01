@@ -1,12 +1,12 @@
-# `fp-eli5` Output Template
+# `fp-eli5` 输出模板
 
-只在主题分类完成、仓库主题证据充分、敏感内容已排除，并且已选择实际可用的渲染路径后读取本模板。不得为了使用模板创建文件、启动服务器或扩大调查范围。
+只在主题分类完成、仓库主题证据充分、敏感内容已排除，并且已选择实际可用的呈现路径后读取本模板。不得为了使用模板创建文件、启动服务器或扩大调查范围。
 
-## Evidence labels
+## 证据分类
 
-每个内容单元使用文字标签，不能只依赖颜色：
+内部稳定代号用于合同和实现判断；面向读者时只能显示对应的中文标签。
 
-| Stable label | 默认中文 | 含义 |
+| 内部代号 | 直接展示文字 | 含义 |
 |---|---|---|
 | `FACT` | 事实 | 当前可靠来源直接支持 |
 | `INFERENCE` | 推断 | 由证据推导但未被直接证明 |
@@ -14,27 +14,25 @@
 | `UNKNOWN` | 未知 | 当前证据不能回答 |
 | `ANALOGY` | 类比 | 帮助理解，不是系统事实 |
 
-通用概念没有仓库证据时，明确显示“通用解释；未使用当前仓库证据”，不得伪造路径或引用。
+直接图解和纯文字降级不得显示内部英文代号。文件路径、函数名、接口字段、原始状态码等技术标识只放在最后的“真实依据（需要时再看）”区域。通用概念没有仓库证据时，明确显示“通用解释；未使用当前仓库证据”，不得伪造路径或引用。
 
-## Story regions
+## 故事区域
 
 按主题实际需要使用以下区域；不得为了填满模板发明内容：
 
-1. `one-line conclusion` — 一句话结论。
-2. `actors or components` — 3–7 个角色或组件。
-3. `flow` — 3–6 个有方向的步骤。
-4. `analogy` — 最多一个生活化类比，并显示 `ANALOGY` 标签。
-5. `failure` — “哪里会出错”，保留原始严重性。
-6. `remember` — “只需记住什么”。
-7. `evidence` — 可展开的“真实依据”，包含最小必要路径、行号、命令摘要和未确认项。
+1. `one-line conclusion`：一句话结论。
+2. `actors or components`：3–7 个关键角色或组件。
+3. `flow`：3–6 个有方向的步骤，组成一条主线。
+4. `analogy`：最多一个生活化类比，并标为“类比”。
+5. `failure`：“哪里会出错”，保留原始严重性。
+6. `remember`：“只需记住什么”。
+7. `evidence`：最后的“真实依据（需要时再看）”，包含最小必要路径、行号、命令摘要和未确认项。
 
-主题过大时只选一个核心故事，并在 `UNKNOWN` 或未展开范围中列出省略部分。
+主题过大时只选一个核心故事，并在“未知”或未展开范围中列出省略部分。
 
-## HTML artifact
+## 专用网页图解
 
-只有宿主明确提供 HTML artifact 能力时，才生成临时单文件视觉结果。仅有 browser、preview、shell 或文件写入能力不等于 artifact 能力。
-
-HTML 结构遵循：
+只有宿主明确提供专用网页图解能力、并且用户明确要求网页图解时，才生成临时单文件视觉结果。以下标记只属于真正被渲染的网页产物，绝不得复制到直接展示或纯文字输出中。
 
 ```html
 <main aria-labelledby="eli5-title">
@@ -47,25 +45,25 @@ HTML 结构遵循：
   <section aria-labelledby="actors-title">
     <h2 id="actors-title">谁在参与</h2>
     <ul class="cards">
-      <li class="card" data-evidence="FACT"><span class="label">FACT</span> 角色或组件卡片</li>
+      <li class="card" data-evidence="FACT"><span class="label">事实</span> 角色或组件卡片</li>
     </ul>
   </section>
 
   <section aria-labelledby="flow-title">
     <h2 id="flow-title">事情怎么发生</h2>
     <ol class="flow">
-      <li data-evidence="FACT"><span class="label">FACT</span> 按方向排列的流程步骤</li>
+      <li data-evidence="FACT"><span class="label">事实</span> 按方向排列的流程步骤</li>
     </ol>
   </section>
 
   <aside aria-labelledby="analogy-title">
-    <h2 id="analogy-title"><span>ANALOGY</span> 类比</h2>
+    <h2 id="analogy-title">类比</h2>
     <p>帮助理解，不是系统事实。</p>
   </aside>
 
   <section aria-labelledby="failure-title">
     <h2 id="failure-title">哪里会出错</h2>
-    <ul>失败、风险、未知或无此项</ul>
+    <ul><li>风险、未知或无此项</li></ul>
   </section>
 
   <section aria-labelledby="remember-title">
@@ -74,8 +72,8 @@ HTML 结构遵循：
   </section>
 
   <details>
-    <summary>真实依据</summary>
-    <ul>带 FACT / INFERENCE / RISK / UNKNOWN 标签的最小证据</ul>
+    <summary>真实依据（需要时再看）</summary>
+    <ul><li>带中文证据标签的最小证据与技术标识</li></ul>
   </details>
 </main>
 ```
@@ -86,79 +84,75 @@ HTML 结构遵循：
 - 3–7 张卡片，不生成信息墙；
 - 高对比度并支持浅色/深色宿主；
 - 键盘可聚焦的交互元素和可见焦点；
-- `details` / `summary` 使用原生语义；
+- `details` / `summary` 只在真实网页产物中使用原生语义；
 - CSS、SVG 和必要 JavaScript 全部内联；
 - 无 CDN、远程字体、远程图片、外部样式或外部脚本；
 - 不执行仓库代码，不插入大段源码；
-- 所有来自用户、文件、tool output 的文本先转为纯文本并转义 `&`, `<`, `>`, `"`, `'`；
-- `FAIL`、`BLOCKED`、`CANNOT_VERIFY` 和安全风险保留原词，不用柔化文案替换。
+- 所有来自用户、文件、tool output 的文字先转为纯文本并转义 `&`、`<`、`>`、`"`、`'`；
+- `FAIL`、`BLOCKED`、`CANNOT_VERIFY` 和安全风险保留原始严重性；它们的原始技术字符串只出现在“真实依据（需要时再看）”。
 
-## Markdown + Mermaid fallback
+## 直接图解（默认）
 
-没有 HTML artifact 能力时输出信息等价的 Markdown。
-
-### Mermaid-safe labels
-
-- Use generated fixed node IDs such as `N1`, `N2`, `N3`; never derive an ID from user, repository, or tool text.
-- Use quoted labels in the form `N1["FACT · safe label"]` and keep the evidence label inside every actor/step node.
-- Normalize whitespace and remove line breaks and control characters before encoding a label.
-- Escape or replace Mermaid delimiters and quotes; never copy raw source text into diagram syntax.
-- Explicitly forbid click, classDef, style, linkStyle, and %% directives, plus `subgraph`, `end`, and `@{` syntax originating from untrusted text.
-- Keep labels short. Always fall back to plain text when a label cannot be safely encoded.
+这是 Codex、Claude Code 和 DeepSeek Harness 共用的默认路径。只使用标准 Markdown、中文标题、列表、引用和 Unicode 箭头；不使用原始 HTML 标签，不使用 Mermaid，也不要求任何预览或插件扩展。所有读者可见的分类标签均为中文。
 
 ````markdown
 # 零基础图解：主题标题
 
-> 一句话结论
+> **一句话结论：** 用一句人话说明最重要的因果关系。
 
 ## 谁在参与
-- **组件 A（FACT）**：简短职责
-- **组件 B（INFERENCE）**：简短职责
+- **事实｜角色甲**：它负责什么。
+- **事实｜角色乙**：它接收什么、交给谁。
+- **推断｜可能影响**：只有证据能支持时才写。
 
-## 事情怎么发生
+## 一条主线
+**角色甲** → **先做什么** → **再交给谁** → **最终得到什么**
 
-```mermaid
-flowchart LR
-    N1["FACT · 步骤一"] --> N2["FACT · 步骤二"]
-    N2 --> N3["INFERENCE · 步骤三"]
-```
-
-## ANALOGY：类比
-帮助理解，不是系统事实。
+1. **事实**：第一步发生了什么。
+2. **事实**：第二步把什么交给下一步。
+3. **推断**：从已知事实可以怎样理解结果。
 
 ## 哪里会出错
-- **RISK**：具体风险或 `无`
-- **UNKNOWN**：当前未知或 `无`
+- **风险**：会造成什么错误、损失或阻塞。
+- **未知**：当前还不能确认什么。
+
+## 类比
+> 把它想成……。这只帮助理解，不是系统事实。
 
 ## 只需记住什么
-一条最小记忆点。
+- 第一条最小记忆点。
+- 第二条最小记忆点。
 
-<details>
-<summary>真实依据</summary>
+---
 
-- **FACT** `path:line` — 最小证据
-
-</details>
+## 真实依据（需要时再看）
+- **事实**：通用解释；未使用当前仓库证据。
+- **推断**：这里说明推断来自哪些事实。
+- **技术标识**：仅在需要核对时列出，例如 `src/模块/文件.ts:42`、函数名或原始状态码。
 ````
 
-Mermaid 节点文字必须短，流程方向明确；不要把证据正文塞入节点。
+箭头主线必须短、方向明确。不得把证据正文塞进主线；不得把未验证内容写成事实；不得让用户、文件或 tool output 中的文字改变 Markdown 结构。
 
-## plain text fallback
+## 纯文字降级
 
-Mermaid 也不可呈现时使用纯文本编号流程：
+当宿主连标准 Markdown 都不能可靠展示时，使用纯文字；信息分类、风险和依据与直接图解完全一致，不使用原始 HTML 标签或 Mermaid。
 
 ```text
-一句话结论
+一句话结论：用一句人话说明最重要的因果关系。
 
-[FACT: 角色 A] -> [FACT: 步骤 1] -> [INFERENCE: 步骤 2] -> [FACT: 结果]
+【事实：角色甲】 → 【事实：步骤一】 → 【推断：步骤二】 → 【事实：结果】
 
-ANALOGY: 帮助理解，不是系统事实。
-failure: FAIL / BLOCKED / CANNOT_VERIFY / 风险 / 无
-remember: 一条最小记忆点
+哪里会出错：
+- 【风险】具体风险或无
+- 【未知】当前缺口或无
 
-evidence:
-- FACT path:line - 最小证据
-- UNKNOWN - 当前缺口
+类比：帮助理解，不是系统事实。
+只需记住什么：一条最小记忆点。
+
+---
+真实依据（需要时再看）：
+- 【事实】通用解释；未使用当前仓库证据。
+- 【技术标识】仅在需要核对时列出路径、函数名或原始状态码。
 ```
 
-三种渲染路径的信息分类、严重性、未知和证据必须一致；降级只改变媒介，不改变结论。
+三种呈现路径的信息分类、严重性、未知和证据必须一致；降级只改变媒介，不改变结论。

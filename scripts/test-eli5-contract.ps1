@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -29,10 +29,6 @@ function Test-DisallowedEli5Integration([string]$text) {
     return $text.Contains('eli5-handoff.md') -or $text.Contains('fp:fp-eli5')
 }
 
-function Test-MermaidInjectionText([string]$text) {
-    return $text -match '(?im)^\s*(?:(?:click|classDef|style|linkStyle|subgraph|end)\b|%%)|@\{'
-}
-
 $paths = [ordered]@{
     Skill = 'skills\fp-eli5\SKILL.md'
     Command = 'commands\fp-eli5.md'
@@ -61,13 +57,17 @@ Assert-Condition ((@($skill -split "`r?`n").Count) -le 500) 'SKILL.md exceeds 50
 Assert-Condition ((@($command -split "`r?`n").Count) -le 20) 'command exceeds 20 lines'
 Assert-Condition ($command.Contains('$ARGUMENTS')) 'command must forward $ARGUMENTS'
 Assert-Condition ($command.Contains('Gate checksum')) 'command is missing its gate checksum'
+Assert-Condition ($command.Contains('直接展示中文图解')) 'command must promise direct Chinese output'
+Assert-Condition ($command.Contains('原始 HTML 标签')) 'command must forbid raw HTML in direct output'
 
 foreach ($anchor in @(
     '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`',
     'available-skill', 'DeepSeek Harness', '`${CLAUDE_PLUGIN_ROOT}/skills`',
     'generic', 'repository-grounded', 'external-current', 'fp:fp-explore', 'public standalone',
     'CANNOT_EXPLAIN_WITH_EVIDENCE', 'RENDERED_HTML_ARTIFACT', 'RENDERED_MARKDOWN_FALLBACK',
-    'RENDERED_TEXT_FALLBACK', 'no repository write by default'
+    'RENDERED_TEXT_FALLBACK', '默认不写入仓库', '直接图解（默认）', '只使用中文标签',
+    '不依赖原始 HTML 标签', '不依赖 Mermaid', '技术标识只放在末尾的“真实依据”区域',
+    '用户可见的状态说明使用中文'
 )) {
     Assert-Condition ($skill.Contains($anchor)) "fp-eli5 is missing $anchor"
 }
@@ -81,35 +81,33 @@ Assert-Condition (-not $genericSection.Contains('fp:fp-explore')) 'generic mode 
 Assert-Condition ($genericSection.Contains('Generic mode never calls fp-explore.')) 'generic mode needs an explicit no-explore contract'
 Assert-Condition ($skill.Contains('prototype.html is not an fp-eli5 output')) 'fp-eli5 must explicitly reject prototype equivalence'
 Assert-Condition ($skill.Contains('Severity preservation applies to every rendering path.')) 'fp-eli5 must preserve severity across every renderer'
-foreach ($anchor in @('Mermaid-safe labels', 'fixed node IDs', 'remove line breaks and control characters', 'fall back to plain text when a label cannot be safely encoded')) {
-    Assert-Condition ($skill.Contains($anchor)) "fp-eli5 skill is missing Mermaid safety anchor $anchor"
-}
 
 foreach ($anchor in @(
     'FACT', 'INFERENCE', 'RISK', 'UNKNOWN', 'ANALOGY', 'one-line conclusion',
-    'failure', 'remember', 'evidence', 'Markdown + Mermaid', 'plain text'
+    'failure', 'remember', 'evidence', '直接图解（默认）', '纯文字降级'
 )) {
     Assert-Condition ($template.Contains($anchor)) "output template is missing $anchor"
 }
 Assert-Condition ($template -notmatch '(?i)<script\s+src|<link\s+[^>]*href|@import|https?://') 'output template permits an external resource'
-Assert-Condition ($template.Contains('````markdown')) 'Markdown fallback must use an outer four-backtick fence around Mermaid'
-foreach ($anchor in @(
-    'Mermaid-safe labels', 'fixed node IDs', 'remove line breaks and control characters',
-    'forbid click, classDef, style, linkStyle, and %% directives',
-    'fall back to plain text when a label cannot be safely encoded', 'N1["FACT',
-    'data-evidence="FACT"'
-)) {
-    Assert-Condition ($template.Contains($anchor)) "output template is missing Mermaid/label anchor $anchor"
+Assert-Condition ($template.Contains('data-evidence="FACT"')) 'dedicated HTML artifact must retain stable internal evidence data'
+Assert-Condition (-not $template.Contains('<span class="label">FACT</span>')) 'visible HTML artifact labels must use Chinese'
+
+$directDiagram = Get-Section $template '## 直接图解（默认）' '## 纯文字降级' 'direct visual output'
+foreach ($anchor in @('一句话结论', '一条主线', '哪里会出错', '只需记住什么', '真实依据（需要时再看）', '事实', '推断', '风险', '未知', '类比')) {
+    Assert-Condition ($directDiagram.Contains($anchor)) "direct visual output is missing $anchor"
 }
-Assert-Condition (-not ($template -match '(?m)^\s*[A-Z]\[[^"\r\n]')) 'Mermaid example must not use unquoted labels'
-Assert-Condition (Test-MermaidInjectionText "flowchart LR`nclick N1 callback`n") 'Mermaid injection detector misses click directive'
-Assert-Condition (Test-MermaidInjectionText "flowchart LR`nclassDef bad fill:red`n") 'Mermaid injection detector misses classDef directive'
-Assert-Condition (Test-MermaidInjectionText "flowchart LR`n%%{init: config}`n") 'Mermaid injection detector misses %% directive'
-Assert-Condition (-not (Test-MermaidInjectionText 'N1["FACT safe label"] --> N2["FACT next"]')) 'Mermaid injection detector rejects a safe fixture'
-$textFallbackStart = $template.IndexOf('## plain text fallback', [System.StringComparison]::Ordinal)
-Assert-Condition ($textFallbackStart -ge 0) 'plain text fallback section is missing'
+Assert-Condition ($directDiagram.Contains('→')) 'direct visual output must use a readable Chinese arrow flow'
+Assert-Condition ($directDiagram.Contains('---')) 'direct visual output must separate the evidence area'
+Assert-Condition (-not ($directDiagram -match '(?is)<\s*/?\s*[a-z][a-z0-9-]*\b[^>]*>')) 'direct visual output must not contain raw HTML tags'
+Assert-Condition (-not $directDiagram.Contains('```mermaid')) 'direct visual output must not require Mermaid'
+Assert-Condition (-not ($directDiagram -match '(?<![A-Za-z])(?:FACT|INFERENCE|RISK|UNKNOWN|ANALOGY)(?![A-Za-z])')) 'direct visual output must not expose English evidence labels'
+
+$textFallbackStart = $template.IndexOf('## 纯文字降级', [System.StringComparison]::Ordinal)
+Assert-Condition ($textFallbackStart -ge 0) 'plain-text fallback section is missing'
 $textFallbackSection = $template.Substring($textFallbackStart)
-Assert-Condition ($textFallbackSection -match '\[FACT:[^\]]+\]\s*->\s*\[FACT:[^\]]+\]\s*->\s*\[INFERENCE:[^\]]+\]') 'plain text actor/step chain must preserve evidence labels'
+Assert-Condition ($textFallbackSection -match '【事实：[^】]+】\s*→\s*【事实：[^】]+】\s*→\s*【推断：[^】]+】') 'plain-text flow must preserve Chinese evidence labels'
+Assert-Condition (-not ($textFallbackSection -match '(?is)<\s*/?\s*[a-z][a-z0-9-]*\b[^>]*>')) 'plain-text fallback must not contain raw HTML tags'
+Assert-Condition (-not ($textFallbackSection -match '(?<![A-Za-z])(?:FACT|INFERENCE|RISK|UNKNOWN|ANALOGY)(?![A-Za-z])')) 'plain-text fallback must not expose English evidence labels'
 
 foreach ($field in @('caller:', 'topic:', 'active-slug:', 'pending-gate:', 'allowed-sources:', 'return-to:')) {
     Assert-Condition ($handoff.Contains($field)) "handoff is missing $field"
@@ -172,7 +170,7 @@ foreach ($path in $disallowedPaths) {
 
 $readme = Read-Utf8 (Join-Path $root 'README.md')
 $codexPlugin = Read-Utf8 (Join-Path $root '.codex-plugin\plugin.json') | ConvertFrom-Json
-foreach ($anchor in @('commands/fp-eli5.md', '`fp-eli5`', '/fp-eli5', 'HTML artifact', 'Markdown + Mermaid', 'no repository write by default')) {
+foreach ($anchor in @('commands/fp-eli5.md', '`fp-eli5`', '/fp-eli5', '直接展示中文图解', '原始 HTML 标签', '专用网页图解', '默认不写仓库')) {
     Assert-Condition ($readme.Contains($anchor)) "README.md is missing public anchor $anchor"
 }
 foreach ($surface in @($readme)) {
@@ -182,10 +180,23 @@ foreach ($surface in @($readme)) {
 }
 Assert-Condition ($codexPlugin.skills -eq './skills/') 'Codex plugin must continue to expose ./skills/'
 
+$eli5Design = Read-Utf8 (Join-Path $root 'docs\superpowers\specs\2026-08-24-fp-eli5-design.md')
+foreach ($anchor in @(
+    '### 8.3 专用网页图解', '### 8.4 直接中文图解', '默认直接展示中文图解',
+    '不依赖原始 HTML 标签', '不依赖 Mermaid', '只有用户明确要求且宿主提供专用网页图解能力时',
+    'RENDERED_MARKDOWN_FALLBACK`：直接中文图解已生成'
+)) {
+    Assert-Condition ($eli5Design.Contains($anchor)) "fp-eli5 design is missing $anchor"
+}
+Assert-Condition (-not $eli5Design.Contains('优先临时 HTML artifact')) 'fp-eli5 design must not advertise HTML-first output'
+Assert-Condition (-not $eli5Design.Contains('Markdown + Mermaid')) 'fp-eli5 design must not advertise Mermaid as the direct fallback'
+
 $validatePlugin = Read-Utf8 (Join-Path $root 'scripts\validate-plugin.ps1')
 foreach ($anchor in @(
     'scripts\test-eli5-contract.ps1',
     'focused fp-eli5 contract validator is missing',
+    'focused fp-eli5 contract validator must use UTF-8 BOM',
+    'ReadAllBytes($eli5ContractValidator)',
     'focused fp-eli5 contract validator failed'
 )) {
     Assert-Condition ($validatePlugin.Contains($anchor)) "validate-plugin.ps1 is missing aggregate anchor $anchor"

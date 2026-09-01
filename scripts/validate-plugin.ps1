@@ -529,6 +529,13 @@ Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-explore contract validator fa
 
 $eli5ContractValidator = Join-Path $root 'scripts\test-eli5-contract.ps1'
 Assert-Condition (Test-Path $eli5ContractValidator) 'focused fp-eli5 contract validator is missing'
+$eli5ContractValidatorBytes = [System.IO.File]::ReadAllBytes($eli5ContractValidator)
+Assert-Condition (
+    $eli5ContractValidatorBytes.Length -ge 3 -and
+    $eli5ContractValidatorBytes[0] -eq 0xEF -and
+    $eli5ContractValidatorBytes[1] -eq 0xBB -and
+    $eli5ContractValidatorBytes[2] -eq 0xBF
+) 'focused fp-eli5 contract validator must use UTF-8 BOM'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $eli5ContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-eli5 contract validator failed'
 

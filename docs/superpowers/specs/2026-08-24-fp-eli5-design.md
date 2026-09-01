@@ -22,12 +22,17 @@ Anthropic community 的 `eli5` skill 提供了一个很小但有价值的交互�
 | E-001 | 总体方案 | 新增独立 `fp-eli5`，不把 ELI5 prompt 复制到所有 skill |
 | E-002 | 主题范围 | 双模式：普通概念直接解释；仓库、代码、配置、FeaturePilot 产物和阶段状态先取证 |
 | E-003 | 仓库取证 | `fp-eli5` 单向调用现有 `fp-explore` standalone；不修改 `fp-explore` profile、caller 或合同 |
-| E-004 | 默认输出 | 能力自适应：优先临时 HTML artifact；不支持时降级为 Markdown + Mermaid，再降级为纯文本流程 |
+| E-004 | 默认输出 | 默认直接展示中文图解（标准 Markdown + 中文箭头），不依赖原始 HTML 标签或 Mermaid；只有用户明确要求且宿主提供专用网页图解能力时才生成临时网页图解，标准 Markdown 不可靠时才降级为纯文字流程 |
 | E-005 | 持久化 | 默认不写仓库；第一版不提供隐式保存 HTML |
 | E-006 | 触发策略 | 显式按需，不自动打断 FeaturePilot 阶段 |
 | E-007 | 默认语气 | 零基础专业：大图少字、少术语、可使用类比，但不幼儿化 |
 | E-008 | JIT caller | `fp-init`、`fp-prd-grill-me`、`fp-brainstorm`、`fp-plan`、`fp-start` |
 | E-009 | 权威边界 | 图解不是需求、设计、计划、review verdict、测试证据、write authorization 或用户确认 |
+| E-010 | 跨运行时直接展示 | Codex、Claude Code 与 DeepSeek Harness 默认直接展示中文图解：不依赖原始 HTML 标签或 Mermaid；技术标识仅置于末尾“真实依据（需要时再看）”。只有用户明确要求且宿主提供专用网页图解能力时才生成临时网页图解。 |
+
+### 2.1 E-010 覆盖规则
+
+E-010 取代 E-004 的默认呈现顺序；本文后续任何与 E-010 冲突的 HTML 优先、Mermaid 降级或直接输出英文标签描述，均以 E-010 为准。专用网页图解仍保留为能力受限的可选增强，不写入仓库。
 
 ## 3. 目标与非目标
 
@@ -36,7 +41,7 @@ Anthropic community 的 `eli5` skill 提供了一个很小但有价值的交互�
 1. 提供 `/fp-eli5 <topic>` Claude Code 入口和跨运行时共享 skill。
 2. 用统一视觉故事解释普通技术概念和当前仓库主题。
 3. 仓库主题只使用 `fp-explore` 已明确返回的事实、推断、风险、未知和证据。
-4. 在支持的宿主中交付临时 HTML artifact，在其他宿主中保持可读的确定性降级。
+4. 在三个运行时默认直接展示可读的中文图解；只有用户明确要求且宿主支持时才交付临时网页图解，标准 Markdown 不可靠时再确定性降级为纯文字。
 5. 支持在五个 FeaturePilot 关键阶段中按用户显式意图临时解释，然后恢复原 decision/checkpoint。
 6. 保持事实、推断、风险、未知和类比可区分、可追溯。
 7. 不污染 worktree，不创建新的 canonical FeaturePilot artifact 类型。
@@ -121,14 +126,12 @@ skills/fp-eli5/SKILL.md
                           v
               事实分类与视觉故事组织
                           |
-             +------------+-------------+
-             |                          |
-             v                          v
-       HTML artifact              Markdown + Mermaid
-       （宿主支持时）              （能力降级）
-                                          |
-                                          v
-                                  纯文本编号流程
+              直接中文图解（默认）
+             标准 Markdown + 中文箭头
+                    |             |
+                    |             +-- Markdown 不可靠 --> 纯文字流程
+                    |
+                    +-- 用户明确要求且宿主支持 --> 临时网页图解
 ```
 
 ### 4.3 权威职责
@@ -323,9 +326,9 @@ return-to: <原 caller 与原未决问题/checkpoint>
 
 不能只用颜色区分；每项都有文字标签。类比必须包含“帮助理解，不是系统事实”的提示。
 
-### 8.3 HTML artifact
+### 8.3 专用网页图解
 
-只有当前运行时明确暴露可用 HTML artifact 能力时才使用。输出要求：
+只有用户明确要求且宿主提供专用网页图解能力时才使用。输出要求：
 
 - 临时呈现，不写入仓库；
 - 单文件语义；
@@ -339,17 +342,17 @@ return-to: <原 caller 与原未决问题/checkpoint>
 
 仅检测到浏览器工具不等于检测到 artifact 能力，禁止以此为理由创建临时仓库文件。
 
-### 8.4 Markdown 降级
+### 8.4 直接中文图解
 
-无 HTML artifact 能力时，输出：
+默认直接展示中文图解：
 
-- 同一句话结论；
-- Mermaid flowchart；
-- 角色/步骤卡片的 Markdown 等价结构；
-- 相同分类标签；
-- 证据列表。
+- 使用标准 Markdown、中文标题、引用、列表和 Unicode 箭头；
+- 用一条短而有方向的主线代替 Mermaid；
+- 所有可见分类使用“事实”“推断”“风险”“未知”“类比”；
+- 文件路径、函数名、接口字段和原始状态码只放在最后“真实依据（需要时再看）”；
+- 不依赖原始 HTML 标签，不依赖 Mermaid，也不要求预览或插件扩展。
 
-Mermaid 不可呈现时再降级为编号流程和简单字符箭头。降级不得丢失 `FAIL`、`BLOCKED`、`CANNOT_VERIFY`、风险、未知或证据。
+只有用户明确要求且宿主提供专用网页图解能力时，才使用 8.3 的临时网页图解。标准 Markdown 不可靠时才降级为纯文字箭头流程。三种路径均不得丢失失败、阻塞、无法验证、风险、未知或证据的原始严重性。
 
 ## 9. 与现有 artifact 的边界
 
@@ -374,11 +377,11 @@ Mermaid 不可呈现时再降级为编号流程和简单字符箭头。降级不
 - `NEEDS_SCOPE`：主题类型存在结论相关歧义；
 - `CANNOT_EXPLAIN_WITH_EVIDENCE`：仓库主题缺少可靠证据；
 - `EXTERNAL_RESEARCH_NOT_AUTHORIZED`：当前外部事实需要研究但未获授权；
-- `RENDERED_HTML_ARTIFACT`：HTML artifact 成功；
-- `RENDERED_MARKDOWN_FALLBACK`：使用 Markdown + Mermaid；
-- `RENDERED_TEXT_FALLBACK`：使用纯文本流程。
+- `RENDERED_HTML_ARTIFACT`：用户明确请求的网页图解已生成；
+- `RENDERED_MARKDOWN_FALLBACK`：直接中文图解已生成；
+- `RENDERED_TEXT_FALLBACK`：纯文字图解已生成。
 
-这些状态是 `fp-eli5` 返回描述，不是 FeaturePilot change stage。
+这些代号仅用于 `fp-eli5` 的内部返回描述，不是 FeaturePilot change stage；面向用户的状态说明必须使用中文。
 
 ### 10.2 安全规则
 
@@ -405,13 +408,14 @@ Mermaid 不可呈现时再降级为编号流程和简单字符箭头。降级不
 6. 仓库主题只单向调用现有 `fp-explore` standalone。
 7. `fp-eli5` 不引用虚构的 `eli5-facts` profile。
 8. `skills/fp-explore/SKILL.md` 和 `commands/fp-explore.md` 不新增 `fp-eli5` 集成锚点。
-9. 无 HTML artifact 能力时存在 Markdown fallback；无 Mermaid 时存在 text fallback。
+9. 默认直接中文图解不包含原始 HTML 标签或 Mermaid；标准 Markdown 不可靠时存在纯文字 fallback，网页图解仅在用户明确要求且宿主具备专用能力时生成。
 10. 默认禁止写仓库和持久化 HTML。
 11. 输出合同要求区分事实、推断、风险、未知和类比。
 12. `FAIL`、`BLOCKED`、`CANNOT_VERIFY` 不能被弱化。
 13. 五个允许 caller 都有显式触发、JIT handoff 和恢复同一 gate 的锚点。
 14. 非允许 caller 没有自动调用要求。
 15. `prototype.html` 非等价和非权威边界存在。
+16. 聚合验证在调用 `scripts/test-eli5-contract.ps1` 前检查其 UTF-8 BOM，确保 Windows PowerShell 5.1 可以解析中文断言。
 
 ### 11.2 总体验证
 
@@ -432,7 +436,7 @@ Mermaid 不可呈现时再降级为编号流程和简单字符箭头。降级不
 1. `/fp-eli5 <generic-topic>` 能在不调用仓库调查的情况下输出零基础专业解释。
 2. `/fp-eli5 <repository-topic>` 单向调用未修改的 `fp-explore` standalone，并保留其事实分类和引用。
 3. `fp-explore` 文件和现有 internal profile 合同没有变化。
-4. 支持 HTML artifact 的宿主获得临时单文件视觉结果；不支持的宿主获得信息等价的 Markdown 或纯文本结果。
+4. 三个运行时默认获得信息等价的直接中文图解；用户明确要求且宿主支持专用网页图解时获得临时单文件视觉结果，标准 Markdown 不可靠时获得纯文字结果。
 5. 默认执行后 git worktree 不因图解产生新文件或修改。
 6. 五个 JIT caller 只在显式请求时调用，并在返回后恢复同一 decision/checkpoint。
 7. 图解不能确认 decision、计划、task、review、coverage 或归档状态。
