@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -196,15 +196,17 @@ $command = Read-Utf8 $commandPath
 $coverageGuide = Read-Utf8 $coverageGuidePath
 $mainGuide = Read-Utf8 $mainGuidePath
 $readme = Read-Utf8 (Join-Path $root 'README.md')
-$agents = Read-Utf8 (Join-Path $root 'AGENTS.md')
 $validator = Read-Utf8 (Join-Path $root 'scripts\validate-plugin.ps1')
+
+$expectedDescription = 'description: Use when a user asks to raise unit-test, line, branch, statement, function, instruction, or combined coverage to an explicit target, close measured coverage gaps through behavior tests, or resume an interrupted coverage-improvement effort.'
+Assert-Condition ($skill.Contains($expectedDescription)) 'skill discovery pointer advertises an unsupported coverage-config-only gate branch'
+Assert-Condition ($command.Contains('Read and strictly execute `${CLAUDE_PLUGIN_ROOT}/skills/fp-coverage/SKILL.md` before acting.')) 'command does not require retrieval and execution of the authoritative coverage skill'
 
 foreach ($anchor in @(
     'name: fp-coverage',
     'Use when',
     '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`',
-    'available-skill',
-    '`skills/...`',
+    '插件资源锚定',
     'RESOLVING',
     'BASELINING',
     'TRIAGING',
@@ -456,12 +458,6 @@ Assert-Condition ($readme.Contains('coverage-tooling-bootstrap') -and $readme.Co
 Assert-Condition ($readme.Contains('issues.md') -and $readme.Contains('final-report.md')) 'README lacks code issues and final report artifacts'
 Assert-Condition ($readme.Contains('.fp-coverage/contract.md') -and $readme.Contains('baselines/') -and $readme.Contains('batches/') -and $readme.Contains('verifications/')) 'README lacks split evidence paths'
 Assert-Condition (-not (Test-HardcodedCoverageTarget $readme)) 'README coverage example or prose hardcodes a default target percentage'
-Assert-Condition ($agents.Contains('skills/fp-coverage/SKILL.md')) 'AGENTS intent table lacks fp-coverage'
-Assert-Condition ($agents.Contains('fp-docs/changes/<slug>-coverage/')) 'AGENTS lacks the coverage change artifact root'
-Assert-Condition ($agents.Contains('coverage-tooling-bootstrap') -and $agents.Contains('pytest-cov')) 'AGENTS lacks the approved missing-tool bootstrap and Django fallback'
-Assert-Condition ($agents.Contains('issues.md') -and $agents.Contains('final-report.md')) 'AGENTS lacks code issues and final report artifacts'
-Assert-Condition ($agents.Contains('.fp-coverage/contract.md') -and $agents.Contains('baselines/') -and $agents.Contains('batches/') -and $agents.Contains('verifications/')) 'AGENTS lacks split evidence paths'
-Assert-Condition ($agents.Contains('`fp-coverage`')) 'AGENTS lacks fp-coverage post-write lifecycle'
 Assert-Condition ($validator.Contains('test-coverage-contract.ps1')) 'global validator does not invoke fp-coverage suite'
 
 foreach ($anchor in @(

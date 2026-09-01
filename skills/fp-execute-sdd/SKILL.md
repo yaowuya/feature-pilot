@@ -1,11 +1,10 @@
 ---
 name: fp-execute-sdd
-description: Use when executing confirmed FeaturePilot implementation plans that need isolated task workers, fresh-context review, interruption recovery, or stricter quality gates than inline execution.
+description: Use when a user explicitly requests fp-execute-sdd for a confirmed FeaturePilot plan, or resumes an existing SDD execution recorded in progress.md.
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
@@ -42,6 +41,7 @@ skills/fp-execute-sdd/
   SKILL.md
   task-brief-template.md
   implementer-prompt.md
+  visual-reviewer-prompt.md
   e2e-verifier-prompt.md
   task-reviewer-prompt.md
   fix-prompt.md
@@ -50,11 +50,13 @@ skills/fp-execute-sdd/
 
 ## When to Use
 
-Use this skill for confirmed FeaturePilot plans when:
-- The change is medium/large, cross-module, cross-end, permission-sensitive, data-sensitive, or UI/visual-sensitive.
+Explicit SDD intent is the invocation gate; complexity is decision context only.
+
+Use this skill only when:
+- The user explicitly requests `fp-execute-sdd` / SDD for a confirmed FeaturePilot plan; or a valid existing `progress.md` records an SDD execution to resume.
 - The plan resolves to a small `tasks/plan-backend.md` / `tasks/plan-frontend.md` or a split `tasks/backend/00-index.md` / `tasks/frontend/00-index.md`, with explicit TDD steps in its task owners.
-- You want fresh-context per-task implementation and review rather than one long inline context.
-- You need recovery after compaction, restart, or a partially completed task chain.
+
+After that gate, SDD supplies isolated task workers, fresh-context per-task review, interruption recovery, and stricter quality gates. Medium/large, cross-module, cross-end, permission-sensitive, data-sensitive, and UI/visual-sensitive work can inform the user's choice but never select this skill by itself.
 
 Do not use it for:
 - `fp-quick` changes.
@@ -64,13 +66,7 @@ Do not use it for:
 
 ## Shared canonical artifact resolution
 
-Before preflight, briefing, or task selection, use canonical-first Consumer resolution for the complete approved artifact graph:
-
-1. Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; and `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`.
-2. Producer output has one canonical form. This Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility; migration must finish before dispatch.
-3. A split `00-index.md` is the sole canonical entry. Parse its manifest and read every listed fragment in exact manifest order; reject a missing/duplicate entry, duplicate owner, or unindexed fragment. Never infer order from entrypoint links, recursive globs, or filesystem order.
-4. In split plans, only manifest Kind=`tasks` rows create `tasks`-kind task-owner files. Every stable ID and checkbox has one unique task owner. Reject checkboxes in indexes/context/interface/coverage/overview, duplicate IDs/checkboxes, missing references, and dependency cycles.
-5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. Only a valid two-end overview supplies cross-end edges and derived progress; recompute its totals from owner checkboxes.
+Before preflight, briefing, or task selection, use canonical-first Consumer resolution from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` for the complete approved artifact graph: detect both alternatives before reading either (`prd.md`/`prd/00-index.md`; `proposal.md`/`proposal/00-index.md`; `design/backend.md`/`design/backend/00-index.md`; `design/frontend.md`/`design/frontend/00-index.md`; `tasks/plan-backend.md`/`tasks/backend/00-index.md`; `tasks/plan-frontend.md`/`tasks/frontend/00-index.md`). Producer output has one canonical form. This Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility; migration must finish before dispatch. A split `00-index.md` is the sole canonical entry; parse its manifest and read every listed fragment in exact manifest order; reject a missing/duplicate entry, duplicate owner, or unindexed fragment; never infer order from entrypoint links, recursive globs, or filesystem order. In split plans, only manifest Kind=`tasks` rows create `tasks`-kind task-owner files; every stable ID and checkbox has one unique task owner; reject checkboxes in indexes/context/interface/coverage/overview, duplicate IDs/checkboxes, missing references, and dependency cycles. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist; a single-end plan never has an overview; only a valid two-end overview supplies cross-end edges and derived progress, recomputed from owner checkboxes.
 
 Record resolved canonical entries, ordered fragments, task owners, and structural conflicts in every brief/package and in `progress.md`. Only when an end's split directory is absent may the Consumer read its small plan file; if both exist, stop before reading either.
 
@@ -121,13 +117,14 @@ The controller must:
 3. Create a task brief file.
 4. Dispatch exactly one implementer subagent for that task.
 5. Wait for the implementer to finish.
-6. For every UI-bearing case, record the staged visual gate and, after `VISUAL_REVIEW_PASS`, confirm the brief-owned customer-selected browser capability before dispatching the independent verifier; if required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
-7. Create a review package from the actual diff, implementer report, and independent E2E result.
-8. Dispatch exactly one read-only task reviewer.
-9. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
-10. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes or attempt 3 leaves only non-blocking review debt.
-11. After a task passes review or is accepted with non-blocking review debt at attempt 3, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
-12. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
+6. For every UI-bearing case at `STATIC_UI_READY`, dispatch one fresh independent read-only visual reviewer; only its persisted `VISUAL_REVIEW_PASS` verdict may advance the case.
+7. After `VISUAL_REVIEW_PASS`, confirm the brief-owned customer-selected browser capability and dispatch the independent E2E verifier when required; if visual review or required E2E is `BLOCKED`, keep the task unchecked and do not dispatch final review.
+8. Create a review package from the actual diff, implementer report, independent visual review, and independent E2E result when required.
+9. Dispatch exactly one read-only task reviewer.
+10. Run the bounded serial review/fix state machine for Critical/Important findings, with no more than three reviews in the task review scope.
+11. Update the unique owner checkbox, recompute derived overview progress counts only for a valid two-end overview, and record commit/commit-range evidence in the ledger only after review passes or attempt 3 leaves only non-blocking review debt.
+12. After a task passes review or is accepted with non-blocking review debt at attempt 3, branch only by the selected mode: `step-confirmation` reports evidence and waits for explicit confirmation; `automatic-continuation` must immediately select and dispatch the next eligible task without returning at the task boundary.
+13. Record information-layer preflight, relevant Unknowns, and any stale/missing references in the progress ledger and review package.
 
 The dynamic context assembled here replaces the old static handoff gate; the exact brief/package sources are review evidence.
 
@@ -209,7 +206,7 @@ Ledger rules:
 - When both ends exist, `tasks/00-overview.md` progress counts are derived from owner checkboxes; recompute them on mismatch instead of treating them as another state source. Never create or expect it for a single-end plan.
 - On any mismatch, inspect the owner file, commits, actual implementation, tests, and review evidence; reconcile both records before selecting, repeating, or declaring the task complete.
 - Append an event for task start, implementer result, package creation, review result, fix attempt, blocked state, checkbox update, and final review.
-- For each UI case, record its delivery level, current lifecycle stage, manifest reference, E2E evidence root, coverage-matrix result, attempts, cleanup, and any `BLOCKED` rationale in progress/review package evidence only; do not copy Visual Evidence Manifest fields or replace the unique task-owner checkbox as the sole completion authority.
+- For each UI case, record its delivery level, current lifecycle stage, manifest reference, independent visual-review path/verdict, separate `visualAttempt`, E2E attempt count, task-review attempt, E2E evidence root, coverage-matrix result, cleanup, and any `BLOCKED` rationale in progress/review package evidence only; do not copy Visual Evidence Manifest fields or replace the unique task-owner checkbox as the sole completion authority.
 - Append one `review_attempt` event after every review with `reviewScopeId`, scope/task, attempt, `reviewedTargetHead`, runtime `evidenceCommitHead`/`dispatchHead`, verdict, Critical/Important/Minor counts, review path, exact findings, and disposition. Counts alone are insufficient evidence.
 - On resume, restore the recorded review attempt for each task review scope and final review scope. A different finding, reviewer, fixer, commit, session, compaction, or restart never resets that scope's counter.
 - Persist one stable reviewScopeId per task/final scope before its attempt 1. A new reviewer, new commit, new session, or new finding never resets `reviewAttempt`; identity changes update evidence inside the same scope.
@@ -259,7 +256,13 @@ Evidence channels: browser interaction evidence is separate from screenshot evid
 
 For a UI-bearing task, resolve the matching `UI/E2E Delivery Contract` and `Visual Evidence Manifest` by stable `Task ID + Case ID` from the canonical frontend plan. Link the manifest by reference only: visual provenance, Figma mapping, viewport/fixture, reference/current/diff, mask, visual acceptance, and visual command remain Visual Evidence Manifest fields.
 
-The controller records `SOURCE_READY` from the source-derived condition/requirement, route, and real account/role; then `STATIC_UI_READY`; then applies the existing visual decision table to record `VISUAL_REVIEW_PASS` before E2E dispatch.
+The controller records `SOURCE_READY` from the source-derived condition/requirement, route, and real account/role; then `STATIC_UI_READY`. It may record `VISUAL_REVIEW_PASS` only from the persisted verdict of the fresh visual reviewer below; the controller and implementer never issue that verdict.
+
+After `STATIC_UI_READY` and before any E2E verifier launch, dispatch one fresh independent `visual-reviewer` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/visual-reviewer-prompt.md`. Persist its case-level review under `.fp-execute/reviews/<task-id>-<case-id>-visual-review-<visual-attempt>.md`; only its `VISUAL_REVIEW_PASS` verdict may advance the case.
+
+For each Task ID + Case ID, persist `visualAttempt` separately from task-review `reviewAttempt` and `reviewScopeId`; initialize it to 0, increment exactly once immediately before each visual-review dispatch, allow dispatched values 1..3 only, and never consume a task-review attempt.
+
+Before E2E launch and again at task review, require current HEAD to equal the recorded Reviewed HEAD and require the manifest/reference/current/optional-diff SHA-256 to match; a mismatch at `visualAttempt` 1 or 2 returns the case to `STATIC_UI_READY` and requires the next `visualAttempt`, while a mismatch at `visualAttempt` 3 is `BLOCKED` and forbids a fourth dispatch.
 - `static-only` may proceed from `VISUAL_REVIEW_PASS` to final review only with the evidence-backed `E2E Applicability: N/A` record; it must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
 - `interactive` and `business-flow` must progress `VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS` with independent real-browser E2E evidence; required E2E cannot be skipped, manually waived, or satisfied by a screenshot.
 
@@ -298,7 +301,7 @@ Rules:
 - The implementer may edit files, run tests, and commit only the current task.
 - The implementer must write the full report to `.fp-execute/reports/<task-id>-report.md`.
 - For a visual task, the implementer must write each case `manifest.md` and report case-level reference/current/optional diff provenance plus separate browser interaction evidence.
-- For an interactive/business-flow case, the controller dispatches the independent E2E verifier after visual pass; the implementer may not report `FRONTEND_E2E_PASS`.
+- For every UI case, the controller dispatches the fresh visual reviewer after the implementer produces `STATIC_UI_READY` evidence; the implementer may not report `VISUAL_REVIEW_PASS`. For an interactive/business-flow case, the controller dispatches the independent E2E verifier only after that visual pass; the implementer may not report `FRONTEND_E2E_PASS`.
 - The implementer final chat response must be short: status, commits, tests, report path, concerns.
 
 Allowed implementer statuses:
@@ -309,7 +312,7 @@ Allowed implementer statuses:
 
 ## Review Package
 
-After `DONE` or `DONE_WITH_CONCERNS`, first complete required UI/E2E verifier dispatch and then create a package using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/review-package-template.md`:
+After `DONE` or `DONE_WITH_CONCERNS`, first complete every required fresh visual review and, only after `VISUAL_REVIEW_PASS`, any required UI/E2E verifier dispatch; then create a package using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/review-package-template.md`:
 - brief path
 - implementer report path
 - base/head SHA for this task
@@ -317,7 +320,7 @@ After `DONE` or `DONE_WITH_CONCERNS`, first complete required UI/E2E verifier di
 - diff stat
 - full diff with context
 - test command evidence
-- case-level Visual Evidence Manifest, source/runtime provenance, replay command, artifact paths, browser interaction evidence, and required `FIGCAP-*` / `PRES-*` before/after evidence
+- case-level Visual Evidence Manifest, fresh visual-review path/verdict, source/runtime provenance, replay command, artifact paths, browser interaction evidence, and required `FIGCAP-*` / `PRES-*` before/after evidence
 - case-level UI/E2E Delivery Contract evidence: lifecycle stage, verifier result, E2E evidence path, coverage matrix, cleanup, and any blocker
 - controller notes and known concerns
 
@@ -331,7 +334,7 @@ Reviewer must verify two gates:
 1. **Spec Compliance:** task brief, interfaces, constraints, visual checks, and validation evidence.
 2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness.
 
-For frontend/UI tasks the reviewer also emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY` and `E2E evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and independent real-browser evidence, and keeps browser interaction evidence separate from screenshot evidence.
+For frontend/UI tasks the reviewer also verifies the persisted fresh visual-review artifact that issued `VISUAL_REVIEW_PASS`, emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY` and `E2E evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and independent real-browser evidence, and keeps browser interaction evidence separate from screenshot evidence.
 
 Reviewer output goes to `.fp-execute/reviews/<task-id>-review.md` and must include:
 - `Spec Compliance: PASS | FAIL | CANNOT VERIFY FROM DIFF`
@@ -413,6 +416,8 @@ Every dispatch states a capability expectation, not a guessed model ID. Use the 
 
 ## Completion and Final Review
 
+Before creating or resuming an SDD final-review scope in `pending-dispatch`, `review-completed`, `result-committed`, `fixing`, or `complete`, read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` once; it owns the shared final-review identity, phase, scope, gate, and evidence schemas.
+
 After every task has either passed review or reached attempt 3 with only recorded non-blocking review debt:
 1. Ensure every completed task's unique owner checkbox is checked and no summary/index file contains a task checkbox.
 2. Ensure ledger has no unresolved `BLOCKED` or main-flow blocker, including any required UI/E2E lifecycle, coverage, cleanup, or mock violation; every other unresolved finding must appear under `Review Debt`.
@@ -433,7 +438,7 @@ After every task has either passed review or reached attempt 3 with only recorde
 16. On resume, restore the recorded final review attempt, `reviewPhase`, scope/prior finding state, packageParentHead, and historical runtime evidence. Branch by phase:
     - `pending-dispatch`: current clean HEAD is the unique direct child of packageParentHead. Re-run parent/count/name-only checks for the allowed evidence-only delta, then reconstruct `evidenceCommitHead=dispatchHead=current HEAD` without relying on a ledger self-recorded commit SHA.
     - `review-completed`: historical dispatchHead remains the current committed HEAD; only final report/result-ledger paths may be uncommitted. Validate them and persist the result before advancing.
-    - `result-committed` or `fixing`: must not set dispatchHead=current HEAD. Recover historical dispatchHead from the later result event, run `git merge-base --is-ancestor <dispatchHead> HEAD`, and verify dispatchHead is an ancestor of current HEAD, `dispatchHead^ == packageParentHead`, `rev-list --count packageParentHead..dispatchHead == 1`, and original allowed package/pending-ledger paths. Run `git diff --name-only <dispatchHead>..HEAD` for successors after dispatchHead: result/complete permit only final report/result-ledger evidence; fixing additionally permits exact finding-authorized source/tests/fix evidence. Any other phase-allowed result evidence/fix paths violation records `BLOCKED`.
+    - `result-committed`, `fixing`, or `complete`: must not set dispatchHead=current HEAD. Recover historical dispatchHead from the later result event, run `git merge-base --is-ancestor <dispatchHead> HEAD`, and verify dispatchHead is an ancestor of current HEAD, `dispatchHead^ == packageParentHead`, `rev-list --count packageParentHead..dispatchHead == 1`, and original allowed package/pending-ledger paths. Run `git diff --name-only <dispatchHead>..HEAD` for successors after dispatchHead: result/complete permit only final report/result-ledger evidence; fixing additionally permits exact finding-authorized source/tests/fix evidence. Any other phase-allowed result evidence/fix paths violation records `BLOCKED`.
     A result commit records the prior dispatchHead and does not record its own SHA; resolve its current SHA externally. A new reviewer, new commit, new session, or new finding never resets the final scope.
 17. After a `PASS` or `PASS_WITH_NOTES` result is committed and the phase checks pass, set `reviewPhase=complete` without rerunning review. Any successor evidence update must contain only permitted final result/report paths; otherwise the verdict is stale and follows the bounded non-pass transition.
 18. Final review never resets or reopens a completed task review scope merely because it reports an existing review debt item.
@@ -457,7 +462,7 @@ Final report must include:
 - Minor findings and review debt fixed or deferred, with exact findings and rationale.
 - Final review result.
 - CodeGraph `post-write-sync` execution, skip, or failure state.
-- Per UI case, the lifecycle stage, manifest reference, independent E2E verifier result, E2E evidence/coverage-matrix paths, cleanup, and unresolved blocker (if any).
+- Per UI case, the lifecycle stage, manifest reference, independent visual-review path/verdict, independent E2E verifier result, E2E evidence/coverage-matrix paths, cleanup, and unresolved blocker (if any).
 - Whether `/fp-archive` is recommended.
 
 Only `step-confirmation` produces a user confirmation prompt after an individual task passes review or is accepted with non-blocking review debt at attempt 3. In `automatic-continuation`, concise per-task status is progress only; the controller's user-facing return occurs after all tasks and final review complete or when a genuine blocker requires user input.

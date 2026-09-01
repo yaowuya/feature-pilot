@@ -1,11 +1,10 @@
 ---
 name: fp-quick
-description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-explore 的 quick profile 获取候选文件、复用模式、验证路径、风险和范围证据，不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则每轮最多问一个实质性问题，如无疑问则输出内联实现计划并等待用户确认，确认后按计划实现与验证。
+description: Use when a user wants a small, local feature change, bug fix, or refinement handled without the full FeaturePilot proposal-design-plan document chain.
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.

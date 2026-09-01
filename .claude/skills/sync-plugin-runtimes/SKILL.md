@@ -1,6 +1,6 @@
 ---
 name: sync-plugin-runtimes
-description: Use when the current FeaturePilot repository must be synchronized to its locally installed Claude Code and Codex plugin runtimes, including unchanged-version cache refresh or installation verification.
+description: Use when the current FeaturePilot repository must be synchronized to its locally installed Claude Code, Codex, and DeepSeek Harness plugin runtimes, including unchanged-version cache refresh or installation verification.
 ---
 
 # Sync Plugin Runtimes

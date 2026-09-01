@@ -1,11 +1,10 @@
 ---
 name: fp-start
-description: 启动并严格执行全流程开发向导（propose → brainstorm → plan → execute）。用于中大型或需要 FeaturePilot 留痕的需求；必须按阶段门禁执行，显式加载 fp-propose、fp-brainstorm、fp-plan、fp-execute 子 skill，生成并核验对应产物，等待用户确认后才能进入下一阶段。
+description: Use when a user asks to run or resume the full FeaturePilot workflow for a feature after any required PRD work.
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
@@ -63,13 +62,7 @@ return-to: <fp-start + same stage gate>
 
 ## Shared canonical artifact resolution
 
-Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts:
-
-1. Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; and `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`.
-2. A Producer writes exactly one canonical form. A Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility. Migration requires explicit approval, one validated canonical form, and deletion of obsolete paths before the phase continues.
-3. For split form, the directory `00-index.md` is the sole canonical entry; parse its fragment table and read every listed file in exact manifest order. Reject a missing listed file, duplicate owner, or unindexed fragment; never use a recursive glob, filesystem order, or body link as ordering evidence.
-4. For split plans, only manifest rows whose Kind is `tasks` produce `tasks`-kind task-owner files. Every task ID and checkbox has one unique task owner; indexes, context/interface/coverage fragments, and overview contain no executable checkbox.
-5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. Only for a valid two-end overview, validate cross-end references/cycles and recompute derived progress from the unique owner checkboxes.
+Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts: detect both alternatives before reading either (`prd.md`/`prd/00-index.md`; `proposal.md`/`proposal/00-index.md`; `design/backend.md`/`design/backend/00-index.md`; `design/frontend.md`/`design/frontend/00-index.md`; `tasks/plan-backend.md`/`tasks/backend/00-index.md`; `tasks/plan-frontend.md`/`tasks/frontend/00-index.md`). A Producer writes exactly one canonical form. A Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility. Migration requires explicit approval, one validated canonical form, and deletion of obsolete paths before the phase continues. For split form, the directory `00-index.md` is the sole canonical entry; parse its fragment table and read every listed file in exact manifest order; reject a missing listed file, duplicate owner, or unindexed fragment; never use a recursive glob, filesystem order, or body link as ordering evidence. For split plans, only manifest rows whose Kind is `tasks` produce `tasks`-kind task-owner files; every task ID and checkbox has one unique task owner; indexes, context/interface/coverage fragments, and overview contain no executable checkbox. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist; a single-end plan never has an overview; only for a valid two-end overview, validate cross-end references/cycles and recompute derived progress from the unique owner checkboxes.
 
 Resume and post-write checks record resolved mode, entry, ordered fragments, task owners, and structural conflicts. Producer phases never read or update historical combinations in place; migration needs explicit approval under the shared contract.
 

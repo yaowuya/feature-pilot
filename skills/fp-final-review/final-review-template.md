@@ -4,6 +4,8 @@ Resolution follows the artifact-layout contract already loaded by `fp-final-revi
 
 叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段以及契约要求精确匹配的英文 schema 标题保留必要英文。若用户或目标项目设置明确指定其他语言，按共享优先级执行。
 
+Before writing or resuming a final-review report in direct mode (`N/A-direct`) or SDD mode in any review phase, read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` once. It owns shared schemas and invariants; this template owns independent judgments, findings, and verdict output.
+
 **Verdict:** PASS | PASS_WITH_NOTES | FAIL | BLOCKED
 **Reviewer:** read-only fp-final-review
 **Review Time:** YYYY-MM-DD HH:MM
@@ -74,35 +76,29 @@ Resolution follows the artifact-layout contract already loaded by `fp-final-revi
 
 ## Dispatch Commit and Phase-aware Resume
 
-Record `git rev-parse <dispatchHead>^`, `git rev-list --count <packageParentHead>..<dispatchHead>`, and `git diff --name-only <packageParentHead>..<dispatchHead>`. Require `dispatchHead^ == packageParentHead`, `rev-list --count packageParentHead..dispatchHead == 1`, and only allowed package/pending-ledger paths.
-
-- `pending-dispatch`: current clean HEAD is the unique direct child of packageParentHead; `evidenceCommitHead=dispatchHead=current HEAD`.
-- `review-completed`: historical dispatchHead remains the current committed HEAD; only final report/result-ledger paths may be uncommitted; persist the result before advancing.
-- `result-committed` or later: must not set dispatchHead=current HEAD. Record `git merge-base --is-ancestor <dispatchHead> HEAD` proving dispatchHead is an ancestor of current HEAD; revalidate historical parent/count/allowed delta. Record `git diff --name-only <dispatchHead>..HEAD` for successors after dispatchHead: result/complete allow only final report/result-ledger evidence, while fixing may add exact finding-authorized source/tests/fix evidence. Any other phase-allowed result evidence/fix paths violation is `BLOCKED`.
-
-The result commit records the prior dispatchHead and does not record its own SHA; record the externally resolved current result SHA separately.
+Apply `Review Identity and Phase` from `final-review-contract.md`. Record the direct `N/A-direct` result or SDD parent/count/allowed-delta, ancestry, phase-successor, and external-SHA evidence here without restating the phase rules.
 
 ## Scope Matrix
 
-Base semantics: `declared`, `observed`, `mapped`, `unmapped`, `missing`, `shared`, and `cross-change`. Verdict classes are separate: `mapped-current` belongs to the current selected change and affects the current verdict. `cross-change-only` requires explicit artifact/owner evidence, stays in branch inventory/counts, and is excluded from the current change verdict. If owner evidence is insufficient or cannot be proven, use `unowned/unmapped`; record a scope finding that affects the current verdict. `shared` is reviewed against each relevant change contract and affects the current verdict for selected-change obligations.
+Apply `Scope and Ownership` from `final-review-contract.md`; the table below is the report judgment projection.
 
 | Declared path/contract | Observed diff path | Mapping | Classification | Relevant change owner | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | `<artifact item/path or N/A>` | `<changed path or N/A>` | `declared / observed / mapped / unmapped / missing` | `mapped-current / cross-change-only / shared / unowned/unmapped / missing` | `<selected slug, other proven slug(s), shared, or unowned>` | `<artifact/owner/diff/current source/test>` |
 
-Review the complete branch inventory first. The selected change verdict covers selected change + shared + unowned risk and missing selected-change scope; proven cross-change-only findings remain reported but do not contaminate it.
+Populate every branch-inventory row, then derive the selected-change verdict under the shared scope rule.
 
 ## Owner Discovery Evidence
 
-Build owner inventory from selected change canonical artifacts: proposal/design scope, canonical task-owner `Files`/scope entries, and selected evidence package/ledger Scope Matrix. Only for selected-unmapped observed paths, derive the exact normalized path and run one fixed-string candidate lookup over direct sibling active changes under `fp-docs/changes/`. Do not search archive/history and must not bulk-read all changes.
-
-Search only canonical task-owner `Files`/scope entries and existing evidence package/ledger Scope Matrix rows. An exact hit creates a candidate change; only then resolve canonical-first and read minimal proposal/design/task-owner excerpts. Lookup budget: one query, at most eight candidate changes, and one matching owner fragment plus relevant contract excerpts per candidate. Insufficient/cannot-be-proven owner evidence or exhausted lookup budget remains `unowned/unmapped`.
+Apply the bounded lookup and ownership classification from `Scope and Ownership` in `final-review-contract.md`; record final lookup evidence in the projection below.
 
 | Path | Candidate lookup | Canonical owner proof | Resolved owners | Classification |
 | --- | --- | --- | --- | --- |
 | `<exact normalized path>` | `<query, hits, budget>` | `<canonical entry/excerpt or none>` | `<selected/other/shared/unowned>` | `<mapped-current/cross-change-only/shared/unowned-unmapped>` |
 
 ## Every-Attempt Gates
+
+Apply `Every-Attempt Gates` from `final-review-contract.md`; report rows contain independent reviewer results.
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
@@ -138,9 +134,7 @@ Figma Completion Status: `COMPLETE | INCOMPLETE | BLOCKED`
 - Figma visual fidelity: `PASS | FAIL | CANNOT_VERIFY | BLOCKED`
 - Overall Figma result: `COMPLETE | INCOMPLETE | BLOCKED`
 
-A Figma `COMPLETE` result requires every required `FIGCAP-*`, core `PRES-*`, and core Visual Case to be `PASS`, with no unapproved behavior change.
-
-For Figma-derived UI scope, `INCOMPLETE`, `BLOCKED`, or any required `FIGCAP-*`, core `PRES-*`, or core Visual Case `FAIL`/`CANNOT_VERIFY` makes the final verdict `FAIL` or `BLOCKED`; it cannot be `PASS`, `PASS_WITH_NOTES`, review debt, a manual approval, or a waived check.
+Apply `Figma Capability and Preservation` from `final-review-contract.md`; combine the independent dimensions above into the final Figma and overall verdict.
 
 ## Visual Evidence
 
@@ -150,28 +144,25 @@ Visual evidence: PASS | FAIL | CANNOT_VERIFY
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `<case-id>` | `<approved Figma/static design source>` | `<node or N/A>` | `<revision/time or approved-source time>` | `<frame/variant>` | `<available context or N/A>` | `<real target runtime route>` | `<scenario/state>` | `<viewport>` | `<DPR>` | `<locale>` | `<theme>` | `<stable fixture; no secrets or production/customer data>` | `.fp-execute/visual/<task-id>/<case-id>/reference.png` | `.fp-execute/visual/<task-id>/<case-id>/current.png` | `.fp-execute/visual/<task-id>/<case-id>/diff.png` or `N/A: <missing diff explanation>` | `<mask>` | `<case-specific rule>` | `<project-configured replay command/tool>` | `<core visual/non-core cosmetic>` | `<PASS/FAIL/CANNOT_VERIFY>` |
 
-- Source/runtime provenance: `reference.png` comes from the approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` comes from the real target runtime/Runtime route with stable data and stable environment. The optional diff or missing diff explanation must not hide missing source/runtime.
+- Source/runtime provenance: `<approved-source and real-runtime evidence under the shared Visual Evidence contract>`
 - Browser interaction evidence: `<separate evidence exercising approved states>`
 - Screenshot evidence: `<manifest/reference/current/optional diff evidence>`
-- Core blocker/debt: `<core visual without trustworthy source/runtime is CANNOT_VERIFY and main-flow blocker; missing evidence must not become review debt; at attempt 3 only reproducible non-core cosmetic differences may become review debt>`
-
-- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
-- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
-- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
+- Core blocker/debt: `<shared-contract classification and evidence>`
+- Apply `Visual Evidence` from `final-review-contract.md` for provenance, channel separation, verdict, and blocker/debt semantics.
 
 ## UI Case Inventory / N/A Reconciliation
 
-Before emitting the UI/E2E gate, reconcile the reviewed target snapshot against task-owner Files/task text, frontend design component/interaction/Visual Checks, Figma `FIGCAP-*`/`PRES-*` mappings, and mapped-current/shared/unowned frontend diff. Every UI-bearing source needs Task ID + Case ID + Delivery Contract; an unmapped source is `FAIL` or `BLOCKED`.
+Apply `UI Case Inventory / N/A Reconciliation` from `final-review-contract.md`; the table below records the report's final reconciliation.
 
 | Source owner / diff evidence | UI classification | Task ID | Case ID | Disposition |
 | --- | --- | --- | --- | --- |
 | `<task/design/Figma/diff evidence>` | `UI-bearing / non-UI` | `<task-id or N/A>` | `<case-id or N/A>` | `<mapped / FAIL / BLOCKED>` |
 
-`N/A` is valid only with zero UI-bearing inventory rows, no Figma UI scope, no mapped-current or unowned frontend diff, and evidence covering the reviewed target snapshot.
+Record whether the shared `N/A` predicate is satisfied and cite the complete inventory evidence.
 
 ## UI/E2E Gate
 
-Read the shared UI/E2E contract and join every planned UI case by exact Task ID + Case ID across plans, briefs, progress, review packages, visual manifests, E2E evidence, and coverage matrices. This gate is independent from `Visual Evidence`: reference that table's case/result/path rather than copying its visual fields.
+Apply `UI/E2E Gate` from `final-review-contract.md`; join final evidence by exact Task ID + Case ID and reference, rather than copy, Visual Evidence fields.
 
 **UI/E2E Gate:** PASS | N/A | FAIL | BLOCKED
 
@@ -179,23 +170,21 @@ Read the shared UI/E2E contract and join every planned UI case by exact Task ID 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `<task-id>` | `<case-id>` | `static-only / interactive / business-flow` | `<required lifecycle path>` | `<last completed stage>` | `<Visual Evidence row + manifest path>` | `<REQUIRED/N/A + PASS/FAIL/BLOCKED>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md; <artifacts>` | `false / N/A` | `<result/path or N/A>` | `<real persistence/permission result or N/A>` | `<None or exact core gap + repair owner>` |
 
-- `static-only`: requires `VISUAL_REVIEW_PASS` and an evidence-backed `E2E Applicability: N/A` reason.
-- `interactive` and `business-flow`: require `FRONTEND_E2E_PASS`, real browser evidence, and the canonical matrix. `business-flow` also requires real core API, `Mocked Core API: false`, real persistence/permission result, and cleanup.
-- `N/A` means the UI Case Inventory has zero UI-bearing sources; required E2E cannot be skipped or manually approved. A core UI/E2E gap, mock violation, unsafe unverified condition, missing required matrix/evidence, or `BLOCKED` lifecycle is `FAIL` or `BLOCKED`, must name its repair owner, and cannot become `PASS`, `PASS_WITH_NOTES`, review debt, a manual override, or a waived check.
+- Record the level-specific result, real-browser/zero-mock proof, cleanup/business result, final gate disposition, and repair owner under the shared contract.
 
 ## Verification Commands
 
-Classify before execution: `SAFE` may run only after inspecting definitions; `UNSAFE` and `UNKNOWN` must not run.
+Apply `Command Safety` from `final-review-contract.md`; the table below records the independent classification and result.
 
 | Command | Safety | Definition evidence | Result | Notes |
 | --- | --- | --- | --- | --- |
 | `<command>` | SAFE / UNSAFE / UNKNOWN | `<script/wrapper/config path or N/A>` | PASS / FAIL / SKIPPED | <key output or reason> |
 
-Write-mode and side-effect commands such as `--fix`, `--write`, snapshot update, migration, seed, formatter, generator, cache, coverage, dist, unknown wrapper, service, database, or external mutation are skipped.
+Record the safe variant or evidence gap required by the shared command classification.
 
 ## CodeGraph Candidate Evidence
 
-CodeGraph `explore`, `impact`, and `affected` results are candidate-only. Verify them with current source/diff plus native search, tests, or command output. Missing/stale/unavailable graph uses native search fallback and must not block.
+Apply `CodeGraph Candidate Verification` from `final-review-contract.md`; record candidates, current-source/native proof, and fallback in the projection below.
 
 | Query/helper | Candidates | Current-source verification | Native search / test / command evidence | Fallback |
 | --- | --- | --- | --- | --- |

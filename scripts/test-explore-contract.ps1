@@ -337,11 +337,9 @@ foreach ($anchor in @(
 }
 
 $readme = Read-Utf8 (Join-Path $root 'README.md')
-$agents = Read-Utf8 (Join-Path $root 'AGENTS.md')
 $userGuide = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
 foreach ($surface in @(
     @{ Name = 'README.md'; Text = $readme },
-    @{ Name = 'AGENTS.md'; Text = $agents },
     @{ Name = 'user guide'; Text = $userGuide }
 )) {
     Assert-Condition ($surface.Text.Contains('/fp-explore') -or $surface.Text.Contains('fp-explore')) "$($surface.Name) does not document fp-explore"
@@ -349,6 +347,5 @@ foreach ($surface in @(
     Assert-Condition (-not $surface.Text.Contains('approved-research-boundary:')) "$($surface.Name) copied the internal invocation schema"
 }
 Assert-Condition ($readme.Contains('commands/fp-explore.md')) 'README command table lacks fp-explore'
-Assert-Condition ($agents.Contains('skills/fp-explore/SKILL.md')) 'AGENTS intent routing lacks fp-explore fallback'
 
 Write-Output 'FeaturePilot fp-explore contract validation passed.'

@@ -4,8 +4,7 @@ description: Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitl
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
@@ -133,10 +132,7 @@ At the start, choose one of two modes from user intent:
 3. Stop code-fact investigation as soon as the next useful product question is known.
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
 5. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
-6. Select the final PRD form before writing:
-   - for form selection, default to the small form in `prd.md` when the complete logical artifact is expected to stay within 500 lines and 30,000 characters;
-   - use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves;
-   - preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
+6. Select the final PRD form before writing per the shared artifact-layout contract: default to the small form in `prd.md`; use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only under that contract's overflow/approval/setting gates. Preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
 6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
 7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
 8. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
@@ -202,7 +198,7 @@ Prototype requirements:
 
 - Single-file HTML/CSS/JS.
 - No external CDN.
-- Existing-product work should follow existing pages, `fp-ui-spec`, `fp-ux-spec`, Figma, or screenshot facts.
+- Existing-product work should follow existing pages, `fp-frontend-spec`, Figma, or screenshot facts.
 - Prototype expresses information structure and interaction, not final implementation.
 - Prototype must support simple interactions, not just static markup.
 

@@ -5,8 +5,7 @@ description: Use only after fp-prd has been explicitly selected, when PRD-blocki
 
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
@@ -15,15 +14,15 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` when classifying 
 
 # FeaturePilot PRD Grill Me
 
-This skill specializes `grill-me` for PRD creation.
+This skill 内联通用 grill-me 原则并专用于 PRD 访谈。
 
 ## First Step
 
-Load and follow `grill-me` first. This skill adds PRD-specific decision gates, output expectations, and stricter question/answer protocol. If `grill-me` conflicts with this skill, this skill wins for PRD interviews.
+通用 grill-me 原则：持续追问直到达成共享理解，沿决策树逐支解决依赖；能用代码探索回答的问题先探索代码；推荐只是推荐，不是用户确认。本 skill 在此之上增加 PRD 专属决策门禁、输出期望与更严格的问答协议。
 
 ### PRD override for code exploration
 
-The base `grill-me` rule “If a question can be answered by exploring the codebase, explore the codebase instead” applies only to implementation facts and existing-product constraints. It does **not** apply to product decisions.
+通用 grill-me 原则中的"能用代码探索回答的问题先探索代码"只适用于实现事实与既有产品约束。它**不**适用于产品决策。
 
 Code exploration may answer:
 
@@ -154,7 +153,7 @@ Before `fp-prd` writes either PRD form or `prototype.html`, confirm every decisi
 - High-risk error handling and fallback behavior.
 - Whether an HTML prototype is needed; what source it should follow; and which simple interactions `prototype.html` must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
 - Acceptance criteria and core test scenarios.
-- PRD form and split strategy for multi-change input: for form selection, default to the small form in compact `prd.md` when the complete logical artifact is expected to stay within 500 lines and 30,000 characters. Use mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves, and complete feature blocks stay together on semantic boundaries.
+- PRD form and split strategy for multi-change input: default to the small form in compact `prd.md`; use the mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only under the shared artifact-layout contract's overflow/approval/setting gates, keeping complete feature blocks together on semantic boundaries.
 - Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
 
 ## Prototype-first Interview
@@ -175,7 +174,7 @@ Confirm these prototype-blocking decisions before `prototype.html` is written:
 - Key fields, filters, table columns, actions, and button states.
 - Loading, empty, success, error, disabled, and permission-denied states that must be visible or switchable.
 - Concrete interactions to simulate, such as dialog open/close, form validation, search/filter, table selection, wizard step navigation, submit success/error, and permission-disabled controls.
-- Visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, `fp-ui-spec`, `fp-ux-spec`, or neutral default.
+- Visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, `fp-frontend-spec`, or neutral default.
 
 Do **not** ask backend implementation questions during the prototype-first interview unless they affect visible behavior or required user states. Backend/API/data/security details can be asked later before PRD writing.
 

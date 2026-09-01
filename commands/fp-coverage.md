@@ -1,7 +1,7 @@
 ---
 description: 覆盖率
 ---
-`${CLAUDE_PLUGIN_ROOT}/skills/fp-coverage/SKILL.md` $ARGUMENTS
+Read and strictly execute `${CLAUDE_PLUGIN_ROOT}/skills/fp-coverage/SKILL.md` before acting. Pass through: $ARGUMENTS
 
 Gate checksum：
 metric-freeze owner batch fresh full-suite exit code exact coverage

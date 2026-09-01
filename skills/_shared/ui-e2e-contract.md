@@ -4,7 +4,7 @@
 
 Every UI-bearing task declares one `UI Delivery Level` and records why that level applies:
 
-This contract is mandatory for UI-bearing work in `fp-execute` and `fp-execute-sdd`.
+This contract is mandatory for UI-bearing work in `fp-figma`, `fp-execute`, `fp-execute-sdd`, and `fp-final-review`.
 
 - `static-only`: only static presentation is in scope. It needs visual `PASS` / `VISUAL_REVIEW_PASS` evidence and an evidence-backed `E2E Applicability: N/A` reason.
 - `interactive`: user interaction is in scope. It requires real browser front-end E2E and `E2E Applicability: REQUIRED`.
@@ -28,7 +28,7 @@ The state order is exact:
 
 Tasks may progress only from left to right. A `static-only` task reaches `FINAL_REVIEW` only after its visual pass and justified E2E N/A record. `interactive` and `business-flow` tasks must reach `FRONTEND_E2E_PASS` with real browser evidence before final review. Required E2E cannot be `SKIPPED` or manual-approved; an unmet requirement is `BLOCKED`.
 
-`VISUAL_REVIEW_PASS` is issued only by a separate, independent, read-only visual-review stage: it must not modify files; it checks only the existing Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state; SDD uses a fresh reviewer.
+`VISUAL_REVIEW_PASS` is issued only by a separate, independent, read-only visual-review stage: it may write only its review artifact and must not modify implementation, source-evidence, or lifecycle files; it checks only the existing Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state; SDD uses a fresh reviewer.
 
 The visual-review stage records exactly `VISUAL_REVIEW_PASS`, `CANNOT_VERIFY`, or `FAIL`; only `VISUAL_REVIEW_PASS` can advance. `CANNOT_VERIFY` is `BLOCKED`.
 

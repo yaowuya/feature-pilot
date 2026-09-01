@@ -66,7 +66,7 @@ npm install -g @colbymchenry/codegraph@latest
 
 FeaturePilot 不使用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx` 安装 CodeGraph。系统缺少 npm 时，它不会自动安装 Node.js，也不会切换安装方式；会说明前置条件并继续普通初始化。
 
-CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。MCP 配置可能修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
+CLI 可用后，`/fp-init` 会把 Agent MCP 配置与（必要时）首次建图合并为一次确认，一次批准覆盖并逐步汇报。MCP 配置会修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
 
 项目根目录没有 `.codegraph/` 时：本轮自动安装已包含首次建图授权；如果 CLI 原本已安装，则会再次询问是否为当前项目建图。已有图和新图都必须通过 `codegraph status <project-root> --json` 验证，不能只凭目录存在判断可用。FeaturePilot 不会未经允许修改 `.gitignore` 或删除失败索引。
 
@@ -96,7 +96,7 @@ codegraph sync <project-root> --quiet
 
 ### 可选设置文件
 
-`/fp-init` 会逐项询问是否生成可选 settings，只有批准后才创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
+`/fp-init` 会一次列出可选 settings（agent/frontend/backend/prototype-style），逐文件确认后只为被批准的文件创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
 
 建议原则：
 
