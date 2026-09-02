@@ -19,6 +19,7 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | Implement or refine UI from a Figma node URL | `skills/fp-figma/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
 | Technical design | `skills/fp-brainstorm/SKILL.md` |
+| Design review entry for a confirmed design | `skills/fp-design-review/SKILL.md` |
 | Implementation plan | `skills/fp-plan/SKILL.md` |
 | Execute a confirmed plan (default direct execution) | `skills/fp-execute/SKILL.md` |
 | Execute a confirmed plan with explicitly requested SDD, or resume recorded SDD progress | `skills/fp-execute-sdd/SKILL.md` |
