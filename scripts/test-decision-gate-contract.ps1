@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -366,6 +366,7 @@ Assert-Anchors $brainstormSkill @(
     'do not repeat the Figma question'
 ) 'fp-brainstorm inherited visual-source gate'
 Assert-Anchors $brainstormSkill @('globally unique D-NNN sequence') 'fp-brainstorm cross-end decision ownership'
+Assert-Anchors $startSkill @('fp-design-review', 'review.md', '评审入口摘要', '未复制决策正文', '重新生成') 'fp-start review entry'
 Assert-Anchors $startSkill @('globally unique D-NNN sequence', 'Covered IDs') 'fp-start cross-end decision recovery'
 
 Assert-Anchors $startCommand @('Decision Ledger', 'per-item confirmation') 'commands/fp-start.md'
