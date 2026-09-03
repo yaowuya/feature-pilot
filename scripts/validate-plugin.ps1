@@ -908,6 +908,7 @@ $skillAnchors = @{
     'fp-prd-grill-me' = @('one question per turn', 'MUST NOT decide Bucket C', 'Minimal Fact Exploration')
     'fp-propose' = @('proposal-template.md', 'Why / What Changes / Out of Scope / Impact', 'fp-docs/changes/<slug>/proposal.md')
     'fp-brainstorm' = @('2-3', 'design-template.md', 'Visual Checks', 'design/00-index.md', 'design/backend.md', 'design/frontend.md')
+    'fp-design-review' = @('review-template.md', 'review.md', '评审关注点', '决策统计', '不得复制决策正文', 'design/00-index.md', 'manifest order', 'canonical-first', '阻塞')
     'fp-plan' = @('fp-plan-backend', 'fp-plan-frontend', 'plan-backend.md', 'plan-frontend.md')
     'fp-plan-backend' = @('Global Constraints', 'Backend Interface Ledger', 'Coverage Matrix', 'plan-template.md')
     'fp-plan-frontend' = @('Global Constraints', 'Interfaces', 'Visual Checks', 'plan-template.md')
@@ -956,6 +957,9 @@ Assert-Condition ($brainstormSkill.Contains('design-template.md') -and $brainsto
 Assert-Condition ($brainstormSkill.Contains('Agent') -and $brainstormSkill.Contains('Workflow')) 'fp-brainstorm is missing the single-owner finalization boundary'
 Assert-Condition ($brainstormSkill.Contains('fp-start') -and $brainstormSkill.Contains('design/00-index.md')) 'fp-brainstorm is missing its post-write handoff to fp-start'
 Assert-Condition ($startSkill.Contains('design/00-index.md') -and $startSkill.Contains('fp-plan')) 'fp-start is missing the post-write artifact confirmation boundary'
+$designReviewSkillText = Read-Utf8 (Join-Path $root 'skills\fp-design-review\SKILL.md')
+Assert-Condition ($startSkill.Contains('fp-design-review') -and $startSkill.Contains('review.md')) 'fp-start is missing the fp-design-review delegation for the design review entry'
+Assert-Condition ($designReviewSkillText.Contains('fp-start') -and $designReviewSkillText.Contains('review-template.md')) 'fp-design-review is missing its fp-start integration and template ownership'
 Assert-Condition ($startSkill.Contains('Agent') -and $startSkill.Contains('Workflow')) 'fp-start is missing the no-second-finalizer boundary'
 Assert-Condition ($startSkill.Contains('Resume boundary')) 'fp-start is missing bounded resume behavior'
 Assert-Condition ($startSkill.Contains('Task/Todo')) 'fp-start is missing non-authoritative bookkeeping failure handling'

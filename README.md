@@ -43,6 +43,7 @@ UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visua
 | `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
 | `commands/fp-coverage.md` | 先固定覆盖率统计口径，再按可恢复的模块级批次补充测试，最终以最新完整测试全部通过且精确覆盖率达标作为双重验收门禁 |
 | `commands/fp-module-review.md` | 大型或多模块专项审查、Finding 门禁与受控修复 |
+| `commands/fp-design-review.md` | 从已确认设计生成开发设计评审入口 review.md；可由 fp-start 阶段 2 自动触发或单独刷新 |
 | `commands/fp-final-review.md` | 归档前最终整分支只读审查 |
 | `commands/fp-archive.md` | 归档已完成的变更 |
 | `commands/fp-figma.md` | Figma UI 分析、改造与质量审查入口 |

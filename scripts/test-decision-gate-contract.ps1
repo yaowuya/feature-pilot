@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -181,6 +181,9 @@ $startSkillPath = Join-Path $root 'skills\fp-start\SKILL.md'
 $decisionLedgerPath = Join-Path $root 'skills\_shared\decision-ledger.md'
 $startCommandPath = Join-Path $root 'commands\fp-start.md'
 $validatorPath = Join-Path $root 'scripts\validate-plugin.ps1'
+$designReviewSkillPath = Join-Path $root 'skills\fp-design-review\SKILL.md'
+$reviewTemplatePath = Join-Path $root 'skills\fp-design-review\review-template.md'
+$designReviewCommandPath = Join-Path $root 'commands\fp-design-review.md'
 
 foreach ($path in @(
     $proposalSkillPath,
@@ -190,7 +193,10 @@ foreach ($path in @(
     $startSkillPath,
     $decisionLedgerPath,
     $startCommandPath,
-    $validatorPath
+    $validatorPath,
+    $designReviewSkillPath,
+    $reviewTemplatePath,
+    $designReviewCommandPath
 )) {
     Assert-Condition (Test-Path $path) "required decision-gate surface is missing: $path"
 }
@@ -203,6 +209,9 @@ $startSkill = Read-Utf8 $startSkillPath
 $decisionLedger = Read-Utf8 $decisionLedgerPath
 $startCommand = Read-Utf8 $startCommandPath
 $validator = Read-Utf8 $validatorPath
+$designReviewSkill = Read-Utf8 $designReviewSkillPath
+$reviewTemplate = Read-Utf8 $reviewTemplatePath
+$designReviewCommand = Read-Utf8 $designReviewCommandPath
 
 $statusAnchors = @('PRD-confirmed', 'code-verified', 'user-confirmed', 'not-applicable', 'needs-user-confirmation')
 
@@ -366,6 +375,36 @@ Assert-Anchors $brainstormSkill @(
     'do not repeat the Figma question'
 ) 'fp-brainstorm inherited visual-source gate'
 Assert-Anchors $brainstormSkill @('globally unique D-NNN sequence') 'fp-brainstorm cross-end decision ownership'
+Assert-Anchors $startSkill @('fp-design-review', 'review.md', '评审入口摘要', '未复制决策正文', '重新生成') 'fp-start review entry'
+Assert-Anchors $designReviewSkill @(
+    'review.md',
+    'review-template.md',
+    'fp-docs/changes/<slug>/review.md',
+    '评审关注点',
+    '决策统计',
+    '建议评审顺序',
+    '建议抽查路径',
+    'design/00-index.md',
+    'manifest order',
+    'canonical-first',
+    '不得复制决策正文',
+    '不得编造',
+    '阻塞'
+) 'fp-design-review skill'
+Assert-Anchors $reviewTemplate @(
+    '# <功能描述> — 开发设计评审',
+    '评审导航摘要',
+    '决策统计',
+    '数据变更',
+    '接口变更',
+    '评审关注点',
+    '建议评审顺序',
+    '建议抽查路径',
+    '设计入口',
+    '不得复制决策正文',
+    '不得编造'
+) 'design review template'
+Assert-Anchors $designReviewCommand @('fp-design-review', 'review.md', 'Gate checksum', '不得复制决策正文') 'commands/fp-design-review.md'
 Assert-Anchors $startSkill @('globally unique D-NNN sequence', 'Covered IDs') 'fp-start cross-end decision recovery'
 
 Assert-Anchors $startCommand @('Decision Ledger', 'per-item confirmation') 'commands/fp-start.md'

@@ -154,7 +154,8 @@ $disallowedPaths = @(
     'skills\fp-quick\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md',
     'skills\fp-figma\SKILL.md', 'skills\fp-frontend-spec\SKILL.md',
     'skills\fp-propose\SKILL.md', 'skills\fp-prd\SKILL.md', 'skills\fp-final-review\SKILL.md',
-    'skills\fp-module-review\SKILL.md', 'skills\fp-coverage\SKILL.md'
+    'skills\fp-module-review\SKILL.md', 'skills\fp-coverage\SKILL.md',
+    'skills\fp-design-review\SKILL.md'
 )
 $allSkillPaths = @(Get-ChildItem (Join-Path $root 'skills') -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') } | ForEach-Object { 'skills\' + $_.Name + '\SKILL.md' })
 $coveredSkillPaths = @($callerContracts.Path) + $disallowedPaths + @('skills\fp-eli5\SKILL.md', 'skills\fp-explore\SKILL.md')
