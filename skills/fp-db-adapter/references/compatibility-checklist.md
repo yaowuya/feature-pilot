@@ -21,7 +21,7 @@ Python traceback 最后一段
 
 - 日志出现 `Applying system_mgmt.0012_auto_...`，先打开 `system_mgmt/migrations/0012_auto_....py`。
 - 日志出现 `ForeignKey`、`constraint`、`index`，优先看 `AddField`、`AlterField`、`AddIndex`。
-- 日志出现字段长度、`varchar`、`CLOB`、`TEXT`，优先看 `CharField` 与 `TextField`。
+- 日志出现字段长度、`varchar`、`CLOB`、`TEXT`，优先检查 `CharField` 到长文本字段的迁移及其 `CloneField` 实现。
 - 日志出现语法错误、关键字、反引号，优先看 `RunSQL`、`db_column`、`db_table`。
 
 ## 建议搜索
@@ -40,7 +40,9 @@ rg -n "ForeignKey\\(|CharField\\(|RunSQL|RunPython" apps/<app_label>/migrations 
 
 ## 达梦重点
 
-- `CharField(max_length=...)` 过长：在达梦替换迁移中改为 `TextField`，或使用项目已有的 `CloneField` 适配方式。
+- 存量 `CharField` 转长文本：达梦替换 migration 中禁止使用 `migrations.AlterField(..., field=models.TextField(...))` 直接修改字段类型，必须使用 `cw_cornerstone.django.migrations.operations.fields.CloneField` 完成字段克隆和数据迁移。
+- `CloneField` 语义：目标 `field` 使用 `models.TextField(...)`，并保留原字段的 `null`、`blank`、`default`、`verbose_name` 等业务语义；同时核对字段名、数据复制结果、索引、唯一约束、回滚和重复执行风险。
+- 新建字段边界：仅当 migration 是首次 `CreateModel` 或 `AddField` 且数据库中不存在该列时，才可直接声明 `TextField`；已经存在的列从 `CharField` 转为 `TextField` 一律使用 `CloneField`。
 - MySQL 反引号：`RunSQL` 中出现反引号时，改为达梦可执行 SQL。
 - 关键字：`desc`、`key` 等名称需要显式处理，避免裸字段名进入 SQL。
 - 表/模式名：schema 名包含中划线等特殊字符时，确认 settings 中 schema 配置与迁移生成 SQL 一致。
@@ -57,6 +59,7 @@ rg -n "ForeignKey\\(|CharField\\(|RunSQL|RunPython" apps/<app_label>/migrations 
 
 - 保留原 migration 的 `dependencies`。
 - 保留业务字段名、verbose_name、null/blank/default、on_delete 等语义。
+- 达梦中已存在列的 `CharField` 到 `TextField` 类型转换必须使用 `CloneField`，不得退回 `AlterField`；方案和实施结果必须明确列出对应 operation。
 - 只改目标数据库不支持的字段类型、operation 顺序或 SQL 写法。
 - 不为了通过迁移删除业务约束；如果确实需要移除 `db_constraint` 或索引，必须在输出中说明风险。
 - 不重写无关 migration；一次报错只补一个或少数直接相关文件。

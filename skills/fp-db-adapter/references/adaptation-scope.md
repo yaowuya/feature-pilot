@@ -69,7 +69,7 @@
 ## 6. 现有 Migration 文件
 
 - **6.1 原 migration 清单**：扫描项目和相关第三方 app 的 migration，记录 `dependencies`、operations 和执行历史。
-- **6.2 达梦字段与标识符**：检查超长 `CharField`、`AutoField`/`BigAutoField`、`desc`/`key` 等关键字和带反引号 SQL。
+- **6.2 达梦字段与标识符**：检查需要转为长文本的存量 `CharField`、`AutoField`/`BigAutoField`、`desc`/`key` 等关键字和带反引号 SQL。存量 `CharField` 转 `TextField` 时禁止直接使用 `AlterField`，必须在达梦替换 migration 中使用 `cw_cornerstone.django.migrations.operations.fields.CloneField`；只有数据库中尚不存在该列的 `CreateModel` 或 `AddField` 才可直接声明 `TextField`。
 - **6.3 达梦数据迁移**：检查 `RunPython` 中的 `bulk_create`、`bulk_update`、长文本和 `select_related().order_by()` 风险。
 - **6.4 OceanBase DDL 顺序**：检查 `AddField(ForeignKey)`、`AlterField`、外键、唯一约束和索引的 operation 顺序。
 - **6.5 OceanBase 字符集与索引**：检查 `utf8mb4`、中文或 emoji、长文本和索引长度风险。

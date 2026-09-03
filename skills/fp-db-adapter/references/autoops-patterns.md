@@ -108,6 +108,25 @@ approval_mgmt, django_celery_beat, source_apply, system_mgmt
 
 新增补丁前先检查同 app 下是否已有相邻 migration，可直接复用其字段风格、`BigAutoField`/`AutoField` 选择、导入顺序和格式。
 
+达梦替换 migration 将已存在的 `CharField` 转为 `TextField` 时，不得使用 `migrations.AlterField` 直接改变类型，必须沿用项目的 `CloneField` operation：
+
+```python
+from django.db import migrations, models
+from cw_cornerstone.django.migrations.operations.fields import CloneField
+
+
+class Migration(migrations.Migration):
+    operations = [
+        CloneField(
+            model_name="examplemodel",
+            name="content",
+            field=models.TextField(blank=True, null=True, verbose_name="内容"),
+        ),
+    ]
+```
+
+示例字段属性仅用于说明结构，实际补丁必须从原 migration 保留字段名、`null`、`blank`、`default`、`verbose_name` 等业务语义，并检查数据复制、索引、唯一约束、幂等和回滚风险。仅当列尚不存在且 operation 为 `CreateModel` 或 `AddField` 时，才可直接使用 `TextField`。
+
 如果是迁移报错定位，方案只覆盖日志命中的 app 和 migration；如果是全新或增量适配审计，按 `compatibility-checklist.md` 扫描高风险 migration。只有用户确认当前完整方案后，才逐个创建或修改补丁。
 
 ## 打包配置
