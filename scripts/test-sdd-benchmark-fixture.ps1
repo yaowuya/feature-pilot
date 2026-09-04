@@ -95,7 +95,7 @@ function Test-FixtureManifest {
     )
 
     $fixtureInputPaths = @(Get-OrdinalFixtureInputPaths -RepositoryRoot $RepositoryRoot -FixtureProjectPath $FixtureProjectPath)
-    $manifestContent = Read-StrictUtf8Text -LiteralPath $ManifestPath
+    $manifestContent = (Read-StrictUtf8Text -LiteralPath $ManifestPath) -replace "`r`n?", "`n"
     $manifestEntries = @($manifestContent -split "`n" | Where-Object { $_.Trim() })
 
     if ($manifestEntries.Count -ne $fixtureInputPaths.Count) {
