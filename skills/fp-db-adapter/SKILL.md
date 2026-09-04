@@ -3,6 +3,12 @@ name: fp-db-adapter
 description: 为 Django/Python SaaS 项目审计、规划和实施达梦及 OceanBase 数据库适配，自动判断全新或增量适配以及单库或全量范围。适用于首次信创接入、已有适配补全、migration 报错定位和兼容性验证；任何项目修改前必须先输出详细方案并获得用户确认。
 ---
 
+## FeaturePilot workspace and information layer
+
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
+
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns project-root resolution, plugin-resource mapping, manifest-first lazy context, evidence precedence, process-document language, customer neutrality, compatibility, and artifact ownership.
+
 # 信创数据库适配
 
 自动识别项目现状和用户目标，规划并实施达梦、OceanBase 或两者的数据库适配。保留项目已有模式和迁移历史，不把静态推断描述为目标库验证结果。
