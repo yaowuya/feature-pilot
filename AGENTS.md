@@ -1,99 +1,41 @@
 # FeaturePilot (`fp`) for Codex and other agents
 
-FeaturePilot is an AI feature-development guide that runs the lifecycle:
+FeaturePilot is an AI feature-development guide for `需求 → 原型/设计 → 计划 → 执行 → 归档`. This repository ships the same `skills/` to Claude Code, Codex, and DeepSeek Harness. Current release: `1.0.0`.
 
-`需求 → 原型/设计 → 计划 → 执行 → 归档`
+`AGENTS.md` is a router, not a workflow contract cache. Resolve the current intent, read the matching skill completely, then read every conditional contract whose trigger matches before acting. Those files own the behavior; this file owns only discovery. If a routed resource is missing or unreadable, stop and report the incomplete plugin installation rather than searching the target repository for a substitute.
 
-This repository is a Claude Code plugin, but Codex can use the same command and skill files as plain Markdown process instructions. Current release: `0.3.0`.
+## Codex fallback router
 
-## How to use in Codex
-
-Codex does not run Claude Code plugins or slash commands directly. Treat `/fp-*` names as workflow labels that map to Markdown files in `skills/` and `commands/`. When the user asks to run FeaturePilot, read the matching skill file before acting:
+Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as workflow labels and load the matching installed skill:
 
 | User intent | Read first |
 |---|---|
-| Initialize workspace/config | `skills/fp-init/SKILL.md` |
-| Full feature workflow | `skills/fp-start/SKILL.md` |
-| PRD from rough idea | `skills/fp-prd/SKILL.md` |
+| Initialize or refresh workspace/config | `skills/fp-init/SKILL.md` |
+| Read-only repository exploration | `skills/fp-explore/SKILL.md` |
+| Explicit zero-background visual explanation | `skills/fp-eli5/SKILL.md` |
+| Full FeaturePilot workflow | `skills/fp-start/SKILL.md` |
+| Explicit PRD authoring or revision | `skills/fp-prd/SKILL.md` |
+| Small local change or bug fix without the full document chain | `skills/fp-quick/SKILL.md` |
+| Implement or refine UI from a Figma node URL | `skills/fp-figma/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
 | Technical design | `skills/fp-brainstorm/SKILL.md` |
+| Design review entry for a confirmed design | `skills/fp-design-review/SKILL.md` |
 | Implementation plan | `skills/fp-plan/SKILL.md` |
-| Execute confirmed plan | `skills/fp-execute/SKILL.md` or `skills/fp-execute-sdd/SKILL.md` |
-| Final review | `skills/fp-review/SKILL.md` |
-| Archive completed change | `skills/fp-archive/SKILL.md` |
+| Execute a confirmed plan (default direct execution) | `skills/fp-execute/SKILL.md` |
+| Execute a confirmed plan with explicitly requested SDD, or resume recorded SDD progress | `skills/fp-execute-sdd/SKILL.md` |
+| Raise or recover unit-test coverage | `skills/fp-coverage/SKILL.md` |
+| Review one large functional module or related modules | `skills/fp-module-review/SKILL.md` |
+| Final whole-branch review before archive or merge | `skills/fp-final-review/SKILL.md` |
+| Archive a completed change | `skills/fp-archive/SKILL.md` |
 
-## 0.3.0 release behavior
+## Conditional contract router
 
-This release documents the current FeaturePilot gates for both Claude Code and Codex:
+| Trigger branch | Required read |
+|---|---|
+| Any FeaturePilot workflow, including initialization or an absent information layer | `skills/_shared/workspace-rules.md` |
+| A PRD, proposal, design, task plan, overview, or archive artifact is read, written, converted, validated, reviewed, or archived | `skills/_shared/artifact-layout.md` |
+| Requirement, proposal, or design questions can change scope, behavior, architecture, interfaces, or acceptance | `skills/_shared/decision-ledger.md` |
+| Code location, symbols, call/data flow, impact, graph setup/refresh, or post-write graph state is involved | `skills/_shared/codegraph.md` |
+| Figma, frontend/UI planning or implementation, visual evidence, browser E2E, final review, or archive has UI-bearing scope | `skills/_shared/ui-e2e-contract.md` |
 
-- `fp-prd` is an interview workflow, not a one-shot PRD generator: Bucket A/B confirmed items are reviewed in one batch, Bucket C unresolved decisions are asked sequentially one at a time, assistant recommendations are not user confirmation, and the assistant must never self-answer Bucket C.
-- PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing `fp-docs/changes/<slug>/prd.md`.
-- Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write `prd.md`.
-- Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
-- Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
-
-## Workspace and settings
-
-Before choosing output paths, component-library guidance, test commands, or workflow behavior, treat the target project repository root as the FeaturePilot project root and look only for `fp-docs/` directly under that root:
-
-1. If `fp-docs/manifest.md` exists directly under the target project root, read it first.
-2. Do **not** walk upward to reuse a parent directory's `fp-docs/`.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. If the information layer is absent, fall back to current project code, adjacent implementations, and public defaults only.
-8. Do not create, overwrite, or rewrite customer manifest/settings/intel unless the user explicitly asks.
-9. Do not assume any customer component library, vendor, component prefix, design token, backend framework, or workflow policy in public workflow behavior.
-
-Information layer structure:
-
-```text
-fp-docs/
-  manifest.md               # FeaturePilot 信息层唯一入口
-  settings/
-    agent.md                # 可选：轻量 FeaturePilot policy adapter
-    frontend.md             # 可选：前端/UI/视觉/设计系统规则
-    backend.md              # 可选：后端/API/数据/安全规则
-    prototype-style.md      # 可选：原型视觉风格参考
-  intel/                    # 生成的 source-backed 但 stale-prone 的导航线索
-```
-
-## OpenSpec-inspired artifact model
-
-Use `fp-docs/changes/<slug>/` as the review unit for a feature. Keep artifacts together:
-
-- `prd.md` — product requirement design from `/fp-prd`.
-- `proposal.md` — concise development intent, scope, and impact.
-- `design-*.md` — technical approach and architecture decisions.
-- `tasks/` — implementation checklist.
-- `.fp-execute/` — execution ledger, task briefs, packages, and reviews.
-
-When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and summarize the change in `fp-docs/history/history.md`.
-
-## Low-cost flow
-
-Preferred path:
-
-1. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`, `fp-docs/intel/`).
-2. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
-3. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
-4. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.
-5. If `fp-init` detects a likely Canway/CW project, it may only ask whether to adopt labelled examples from `examples/canway-cw/fp-docs/settings/` as editable target-project settings. It must not auto-copy them, overwrite existing files, or treat them as public defaults.
-
-For the user-facing init/prd/start guide, see `docs/user_guide/init-prd-start.md`.
-
-## Mandatory gates
-
-Do not skip phases unless the selected skill explicitly allows it.
-
-1. Generate and confirm `fp-docs/changes/<slug>/prd.md` through `fp-prd` when starting from a rough idea. Use the mandatory PRD template and never write PRDs outside `fp-docs/changes/<slug>/prd.md`.
-2. Generate and confirm `fp-docs/changes/<slug>/proposal.md`.
-3. Generate and confirm design files under `fp-docs/changes/<slug>/`.
-4. Generate and confirm task plans under `fp-docs/changes/<slug>/tasks/`.
-5. Execute tasks using the confirmed task files, not chat summaries.
-6. Review and archive when complete, using `fp-docs/archive/`, and `fp-docs/history/history.md` as the canonical archive/spec/history locations.
-
-## Naming
-
-Use the `fp-*` namespace for FeaturePilot commands and skills.
+When maintaining this repository itself, also follow root `CLAUDE.md`; it owns pull-request language and repository-specific CodeGraph integration constraints.

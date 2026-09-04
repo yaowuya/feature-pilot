@@ -1,38 +1,13 @@
 ---
-description: 初始化 fp-docs 信息层（单一 manifest.md、settings/agent.md/frontend.md/backend.md/prototype-style.md、intel/），引导生成可选 settings、轻量 discovery，并在检测到 Canway/CW 项目时询问是否采用内置示例规范
+description: 初始化或刷新 fp-docs v2 信息层（manifest-only、可选 settings/project facts、CodeGraph 与项目族示例）
 ---
 
-# FeaturePilot Init
+读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/SKILL.md`，将「$ARGUMENTS」作为输入；该 skill 及其共享 workspace contract 是完整事实源。
 
-**初始化目标（可选）：** $ARGUMENTS
+Gate checksum：
 
-## FeaturePilot workspace and information layer
-
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
-
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: `/fp-init` is the only workflow that may create or repair `fp-docs/manifest.md`, `fp-docs/settings/`, and `fp-docs/intel/`. It must do so only under the target project root, never in a parent directory.
-
-调用并严格遵守本插件内 `fp-init` skill：`skills/fp-init/SKILL.md`。
-
-`fp-init` 用于低成本接入 FeaturePilot 信息层：
-
-- 创建 `fp-docs/manifest.md`、`fp-docs/settings/`、`fp-docs/intel/` 最小骨架。
-- 不创建 `fp-docs/changes/`、`fp-docs/archive/`、`fp-docs/history/`。
-- 如果项目根目录已有 `CLAUDE.md` 或 `AGENTS.md`，在 `fp-docs/manifest.md` 中记录引用，不复制大段内容到 `settings/agent.md`。
-- 引导用户选择是否生成可选的 `fp-docs/settings/agent.md`（轻量 FeaturePilot policy adapter）、`fp-docs/settings/frontend.md`（前端/UI）、`fp-docs/settings/backend.md`（后端/API/数据/安全）和/或 `fp-docs/settings/prototype-style.md`（原型视觉风格参考）。
-- 引导用户选择是否运行轻量只读 discovery，填充 `fp-docs/intel/*`。
-- 运行小范围只读 Canway/CW 检测；如果高置信度识别为 Canway/CW 项目，必须询问是否采用 `examples/canway-cw/fp-docs/settings/` 作为可编辑初始草稿；不得自动采用或覆盖已有文件。
-- 所有可选文件均使用 Unknown 占位而非猜测；已有文件绝不覆盖，除非用户明确要求。
-- 如果用户不同意可选配置，只创建信息层骨架，不强制配置。
-
-完成后输出工作区路径、manifest 路径、Canway/CW 检测与示例采用状态、`agent.md`/`frontend.md`/`backend.md`/`prototype-style.md` 配置生成状态、intel 生成状态、critical unknowns、下一步建议（通常是 `/fp-prd` 或 `/fp-start`）。
+- `fp-init` 唯一拥有项目级信息层；`manifest-only default` 只创建 manifest，不预建可选目录或 changes/archive/history。
+- settings、项目族示例、覆盖及 human-owned knowledge 均先批准；discovery 只读且只产出 `project-facts.md` + metadata-only `.freshness.json`。
+- CodeGraph 可选；安装仅用 `npm install -g @colbymchenry/codegraph@latest`，对应当前 CLI 状态，安装/MCP/建图（含 `codegraph init <project-root>`）一次批准并逐步汇报，失败回退。
+- `refresh-existing-information-layer` 实时计算 project facts 的 stale/conflict，确认后选择性刷新；人工/冲突内容不批量覆盖。
+- 旧 unknown/refresh/handoff 文件仅作一版只读兼容，不创建、刷新或要求；Unknown 不猜测。

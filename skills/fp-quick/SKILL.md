@@ -1,22 +1,13 @@
 ---
 name: fp-quick
-description: 快速处理小型开发需求、轻量功能、局部 bugfix 或微调优化；适用于不需要 fp-start / FeaturePilot proposal-design-plan 文档链路的场景。使用时必须先加载 fp-propose 并复用其项目探索与需求澄清规则，但不生成 proposal.md 或 fp-docs/changes；如有阻塞疑问则向用户提问，如无疑问则直接输出内联实现计划并等待用户确认，确认后按计划实现与验证。
+description: Use when a user wants a small, local feature change, bug fix, or refinement handled without the full FeaturePilot proposal-design-plan document chain.
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 ---
 
 # FeaturePilot Quick
@@ -35,27 +26,32 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 ## 工作流
 
-### 1. 用 fp-propose 探索项目背景
+### 1. 用 fp-explore quick 探索项目背景
 
-不要先要求用户补充项目上下文。Claude Code 运行时立即加载本插件内 `fp-propose` skill；Codex/Markdown agents 读取 `skills/fp-propose/SKILL.md`。只复用它的“探索项目现状”和“Socratic 需求澄清”规则来完成背景检索。
+使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `quick` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并停止 quick 流程。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`；不要为了探索而加载完整的 `fp-propose` skill；无产物和实现前确认门禁保持不变。
 
-重要边界：
-- 只使用 `fp-propose` 的探索和澄清部分。
-- 不执行 `fp-propose` 的 proposal 生成阶段。
-- 不创建 `fp-docs/changes/<slug>/`、`proposal.md`、`design.md` 或 `tasks.md`。
+<!-- fp-explore-invoke
+profile: quick
+objective: Locate candidate files, module boundaries, reusable code and test patterns, verification paths, implementation blockers, and quick-flow suitability evidence for this requested small change.
+caller: fp-quick
+active-slug:
+caller-owned-context:
+  - current user request and already confirmed constraints
+scope-include:
+  - user-named files, symbols, routes, APIs, models, components, and tests
+scope-exclude:
+  - fp-docs/changes/, archive/, and history/
+budget-profile: small
+return-shape: profile-default
+external-research: not-authorized
+approved-research-boundary:
+-->
 
-探索时至少完成：
-1. 不检查、不生成项目索引；先读取 `fp-docs/settings/` 中存在的相关配置，小需求也必须以当前代码为实现事实来源。
-2. 读取项目根目录或 `.claude/`、`.codex/`、`.agents/` 中的工程约束文件，例如 `CLAUDE.md`、`AGENTS.md`、`README.md`。
-3. 使用 `rg` / `rg --files` 搜索需求关键词、页面文案、接口名、路由名、组件名、模型名、测试名。
-4. 读取最可能相关的实现文件、测试文件和相邻同类代码，提炼现有模式。
+Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification` to build the inline plan. Treat `quick-scope-assessment` as advisory evidence only; `fp-quick` retains the final suitability decision. Keep current source and tests as the implementation truth and preserve the no-FeaturePilot-artifact boundary.
 
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为上下文依据。小需求必须以当前代码、测试和接口实现为准；若配置与代码冲突，以代码为准并向用户说明。
 
-检索要聚焦，不要为了小需求全量阅读仓库。优先形成这些结论：
-- 可能改动的文件和模块边界
-- 已有可复用模式、组件、API 或测试写法
-- 需求中仍不明确或可能有风险的点
+检索必须聚焦，搜索优先于整文件读取，不要为了小需求全量阅读仓库。
 
 ### 2. 判断是否需要澄清
 
@@ -66,7 +62,7 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 - 现有代码存在互相冲突的模式
 
 提问规则：
-- 每次最多问 1-3 个关键问题。
+- Ask at most one substantive question per turn. If multiple decisions are genuinely inseparable, express them as one structured choice rather than a list of separate questions.
 - 给出推荐选项和影响说明。
 - 不问可以在实现中按现有模式自然决定的细节。
 
@@ -94,12 +90,21 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 - 控制改动范围，不顺手重构无关代码。
 - 遇到新阻塞时停下说明，不擅自扩大范围。
 
+首次写入源码、测试、配置、schema 或生成器输入后，将当前图状态标记为 `dirty-after-write`，并 `never query a dirty graph`；剩余定位只使用当前源码搜索。项目在写入前已有 `.codegraph/` 时，在最终汇报或任何写入后的阻塞返回前执行一次 `post-write-sync`：
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+不再运行 `status`，不提交索引变化。同步失败只记录一次原因，`must not block completion`、验证或汇报；项目原本没有图时不得隐式建图。
+
 ### 5. 验证并汇报
 
 实现后运行与改动范围匹配的验证命令。最终汇报：
 - 完成了什么
 - 改了哪些关键文件
 - 验证命令及结果
+- CodeGraph `post-write-sync` 的执行、跳过或失败状态
 - 未验证项或残余风险
 
 如果验证失败，先按失败信息修复；同一问题连续失败多次或需要产品决策时，再请求用户介入。

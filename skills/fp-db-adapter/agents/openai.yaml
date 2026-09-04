@@ -1,0 +1,4 @@
+interface:
+  display_name: "信创数据库适配"
+  short_description: "先规划确认，再适配达梦与 OceanBase"
+  default_prompt: "使用 $fp-db-adapter 适配达梦、OceanBase 或两者：先列出全部适配分组及简要说明，再完整检查并输出审批摘要、表格化适配列表和按分组合并的已适配项，改动明细精确到文件、行号和代码锚点；等待我确认后按列表逐项实施，每项明确显示成功及实际适配内容，或失败原因和后续影响。"

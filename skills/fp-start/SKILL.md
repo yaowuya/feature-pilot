@@ -1,29 +1,21 @@
 ---
 name: fp-start
-description: 启动并严格执行全流程开发向导（propose → brainstorm → plan → execute）。用于中大型或需要 FeaturePilot 留痕的需求；必须按阶段门禁执行，显式加载 fp-propose、fp-brainstorm、fp-plan、fp-execute 子 skill，生成并核验对应产物，等待用户确认后才能进入下一阶段。
+description: Use when a user asks to run or resume the full FeaturePilot workflow for a feature after any required PRD work.
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
-
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` once before coordinating proposal or design; it owns Decision Ledger statuses, per-item confirmation, persisted terminal evidence, and recovery behavior.
 ---
 
 # FeaturePilot Start
 
 你是一个全流程开发向导，将引导用户完成从需求到实现的完整流程。这个 skill 是强流程，不是普通建议。
 
-**功能描述或 PRD slug：** 用户在命令中提供的需求文本，或 `fp-docs/changes/<slug>/prd.md` 对应的 slug。
+**功能描述或 PRD slug：** 用户在命令中提供的需求文本，或 resolved logical PRD content（small `prd.md` 或 split `prd/00-index.md` + fragments）对应的 slug。
 
 **如果功能描述为空**，只提示工程师提供详细的需求说明：背景与目标、具体需求、约束与边界；不要继续扫描或创建文件。
 
@@ -44,18 +36,35 @@ If it is missing:
 ## 强制执行契约
 
 从启动到结束必须遵守：
-- **显式加载子 skill**：每进入一个阶段，先读取并遵守对应的 `skills/<skill-name>/SKILL.md`。如果当前运行环境有 Skill/activate_skill 工具，使用工具加载；否则用文件读取工具读取本插件内的 SKILL.md。不要只凭记忆执行。
-- **阶段门禁**：阶段 1、2、3 完成后必须停下等待用户确认。没有明确确认，不得进入下一阶段。
+- **显式加载子 skill**：在 Claude Code 中，每进入一个阶段都使用 Skill tool 和对应的完整名称（`fp:fp-propose`、`fp:fp-brainstorm`、`fp:fp-plan`、`fp:fp-execute`、`fp:fp-execute-sdd`、`fp:fp-quick`）加载 skill；不得通过搜索或直接读取消费者项目中的对应 `SKILL.md` 模拟调用。如果 Skill tool 不可用或调用失败，报告 FeaturePilot 插件可用性、权限或安装问题并停在当前门禁。只有明确的非 Claude Code Codex/Markdown fallback 才可用文件读取工具读取 FeaturePilot 分发源码内对应的 `skills/fp-*/SKILL.md`；不要只凭记忆执行。
+- **阶段门禁**：阶段 1、2、3 完成后必须停下等待用户确认。Proposal/design 阶段还必须核验其 Decision Ledger 与 pre-write confirmation evidence；没有明确确认或台账证据，不得进入下一阶段。
 - **产物核验**：每个阶段完成后必须用工具检查目标文件确实存在，并向用户展示关键路径和摘要。
 - **范围纪律**：不得跳过 proposal/design/plan 直接实现；只有在“小需求分流”中判断适合 `fp-quick` 且用户明确确认后，才允许切换到 `fp-quick`。
-- **失败处理**：如果子 skill、索引或目标目录缺失，先说明实际发现，再按本文件的 fallback 继续，不要假装已调用或已生成。
+- **失败处理**：在 Claude Code 中，子 skill 不可用或调用失败时停在当前门禁并报告，不进入文件 fallback。索引或目标目录缺失时，先说明实际发现，再按下文对应的 artifact 规则处理。只有第一个契约明确限定的非 Claude Code Codex/Markdown 环境可读取 FeaturePilot 分发源码中的 skill 文件继续；不要假装已调用或已生成。
 
-## 通用规则：大文档自动拆分
+### JIT `fp-eli5` handoff
 
-任何阶段生成的 Markdown 文档，若预计超过 500 行，**必须主动拆分为多个小文件**：
-- `design.md` 超大时：按子系统拆分，`00-overview.md` + `01-<子系统>.md` …
-- `plan.md` 超大时：按任务拆分，`00-overview.md` + `01-<任务名>.md` …
-- 每个文件控制在 200 行以内，`00-overview.md` 包含其他文件的索引链接
+This is an explicit-only JIT path. 仅当用户显式要求解释当前 routing、stage artifact、checkpoint，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-start
+topic: <exact current routing/stage artifact/checkpoint>
+active-slug: <caller-resolved slug or N/A>
+pending-gate: <exact quick/full, proposal, design, plan, or SDD-mode gate>
+allowed-sources:
+  - <current argument, current canonical artifacts, and already-verified ledger/checkpoint evidence and summary>
+return-to: <fp-start + same stage gate>
+-->
+```
+
+图解不得替代 quick/full 选择、proposal/design/plan post-write confirmation、resume evidence 或 SDD continuation mode，不得加载下一阶段。返回后保持 stage 和 gate 不变，重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
+
+## Shared canonical artifact resolution
+
+Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts: detect both alternatives before reading either (`prd.md`/`prd/00-index.md`; `proposal.md`/`proposal/00-index.md`; `design/backend.md`/`design/backend/00-index.md`; `design/frontend.md`/`design/frontend/00-index.md`; `tasks/plan-backend.md`/`tasks/backend/00-index.md`; `tasks/plan-frontend.md`/`tasks/frontend/00-index.md`). A Producer writes exactly one canonical form. A Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility. Migration requires explicit approval, one validated canonical form, and deletion of obsolete paths before the phase continues. For split form, the directory `00-index.md` is the sole canonical entry; parse its fragment table and read every listed file in exact manifest order; reject a missing listed file, duplicate owner, or unindexed fragment; never use a recursive glob, filesystem order, or body link as ordering evidence. For split plans, only manifest rows whose Kind is `tasks` produce `tasks`-kind task-owner files; every task ID and checkbox has one unique task owner; indexes, context/interface/coverage fragments, and overview contain no executable checkbox. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist; a single-end plan never has an overview; only for a valid two-end overview, validate cross-end references/cycles and recompute derived progress from the unique owner checkboxes.
+
+Resume and post-write checks record resolved mode, entry, ordered fragments, task owners, and structural conflicts. Producer phases never read or update historical combinations in place; migration needs explicit approval under the shared contract.
 
 ---
 
@@ -64,7 +73,7 @@ If it is missing:
 读取项目上下文时必须以当前代码为准：
 - 不要生成项目索引；读取 `fp-docs/settings/` 中与当前阶段相关的客户配置，并以当前代码作为最终实现事实来源。
 - 不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为实现背景或设计依据。
-- 只允许读取当前正在处理的 `fp-docs/changes/<slug>/proposal.md`、设计文件和任务文件，用作本次流程阶段产物。
+- 只允许读取当前 slug 的 resolved logical PRD content、resolved logical proposal content、适用设计和任务 logical content；每项都通过 small file OR split index/fragments 解析后作为本次流程阶段产物。
 - 如果需要了解现有实现，必须用 `rg` / `rg --files` 定位真实代码、测试、路由、模型、组件和 API。
 
 ---
@@ -79,66 +88,51 @@ prd → proposal → design → tasks → execute → review → archive
 
 Dependencies are enablers, not busywork:
 
-- If `/fp-prd` already produced `prd.md`, reuse it instead of re-asking requirements.
+- If `/fp-prd` already produced resolved logical PRD content in small or split form, reuse its complete manifest-ordered content instead of re-asking requirements.
 - If a change is small and the user confirms `fp-quick`, avoid the full document chain.
 
 ---
 
-## PRD handoff mode
+## Shared start-routing exploration
 
-`fp-start` is the development handoff after `fp-prd`.
+完成非空输入和 init 可用性检查后，在阶段 1 前使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `start-routing` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在阶段 1 前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。`fp-start` 仍负责 canonical artifact 解析、最终 active slug、quick/full 选择以及所有阶段门禁。
 
-Before deciding whether to ask broad requirement questions:
+<!-- fp-explore-invoke
+profile: start-routing
+objective: Establish current PRD and stage evidence, quick-versus-full routing evidence, implementation boundaries, and the minimum verified context reusable by the next phase for this request.
+caller: fp-start
+active-slug: <caller-resolved exact slug or empty>
+caller-owned-context:
+  - current user argument, explicit continuation facts, and already confirmed PRD facts
+scope-include:
+  - fp-docs/manifest.md when present
+  - the exact candidate change directory only when fp-start already resolved one
+  - requirement-related source, routes, interfaces, models, components, and tests
+scope-exclude:
+  - unrelated fp-docs/changes, archive, and history
+budget-profile: standard
+return-shape: profile-default
+external-research: not-authorized
+approved-research-boundary:
+-->
 
-1. If the user argument matches an existing `fp-docs/changes/<slug>/prd.md`, read that PRD and use it as the requirement source.
-2. If the user argument is a feature description and there is exactly one recent active PRD under `fp-docs/changes/`, ask whether to use that PRD or start from the description.
-3. If a PRD is used, `fp-propose` should summarize from the PRD into `proposal.md` with minimal additional questions; do not re-interview already confirmed PRD decisions.
-4. If no PRD exists, proceed from the feature description as usual.
+Consume `start-active-stage`, advisory `start-route-assessment`, and `start-reusable-context`. `fp-explore` may report exact paths and candidate matches but never generates or normalizes the slug. When evidence supports `quick`, explain why and wait for an explicit user choice between `fp-quick` and the full `fp-start` flow. Only after the user chooses quick may `fp-start` load `fp-quick`; otherwise continue to phase 1.
 
-This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, then `/fp-start <slug>` picks it up for design, planning, and development.
-
----
-
-## 小需求分流
-
-在前置检查和阶段 1 之前，先根据用户需求文本做一次轻量判断。
-
-若需求明显符合以下特征，先暂停并询问用户是否改走 `fp-quick`：
-- 局部页面/组件调整
-- 小型接口、字段、校验、状态或文案变更
-- 明确范围内的 bugfix
-- 单一模块内的轻量能力补充
-- 不需要 FeaturePilot 留痕、跨团队评审或长期规范沉淀
-
-询问格式必须包含：
-- 为什么判断为小需求
-- `fp-quick` 会如何执行：加载 `fp-propose` 做探索与澄清、不生成 FeaturePilot 文档、输出内联计划、确认后实现
-- 让用户在“确认走 fp-quick”或“继续完整 fp-start”之间选择
-
-用户确认走 `fp-quick` 后：
-1. 显式加载 `fp-quick` skill。
-2. 完全按 `fp-quick` 流程执行。
-3. 不再创建 `fp-docs/changes/` 产物。
-
-如果用户要求继续完整流程，或需求复杂度不确定，则继续执行下面的 `fp-start` 全流程。
-
----
-
-## 前置检查：代码上下文
-
-不检查、不生成项目索引。进入阶段 1 前，先读取 `fp-docs/settings/` 中存在的相关配置，再根据需求关键词用 `rg` / `rg --files` 轻量定位真实代码、测试、路由、模型、组件和 API；如果暂时无法定位，继续由 `fp-propose` 做代码探索和澄清。
+For the full flow, pass `start-reusable-context` to `fp-propose` together with the exploration objective, inspected scope, evidence paths/lines, budget state, relevant observed worktree state, uninspected areas, and separately labeled inferences. When the request resolves to existing PRD content, pass the complete resolved logical PRD content in manifest order. `fp-propose` preserves the resolved proposal form when revising one, or selects small file OR split index/fragments before writing; downstream phases consume the complete resolved logical proposal content. Exploration does not advance a stage and does not count as proposal confirmation.
 
 ---
 
 ## 阶段 1：理解需求 & 生成变更提案
 
 【必须先加载】`fp-propose` skill，然后完成：
-- 探索项目现状（读取 `fp-docs/settings/` 的客户配置，并以真实代码、测试、路由、模型、组件和 API 为实现事实依据）
+- 复用 fresh `start-reusable-context` 中范围仍匹配、相关工作树内容未变化的 verified facts，并把推断继续作为推断；不要把探索建议当作用户确认。
+- 只对未覆盖、已变化或不足以判断 proposal 范围/影响/交付策略的缺口继续探索真实代码、测试、路由、模型、组件和 API。
 - Socratic 需求澄清（如需要）
-- 生成 `fp-docs/changes/<slug>/proposal.md`
+- Generate one resolved proposal form: small `fp-docs/changes/<slug>/proposal.md` or split `fp-docs/changes/<slug>/proposal/00-index.md` plus its manifest-listed fragments.
 
 阶段完成检查：
-- 用工具确认 `fp-docs/changes/<slug>/proposal.md` 存在。
+- Resolve and validate the selected proposal form with the shared contract; confirm its canonical entry and all manifest-listed fragments exist.
+- 从 `Impact` 的 unique detailed owner 解析 Handoff Decision Ledger 与 Pre-write Confirmation Evidence。每个 proposal-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved，不得把产物摘要当作确认完成，return to the owning phase `fp-propose` 补齐指定 `P-NNN` 的逐项确认。
 - 向用户展示 slug、proposal 路径、Why / What Changes / Impact 摘要。
 - 明确询问用户是否确认 proposal。
 
@@ -148,18 +142,43 @@ This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, the
 
 ## 阶段 2：技术方案设计
 
-【必须先加载】`fp-brainstorm` skill，然后完成：
+【必须先加载】`fp-brainstorm` skill。一次 `fp-brainstorm` 调用必须持续执行到适用的设计文件写入并核验存在后才返回；Socratic 问答完成或方案确认都不是子 skill 的返回点。其职责包括：
 - 基于真实代码定位涉及模块、API、数据模型、组件和约定
 - Socratic 架构决策问答（后端 + 前端维度）
 - 如果包含前端需求，利用 **本插件内** 的 `fp-figma` skill 分析设计稿，完成精准的前端页面与组件映射设计；**禁止回退到全局 `figma-to-vue` skill**。
-- 按实际涉及端生成设计文档：涉及后端才生成 `design-backend.md`；涉及前端/UI 才生成 `design-frontend.md`；没有前端计划时不得生成前端设计文档或空占位文件。
+- 按实际涉及端生成设计文档：每一端选择 small file 或 split directory 的一个 canonical form；始终生成 `design/00-index.md` 并让它直指所选端入口；没有前端计划时不得生成前端设计入口、分片或空占位文件。
 
-阶段完成检查：
-- 用工具确认设计文件存在；若分前后端，必须确认 `design-backend.md` 和/或 `design-frontend.md`。
+### No second design finalizer
+
+设计生成和写入完全属于当前 `fp-brainstorm` 调用。它返回后，`fp-start` 不得启动第二个设计收尾 Agent 或 Workflow，不得重复扫描代码库、重新推导决策、重写设计或发起多轮交叉验证。外层只能核验已写入文件、从文件提取摘要并请求写入后产物确认；若发现具体缺失或矛盾，返回同一 `fp-brainstorm` 上下文定点补齐或向用户报告阻塞。
+
+### Post-write artifact confirmation
+
+阶段完成检查属于**写入后产物确认**，与 `fp-brainstorm` 内部的写入前内容确认不同：
+- 用工具确认 `design/00-index.md` 及实际涉及端解析出的 small file 或 split `00-index.md` 存在；split design 还必须按 manifest order 确认每个 listed fragment 存在。
+- 加载 `${CLAUDE_PLUGIN_ROOT}/skills/fp-design-review/SKILL.md` 生成 `fp-docs/changes/<slug>/review.md` 并向用户展示其评审入口摘要（决策统计、评审关注点、建议评审顺序）；生成阻塞或发现 review.md 复制了台账或设计正文时，修复来源设计后重新生成，不得编造。review.md 是评审导航摘要：未复制决策正文，不改变任何台账状态；它是 fp-start 的写入后产物确认步骤，不属于 `fp-brainstorm`。
+- 从每个 actual-end 的 unique detailed owner 解析 Decision Ledger 与 Pre-write Confirmation Evidence。每个 design-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved。合并所有 owner 后必须仍是 globally unique D-NNN sequence，且每个 owner 的 `Covered IDs` 恰好覆盖其台账行；否则 return to the owning phase `fp-brainstorm` 补齐指定 `D-NNN` 的逐项确认，不得进入计划。
 - 向用户展示关键架构决策、改动模块、前端组件/布局映射（如涉及）。
 - 明确询问用户是否确认设计。
 
 等待用户确认设计后，输出 `✅ 设计确认，进入计划阶段`，然后才进入阶段 3。
+
+### Resume boundary
+
+会话中断或用户说“继续”时，以当前 slug 的实际产物和已明确完成的门禁恢复，不重新启动整段设计：
+
+- 先解析 proposal 的 Handoff Decision Ledger 和 Pre-write Confirmation Evidence。缺少任一记录、来源/确认凭据，出现 `needs-user-confirmation`，或遗留 `placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` / sample authorization，都是 missing or unresolved pre-write confirmation evidence；must not assume the gate completed，也不得仅因文件存在而跳到写后确认。proposal 证据缺失时，return to the owning phase `fp-propose`，只展示并补齐缺失的 `P-NNN` 行与写入授权。
+- proposal 的终态台账只证明写入前门禁，**不能**证明 `proposal post-write artifact confirmation`。若当前会话无法证明用户已经确认该 proposal，先展示 proposal 摘要并恢复阶段 1 的写入后产物确认；在这项确认完成前，不得判定或启动 design 状态。
+- 只有 proposal 写入后确认完成，才检查 design：如果当前会话已能证明所有 `D-NNN` 的逐项确认与 separate write authorization 已完成、但设计文件尚未创建（`design-prewrite-proven-in-session`），恢复同一次 `fp-brainstorm` 的第五步，使用已确认内容直接读取模板、写文件并核验；不得重新探索、问答、起草或另建 finalization workflow。
+- 否则，若没有 `design/00-index.md`、任一 end entrypoint 或 partial design path，标记为 `design-not-started`，加载 `fp-brainstorm` 开始阶段 2；不得把 design 尚未开始当作缺失设计证据。
+- 若发现任何 design 路径，则先解析 canonical form。dual form、historical path、partial conversion、缺少 index/fragment，或 actual-end detailed owner 缺少/存在未终态 Decision Ledger 或 Pre-write Confirmation Evidence、owner 合并后不再是 globally unique D-NNN sequence、`Covered IDs` 与 owner 台账不一致，都是 design recovery：return to the owning phase `fp-brainstorm`，只补齐指定 `D-NNN` 行与写入授权。对旧产物要明确说明是 recovery confirmation，不得伪称为历史写入前确认。
+- 适用的 canonical-first resolved design 已存在且其 pre-write confirmation evidence 完整：只核验 entry/index/ordered fragments、台账终态、展示摘要并恢复写入后产物确认；除非用户明确要求修改，不得重跑 `fp-brainstorm`。
+- 无法从当前会话确定某个 decision ID 是否已确认：明确说明缺少哪个门禁，只补问该 ID，不得假设完成或重新做全流程。
+- 恢复判断只读取当前 slug 的 resolved logical PRD/proposal content、适用设计 logical content 和当前会话中的明确确认，不读取历史 change/archive，也不创建新的 slug。
+
+### Bookkeeping failure
+
+Task/Todo 更新、进度展示或其他编排记账失败不代表阶段产物失败，也不是重新执行架构工作的依据。报告该失败后，仍以文件存在性和用户明确确认作为唯一阶段事实；不得因记账失败启动摘要、设计收尾、重写或验证 Workflow。若目标文件写入或核验本身失败，则停在当前阶段并报告，禁止进入计划阶段。
 
 ---
 
@@ -167,12 +186,14 @@ This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, the
 
 【必须先加载】`fp-plan` skill，然后完成：
 - 基于设计文档生成超级细粒度的 TDD 任务清单。
-- 按实际涉及端生成任务计划：涉及后端才生成 `tasks/plan-backend.md`；涉及前端/UI 才生成 `tasks/plan-frontend.md`。
-- 没有前端计划或不存在已确认的 `design-frontend.md` 时，不得生成 `plan-frontend.md` 或前端任务占位文件。
+- 按实际涉及端生成任务计划：后端选择 small `tasks/plan-backend.md` 或 split `tasks/backend/00-index.md`；前端选择 small `tasks/plan-frontend.md` 或 split `tasks/frontend/00-index.md`，每端只能选一种。
+- 没有前端计划，或 canonical Consumer 解析不存在已确认的前端设计入口时，不得生成任何前端 plan form 或占位文件；historical layout 直接阻塞。
 - 后端/前端任务都按项目实际分层、已确认设计和现有代码依赖顺序生成；只覆盖真实涉及的模型、服务、接口、权限、客户端、状态、路由、页面/组件、样式和验证边界，不固定框架术语或工具名。
+- 仅两端都有计划时生成 `tasks/00-overview.md`，只记录两个 canonical entries、跨端依赖/阶段和 derived progress，不复制端内导航或 task checkbox。
 
 阶段完成检查：
-- 用工具确认任务计划文件存在。
+- Resolve each end before reading any stable file. For split form, confirm its index and manifest-ordered fragments exist with no unindexed fragment; do not require an overview for a split single-end plan.
+- 确认 task IDs/checkbox 只存在于 manifest Kind=`tasks` 的 owner files 且各有一个 unique task owner；only when both ends exist, validate overview cross-end edges/cycles and derived progress against owner checkboxes.
 - 检查每个任务都包含 Files、Reasoning、测试/验证步骤；前端任务还必须包含 Template / Script / Style / Visual Checks。
 - 向用户展示任务文件路径和任务摘要。
 - 明确询问用户是否确认计划。
@@ -183,20 +204,29 @@ This keeps the low-cost flow: `/fp-prd <idea>` completes requirement design, the
 
 ## 阶段 4：执行任务
 
-根据计划规模选择执行 skill：
+### Default execution path
 
-- **默认执行**：加载 `fp-execute`，按任务文件中的步骤严格执行 TDD 流程，适合小到中等、任务较少或需要用户逐步确认的计划。
-- **SDD 执行（推荐中大型）**：如果任务跨多个模块/端、包含权限/数据模型/API/UI 契约、任务数较多，或用户要求自动连续执行，优先加载 `fp-execute-sdd`；它会为每个任务生成 brief、派发 fresh implementer、做 per-task review / fix loop，并在最后调用 `fp-review` 做整分支 review。
+Load `fp-execute` by default after the plan is confirmed. Execute the approved task-owner files directly in the current context with `automationMode=full`; use `automationMode=semi` only when the user explicitly requests per-task confirmation. Do not stop for a direct-versus-SDD choice and do not infer SDD from task count, complexity, module span, or risk.
+
+Only use `fp-execute-sdd` when the user explicitly requests it, asks for SDD, or asks for per-task fresh implementer/reviewer isolation. If the user asks to compare the modes without selecting one, explain the difference and continue only after the user chooses; otherwise the confirmed plan proceeds through `fp-execute`.
+
+### SDD continuation mode gate
+
+Ask this gate only after the user explicitly requests SDD. Explain what each option does, when it pauses, and when to use it, then wait for one explicit choice:
+
+1. **Step-confirmation SDD** — Complete one task through implementation, review/fix, checkbox reconciliation, and ledger update; report its evidence and wait for explicit user confirmation before dispatching the next task. Choose this when the user wants to inspect each increment or control every task/commit boundary.
+2. **Automatic-continuation SDD** — Run the same complete per-task SDD quality cycle, but after a task passes review or reaches attempt 3 with only non-blocking review debt, immediately continue to the next eligible task without asking. Per-task reports are progress updates, not return points. Continue through all tasks and final review; pause only for a genuine blocker, unresolved user decision, plan conflict, blocked implementation, or when a main-flow blocker remains after review attempt 3. Choose this for unattended execution without giving up SDD review rigor.
+
+Pass the exact selected continuation mode (`step-confirmation` or `automatic-continuation`) to `fp-execute-sdd`. Do not display this second gate for direct task execution.
 
 执行要求：
 - 先读取已确认的任务文件，不得凭阶段 3 的聊天摘要执行。
-- 执行前必须做 Pre-flight Plan Review；发现计划冲突先汇总处理，不要边执行边猜。
-- 每完成一个任务，更新任务 checkbox，并维护 `.fp-execute/progress.md`。
-- 执行验证命令并记录结果。
-- 若连续失败、review 发现 Critical/Important、或发现计划缺陷，暂停并说明；不得绕过测试或 review 直接声明完成。
-- SDD 模式第一版必须串行派发实现任务，不要让多个 implementer 并行修改同一工作区。
+- 执行前做一次 Pre-flight Plan Review；先解析唯一 task-owner files，split form 按 manifest order 读取，双端计划才使用 `tasks/00-overview.md`。
+- 每完成一个任务，只更新 owner file 中的唯一 checkbox，并维护作为恢复证据的 `.fp-execute/progress.md`。
+- Direct execution 对每个任务完成 TDD、必要验证和一次 inline 自审；发现问题就在当前任务中修复并重新验证，不派发独立 reviewer/fixer。
+- SDD 模式继续遵循 `fp-execute-sdd` 自己的 briefs、packages、review/fix 和 continuation contract。
 
-执行完所有任务后，加载 `fp-review` 做最终整分支 review；review 通过或用户接受残余风险后，提示运行 `/fp-archive` 归档本次变更。
+Direct execution does not own a final review scope; load `fp-final-review` once after `fp-execute` returns. `fp-final-review` 通过后才提示运行 `/fp-archive`。如果用户明确选择 `fp-execute-sdd`，由该 skill 按自身契约完成 final review，不再重复调用第二次 `fp-final-review`。
 
 ---
 

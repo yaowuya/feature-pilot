@@ -1,36 +1,28 @@
 ---
 name: fp-prd-grill-me
-description: Use with fp-prd to grill a product idea, pain point, user story, or rough requirement until PRD-blocking decisions are confirmed.
+description: Use only after fp-prd has been explicitly selected, when PRD-blocking product decisions still need confirmation.
 ---
 
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` when classifying PRD form, semantic split boundaries, existing-artifact conflicts, or conversions. This dependency skill does not independently broaden `fp-prd` discovery.
 
 
 # FeaturePilot PRD Grill Me
 
-This skill specializes `grill-me` for PRD creation.
+This skill 内联通用 grill-me 原则并专用于 PRD 访谈。
 
 ## First Step
 
-Load and follow `grill-me` first. This skill adds PRD-specific decision gates, output expectations, and stricter question/answer protocol. If `grill-me` conflicts with this skill, this skill wins for PRD interviews.
+通用 grill-me 原则：持续追问直到达成共享理解，沿决策树逐支解决依赖；能用代码探索回答的问题先探索代码；推荐只是推荐，不是用户确认。本 skill 在此之上增加 PRD 专属决策门禁、输出期望与更严格的问答协议。
 
 ### PRD override for code exploration
 
-The base `grill-me` rule “If a question can be answered by exploring the codebase, explore the codebase instead” applies only to implementation facts and existing-product constraints. It does **not** apply to product decisions.
+通用 grill-me 原则中的"能用代码探索回答的问题先探索代码"只适用于实现事实与既有产品约束。它**不**适用于产品决策。
 
 Code exploration may answer:
 
@@ -62,6 +54,24 @@ For every item in the PRD Blocking Decisions list, classify it into one of three
 **Bucket C — Must Ask（必须提问）：** The decision has high impact, no clear default, genuinely ambiguous trade-offs, or the assistant's confidence is low. **The assistant MUST NOT decide Bucket C items.** These become the "需确认" questions and must be asked one at a time.
 
 **HARD RULE:** The assistant must NEVER self-answer Bucket C items. Bucket C items can only be resolved by the user's explicit answer.
+
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 仅当用户显式要求解释 Phase 1 的当前 A/B review item、当前唯一 Bucket C 问题，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-prd-grill-me
+topic: <exact current A/B review item or sole C question>
+active-slug: <current PRD slug or N/A>
+pending-gate: <exact Phase 1 batch confirmation or current C N/Total>
+allowed-sources:
+  - <current PRD input, confirmed facts, exact options/impacts/recommendation, and bounded verified code facts>
+return-to: <fp-prd-grill-me + same review item/question>
+-->
+```
+
+图解不得重分类或代答 Bucket C，不得把 recommendation 当答案，不得提前呈现下一题，也不得把 interview completion 当作 PRD/prototype write approval。返回后保持原分类和回答状态，重新呈现同一 review item/question 并等待用户显式答复。
 
 ### Phase 1: Batch Review (Buckets A/B)
 
@@ -122,7 +132,7 @@ After the user answers, briefly confirm (`收到，确认为 A：<摘要>`) and 
 
 ### After Phase 2
 
-When all Bucket C questions are answered, produce a brief confirmation summary of all Bucket C decisions, then immediately return to `fp-prd` to write the PRD.
+When all Bucket C questions are answered, produce a brief confirmation summary of all Bucket C decisions, then return to `fp-prd` for canonical-form selection, the final output-path summary, and explicit pre-write approval. Do not treat interview completion as write approval.
 
 ### Special: 0 Bucket C Items
 
@@ -130,7 +140,7 @@ If no items fall into Bucket C, this is valid only when the input is already a c
 
 ## PRD Blocking Decisions
 
-Before `fp-prd` writes `prd.md` or `prototype.html`, confirm every decision that can change product scope, user value, risk, or acceptance criteria:
+Before `fp-prd` writes either PRD form or `prototype.html`, confirm every decision that can change product scope, user value, risk, or acceptance criteria:
 
 - Target users, roles, and user stories.
 - Business problem, pain point, and expected outcome.
@@ -143,11 +153,12 @@ Before `fp-prd` writes `prd.md` or `prototype.html`, confirm every decision that
 - High-risk error handling and fallback behavior.
 - Whether an HTML prototype is needed; what source it should follow; and which simple interactions `prototype.html` must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
 - Acceptance criteria and core test scenarios.
-- Split strategy for multi-change input.
+- PRD form and split strategy for multi-change input: default to the small form in compact `prd.md`; use the mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only under the shared artifact-layout contract's overflow/approval/setting gates, keeping complete feature blocks together on semantic boundaries.
+- Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
 
 ## Prototype-first Interview
 
-When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. The goal is to create a reviewable `prototype.html` before writing `prd.md`.
+When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. The goal is to create a reviewable `prototype.html` before writing either PRD Markdown form.
 
 Prototype-first still uses the same Bucket A/B/C discipline:
 
@@ -163,7 +174,7 @@ Confirm these prototype-blocking decisions before `prototype.html` is written:
 - Key fields, filters, table columns, actions, and button states.
 - Loading, empty, success, error, disabled, and permission-denied states that must be visible or switchable.
 - Concrete interactions to simulate, such as dialog open/close, form validation, search/filter, table selection, wizard step navigation, submit success/error, and permission-disabled controls.
-- Visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, `fp-ui-spec`, `fp-ux-spec`, or neutral default.
+- Visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, `fp-frontend-spec`, or neutral default.
 
 Do **not** ask backend implementation questions during the prototype-first interview unless they affect visible behavior or required user states. Backend/API/data/security details can be asked later before PRD writing.
 
@@ -180,7 +191,8 @@ Allowed default context:
   - `settings/prototype-style.md` only for prototype generation.
   - `settings/frontend.md` only for UI/page/prototype decisions.
   - `settings/backend.md` only for backend/API/data/security/permission product decisions.
-- Read `intel/unknowns-and-decisions.md` only if the manifest lists it and it is directly relevant.
+- Read `intel/unknowns.md` / `intel/decisions.md` only if the manifest lists actual directly relevant project-level content. Their absence is not a blocker; keep ordinary questions as `change-local unknowns` in the current PRD interview.
+- During one-release compatibility, a manifest-listed `intel/unknowns-and-decisions.md` may be read as a legacy hint only, never required current proof.
 
 Do not read by default:
 
@@ -208,32 +220,7 @@ Code facts can explain current behavior and existing patterns; they cannot decid
 
 ## Question Format (for Bucket C sequential questions)
 
-The Question Format defined in Phase 2 above applies for every Bucket C question: one question per turn, with options and a recommendation.
-
-For non-PRD `grill-me` use, the same one-question-per-turn format applies. Multi-question turns are not allowed in PRD grill-me.
-
-Every question must be numbered (question N of total). Every option label is scoped to the current question (A/B/C).
-
-For each Bucket C question:
-
-```markdown
-### 需确认（第 N/Total 个）
-
-已确认事实：
-- <事实>
-
-**问题：** <具体问题>
-
-选项：
-- A. <选项A> — <影响>
-- B. <选项B> — <影响>
-
-**推荐：** A，因为 <依据>。
-
-请回答 A/B/C 或给出你的方案。
-```
-
-A recommendation is not confirmation. Proceed only after the user explicitly answers.
+Reuse the exact Phase 2 format above: numbered N/Total, one question per turn, scoped A/B/C options with impacts, and a recommendation. Never bundle questions. A recommendation is not confirmation; proceed only after the user answers.
 
 ## Ambiguous Answer Handling
 
@@ -251,10 +238,7 @@ When a correction appears:
 3. If the new answer is clear, update the decision and continue with the next question.
 4. Do NOT re-ask already-answered questions unless the correction creates a contradiction with a later answer. In that case, surface the contradiction and ask how to resolve.
 
-```markdown
-收到，我更正为：问题 N 选择 B（<新含义>），不是 A（<旧含义>）。
-继续下一个问题...
-```
+Confirm briefly: `收到，我更正为：问题 N 选择 B（<新含义>），不是 A（<旧含义>）。` Then continue.
 
 For prototype requests, do not accept “make a prototype” as sufficient. Confirm the concrete interactions to demonstrate. If the user does not specify them, recommend a minimal interaction set based on the workflow and ask for approval.
 
@@ -268,3 +252,4 @@ When all PRD-blocking decisions are confirmed, return to `fp-prd` with:
 - Confirmed prototype interactions, if `prototype.html` will be generated.
 - Confirmed non-functional requirements.
 - Non-blocking open questions, each with why it is non-blocking.
+- Recommended small or split PRD form, semantic fragment ownership when split, and any existing-artifact conflict or proposed conversion. `fp-prd` owns the final selection and approval gate.

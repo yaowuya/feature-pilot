@@ -1,22 +1,14 @@
 ---
 name: fp-plan-backend
-description: Use when generating backend FeaturePilot task plans from proposal.md and design-backend.md, especially for server-side model, service, API, serializer, IAM, provider, URL, and test changes.
+description: Use when generating backend FeaturePilot task plans from the resolved logical proposal and canonical backend design representation, especially for server-side model, service, API, serializer, IAM, provider, URL, and test changes.
 ---
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing the backend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
 ---
 
 # FeaturePilot Backend Plan
@@ -25,27 +17,59 @@ Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue f
 
 本 skill 已融合 `writing-plans` 的核心方法：先锁定文件结构，再拆成小粒度 TDD 任务；每个任务必须给出精确文件、测试代码、运行命令、最小实现、通过验证和提交步骤。
 
+## Canonical input resolution
+
+Resolve the proposal representation before reading either form: detect `proposal.md` and `proposal/00-index.md`, reject dual or malformed state as a structural conflict, then read the small file or every split fragment in complete manifest order.
+
+Resolve the backend design representation before reading either form: detect `design/backend.md` and `design/backend/00-index.md`, reject dual or malformed state as a structural conflict, then read the small file or every split fragment in complete manifest order. If the parent supplied resolved logical content, canonical entrypoint, mode, and ordered fragment paths, verify them against disk before using them. Never discover split content from a stable-file body link.
+
+## Historical layout blocker
+
+检测到 `fp-docs/changes/<slug>/design-backend.md` 时，立即作为 structural conflict 阻塞，不读取其正文。必须先明确批准迁移到 `design/backend.md` 或 `design/backend/00-index.md`、删除旧路径并验证，之后才能规划。
+
 ## 输入
 
 【立即用工具执行】读取：
-- `fp-docs/changes/<slug>/proposal.md`
-- `fp-docs/changes/<slug>/design-backend.md`
+- `fp-docs/manifest.md`（如存在，作为信息层入口）
+- 已按 XOR 规则解析的 proposal logical content、canonical entrypoint、mode 与 ordered fragment paths
+- 按 canonical-first 规则解析的完整后端设计
+- `fp-docs/settings/backend.md`（如存在，作为后端/API/数据/安全约束）
+- manifest 列出的、与本次后端范围直接相关的 intel（仅作导航，当前事实回到代码验证）
 
-不要读取 `design-frontend.md` 来生成后端任务。
+不要读取前端设计来生成后端任务。
 
 ## 输出
 
-固定写入：
+写入前检查 small file、split index 和 historical paths；任何 historical/dual structure 都先作为 structural conflict 阻塞，迁移后再选择下列一种 mutually exclusive canonical form：
 
 ```text
-fp-docs/changes/<slug>/tasks/plan-backend.md
+Small form: fp-docs/changes/<slug>/tasks/plan-backend.md
+Split form: fp-docs/changes/<slug>/tasks/backend/00-index.md plus indexed fragments
 ```
+
+The two forms are mutually exclusive. Small form keeps the complete logical plan and all executable tasks in `plan-backend.md`; it does not create `tasks/backend/`. Split form writes only the end directory and must not create or retain `plan-backend.md`. For this end-local plan, default to the small form while the complete plan is expected to fit within 500 lines and 30,000 characters. Select split form only when the small plan is expected to exceed either limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Task groups, page areas, and ownership domains define fragments only after split form has been selected. A representation in which any produced Markdown file exceeds 500 lines or 30,000 characters is invalid; every produced file must stay within both hard limits.
+
+For split form, use semantic task-kind fragments rather than mechanically cutting a monolith:
+
+```text
+fp-docs/changes/<slug>/tasks/backend/00-index.md
+fp-docs/changes/<slug>/tasks/backend/01-context.md
+fp-docs/changes/<slug>/tasks/backend/05-interfaces.md
+fp-docs/changes/<slug>/tasks/backend/10-<topic>-tasks.md
+fp-docs/changes/<slug>/tasks/backend/90-coverage.md
+```
+
+Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan/task-layout-template.md` when splitting and use its authoritative `Order / File / Kind / Owns` manifest. The `context` fragment uniquely owns the header, goal, architecture, tech stack, Global Constraints, and file structure. The `interface` fragment uniquely owns the Backend Interface Ledger. One or more `tasks` fragments uniquely own the logical TDD task bodies. The `coverage` fragment uniquely owns the Coverage Matrix. The index contains navigation and ownership metadata only; every sibling Markdown fragment is listed exactly once.
+
+Each executable task checkbox exists exactly once: in `plan-backend.md` for small form or one `tasks`-kind fragment for split form. Split `00-index.md`, `context`, `interface`, and `coverage` fragments contain no executable checkbox. When converting an existing canonical form, transfer all unique content, validate the new representation, and remove the obsolete form. Never produce the historical stable-file-plus-directory combination.
+
+Use stable task IDs `backend-001`, `backend-002`, ... across the whole backend plan. Numbering continues across fragments and never resets per file. Return every `(task ID, owner file, dependencies)` tuple to `fp-plan` for whole-graph validation and derived totals. Only when both ends exist may `fp-plan` write `tasks/00-overview.md`, and it publishes only cross-end edges/stages and derived totals; this end-specific skill never writes the overview.
 
 不要写入其它计划目录。不要输出 subagent/inline execution 选择；`fp-start` 会在用户确认计划后进入 `fp-execute`。
 
 ## Scope Check
 
-生成计划前先检查 `proposal.md` 和 `design-backend.md`：
+生成计划前先检查已解析的完整 logical proposal 和完整后端设计：
 
 - 如果后端设计覆盖多个互相独立的子系统，先提示应拆成多个后端计划；不要把无关子系统塞进一个任务链。
 - 每个计划必须能独立产出可测试的软件增量。
@@ -53,7 +77,7 @@ fp-docs/changes/<slug>/tasks/plan-backend.md
 
 ## File Structure
 
-定义任务前，先写“文件结构规划”章节，列出将创建或修改的文件，以及每个文件的职责。
+定义任务前，先生成“文件结构规划”，列出将创建或修改的业务文件及职责。Small form 把它写入 `plan-backend.md`；split form 把它写入唯一的 `context` fragment。
 
 要求：
 
@@ -64,31 +88,13 @@ fp-docs/changes/<slug>/tasks/plan-backend.md
 
 ## Plan Header
 
-`plan-backend.md` 必须以如下 header 开头：
-
-```markdown
-# <功能名> Backend Implementation Plan
-
-> **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
-
-**Goal:** <一句话说明本计划交付什么后端能力>
-
-**Architecture:** <2-3 句话说明后端实现策略、边界和关键依赖>
-
-**Tech Stack:** <涉及的后端框架、测试框架、权限/IAM/任务/数据库等关键技术>
-
-## Global Constraints
-
-从 `proposal.md`、`design-backend.md`、项目约束文件（如 `CLAUDE.md`）中提取对所有任务都生效的硬约束。必须写精确值，不要泛泛而谈：
+写入前读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-backend/plan-template.md`，使用其中的 logical header。Small form 把 header 与 `Global Constraints` 写入 `plan-backend.md`；split form 把它们写入唯一的 `context` fragment。`Global Constraints` 必须从 resolved logical proposal、完整后端设计、项目约束和当前代码中提取精确值：
 - 版本/框架/依赖限制。
 - API 返回结构、错误码、权限 action、命名约定。
 - 数据迁移、兼容性、安全、性能或审计要求。
 - 明确禁止的做法，例如不得新增第三方依赖、不得跳过权限负向测试。
 
-这些约束默认约束每个任务，后续任务不得与之冲突。
-
----
-```
+这些约束默认约束每个任务，后续任务不得与之冲突。不要在推导任务期间提前加载模板。
 
 ## Task Granularity
 
@@ -120,7 +126,7 @@ Data/schema changes → business/service logic → request/response contracts �
 
 ## Backend Interface Ledger
 
-生成任务前必须先在 `plan-backend.md` 中建立后端接口账本；每个任务的 `**Interfaces:**` 必须与账本一致。
+生成任务前必须先建立后端接口账本；small form 的 owner 是 `plan-backend.md`，split form 的唯一 owner 是 `interface` fragment。每个任务的 `**Interfaces:**` 必须与账本一致。
 
 接口包括：
 - Python 函数、类、方法、构造参数、返回值。
@@ -132,72 +138,13 @@ Data/schema changes → business/service logic → request/response contracts �
 - provider / registry / hook 的注册 key、调用签名和生命周期。
 - 异步任务、定时任务、外部服务 client 的调用契约。
 
-格式：
-
-```markdown
-## Backend Interface Ledger
-
-| Interface | Owner Task | Contract | Consumers | Verification |
-| --- | --- | --- | --- | --- |
-| `<具体接口名>` | Task N | `<签名、payload、字段或 action mapping>` | `<后续任务或现有调用方>` | `<测试文件::测试名>` |
-```
+格式使用 `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-backend/plan-template.md` 的 Backend Interface Ledger。
 
 后续任务只能消费账本中已经存在的接口、现有代码中的接口，或本任务明确创建的接口；不得临时发明未声明的函数、字段、action、route 或 provider key。
 
 ## Task Format
 
-每个任务必须使用以下格式：
-
-````markdown
-### Task N: <组件或行为名称>
-
-**Files:**
-- Create: `exact/path/to/new_file.py`
-- Modify: `exact/path/to/existing_file.py:123-145`
-- Test: `tests/exact/path/to/test_file.py`
-
-**Reasoning:**
-- 为什么这个任务独立。
-- 它覆盖 proposal/design-backend 中的哪个需求点。
-- 它完成后系统行为有什么可验证变化。
-
-**Interfaces:**
-- Consumes: <本任务依赖的现有模型/service/API/权限 action，或前序任务产出的函数、类、字段、路径；写出精确签名/字段名/URL>
-- Produces: <后续任务、前端或外部调用方会依赖的函数、类、字段、URL、返回结构、权限 action；写出精确契约>
-- Contract checks: <如何验证 consumes/produces 的契约一致，例如 serializer 字段、API schema、权限映射或导入路径>
-
-- [ ] **Step 1: Write the failing test**
-
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
-```
-
-- [ ] **Step 2: Run test to verify it fails**
-
-Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
-Expected: FAIL with `<具体失败信息>`
-
-- [ ] **Step 3: Write minimal implementation**
-
-```python
-def function(input):
-    return expected
-```
-
-- [ ] **Step 4: Run test to verify it passes**
-
-Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
-Expected: PASS
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add tests/path/test_file.py exact/path/to/changed_file.py
-git commit -m "feat: add specific behavior"
-```
-````
+每个任务必须使用 `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-backend/plan-template.md` 的 Task 格式，完整保留唯一 task-level `- [ ] **Task backend-NNN: ...**` marker、Files、Reasoning、Depends on、Interfaces、失败测试、预期失败、最小实现、通过验证和 Commit 五步。子步骤不得使用 checkbox 语法。
 
 ## No Placeholders
 
@@ -230,19 +177,9 @@ git commit -m "feat: add specific behavior"
 
 ## Coverage Matrix
 
-`plan-backend.md` 必须在任务列表之后包含覆盖矩阵，用来证明 proposal 和 design-backend 的后端范围都被任务覆盖。
+后端 logical plan 必须在任务列表之后包含覆盖矩阵，用来证明 proposal 和 design-backend 的后端范围都被任务覆盖。Small form 的 owner 是 `plan-backend.md`；split form 的唯一 owner 是 `coverage` fragment。
 
-格式：
-
-```markdown
-## Coverage Matrix
-
-| Source | Requirement / Boundary | Tasks | Verification |
-| --- | --- | --- | --- |
-| proposal.md | `<具体需求点>` | Task N | `pytest ...::test_name -v` |
-| design-backend.md | `<具体设计点>` | Task N, Task M | `pytest ...::test_name -v` |
-| Backend boundary | `<IAM/permission/provider/migration/API 等实际涉及边界>` | Task N | `pytest ...::test_name -v` |
-```
+格式使用 `${CLAUDE_PLUGIN_ROOT}/skills/fp-plan-backend/plan-template.md` 的 Coverage Matrix。
 
 规则：
 - 每个 proposal 后端需求点必须映射到至少一个任务，或明确标记为 `Design gap — not planned`。
@@ -252,7 +189,7 @@ git commit -m "feat: add specific behavior"
 
 ## Self-Review
 
-写入 `plan-backend.md` 后，必须自审并直接修正问题：
+写入所选 canonical backend plan 后，必须自审并直接修正问题：
 
 1. **Spec coverage:** 逐条检查 proposal 和 design-backend 的后端范围点，确认每一点都能指向 Coverage Matrix 中的具体任务；未设计点只能标记为设计缺口。
 2. **Global constraints coverage:** 确认所有跨任务硬约束都进入 `Global Constraints`，且没有任务违反这些约束。
@@ -262,5 +199,9 @@ git commit -m "feat: add specific behavior"
 6. **Task independence:** 每个任务必须能独立执行、独立验证、独立提交，并且小到值得一次独立 review。
 7. **Backend boundary coverage:** 检查模型/迁移、service、serializer/schema、ViewSet/API、URL/router、IAM/permission、provider/registry/hooks、异步任务、外部服务调用中实际涉及的部分都有任务和验证。
 8. **Command validity:** 测试命令必须是项目中可执行的真实命令，不要写泛泛的 `run tests`。
+9. **Split integrity:** 如果存在 `tasks/backend/00-index.md`，确认 `plan-backend.md` 不存在，manifest 使用 `Order / File / Kind / Owns`，列出的每个 fragment 都存在、目录中没有 unindexed fragment、顺序确定、没有依赖 glob 顺序；每个 executable task checkbox exactly once 且只在 `tasks`-kind fragment，index/context/interface/coverage 不含 task checkbox。
+10. **Stable identity:** `backend-NNN` IDs 在全部 owner files 中唯一、跨 fragment 连续且依赖只引用存在的 task ID；开始执行后的计划修订不得静默移动或重编号任务。
 
-自审完成后，向 `fp-plan` 返回计划路径、任务摘要、Coverage Matrix 摘要和设计缺口列表（如有）。
+若选择 small form，反向确认 `tasks/backend/` 不存在。无论哪种 form，确认每个文件不超过 500 lines 和 30,000 characters，并且单端规划不会创建 `tasks/00-overview.md`。
+
+自审完成后，向 `fp-plan` 返回唯一 canonical entrypoint、manifest/owner files（split form）、任务摘要、Coverage Matrix 摘要和设计缺口列表（如有）。

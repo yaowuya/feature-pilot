@@ -1,143 +1,145 @@
 ---
 name: fp-execute
-description: 按 TDD 流程执行任务，支持半自动与全自动两种模式，并在执行前做计划冲突扫描、用 progress ledger 支持中断恢复
+description: Use when an approved FeaturePilot task plan should be implemented directly in the current context without SDD orchestration.
 ---
+
 ## FeaturePilot workspace and information layer
 
-Before choosing output paths, commands, UI/backend rules, or workflow behavior:
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-1. Treat the target project repository root as the FeaturePilot project root, and look only for `fp-docs/` directly under that root.
-2. If `fp-docs/manifest.md` exists, read it first.
-3. Do **not** bulk-read all `fp-docs/settings/` or `fp-docs/intel/` files. Read only the smallest relevant subset for the current phase/question.
-4. If UI/frontend/prototype behavior is involved and `fp-docs/settings/frontend.md` or `fp-docs/settings/prototype-style.md` exists, read only the relevant sections as required sources.
-5. If backend/API/data/security behavior is involved and `fp-docs/settings/backend.md` exists, read only the relevant sections as required sources.
-6. Treat generated intel as stale-prone navigation, not proof of current behavior. If intel is stale or broad, verify just-in-time from current source files.
-7. Use two precedence modes: current code/command output wins for current-state facts; approved change artifacts win for target-state requirements.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it owns canonical small/split paths, manifests, task ownership, historical-layout rejection, and Consumer validation.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, customer-selected browser capability, retry, and non-waivable blocking.
+If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 
-Public plugin rule: do not hardcode any customer component library, vendor, component prefix, design token, backend framework, API envelope, or workflow policy in public skills. Customer-specific rules belong in target-project settings.
-
-Compatibility rule: if the project root has no `fp-docs/manifest.md`, continue from current code and existing settings when safe, recommend `/fp-init`, and do not force initialization. If the current phase must write FeaturePilot artifacts, create only the necessary artifact directories under the project-root `fp-docs/`; do not create manifest/settings/intel except through `/fp-init`.
 ---
 
 # FeaturePilot Execute
 
-你正在执行 `{{tasksPath}}` 中的任务清单。
+直接执行已确认的 `{{tasksPath}}` 任务清单。
 
 **自动化模式：`{{automationMode}}`**
 **任务状态：{{tasksSummary}}**
 
+## 直接执行契约
+
+- 在当前执行上下文直接完成任务；默认不派发 fresh implementer、独立 task reviewer 或 fixer。Figma-derived UI scope 或含 `FIGCAP-*` / `PRES-*` 的任务必须按下方 Figma independent review gate 派发 fresh independent read-only reviewer，不能由 inline 自审替代。
+- The process artifact set normally includes `.fp-execute/progress.md`, the unique task-owner checkbox, and a valid two-end plan's derived `tasks/00-overview.md`; Figma-derived UI scope or a task with required `FIGCAP-*` / `PRES-*` additionally requires `.fp-execute/reviews/<timestamp>-figma-review.md` as the independent Figma review artifact.
+- 每个任务执行 TDD、必要验证和一次 inline 自审；发现问题就在当前任务内修复并重新验证，不建立独立 review/fix 状态机。
+- `fp-execute` 不拥有 final review scope。全部任务完成后输出执行报告，只提示运行独立的 `fp-final-review`。
+- 只有用户明确要求 `fp-execute-sdd` 时才切换到 SDD；不要根据任务数量、模块跨度或风险自行切换。
 ## 执行模式
 
 ### 半自动模式（semi）
-1. 读取 `{{tasksPath}}`，展示所有待完成任务。
-2. 读取或初始化 `.fp-execute/progress.md`，确认哪些任务已经完成。
-3. 询问用户："从哪个任务开始？"
-4. 执行单个任务（TDD 流程）。
-5. 任务完成后：更新 `{{tasksPath}}` 中的 checkbox（`[ ]` → `[x]`），并追加 progress ledger。
-6. **停下**，等待用户确认："继续下一任务？"
 
-### 全自动模式（full）
-1. 读取 `{{tasksPath}}`，获取所有未完成任务。
-2. 读取或初始化 `.fp-execute/progress.md`；ledger 已标记完成的任务不得重复执行。
-3. 按顺序为每个任务执行（TDD 流程）。
-4. 测试失败时：最多重试 3 次。
-5. 重试 3 次仍失败：**降级为半自动**，通知用户："任务 N 需要人工介入"，并在 ledger 中记录 BLOCKED。
-6. 全部完成后：输出执行报告，提示运行 `fp archive` 或 `/fp-archive`。
+1. 展示解析后的待完成任务及其 owner path。
+2. 读取或初始化 `.fp-execute/progress.md`，核对 checkbox、提交和验证证据。
+3. 询问用户从哪个任务开始。
+4. 按下方 TDD 流程完成一个任务。
+5. 更新唯一 owner checkbox、ledger 和必要的 overview 派生进度。
+6. 汇报结果并等待用户确认是否继续下一任务。
 
-## 执行状态目录
+### 全自动模式（full，默认）
 
-执行前在当前变更目录下维护状态目录：
+1. 按依赖顺序获取全部未完成任务。
+2. 读取或初始化 `.fp-execute/progress.md` 并完成状态对账。
+3. 在当前上下文逐个执行任务，不在正常任务边界停下。
+4. 目标测试或验证失败时最多修复并重试 3 次；仍失败则记录 `BLOCKED`，暂停并说明需要的人工决策。
+5. 全部任务完成后输出执行报告，提示运行独立的 `fp-final-review`；不要在本 skill 内执行最终审查。
+## Canonical 输入解析
 
-```text
-fp-docs/changes/<slug>/.fp-execute/
-  progress.md
-```
+按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 的 canonical-first Consumer（而不是 Producer）规则解析：detect both alternatives before reading either，再读取唯一 canonical form（`prd.md`/`prd/00-index.md`、`proposal.md`/`proposal/00-index.md`、`design/backend.md`/`design/backend/00-index.md`、`design/frontend.md`/`design/frontend/00-index.md`、`tasks/plan-backend.md`/`tasks/backend/00-index.md`、`tasks/plan-frontend.md`/`tasks/frontend/00-index.md`）。Split form 按 manifest order 读取全部 fragments; missing、duplicate 或 unindexed fragment 都是 structural conflict。只有 `tasks`-kind fragment 可以拥有 checkbox；每个 task ID 使用一个 unique task owner；验证端内与跨端依赖存在且无环。`tasks/00-overview.md` exists exactly when both backend and frontend plans exist；A single-end plan never has an overview；双端 overview 的进度是从 owner checkboxes 计算的 derived progress summary。Root-level `design-backend.md` / `design-frontend.md`、indexless split、historical path 或 small/split dual form 都必须在执行前阻塞；`fp-execute` 不迁移需求、设计或计划产物。
 
-如果当前执行的任务文件不在 `fp-docs/changes/<slug>/tasks/` 下，则在任务文件同级目录创建 `.fp-execute/progress.md`。
+## 执行状态
 
-`progress.md` 是恢复执行的事实来源，格式建议：
+在 `fp-docs/changes/<slug>/.fp-execute/progress.md` 维护简单的恢复证据。如果任务文件不在标准 change 目录，则在任务文件同级创建 `.fp-execute/progress.md`。
 
 ```markdown
 # Execution Progress
 
 Plan files:
-- tasks/plan-backend.md
-- tasks/plan-frontend.md
+- <canonical task entrypoints and ordered owner files>
 
 Base SHA: <执行开始时的 git sha>
 
 ## Completed
-- Task backend-001: complete (commits <base>..<head>, tests: `<command>`, review: inline clean)
+- <task-id> (owner: <path>): commits <base>..<head>; tests `<command>`; inline review clean
 
 ## Blocked
 - None
 
 ## Notes
-- <Minor findings or follow-up notes>
+- <残余风险或人工跟进项>
 ```
 
 规则：
-- 启动执行时必须先读取 `progress.md`；不存在则创建。
-- ledger 标记 complete 的任务即使 `{{tasksPath}}` checkbox 仍是 `[ ]`，也不要重复执行；先说明不一致并修正 checkbox。
-- checkbox 是用户可见进度，ledger 是恢复执行依据；两者冲突时，以 ledger + `git log`/实际文件状态为准，并向用户说明。
-- 每完成一个任务，必须在同一次收尾中更新 checkbox、追加 ledger、记录验证命令和 commit 范围。
-- 如果任务 BLOCKED，记录阻塞原因、已尝试命令和下一步需要的人工决策。
 
+- 启动时先读取 ledger；不存在则创建。
+- Task-owner checkbox 是计划完成状态；ledger is recovery evidence, not a second completion authority。
+- Ledger 与 checkbox 不一致时检查 owner file、`git log`、实际实现和验证结果，再修正状态；不要盲目重做。
+- 每个任务完成时一起更新 checkbox、ledger、验证命令和 commit 范围；双端计划再从 owner checkboxes 重算 overview。
+- UI-bearing task 同时在 ledger 记录每个 `Task ID + Case ID` 的当前 lifecycle gate、Visual Evidence Manifest reference、`.fp-execute/e2e/<task-id>/<case-id>/` evidence reference、coverage-matrix result、attempt count、cleanup and `BLOCKED` rationale。它们不得替代 checkbox 的完成权威。
+- 阻塞时记录原因、已尝试命令和需要的人工决策。
 ## Pre-flight Plan Review
 
-执行任何任务前，必须先做一次计划冲突扫描。这个扫描不修改业务代码，只检查任务文件与 proposal/design/项目约束是否自洽。
+执行业务代码前一次性检查：
 
-检查项：
-1. **范围一致性**：任务是否只覆盖已确认的 proposal/design 范围；Out of Scope 不得进入执行。
-2. **Global Constraints**：如果计划包含 `Global Constraints`，每个任务都不得违反其中的版本、依赖、权限、命名、兼容性、安全和 UI 约束。
-3. **Interfaces**：如果任务包含 `Interfaces`，后续任务引用的函数、字段、URL、route、store、组件 props/events 必须由现有代码或前序任务明确产出。
-4. **前后端契约**：后端 API、字段名、错误结构、权限 action 与前端 API wrapper/store/page 任务必须一致；不一致时暂停并汇总给用户决策。
-5. **TDD 可执行性**：每个任务必须有明确失败测试、失败预期、最小实现、通过验证和提交步骤；泛泛的 `run tests` 或 `实现页面` 视为计划缺陷。
-6. **前端骨架完整性**：前端任务必须包含 `Reasoning`、`Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`；前端任务必须显式遵循项目现有前端框架和脚本/状态管理写法。
-7. **占位符扫描**：发现 `TBD`、`TODO`、`按需处理`、`类似上面`、`补充样式`、`Add appropriate error handling` 等占位表达，先修正计划或请求用户确认，不要直接执行。
-8. **review 风险前置**：如果计划要求了明显会被代码审查判为缺陷的做法（例如测试没有断言、硬编码敏感配置、跳过权限负向测试），先把问题与对应计划文本一起提交给用户决定哪个约束优先。
+1. 任务范围与已确认 proposal/design 一致，Out of Scope 未进入计划。
+2. `Global Constraints`、项目设置和当前代码约束没有冲突。
+3. `Interfaces`、API 字段、权限、route、store、props/events 和跨任务依赖一致。
+4. 每个任务有可执行的测试或替代验证步骤，没有 `TBD`、`TODO`、`按需处理` 等占位内容。
+5. 前端任务包含需要的 template/script/style/visual 骨架，并符合项目当前框架与组件惯例。
+6. 计划冲突一次性汇总并暂停；扫描通过后直接开始执行。
+## UI-bearing Task Gate
 
-如果扫描通过，继续执行；如果发现冲突，必须一次性汇总所有冲突，等待用户决策或先修正计划后再执行。
+Before each UI-bearing confirmed task, resolve its unique stable task owner and read the matching `UI/E2E Delivery Contract` and `Visual Evidence Manifest` rows by `Task ID + Case ID` from the canonical frontend plan. The UI/E2E contract links existing visual evidence and does not duplicate visual-manifest fields: approved-design provenance, Figma mapping, viewport/fixture, reference/current/diff, mask, visual acceptance, and visual command remain the Visual Evidence Manifest's only fields.
 
+For every matched case, record lifecycle-gate evidence under the existing task ledger and canonical case directories; this is recovery/verification evidence only, and the unique task-owner checkbox remains the sole plan-completion authority. First prove `SOURCE_READY` from the source-derived condition / requirement reference, route, and real test account or role. Implement the case as `STATIC_UI_READY`, then require the existing Visual Evidence Manifest to pass as `VISUAL_REVIEW_PASS`.
+After `STATIC_UI_READY`, direct execution must run its separate visual-review pass before any case advances. It is independent of implementation, read-only, must not modify files, and checks only the Visual Evidence Manifest `reference`, `current`, and `diff` artifacts against the real runtime route/state. Direct execution records exactly `VISUAL_REVIEW_PASS`, `CANNOT_VERIFY`, or `FAIL`; only `VISUAL_REVIEW_PASS` may continue, and only then may an `interactive` or `business-flow` case enter `INTERACTION_READY`. `CANNOT_VERIFY` is `BLOCKED`. On visual `FAIL`, return only to `STATIC_UI_READY`; on interaction or required-E2E `FAIL`, return only to `INTERACTION_READY`. Preserve prior visual-pass evidence only while current source and real runtime state still match it; otherwise run the separate visual-review pass again.
+- `static-only` follows `SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> FINAL_REVIEW -> ARCHIVE` only after its visual pass and evidence-backed `E2E Applicability: N/A` reason. It must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
+- `interactive` and `business-flow` follow `SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS -> FINAL_REVIEW -> ARCHIVE`. At `INTERACTION_READY`, prove the real target browser can operate the required controls; at `FRONTEND_E2E_PASS`, run real browser E2E and record `E2E Applicability: REQUIRED`.
+- Required E2E cannot be `SKIPPED` or manual-approved, and a screenshot is not E2E evidence. A required UI/E2E gap cannot become non-blocking debt, `N/A`, `PASS`, `PASS_WITH_NOTES`, a manual approval, or a waived check; it is `BLOCKED`.
+
+For each required E2E case, create and maintain `.fp-execute/e2e/<task-id>/<case-id>/`, including `coverage-matrix.md`. Record `Executed command`, `Environment identity`, `Destination`, `Start`, `End`, `Attempts`, `Test IDs`, `Artifacts`, and `Cleanup`; link the real-browser result and the Visual Evidence Manifest separately. Derive coverage from source and confirmed requirements: happy paths and branches; validation and boundaries; loading, empty, error, and retry states; permissions and isolation; persistence and navigation; state transitions and concurrency; and applicable API pagination, filtering, sorting, and compatibility. A real environment condition that cannot safely be verified is `BLOCKED`, never a mock or an E2E `N/A`.
+
+Real E2E has an absolute zero-mock rule. It must not use `page.route`, `route.fulfill`, MSW, Cypress stubs/intercepts, fixture JSON, mock modules, hard-coded API data, frontend store/localStorage business-data injection, database seed, or direct backend/API writes that bypass the normal UI flow. For `business-flow`, prove the browser reaches the real core API, record `Mocked Core API: false`, observe the real persistence or permission result, and perform cleanup of test-created data through an approved normal flow or documented real-environment cleanup mechanism that does not replace the tested UI flow.
+
+Prefer a verified existing project runner, installed browser extension, or existing local `playwright-cli`. If none is available, stop at `BROWSER_CAPABILITY_GATE`: report the discovered capabilities and impacts, then let the customer choose an extension, a global local-CLI installation, or no installation. The customer must run the displayed exact command or explicitly authorize FeaturePilot to run that exact command for this occasion. Never silently install a tool or browser component, add/update project dependencies, alter a lockfile, overwrite/create project configuration, change CI, or upgrade unrelated dependencies. Record the selected capability, customer choice, command, resolved version, and artifacts in case evidence. No approved usable capability is `BLOCKED`, never a mock fallback.
+For Figma-derived UI scope or any task with required `FIGCAP-*` / `PRES-*`, before updating the unique task-owner checkbox or reporting this task complete, create `.fp-execute/reviews/<timestamp>-figma-review.md` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-figma/figma-review-template.md` through a fresh independent read-only reviewer. The reviewer must inspect the approved Figma/static source, `figma-capabilities.md`, `figma-preservation.md`, Visual Cases, and actual diff. Only every required `FIGCAP-*`, core `PRES-*`, and core Visual Case `PASS`, with no unapproved behavior change, permits task completion; direct execution must not self-approve it.
+After a UI/E2E failure, diagnostic retries may continue only through attempt 3. A third failed attempt is `BLOCKED`; a fourth attempt is forbidden. Do not update the unique task-owner checkbox as complete or continue that task to final handoff while any required lifecycle gate, coverage condition, real-E2E result, cleanup, or mock check is `BLOCKED`.
 ## TDD 执行流程（每个任务）
 
-1. **读取任务**：从 `{{tasksPath}}` 或具体 plan 文件获取任务描述、`Files`、`Reasoning`、`Interfaces` 和验收标准；如果是前端任务，必须同时读取并严格兑现任务中的 `Template Outline`、`Script Outline`、`Style Outline`、`Visual Checks`。
-2. **确认未完成**：检查 progress ledger 和 checkbox；已完成任务不得重复执行。
-3. **写失败测试**：根据验收标准编写测试用例；若该任务不适合自动化测试，必须说明原因并写出替代验证步骤。
-4. **运行测试**：验证测试确实失败，并记录命令和关键失败输出。
-5. **写最小实现**：让测试通过的最少代码，不顺手重构无关内容。
-6. **运行测试**：验证目标测试通过；必要时运行相关 lint/build/类型检查/浏览器视觉验证。
-7. **代码审查**：做 inline 自审，检查命名、结构、代码风格、契约一致性、前端视觉约束；发现 Critical/Important 问题必须先修复。
-8. **更新 checkbox**：标记任务为完成。
-9. **提交代码**：按任务提交；提交信息与任务交付行为一致。
-10. **更新 ledger**：追加任务完成记录，包含 commit 范围、验证命令、结果和残余风险。
+1. 从唯一 task-owner file 读取任务、Files、Reasoning、Depends on、Interfaces 和验收标准。
+2. 核对 checkbox、ledger、git 和实际文件，确认任务尚未完成。
+3. 先写失败测试并运行，确认因缺少目标行为而失败；不适合自动测试时记录原因和替代验证。
+4. 编写让测试通过的最小实现，不顺手重构无关范围。
+5. 运行目标测试，并按任务要求运行相关 lint、typecheck、build 或视觉验证。
+6. 做一次 inline 自审，检查正确性、命名、结构、契约、安全和前端视觉约束；发现问题立即修复并重跑受影响验证。
+7. 验证通过后更新唯一 owner checkbox；双端计划同步派生进度。
+8. 按任务提交代码，提交信息与交付行为一致。
+9. 在 ledger 记录 commit 范围、验证命令、结果和残余风险。
+## CodeGraph 写后刷新
 
-## 项目约束
+首次创建、修改、移动或删除源码、测试、配置、schema 或生成器输入时，立即把本工作流代码图状态标记为 `dirty-after-write`。此后 `never query a dirty graph`：本轮剩余定位全部使用当前源码的 `Glob/Grep/ranged Read`，不得继续使用写入前的 CodeGraph 结果。
 
-从项目 CLAUDE.md 提取的关键约束会在此处注入。遵守项目的代码风格、测试框架和提交规范。
+如果写入开始前项目已有 `.codegraph/`，在半自动任务汇报、全自动最终汇报或任何写入后的阻塞返回之前执行一次 `post-write-sync`：
 
-## 前端任务补充约束
+```text
+codegraph sync <project-root> --quiet
+```
 
-- 不能跳过 `template` 骨架直接堆 CSS。
-- 不能忽略 `Reasoning` 中约定的组件映射与布局策略。
-- 不能忽略 `Interfaces` 中约定的 API/store/route/props/events 契约。
-- 不能在执行阶段擅自偏离 `Visual Checks` 中约定的设计稿对齐目标。
-- 前端组件必须遵循项目现有框架、脚本/状态管理和样式写法；若任务生成了与项目惯例不一致的组件结构，必须立即改回项目既有模式。
-- 若发现 `plan-frontend.md` 缺少必要的模板/脚本/样式骨架、接口契约或视觉检查，先回退补全计划，再继续执行。
-
+每次用户可见返回前最多执行一次，不再运行 `status`，不把 `.codegraph/` 混入任务提交。成功时记录已刷新；失败时记录一次降级原因并继续当前验证、checkbox/ledger 更新和汇报，`must not block completion`。项目原本没有图时不得隐式执行 `init`。
 ## 完成汇报
 
-每个任务完成后，在半自动模式下汇报：
-- 任务编号和标题。
-- 修改/新增文件。
-- 测试或验证命令及结果。
-- commit sha 或 commit 范围。
-- ledger 路径。
-- 是否有未解决风险。
+半自动模式每个任务汇报：任务、文件、验证、commit、ledger 和未解决风险。
 
 全自动模式全部完成后汇报：
-- 已完成任务列表。
-- 未执行/跳过任务及原因。
-- 所有验证命令及结果。
-- progress ledger 路径。
-- 是否建议运行 `/fp-archive`。
+
+- 已完成及未执行任务。
+- 关键修改文件。
+- 所有验证命令与结果。
+- progress ledger 路径和残余风险。
+- CodeGraph `post-write-sync` 的执行、跳过或失败状态。
+- 每个 UI case 的 lifecycle gate、Visual/E2E evidence links and coverage-matrix result。
+- 若有任何 unresolved UI core gap、required E2E、real-business closure、cleanup、coverage 或 mock violation 为 `BLOCKED`，must not hand off to `fp-final-review`；输出 `.fp-execute/e2e/<task-id>/<case-id>/`、已尝试命令和所需人工决策，并保持 task owner 未完成。
+- 仅在所有 UI-bearing cases 满足其交付等级门禁后，下一步才是运行独立的 `fp-final-review`；通过后再执行 `/fp-archive`。
