@@ -40,7 +40,7 @@ rg -n "ForeignKey\\(|CharField\\(|RunSQL|RunPython" apps/<app_label>/migrations 
 
 ## 达梦重点
 
-- 新增超长字段：当 operation 为首次 `CreateModel` 或 `AddField`、数据库中尚不存在该列，并且字段原计划使用 `CharField(max_length > 2000)` 时，直接新增为 `TextField`；`max_length == 2000` 不属于超长字段，仍保留 `CharField`。
+- 新增超长字段：当 operation 为首次 `CreateModel` 或 `AddField`、数据库中尚不存在该列，并且字段原计划使用 `CharField(max_length >= 2000)` 时，直接新增为 `TextField`。
 - 存量字段转长文本：已有字段从 `CharField` 变更为 `TextField` 时，达梦替换 migration 中禁止使用 `migrations.AlterField(..., field=models.TextField(...))` 直接修改字段类型，必须使用 `cw_cornerstone.django.migrations.operations.fields.CloneField` 完成字段克隆和数据迁移。
 - `CloneField` 语义：目标 `field` 使用 `models.TextField(...)`，并保留原字段的 `null`、`blank`、`default`、`verbose_name` 等业务语义；同时核对字段名、数据复制结果、索引、唯一约束、回滚和重复执行风险。
 - 新建与存量边界：直接声明 `TextField` 的超长字段规则只适用于数据库中尚不存在该列的 `CreateModel` 或 `AddField`；已经存在的列从 `CharField` 转为 `TextField` 一律使用 `CloneField`。
@@ -60,7 +60,7 @@ rg -n "ForeignKey\\(|CharField\\(|RunSQL|RunPython" apps/<app_label>/migrations 
 
 - 保留原 migration 的 `dependencies`。
 - 保留业务字段名、verbose_name、null/blank/default、on_delete 等语义。
-- 达梦中新建且 `max_length > 2000` 的字段直接使用 `TextField`；已存在列的 `CharField` 到 `TextField` 类型转换必须使用 `CloneField`，不得退回 `AlterField`。方案和实施结果必须明确列出字段状态、阈值判断和对应 operation。
+- 达梦中新建且 `max_length >= 2000` 的字段直接使用 `TextField`；已存在列的 `CharField` 到 `TextField` 类型转换必须使用 `CloneField`，不得退回 `AlterField`。方案和实施结果必须明确列出字段状态、阈值判断和对应 operation。
 - 只改目标数据库不支持的字段类型、operation 顺序或 SQL 写法。
 - 不为了通过迁移删除业务约束；如果确实需要移除 `db_constraint` 或索引，必须在输出中说明风险。
 - 不重写无关 migration；一次报错只补一个或少数直接相关文件。

@@ -110,7 +110,7 @@ approval_mgmt, django_celery_beat, source_apply, system_mgmt
 
 达梦 migration 的超长字段按字段是否已经存在分两类处理：
 
-- 新增字段：`CreateModel` 或 `AddField` 创建数据库中尚不存在的列时，若原计划为 `CharField(max_length > 2000)`，直接定义为 `TextField`；`max_length == 2000` 仍定义为 `CharField`。
+- 新增字段：`CreateModel` 或 `AddField` 创建数据库中尚不存在的列时，若原计划为 `CharField(max_length >= 2000)`，直接定义为 `TextField`。
 - 存量字段：数据库中已经存在的字段从 `CharField` 变更为 `TextField` 时，不得使用 `migrations.AlterField` 直接改变类型，必须沿用项目的 `CloneField` operation。
 
 存量字段转换示例：
@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
     ]
 ```
 
-示例字段属性仅用于说明结构，实际补丁必须从原 migration 保留字段名、`null`、`blank`、`default`、`verbose_name` 等业务语义，并检查数据复制、索引、唯一约束、幂等和回滚风险。只有列尚不存在、operation 为 `CreateModel` 或 `AddField`，且原 `CharField.max_length > 2000` 时，才按本规则直接使用 `TextField`。
+示例字段属性仅用于说明结构，实际补丁必须从原 migration 保留字段名、`null`、`blank`、`default`、`verbose_name` 等业务语义，并检查数据复制、索引、唯一约束、幂等和回滚风险。只有列尚不存在、operation 为 `CreateModel` 或 `AddField`，且原 `CharField.max_length >= 2000` 时，才按本规则直接使用 `TextField`。
 
 如果是迁移报错定位，方案只覆盖日志命中的 app 和 migration；如果是全新或增量适配审计，按 `compatibility-checklist.md` 扫描高风险 migration。只有用户确认当前完整方案后，才逐个创建或修改补丁。
 
