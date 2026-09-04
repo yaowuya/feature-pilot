@@ -14,7 +14,7 @@
 
 ### 什么时候用
 
-在目标项目第一次接入 FeaturePilot，或希望补齐项目级 settings / intel 时运行：
+在目标项目第一次接入 FeaturePilot，或希望按需补齐项目级 settings / facts 时运行：
 
 ```text
 /fp-init
@@ -22,14 +22,14 @@
 
 ### 它会创建什么
 
-`/fp-init` 只负责目标项目的信息层，默认只在项目根目录创建：
+`/fp-init` 只负责目标项目的信息层。v2 的 `manifest-only default` 默认只在项目根目录创建：
 
 ```text
 fp-docs/
   manifest.md
-  settings/
-  intel/
 ```
+
+它不预建空 `settings/`/`intel/`、Unknown/Decision、refresh policy 或 SDD handoff。可选目录随已批准文件按需出现。
 
 `/fp-init` **不会**预创建这些目录：
 
@@ -46,11 +46,57 @@ fp-docs/
 | `fp-docs/settings/frontend.md` | 前端、UI、设计系统、视觉验收规则 | UI/页面/组件/前端实现相关时 |
 | `fp-docs/settings/backend.md` | 后端、API、数据、安全、权限规则 | 后端/API/数据/安全相关时 |
 | `fp-docs/settings/prototype-style.md` | HTML 原型视觉风格参考 | 生成或更新 `prototype.html` 时 |
-| `fp-docs/intel/*` | 只读扫描生成的导航线索 | 只在当前问题相关时小范围读取 |
+| `fp-docs/intel/project-facts.md` | 可选生成事实缓存，只含质量门禁与非显而易见的契约/架构/安全边界 | 仅相关时读取并回到当前源码复核 |
+| `fp-docs/intel/.freshness.json` | metadata-only：source fingerprint、body hash、生成时间/版本 | `/fp-init` 实时计算 stale/conflict 时 |
+| `fp-docs/intel/unknowns.md` / `decisions.md` | 可选 human-owned 项目知识 | 仅有实际内容、已批准且当前问题相关时 |
+
+### 可选 CodeGraph 代码地图
+
+`/fp-init` 在确定项目根目录后检测 CodeGraph。未检测到可用 CLI 时会让你选择：
+
+1. **自动安装（推荐）**：说明 npm 全局安装影响后执行安装；该选择也授权为当前项目执行首次建图。
+2. **展示安装步骤**：只显示前置条件、安装、可选 MCP 配置和建图命令，本轮不执行。
+3. **跳过**：不安装、不配置、不建图，继续普通初始化。
+
+唯一允许的自动安装命令是：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+FeaturePilot 不使用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx` 安装 CodeGraph。系统缺少 npm 时，它不会自动安装 Node.js，也不会切换安装方式；会说明前置条件并继续普通初始化。
+
+CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。MCP 配置可能修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
+
+项目根目录没有 `.codegraph/` 时：本轮自动安装已包含首次建图授权；如果 CLI 原本已安装，则会再次询问是否为当前项目建图。已有图和新图都必须通过 `codegraph status <project-root> --json` 验证，不能只凭目录存在判断可用。FeaturePilot 不会未经允许修改 `.gitignore` 或删除失败索引。
+
+后续代码调查按 `MCP → CLI → 原有搜索` 使用代码图。每个 FeaturePilot 工作流最多执行一次健康检查和一次必要同步；失败会自动回退，不影响主流程。代码图只提供 `navigation-hint-only`，修改范围、精确契约和完成结论仍以当前源码、测试和命令输出为准。
+
+#### 已有信息层如何刷新
+
+项目已有 `fp-docs/manifest.md` 时，再次运行 `/fp-init` 会进入 `refresh-existing-information-layer`。它只读取 manifest、可选 `project-facts.md`、`.freshness.json` 以及 metadata 中列出的源路径，用当前 source fingerprint/body hash 实时计算 section 的 stale/conflict；这些 verdict 不写回 metadata 充当项目事实。
+
+发现 stale 文件后会先展示文件级清单，再提供：
+
+1. `refresh-stale-intel`：只重建清单中已批准且没有用户编辑冲突的 project-facts section，并更新 metadata。
+2. 仅报告：不写入，后续继续实时检查当前源码。
+3. 跳过：不做更多 freshness 检查。
+
+`fp-docs/settings/*`、human-owned `intel/unknowns.md`/`decisions.md`、PRD/proposal/design/tasks、archive/history 不在批量刷新范围。旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 在一个发布周期内只能作为 manifest-listed 只读提示，不创建、刷新、要求或自动删除。
+
+#### 代码写入后的索引更新
+
+`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 或 `fp-module-review` 首次修改测试、fixture、配置或源码后，会把当前图标记为 `dirty-after-write`，本轮不再查询写入前的旧图。它们在写入后的用户可见返回前，对原本已存在的图执行一次 `post-write-sync`：
+
+```text
+codegraph sync <project-root> --quiet
+```
+
+同步后不重复运行 `status`，下一工作流仍会做正常健康检查，以捕获外部新增修改。同步失败只会记录原因并回退原有搜索，不阻塞测试、审查或完成；项目原本没有 `.codegraph/` 时不会在执行结束时隐式建图。
 
 ### 可选设置文件
 
-`/fp-init` 会询问是否生成可选 settings。它们不是强制配置；跳过后 FeaturePilot 仍可基于当前代码、相邻实现和用户回答继续工作。
+`/fp-init` 会逐项询问是否生成可选 settings，只有批准后才创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
 
 建议原则：
 
@@ -96,7 +142,8 @@ examples/canway-cw/fp-docs/settings/
 - 工作区路径。
 - `manifest.md` 创建/更新状态。
 - `agent.md`、`frontend.md`、`backend.md`、`prototype-style.md` 创建/跳过状态。
-- intel 是生成轻量扫描还是仅保留骨架。
+- 是否保持 manifest-only，或生成 project facts/freshness metadata；是否经单独批准写入 human-owned knowledge。
+- CodeGraph CLI、MCP、项目图和必要重启/回退状态。
 - 检测到的外部项目文档。
 - critical unknowns。
 - 下一步建议：通常是 `/fp-prd <想法>` 或 `/fp-start <slug 或功能描述>`。
@@ -259,7 +306,7 @@ Consumer 先检测 canonical small file 与 split directory 的 `00-index.md`，
 2. `fp-brainstorm`：生成并确认技术设计；`design/00-index.md` 映射实际存在的端，每端直接选择 `design/<end>.md` 或 `design/<end>/00-index.md`。
 3. `fp-plan`：生成并确认细粒度执行计划；每端直接选择 `tasks/plan-<end>.md` 或 `tasks/<end>/00-index.md`。只有双端计划才生成无 checkbox 的 `tasks/00-overview.md`；每个可执行任务的 checkbox 只存在于一个 owner file。
 4. `fp-execute`：默认在当前上下文按 TDD 直接执行已确认任务，每个任务完成一次 inline 自审。
-5. `fp-review`：最终整分支审查。
+5. `fp-final-review`：最终整分支审查。
 6. 建议 `/fp-archive`：归档完成的变更。
 
 阶段 1、2、3 完成后都必须停下等待用户确认；没有确认不得进入下一阶段。
@@ -311,8 +358,28 @@ FeaturePilot 会提示建议 `/fp-init`，但不会强制停止。后续如需�
 /fp-start <slug>
 ```
 
+### 覆盖率专项
+
+当目标是先冻结统计口径，再按可恢复 owner batch 补充测试，并以 fresh full-suite 与 exact coverage 双门验收时，使用独立的 [`fp-coverage` 指南](fp-coverage.md)：
+
+```text
+/fp-coverage 将 <metric> coverage 提高到 <明确目标>
+```
+
+它不会由 `fp-start` 自动触发；普通 feature 只缺少少量明确测试时，继续使用正常执行流程。
+
+### 模块专项审查
+
+当目标不是一个待归档 FeaturePilot change，而是一个大型功能模块或多个相关模块时，独立运行：
+
+```text
+/fp-module-review <模块目录、符号或功能边界>
+```
+
+`fp-module-review` 在 `fp-docs/module-reviews/<slug>/` 建立可恢复工作区，先冻结范围和兼容/测试基线，再按 ownership/call flow 分波审查。Finding 使用稳定 `MR-FNNN` owner；外部行为或安全策略变化必须按 ID 逐项批准，批准前不得修改生产行为。完整模式、产物、恢复与完成状态见 [`fp-module-review` 指南](fp-module-review.md)。它不会由 `fp-start` 自动触发，也不替代变更归档前的 `fp-final-review`。
+
 ### 执行模式
 
-计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-review`。
+计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-final-review`。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，才使用复杂执行模式，以获得任务 brief、逐任务独立审查、修复循环和 SDD final review；不要仅根据任务规模或风险自动切换。

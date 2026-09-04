@@ -94,7 +94,7 @@ Valid inputs include:
 Default read set:
 
 1. `fp-docs/manifest.md`, if present — read as an index only.
-2. `fp-docs/intel/unknowns-and-decisions.md`, only if the manifest lists it and it is small/relevant.
+2. `fp-docs/intel/unknowns.md` and `fp-docs/intel/decisions.md`, only if the manifest lists actual directly relevant project-level content. Their absence is not a blocker; keep ordinary questions as `change-local unknowns` and ask through the PRD interview.
 3. `fp-docs/settings/prototype-style.md`, only when generating or updating `prototype.html`.
 4. `fp-docs/settings/frontend.md`, only when UI/page/prototype behavior is involved.
 5. `fp-docs/settings/backend.md`, only when backend/API/data/security/permission behavior affects product decisions.
@@ -108,6 +108,8 @@ Default do-not-read set:
 
 When exact current implementation facts are needed, use current-code search and read only the relevant source excerpts. Generated intel may provide search hints, but current code and command output win for current-state facts.
 
+For one-release compatibility, a manifest-listed `intel/unknowns-and-decisions.md` may be read as a legacy hint only. It is never required, never current proof, and `fp-prd` must not create or update it.
+
 ### Stale Intel Handling
 
 If a relevant intel artifact is stale or has unknown freshness:
@@ -115,7 +117,7 @@ If a relevant intel artifact is stale or has unknown freshness:
 - Use it only as a hint for what to search next.
 - Verify exact facts against current source files before using them in decisions.
 - Mention stale/uncertain intel in the confirmation summary only when it affects a product decision.
-- Do not refresh or rewrite project-level intel during `fp-prd`; recommend `/fp-init --refresh` or a future refresh command instead.
+- Do not refresh or rewrite project-level intel during `fp-prd`; `supported-init-rerun`：建议重新运行 `/fp-init`，由其展示实时 stale/conflict 清单并执行批准门禁。
 
 ## Process
 

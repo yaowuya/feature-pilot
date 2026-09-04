@@ -1,6 +1,6 @@
 # Technical Design Output Template
 
-Read this file only after the user confirms the selected approach and approves writing the reviewed design sections.
+Read this file only after every design-required Decision Ledger row is terminal, the user has confirmed each required decision ID, and the user separately authorizes writing the selected approach, reviewed sections, form, exact paths, and any conversion/removal.
 
 Apply the artifact-layout contract already loaded by `fp-brainstorm` as the normative layout contract. Use only sections relevant to the actual backend/frontend scope, and select each end's mutually exclusive form before writing:
 
@@ -31,13 +31,29 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 
 ## 第一部分：架构决策
 
+### Decision Ledger
+
+| ID | Decision | Source | Blocking | Status | Evidence / explicit confirmation |
+| --- | --- | --- | --- | --- | --- |
+| D-001 | <架构、接口、数据、安全或视觉决策> | `proposal.md#...` / `<path:line>` / user answer | yes | `user-confirmed` | confirmation record or code evidence |
+
 ### 决策 1：[主题]
+- **ID**：`D-001`
 - **选择**：[用户确认的选择]
 - **理由**：[依据]
+- **来源**：[proposal 台账 / PRD / 当前代码 / 本轮用户回答]
+- **状态**：[终态状态]
+- **是否阻塞**：[是 / 否]
 
 ### 决策 2：[主题]
 - **选择**：[用户确认的选择]
 - **理由**：[依据]
+
+### Pre-write Confirmation Evidence
+
+- Covered IDs: `D-001`
+- Outstanding blocking decisions: `none`
+- Explicit user authorization to write: <本次确认消息或等价明确授权>
 
 ## 第二部分：技术方案详述
 
@@ -74,5 +90,11 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 #### 状态管理
 （沿用当前项目的 store/composable/hook/context 或局部状态。）
 ```
+
+For every actual end, place the Decision Ledger and Pre-write Confirmation Evidence in exactly one unique detailed owner: the small end file or one manifest-listed detail fragment. All design end owners use one globally unique D-NNN sequence. Cross-end decisions have one owner only; the split index records ownership only and does not duplicate decision body content. Each owner's `Covered IDs` lists exactly that owner's persisted IDs. Persisted ledger rows need a unique ID, source, blocking value, terminal status, and confirmation evidence; `needs-user-confirmation` must not persist in final design output.
+
+Before finalizing, replace every template placeholder with concrete evidence. A `placeholder`, `TBD`, `TODO`, `unknown`, generic `user answer`, or sample authorization is invalid in final design output; every evidence entry identifies its decision ID and the applicable source, selection, or user-message reference.
+
+对 `user-confirmed` 行，Evidence 使用 `D-NNN: selected <value>; user message <reference>` 的等价具体记录；单独的 `D-NNN: user answer` 不合格。授权记录也必须引用实际批准的方案、form、路径与用户消息。
 
 For frontend work, place the exact Visual Source / component mapping / Visual Checks sections required by `SKILL.md` together in exactly one detailed owner: `design/frontend.md` in small form or one manifest-listed detail fragment in split form. The split index records ownership only and does not duplicate those sections.

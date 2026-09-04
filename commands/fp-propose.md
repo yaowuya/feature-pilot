@@ -6,6 +6,6 @@ description: 仅生成变更提案文档，不进入后续阶段
 
 Gate checksum：
 
-- 从互斥的 `prd.md` / `prd/00-index.md` 解析已确认 PRD，不重复访谈已确认决策。
-- Why / What Changes / Out of Scope / Impact 摘要获明确确认后才写文件。
-- Proposal 在互斥的 `proposal.md` / `proposal/00-index.md` 中预选一种，split form 以 manifest 保持逻辑模板；不预建 design/tasks。
+- 从互斥的 `prd.md` / `prd/00-index.md` 解析已确认 PRD，写入 Decision Ledger 已确认行，不重复访谈。
+- proposal-required 未决项须 per-item confirmation；整体确认不能替代带 decision ID 的选择。
+- 摘要、终态台账和单独写入授权齐全后才写；Proposal 只选 `proposal.md` 或 `proposal/00-index.md`，不预建 design/tasks。

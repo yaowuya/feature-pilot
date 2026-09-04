@@ -21,6 +21,7 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 - Component library/design system: <source>
 - Script/style conventions: <source>
 - Visual source: <Figma / screenshot / existing page / settings>
+- Visual evidence runner: <project-configured browser runner/tool, or explicit authorized setup task>
 - Verification commands: <source>
 
 ## File Structure
@@ -30,6 +31,20 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 | `<exact/path>` | create / modify / test | `<single responsibility in this change>` |
 
 ## 1. Page goal and visual contract
+
+## 1.1 Figma source and browser capability resolution
+
+- UI design source: `Figma only | no trustworthy Figma UI design`
+- Prototype usage: `PROHIBITED_AS_UI_REFERENCE | FUNCTION_SCOPE_ONLY`
+- Browser capability: `project runner | Playwright browser extension | local playwright-cli | customer choice pending | unavailable`
+- Completion vocabulary: Visual evidence is `CANNOT_VERIFY` when no trustworthy Figma UI source or real-runtime case evidence exists.
+
+## 1.2 Capability and preservation mapping
+
+| Capability / Preservation ID | Required observable result | Owner task | Runtime replay / visual case | Completion rule |
+| --- | --- | --- | --- | --- |
+| `FIGCAP-001` | `<result from capability ledger>` | `frontend-NNN` | `<browser replay and VIS-NNN>` | `PASS only after observable runtime result` |
+| `PRES-001` | `<existing behavior from preservation contract>` | `frontend-NNN` | `<before/after replay>` | `PASS only when non-exception behavior is preserved` |
 
 ## 2. Frontend Interface and Visual Contract
 
@@ -41,6 +56,20 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 ### 2.2 State/API/interaction design
 ### 2.3 Style and responsive design
 ### 2.4 Visual and UX checks
+
+### 2.5 Visual Evidence Manifest
+
+Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`. Each case writes `manifest.md`, `reference.png`, `current.png`, and optional `diff.png`.
+
+| Case ID | Approved design source | Figma node | revision/time | Frame/variant | variables / Auto Layout / assets | Runtime route | Scenario/state | Viewport | DPR | Locale | Theme | Deterministic non-sensitive fixture | Reference path | Current path | Diff path / missing diff | Mask | Acceptance rule | Command/tool | Failure class | Result |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `<approved Figma/static design source>` | `<node or N/A>` | `<revision/time or approved-source time>` | `<frame/variant>` | `<available context or N/A>` | `<real target runtime route>` | `<scenario/state>` | `<viewport>` | `<DPR>` | `<locale>` | `<theme>` | `<deterministic fixture; no secrets or production/customer data>` | `.fp-execute/visual/<task-id>/<case-id>/reference.png` | `.fp-execute/visual/<task-id>/<case-id>/current.png` | `.fp-execute/visual/<task-id>/<case-id>/diff.png` or `N/A: <missing diff explanation>` | `<dynamic-region masks or None>` | `<case-specific measurable rule; no global pixel threshold>` | `<project-configured runner/tool and replay command>` | `<core visual/non-core cosmetic>` | `PENDING` |
+
+`reference.png` comes only from the approved Figma/static design source; a local runtime screenshot must not replace it. `current.png` comes from the real target runtime and Runtime route with stable data and stable environment. The optional diff may be absent only with an explicit missing diff explanation and must not hide missing core source/runtime evidence. Browser interaction evidence is separate from screenshot evidence and exercises all approved states.
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## 3. Task breakdown
 
@@ -60,6 +89,11 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 - Consumes: <existing/prior API/state/route/component/visual contract>
 - Produces: <new API/state/route/component/classes/events/visual structure>
 - Contract checks: <exact verification>
+
+**Capability / Preservation Ownership:**
+- `FIGCAP-*`: `<exact IDs or None>`
+- `PRES-*`: `<exact IDs or None>`
+- Browser replay: `<exact case-specific command/tool or CANNOT_VERIFY reason>`
 
 **Step 1: Write the failing test**
 
@@ -85,6 +119,7 @@ Expected: FAIL with `<specific missing behavior>`
 
 **Visual / UX Checks:**
 - <check traceable to design/settings/Figma/screenshot/current code>
+- Visual Evidence cases: <Case IDs owned by this task; core cases require both trustworthy reference.png and real-runtime current.png>
 
 **Step 4: Run test to verify it passes**
 
@@ -103,10 +138,12 @@ git commit -m "feat: add specific frontend behavior"
 
 ## Coverage Matrix
 
-| Source | Requirement / Visual boundary | Tasks | Verification |
+| Source | Requirement / capability / preservation / visual boundary | Tasks | Verification |
 | --- | --- | --- | --- |
 | proposal.md | `<frontend requirement>` | `frontend-NNN` | `<exact command/check>` |
 | design/frontend.md or indexed fragment | `<component/interaction/visual contract>` | `frontend-NNN` | `<exact command/check>` |
+| `figma-capabilities.md` | `FIGCAP-001 <observable capability>` | `frontend-NNN` | `<exact browser replay>` |
+| `figma-preservation.md` | `PRES-001 <existing behavior>` | `frontend-NNN` | `<before/after replay>` |
 | Frontend boundary | `<actual route/state/style/visual boundary>` | `frontend-NNN` | `<exact command/check>` |
 ````
 

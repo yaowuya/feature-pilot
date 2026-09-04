@@ -36,6 +36,8 @@ Read:
 - `fp-docs/settings/agent.md` if present
 - `fp-docs/settings/frontend.md` if present
 - `fp-docs/settings/prototype-style.md` if prototype/visual behavior is in scope
+- `fp-docs/changes/<slug>/.fp-execute/figma-capabilities.md` when the approved UI scope originated from `fp-figma`
+- `fp-docs/changes/<slug>/.fp-execute/figma-preservation.md` when the approved UI scope modifies existing behavior
 
 Treat intel as navigation only; verify current routes, components, scripts, tokens, and commands from source/config files.
 
@@ -77,7 +79,19 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 - In split form, the `interface` fragment is the unique detailed owner for component/state/API/route/interaction/style/visual contracts; task `Interfaces` link to those contracts without copying their bodies.
 - Keep dependencies ordered: API/client wrapper → state/composable/store → route/navigation → page skeleton → component details → style/visual refinement → lint/build/visual checks.
 - Page/component tasks must carry forward the resolved frontend design component mapping and Visual Checks. Do not invent new class names, component choices, tokens, or layout rules during execution.
+- Every required `FIGCAP-*` maps to exactly one frontend task or an explicit backend dependency; a visual control alone never satisfies it.
+- Every required `PRES-*` maps to the task that may affect the behavior and declares before/after replay evidence.
+- A Figma-derived plan records `Figma only` as its visual source. Prototype is `FUNCTION_SCOPE_ONLY` only when no trustworthy Figma UI design exists; in that mode Visual Evidence is `CANNOT_VERIFY`, never `PASS`.
+- Browser capability resolution is a plan fact: reuse project runner, Playwright browser extension, or local `playwright-cli`; absence produces the customer-choice gate and must not create an implicit install task.
 - If settings and existing code do not answer a visual or interaction decision, mark it as a planning blocker or explicit user question.
+- 每个需要视觉验收的 task 都必须携带 case-level `Visual Evidence Manifest`。每个 Case ID 记录 Approved design source、Figma node、revision/time、Frame/variant、可用的 variables / Auto Layout / assets、Runtime route、Scenario/state、Viewport、DPR、Locale、Theme、Deterministic non-sensitive fixture、Reference path、Current path、Diff path、Mask、Acceptance rule、Command/tool 与 Failure class。标准目录是 `.fp-execute/visual/<task-id>/<case-id>/`，包含 `manifest.md`、`reference.png`、`current.png`，`diff.png` 可选。
+- `reference.png` 必须来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 必须来自 real target runtime 的实际 route，使用 stable data 与 stable environment。optional diff 缺失时写明 missing diff，且 must not hide source/runtime 缺失。
+- Browser interaction evidence 与 screenshot evidence 必须 separate；observable flow 要操作到 manifest 中的 approved states，不能用点击成功替代视觉对比。
+- 优先使用 project-configured Playwright/browser runner 或等价浏览器工具，不硬编码框架或命令，do not define a global pixel threshold。若缺 browser runner，计划中新增 explicit task 并取得 authorization；do not silently install 依赖。
+
+- Provenance: reference.png -> approved Figma/static design source; current.png -> real target runtime.
+- Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
+- Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 ## Recommended plan structure
 
@@ -95,6 +109,7 @@ Revise the plan if any of these appear:
 - Framework, component library, component prefix, token, or test command not sourced from settings or existing code.
 - Component tasks without concrete Interfaces and Contract checks.
 - Visual Checks that cannot be traced to the resolved frontend design, settings, Figma, screenshot, or existing code.
+- Core visual case 缺少 approved source、real runtime、稳定 fixture 或可重放命令；仅给 reason 不能替代证据。
 - Verification steps that only say “run tests” or “check page” without exact command/path/expected result.
 
 ## Self-review
@@ -110,3 +125,4 @@ Before returning to `fp-plan`, verify:
 7. If `tasks/frontend/00-index.md` exists, `plan-frontend.md` does not exist; the manifest uses `Order / File / Kind / Owns`; every listed fragment exists, no unindexed fragment exists, order is deterministic, no consumer needs glob order, and every executable task checkbox appears exactly once only in a `tasks`-kind fragment, with none in the index/context/interface/coverage files.
 8. `frontend-NNN` IDs are unique across all owner files, continue across fragments, and dependencies reference existing IDs; after execution begins, plan revisions do not silently move or renumber tasks.
 9. Every output file is within 500 lines and 30,000 characters; small form has no `tasks/frontend/`, and a single-end frontend plan has no `tasks/00-overview.md`.
+10. Every required `FIGCAP-*` and `PRES-*` has one task owner and one stated runtime verification; when no trustworthy Figma UI design exists, no task may mark visual evidence `PASS`.

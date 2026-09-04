@@ -1,6 +1,6 @@
 # Proposal Output Template
 
-Read this file only after the user approves the Why / What Changes / Out of Scope / Impact confirmation summary and immediately before writing `proposal.md` or `proposal/00-index.md` plus its fragments.
+Read this file only after every proposal-required Decision Ledger row is terminal, the user has confirmed each required decision ID, and the user gives separate authorization for the Why / What Changes / Out of Scope / Impact summary and target paths. Read it immediately before writing `proposal.md` or `proposal/00-index.md` plus its fragments.
 
 ## Representation rules
 
@@ -19,7 +19,7 @@ Read this file only after the user approves the Why / What Changes / Out of Scop
 ```
 
 - Write fragments directly on semantic boundaries. Logical concatenation in fragment manifest order must pass logical template validation against the exact heading order below, with every mandatory section owned exactly once.
-- Keep each complete What Changes change point in one fragment. Why, Capabilities, Out of Scope, and Impact each have one detailed owner; other fragments link instead of duplicate.
+- Keep each complete What Changes change point in one fragment. Why, Capabilities, Out of Scope, and Impact each have one unique detailed owner; other fragments link instead of duplicate. The Impact owner also owns the Handoff Decision Ledger and Pre-write Confirmation Evidence; do not create a separate ledger fragment or put decision body content in `00-index.md`.
 
 ```markdown
 # <功能描述>
@@ -55,6 +55,18 @@ Read this file only after the user approves the Why / What Changes / Out of Scop
 ## Impact
 
 - `path/to/file.py` - <受影响模块和原因>
+
+### Handoff Decision Ledger
+
+| ID | Decision | Source | Blocking | Status | Evidence / explicit confirmation |
+| --- | --- | --- | --- | --- | --- |
+| P-001 | <范围、影响或交付决策> | `<PRD section>` / `<path:line>` / user answer | yes | `PRD-confirmed` | confirmation record or code evidence |
+
+### Pre-write Confirmation Evidence
+
+- Covered IDs: `P-001`
+- Outstanding blocking decisions: `none`
+- Explicit user authorization to write: <本次确认消息或等价明确授权>
 ```
 
 ## Structure self-review
@@ -64,3 +76,6 @@ Read this file only after the user approves the Why / What Changes / Out of Scop
 - Every Markdown file, including `00-index.md`, has at most 500 lines and 30,000 characters.
 - Logical template validation reads fragments in manifest order and preserves Why / What Changes / Capabilities / Out of Scope / Impact exactly once and in order.
 - Every section is concrete, scope does not exceed approved requirements, and Impact is supported by current code exploration.
+- The Impact unique detailed owner contains exactly one Handoff Decision Ledger and one Pre-write Confirmation Evidence block. Each persisted row has a unique ID, source, blocking value, terminal status, and evidence; `needs-user-confirmation` must not persist in the final proposal.
+- Before finalizing, replace every template placeholder with concrete evidence. A `placeholder`, `TBD`, `TODO`, `unknown`, generic `user answer`, or sample authorization is invalid in the final proposal; every evidence entry identifies its decision ID and the applicable source, selection, or user-message reference.
+- 对 `user-confirmed` 行，Evidence 使用 `P-NNN: selected <value>; user message <reference>` 的等价具体记录；单独的 `P-NNN: user answer` 不合格。授权记录也必须引用实际批准的范围、路径与用户消息。

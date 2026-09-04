@@ -233,6 +233,7 @@ $commands = @(Get-ChildItem (Join-Path $root 'commands') -Filter 'fp-*.md' -File
 $skills = @(Get-ChildItem (Join-Path $root 'skills') -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') })
 $sharedPath = Join-Path $root 'skills\_shared\workspace-rules.md'
 $artifactLayoutPath = Join-Path $root 'skills\_shared\artifact-layout.md'
+$codeGraphPath = Join-Path $root 'skills\_shared\codegraph.md'
 
 Assert-Condition (Test-Path $sharedPath) 'shared workspace contract is missing'
 $sharedText = Read-Utf8 $sharedPath
@@ -241,6 +242,30 @@ foreach ($anchor in @('target repository root', 'fp-docs/manifest.md', 'smallest
 }
 foreach ($anchor in @('Process document language', 'Chinese by default', 'current explicit user instruction', 'target-project setting', 'necessary English')) {
     Assert-Condition ($sharedText.Contains($anchor)) "shared workspace contract is missing process-document language rule: $anchor"
+}
+
+Assert-Condition (Test-Path $codeGraphPath) 'shared CodeGraph contract is missing'
+$codeGraphText = Read-Utf8 $codeGraphPath
+Assert-Condition (@($codeGraphText -split "`r?`n").Count -le 500) 'shared CodeGraph contract exceeds 500 lines'
+Assert-Condition ($codeGraphText.Length -le 30000) 'shared CodeGraph contract exceeds 30,000 characters'
+foreach ($anchor in @(
+    'npm install -g @colbymchenry/codegraph@latest',
+    'npm prefix -g',
+    'codegraph install --target=auto --location=global --yes',
+    'codegraph init <project-root>',
+    'codegraph status <project-root> --json',
+    'codegraph sync <project-root> --quiet',
+    'MCP -> CLI -> native search',
+    'navigation-hint-only',
+    'must not auto-install Node.js',
+    'must not block FeaturePilot',
+    'dirty-after-write',
+    'never query a dirty graph',
+    'pre-query sync',
+    'post-write sync',
+    'at most one post-write sync'
+)) {
+    Assert-Condition ($codeGraphText.Contains($anchor)) "shared CodeGraph contract is missing: $anchor"
 }
 
 Assert-Condition (Test-Path $artifactLayoutPath) 'shared artifact-layout contract is missing'
@@ -432,10 +457,45 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
+$codeGraphContractValidator = Join-Path $root 'scripts\test-codegraph-contract.ps1'
+Assert-Condition (Test-Path $codeGraphContractValidator) 'focused CodeGraph contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $codeGraphContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused CodeGraph contract validator failed'
+
+$coverageContractValidator = Join-Path $root 'scripts\test-coverage-contract.ps1'
+Assert-Condition (Test-Path $coverageContractValidator) 'focused fp-coverage contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $coverageContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-coverage contract validator failed'
+
+$moduleReviewContractValidator = Join-Path $root 'scripts\test-module-review-contract.ps1'
+Assert-Condition (Test-Path $moduleReviewContractValidator) 'focused fp-module-review contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $moduleReviewContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-module-review contract validator failed'
+
+$finalReviewContractValidator = Join-Path $root 'scripts\test-final-review-contract.ps1'
+Assert-Condition (Test-Path $finalReviewContractValidator) 'focused fp-final-review contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $finalReviewContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-final-review contract validator failed'
+
+$initInformationLayerValidator = Join-Path $root 'scripts\test-init-information-layer-contract.ps1'
+Assert-Condition (Test-Path $initInformationLayerValidator) 'focused init information-layer contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $initInformationLayerValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused init information-layer contract validator failed'
+
+$figmaEvidenceValidator = Join-Path $root 'scripts\test-figma-evidence-contract.ps1'
+Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused Figma evidence contract validator failed'
+
 $exploreContractValidator = Join-Path $root 'scripts\test-explore-contract.ps1'
 Assert-Condition (Test-Path $exploreContractValidator) 'focused fp-explore contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $exploreContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-explore contract validator failed'
+
+$decisionGateContractValidator = Join-Path $root 'scripts\test-decision-gate-contract.ps1'
+Assert-Condition (Test-Path $decisionGateContractValidator) 'focused decision-gate contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused decision-gate contract validator failed'
 
 $prdSkillPath = Join-Path $root 'skills\fp-prd\SKILL.md'
 $prdSkillText = Read-Utf8 $prdSkillPath
@@ -524,7 +584,7 @@ foreach ($anchor in @(
     'restore the recorded final review attempt'
     'Review scope: final'
     '`BRIEF_PATH=N/A`'
-    'fp-review is required for final review scope'
+    'fp-final-review is required for final review scope'
     'clean-snapshot checkpoint before consuming each final review attempt'
     'commit authorized implementation and execution artifacts'
     '`git status --short` is empty'
@@ -555,7 +615,7 @@ Assert-Condition ($startExecutionSection.Success) 'fp-start execution section is
 foreach ($anchor in @(
     '一次 inline 自审'
     'Direct execution does not own a final review scope'
-    'load `fp-review` once after `fp-execute` returns'
+    'load `fp-final-review` once after `fp-execute` returns'
 )) {
     Assert-Condition ($startExecutionSection.Groups['body'].Value.Contains($anchor)) "fp-start is missing lightweight direct-execution integration: $anchor"
 }
@@ -625,8 +685,8 @@ $processLanguageContracts = @{
     'skills\fp-brainstorm\design-template.md' = '叙述性内容默认使用中文'
     'skills\fp-plan-backend\plan-template.md' = '叙述性内容默认使用中文'
     'skills\fp-plan-frontend\plan-template.md' = '叙述性内容默认使用中文'
-    'skills\fp-review\SKILL.md' = 'Process document language'
-    'skills\fp-review\final-review-template.md' = '叙述性内容默认使用中文'
+    'skills\fp-final-review\SKILL.md' = 'Process document language'
+    'skills\fp-final-review\final-review-template.md' = '叙述性内容默认使用中文'
     'skills\fp-archive\SKILL.md' = '叙述性内容默认使用中文'
 }
 foreach ($relativePath in $processLanguageContracts.Keys) {
@@ -765,7 +825,7 @@ $lazyResources = @{
     'skills\fp-plan\SKILL.md' = 'task-layout-template.md'
     'skills\fp-plan-backend\SKILL.md' = 'plan-template.md'
     'skills\fp-plan-frontend\SKILL.md' = 'plan-template.md'
-    'skills\fp-review\SKILL.md' = 'final-review-template.md'
+    'skills\fp-final-review\SKILL.md' = 'final-review-template.md'
     'skills\fp-init\SKILL.md' = 'project-family-examples.md'
 }
 
@@ -777,13 +837,15 @@ foreach ($entry in $lazyResources.GetEnumerator()) {
 }
 
 $resourceAnchors = @{
+    'skills\_shared\codegraph.md' = @('npm install -g @colbymchenry/codegraph@latest', 'npm prefix -g', 'MCP -> CLI -> native search', 'navigation-hint-only', 'dirty-after-write', 'post-write sync')
+    'skills\fp-init\templates.md' = @('## Project Facts Freshness Metadata', 'fp-project-facts-freshness/v1', 'artifactSectionId', 'bodyHash', 'relativePath', 'fingerprint', 'metadata-only', 'stale/conflict is computed live', '## Selective refresh')
     'skills\fp-prd\prd-template.md' = @('### 1.1 ', '### 3.1 ', '#### 3.1.1 ', '#### 3.1.5 ', '### 4.1 ', '### 4.3 ', 'flowchart TD')
     'skills\fp-propose\proposal-template.md' = @('## Why', '## What Changes', '## Capabilities', '## Out of Scope', '## Impact')
     'skills\fp-brainstorm\design-template.md' = @('# <', '## ', '### API ', '#### API ')
     'skills\fp-plan\task-layout-template.md' = @('## Change-level overview', 'tasks/00-overview.md', '## Cross-end Dependency Edges', '## Progress Totals', 'derived from the unique owner checkboxes', '## Per-end split manifest', '## Fragment Manifest', '| Order | File | Kind | Owns |')
     'skills\fp-plan-backend\plan-template.md' = @('## Global Constraints', '## Backend Interface Ledger', '- [ ] **Task backend-NNN:', '**Depends on:**', '## Coverage Matrix')
     'skills\fp-plan-frontend\plan-template.md' = @('## Global Constraints', '- [ ] **Task frontend-NNN:', '**Depends on:**', '**Template Outline:**', '**Script/State Outline:**', '**Style Outline:**', '**Visual / UX Checks:**')
-    'skills\fp-review\final-review-template.md' = @('**Verdict:**', '## Inputs Reviewed', '## Branch State', '## FeaturePilot Coverage', '## Verification Commands', '## Findings', '## Blocking Items Before Archive', '## Final Verdict Rationale')
+    'skills\fp-final-review\final-review-template.md' = @('**Verdict:**', '## Inputs Reviewed', '## Branch State', '## FeaturePilot Coverage', '## Verification Commands', '## Findings', '## Blocking Items Before Archive', '## Final Verdict Rationale')
 }
 
 foreach ($entry in $resourceAnchors.GetEnumerator()) {
@@ -806,7 +868,7 @@ foreach ($example in [regex]::Matches($taskLayoutTemplate, '(?s)```markdown\r?\n
 }
 
 $skillAnchors = @{
-    'fp-init' = @('templates.md', 'project-family-examples.md', 'Lightweight discovery boundaries', 'Never overwrite')
+    'fp-init' = @('templates.md', 'project-family-examples.md', 'Lightweight discovery boundaries', 'Never overwrite', 'auto-install', 'show-install-steps', 'skip-codegraph', 'npm install -g @colbymchenry/codegraph@latest', 'codegraph install --target=auto --location=global --yes', 'codegraph init <project-root>', 'refresh-existing-information-layer', 'stale-generated-intel', 'refresh-stale-intel', 'preserve-manual-settings', 'user-edit-conflict')
     'fp-prd' = @('Bucket A/B', 'Bucket C', 'Prototype-first', 'explicitly approved', 'prd-template.md')
     'fp-prd-grill-me' = @('one question per turn', 'MUST NOT decide Bucket C', 'Minimal Fact Exploration')
     'fp-propose' = @('proposal-template.md', 'Why / What Changes / Out of Scope / Impact', 'fp-docs/changes/<slug>/proposal.md')
@@ -814,12 +876,13 @@ $skillAnchors = @{
     'fp-plan' = @('fp-plan-backend', 'fp-plan-frontend', 'plan-backend.md', 'plan-frontend.md')
     'fp-plan-backend' = @('Global Constraints', 'Backend Interface Ledger', 'Coverage Matrix', 'plan-template.md')
     'fp-plan-frontend' = @('Global Constraints', 'Interfaces', 'Visual Checks', 'plan-template.md')
-    'fp-execute' = @('semi', 'full', 'Pre-flight Plan Review', 'TDD')
-    'fp-start' = @('fp-propose', 'fp-brainstorm', 'fp-plan', 'fp-execute-sdd', 'fp-review')
-    'fp-execute-sdd' = @('No parallel implementers', 'progress.md', 'task-brief-template.md', 'task-reviewer-prompt.md', 'Fix Loop')
-    'fp-review' = @('read-only final reviewer', 'PASS_WITH_NOTES', 'stale intel', 'final-review-template.md')
-    'fp-explore' = @('mode: standalone', 'prd-facts', 'start-routing', 'quick', 'fp-explore-invoke', 'fp-explore-return', 'read-only')
-    'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/')
+    'fp-execute' = @('semi', 'full', 'Pre-flight Plan Review', 'TDD', 'dirty-after-write', 'post-write-sync', 'must not block completion')
+    'fp-start' = @('fp-propose', 'fp-brainstorm', 'fp-plan', 'fp-execute-sdd', 'fp-final-review')
+    'fp-execute-sdd' = @('No parallel implementers', 'progress.md', 'task-brief-template.md', 'task-reviewer-prompt.md', 'Fix Loop', 'dirty-after-write', 'post-write-sync', 'must not block completion')
+    'fp-module-review' = @('large functional module', 'COMPLETE_WITH_AWAITING', 'awaiting-user-confirmation', 'review-entry-template.md', 'dirty-after-write', 'post-write-sync')
+    'fp-final-review' = @('read-only final reviewer', 'PASS_WITH_NOTES', 'stale intel', 'final-review-template.md')
+    'fp-explore' = @('mode: standalone', 'prd-facts', 'start-routing', 'quick', 'fp-explore-invoke', 'fp-explore-return', 'read-only', 'Stage 0 - CodeGraph fast path', 'MCP -> CLI -> native search', 'candidate paths', 'local read windows', 'current source')
+    'fp-quick' = @('fp-explore', 'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification', 'quick-scope-assessment', 'fp-docs/changes/', 'dirty-after-write', 'post-write-sync', 'must not block completion')
     'fp-archive' = @('history/history.md', 'blocked', 'proposal.md')
     'fp-figma' = @('Figma', 'Flex / Grid', 'Visual Checks', 'settings/frontend.md')
     'fp-ui-spec' = @('settings/frontend.md', 'existing code', 'Public-plugin constraints')
@@ -846,12 +909,12 @@ Assert-Condition ($startExploreText.Contains('profile: start-routing') -and $sta
 Assert-Condition ($startExploreText.Contains('Default execution path') -and $startExploreText.Contains('SDD continuation mode gate')) 'start-routing edit removed protected execution routing'
 
 $sddSkill = Read-Utf8 (Join-Path $root 'skills\fp-execute-sdd\SKILL.md')
-Assert-Condition ($sddSkill.Contains('intel/sdd-handoff.md')) 'fp-execute-sdd is missing the SDD handoff preflight contract'
+Assert-Condition ($sddSkill.Contains('dynamic task context') -and $sddSkill.Contains('static handoff absence is not a blocker')) 'fp-execute-sdd is missing the dynamic information-layer preflight contract'
 Assert-Condition ($sddSkill.Contains('unresolved Unknown')) 'fp-execute-sdd is missing unresolved Unknown handling'
 
-$reviewSkill = Read-Utf8 (Join-Path $root 'skills\fp-review\SKILL.md')
-Assert-Condition ($reviewSkill.Contains('stale intel')) 'fp-review is missing stale-intel review guidance'
-Assert-Condition ($reviewSkill.Contains('information-layer process')) 'fp-review is missing information-layer process review guidance'
+$reviewSkill = Read-Utf8 (Join-Path $root 'skills\fp-final-review\SKILL.md')
+Assert-Condition ($reviewSkill.Contains('stale intel')) 'fp-final-review is missing stale-intel review guidance'
+Assert-Condition ($reviewSkill.Contains('information-layer process')) 'fp-final-review is missing information-layer process review guidance'
 
 $brainstormSkill = Read-Utf8 (Join-Path $root 'skills\fp-brainstorm\SKILL.md')
 $startSkill = Read-Utf8 (Join-Path $root 'skills\fp-start\SKILL.md')
@@ -982,7 +1045,7 @@ foreach ($producerContract in @(
     Assert-Condition ($producerContract.Text.Contains('Each executable task checkbox exists exactly once') -and $producerContract.Text.Contains('one `tasks`-kind fragment')) "$($producerContract.Name) is missing unique task checkbox ownership"
 }
 
-foreach ($consumer in @('fp-start', 'fp-plan', 'fp-execute', 'fp-execute-sdd', 'fp-review')) {
+foreach ($consumer in @('fp-start', 'fp-plan', 'fp-execute', 'fp-execute-sdd', 'fp-final-review')) {
     $consumerText = Read-Utf8 (Join-Path $root "skills\$consumer\SKILL.md")
     Assert-Condition ($consumerText.Contains('design/')) "$consumer is missing canonical design paths"
     Assert-Condition ($consumerText.IndexOf('historical', [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "$consumer is missing historical-layout rejection"
@@ -997,7 +1060,7 @@ foreach ($anchor in @(
     '过程产物集合仅包含'
     '一次 inline 自审'
     '不拥有 final review scope'
-    '只提示运行独立的 `fp-review`'
+    '只提示运行独立的 `fp-final-review`'
 )) {
     Assert-Condition ($executeDirectSection.Groups['body'].Value.Contains($anchor)) "fp-execute direct execution contract is incomplete: $anchor"
 }
@@ -1029,7 +1092,7 @@ Assert-Condition ($frontendPlanSkill.Contains('tasks/frontend/00-index.md') -and
 Assert-Condition ($backendPlanSkill.Contains('exactly once') -and $frontendPlanSkill.Contains('exactly once')) 'task plan producers must own each executable task checkbox exactly once'
 Assert-Condition ($backendPlanSkill.Contains('backend-001') -and $frontendPlanSkill.Contains('frontend-001') -and $backendPlanSkill.Contains('never resets per file') -and $frontendPlanSkill.Contains('never resets per file')) 'split task IDs must remain stable and unique across fragments'
 Assert-Condition ($planSkill.Contains('tasks/00-overview.md') -and $planSkill.Contains('task-layout-template.md') -and $planSkill.Contains('exists exactly when both backend and frontend plans exist') -and $planSkill.Contains('A single-end plan never has an overview')) 'fp-plan is missing the exact two-end-only task overview condition'
-foreach ($taskConsumer in @('fp-execute', 'fp-execute-sdd', 'fp-review', 'fp-archive')) {
+foreach ($taskConsumer in @('fp-execute', 'fp-execute-sdd', 'fp-final-review', 'fp-archive')) {
     $taskConsumerText = Read-Utf8 (Join-Path $root "skills\$taskConsumer\SKILL.md")
     Assert-Condition ($taskConsumerText.Contains('tasks/backend/00-index.md') -and $taskConsumerText.Contains('tasks/frontend/00-index.md')) "$taskConsumer must resolve all indexed task fragments"
     Assert-Condition ($taskConsumerText.Contains('tasks/00-overview.md')) "$taskConsumer is missing cross-end task overview handling"
@@ -1046,7 +1109,7 @@ $artifactConsumerContracts = @{
     'skills\fp-start\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-execute\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-execute-sdd\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
-    'skills\fp-review\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
+    'skills\fp-final-review\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
     'skills\fp-archive\SKILL.md' = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'
 }
 foreach ($entry in $artifactConsumerContracts.GetEnumerator()) {
@@ -1088,8 +1151,8 @@ foreach ($entry in $artifactConsumerContracts.GetEnumerator()) {
 $artifactHandoffContracts = @{
     'skills\fp-execute-sdd\task-brief-template.md' = 'artifact-layout contract already loaded by the owning `fp-execute-sdd` controller'
     'skills\fp-execute-sdd\review-package-template.md' = 'artifact-layout contract already loaded by the owning `fp-execute-sdd` controller'
-    'skills\fp-review\final-reviewer.md' = 'artifact-layout contract already loaded by `fp-review`'
-    'skills\fp-review\final-review-template.md' = 'artifact-layout contract already loaded by `fp-review`'
+    'skills\fp-final-review\final-reviewer.md' = 'artifact-layout contract already loaded by `fp-final-review`'
+    'skills\fp-final-review\final-review-template.md' = 'artifact-layout contract already loaded by `fp-final-review`'
 }
 foreach ($entry in $artifactHandoffContracts.GetEnumerator()) {
     $handoffPath = $entry.Key
@@ -1135,13 +1198,13 @@ $structuralReviewBlockers = @(
     'continue collecting findings'
 )
 foreach ($anchor in $structuralReviewBlockers) {
-    Assert-Condition ($reviewSkill.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "fp-review is missing blocking structural verdict contract: $anchor"
+    Assert-Condition ($reviewSkill.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "fp-final-review is missing blocking structural verdict contract: $anchor"
 }
 
 foreach ($templatePath in @(
     'skills\fp-execute-sdd\task-brief-template.md'
     'skills\fp-execute-sdd\review-package-template.md'
-    'skills\fp-review\final-review-template.md'
+    'skills\fp-final-review\final-review-template.md'
 )) {
     $templateText = Read-Utf8 (Join-Path $root $templatePath)
     Assert-Condition (-not (Test-MalformedTasksKindInlineCode $templateText)) "$templatePath has malformed inline code around tasks-kind"
@@ -1162,9 +1225,9 @@ foreach ($strictPlanPath in $strictPlanFiles) {
     Assert-Condition ($strictPlanText -notmatch '(?i)canonical[^\r\n]*(?:legacy|historical)[^\r\n]*(?:entrypoint|\u8BBE\u8BA1\u4EA7\u7269)[^\r\n]*(?:exists|\u5B58\u5728|\u6CA1\u6709)') "$strictPlanPath still treats a historical entrypoint as usable input state"
 }
 
-$reviewContractText = Read-Utf8 (Join-Path $root 'skills\fp-review\SKILL.md')
-Assert-Condition (-not $reviewContractText.Contains('outside a valid unambiguous legacy Consumer mode')) 'fp-review still exempts a legacy Consumer mode from file-plus-directory conflicts'
-$finalReviewerText = Read-Utf8 (Join-Path $root 'skills\fp-review\final-reviewer.md')
+$reviewContractText = Read-Utf8 (Join-Path $root 'skills\fp-final-review\SKILL.md')
+Assert-Condition (-not $reviewContractText.Contains('outside a valid unambiguous legacy Consumer mode')) 'fp-final-review still exempts a legacy Consumer mode from file-plus-directory conflicts'
+$finalReviewerText = Read-Utf8 (Join-Path $root 'skills\fp-final-review\final-reviewer.md')
 Assert-Condition (-not $finalReviewerText.Contains('{CANONICAL_SMALL_SPLIT_OR_LEGACY_READ_ONLY}')) 'final-reviewer still exposes a legacy resolution placeholder'
 Assert-Condition (-not $finalReviewerText.Contains('Compatibility warning / migration debt')) 'final-reviewer still exposes compatibility warning or migration debt'
 Assert-Condition ($finalReviewerText.Contains('{CANONICAL_SMALL_OR_SPLIT}')) 'final-reviewer is missing its canonical-only resolution placeholder'
@@ -1183,8 +1246,38 @@ foreach ($noCompatibilityPath in @(
     Assert-Condition ($noCompatibilityText -notmatch '(?im)^#{1,6}\s+Legacy read compatibility\s*$') "$noCompatibilityPath still has a Legacy read compatibility heading"
 }
 
+$oldReviewPatterns = @('fp-' + 'review', 'skills/' + 'fp-' + 'review', 'commands/' + 'fp-' + 'review', 'test-' + 'review-contract')
+$oldReviewExclusions = @(
+    'docs/superpowers/specs/'
+    'docs/superpowers/plans/'
+    'scripts/test-final-review-contract.ps1'
+    'scripts/validate-plugin.ps1'
+)
+$oldReviewSurfaces = @(
+    (Join-Path $root 'commands')
+    (Join-Path $root 'skills')
+    (Join-Path $root 'scripts')
+    (Join-Path $root 'README.md')
+    (Join-Path $root 'AGENTS.md')
+    (Join-Path $root 'docs\user_guide')
+    (Join-Path $root 'docs\release_notes')
+)
+$oldReviewFiles = foreach ($surface in $oldReviewSurfaces) {
+    if (Test-Path $surface -PathType Leaf) { Get-Item $surface }
+    elseif (Test-Path $surface -PathType Container) { Get-ChildItem $surface -Recurse -File }
+}
+foreach ($file in $oldReviewFiles) {
+    $relativePath = $file.FullName.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
+    if ($oldReviewExclusions | Where-Object { $relativePath.StartsWith($_, [System.StringComparison]::OrdinalIgnoreCase) }) { continue }
+    $text = Read-Utf8 $file.FullName
+    foreach ($pattern in $oldReviewPatterns) {
+        Assert-Condition ($text.IndexOf($pattern, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) "active old review identifier remains in ${relativePath}: $pattern"
+    }
+}
+
 $commandChars = ($commands | ForEach-Object { (Read-Utf8 $_.FullName).Length } | Measure-Object -Sum).Sum
-Assert-Condition ($commandChars -le 5000) "command adapters exceed the 5000-character budget: $commandChars"
+$commandCharBudget = $commands.Count * 480
+Assert-Condition ($commandChars -le $commandCharBudget) "command adapters exceed the $commandCharBudget-character budget for $($commands.Count) commands: $commandChars"
 
 $skillChars = ($skills | ForEach-Object { (Read-Utf8 (Join-Path $_.FullName 'SKILL.md')).Length } | Measure-Object -Sum).Sum
 $coreChars = $commandChars + $skillChars + $sharedText.Length

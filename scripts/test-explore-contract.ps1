@@ -127,6 +127,7 @@ foreach ($anchor in @(
 }
 
 $progressiveOrder = @(
+    'Stage 0 - CodeGraph fast path',
     'Stage A - Glob candidate paths',
     'Stage B - Grep symbols and hit lines',
     'Stage C - ranged Read around evidence',
@@ -141,6 +142,9 @@ foreach ($stage in $progressiveOrder) {
 }
 foreach ($anchor in @(
     'Progressive low-context inspection',
+    'MCP -> CLI -> native search',
+    'fall back to Stage A',
+    'navigation-hint-only',
     '80-160 lines',
     'over 300 lines',
     'candidate paths',

@@ -4,7 +4,7 @@ FeaturePilot is an AI feature-development guide that runs the lifecycle:
 
 `需求 → 原型/设计 → 计划 → 执行 → 归档`
 
-This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `0.3.0`.
+This repository is both a Claude Code plugin and a Codex plugin. Codex loads the same skills through `.codex-plugin/plugin.json`, while this file remains the plain-Markdown fallback and repository contract. Current release: `1.0.0`.
 
 ## How to use in Codex
 
@@ -20,10 +20,12 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | Technical design | `skills/fp-brainstorm/SKILL.md` |
 | Implementation plan | `skills/fp-plan/SKILL.md` |
 | Execute confirmed plan | `skills/fp-execute/SKILL.md` or `skills/fp-execute-sdd/SKILL.md` |
-| Final review | `skills/fp-review/SKILL.md` |
+| Raise unit-test, line, branch, statement, or combined coverage to a target, or resume an interrupted coverage effort | `skills/fp-coverage/SKILL.md` |
+| Review one large functional module or several related modules | `skills/fp-module-review/SKILL.md` |
+| Final whole-branch review before archive or merge | `skills/fp-final-review/SKILL.md` |
 | Archive completed change | `skills/fp-archive/SKILL.md` |
 
-## 0.3.0 release behavior
+## 1.0.0 release behavior
 
 This release documents the current FeaturePilot gates for both Claude Code and Codex:
 
@@ -32,6 +34,8 @@ This release documents the current FeaturePilot gates for both Claude Code and C
 - `fp-prd` is an interview workflow, not a one-shot PRD generator: Bucket A/B confirmed items are reviewed in one batch, Bucket C unresolved decisions are asked sequentially one at a time, assistant recommendations are not user confirmation, and the assistant must never self-answer Bucket C.
 - PRD-first mode must complete the PRD interview gate and receive explicit approval of the confirmation summary before writing the resolved PRD small or split form.
 - Prototype-first mode applies when the user wants to see/adjust a prototype first or the requirement is UI-heavy: confirm prototype-blocking decisions, write `prototype.html`, wait for user confirmation, then ask remaining PRD-blocking questions and write the resolved PRD small or split form.
+- `fp-coverage` resolves one dedicated `fp-docs/changes/<slug>-coverage/` root. `.fp-coverage/progress.md` is a bounded recovery index, while `.fp-coverage/contract.md`, `.fp-coverage/baselines/<run-id>.md`, `.fp-coverage/batches/<batch-id>.md`, and `.fp-coverage/verifications/<run-id>.md` own detailed split evidence; recovery reads only directly indexed current evidence, not all history. `issues.md` is created lazily and records only reproducible `production-code` or `test-code` problems discovered by unit-test execution/triage/addition; it excludes tooling, dependency, environment, CI, coverage-config, and ordinary uncovered-element problems, and agents cannot self-mark Developer review as REVIEWED. `final-report.md` is generated and validated at the `FINAL_VERIFYING` completion boundary after technical predicates pass; only then may the workflow enter `COMPLETE`, and the report must reference fresh final verification. `coverage.xml`, `htmlcov/`, raw data, and every declared report stay beneath the same root, never at the project root. Tests and approved fixtures remain in established test paths. None of these files is a second completion authority.
+- If tests can run but coverage tooling is missing, `fp-coverage` remains `RESOLVING` with `CANNOT_VERIFY` and presents an approval-gated `coverage-tooling-bootstrap` instead of only terminating as `BLOCKED`. Prefer the existing coverage toolchain and runner. With a proven Django project and no existing coverage solution, recommend only `pytest-cov` when pytest already exists, otherwise `pytest + pytest-cov`; add `pytest-django` only when tests need that integration. Before approval list exact dependencies, install command, dependency/lock/config files, production source, baseline/final commands, report paths, and rollback boundary. After approval, persist the dependency declaration, change only the reviewed coverage tooling/config, and run a fresh baseline; never silently install, upgrade unrelated packages, or reuse pre-bootstrap evidence.
 - Generated intel under `fp-docs/intel/` is stale-prone navigation only. Use current code/search/command output for current-state facts.
 - `fp-explore` accepts natural-language public input and remains read-only: it never writes artifacts, implements changes, or automatically dispatches another workflow. Its internal structured profiles may be invoked only by `fp-prd`, `fp-start`, and `fp-quick`, which retain their own product, routing, approval, and implementation gates.
 - Do not bulk-read settings, intel, historical changes, archive, or history files; read the smallest relevant subset for the current phase.
@@ -55,13 +59,35 @@ Information layer structure:
 ```text
 fp-docs/
   manifest.md               # FeaturePilot 信息层唯一入口
-  settings/
+  settings/                 # 可选；明确批准某个文件后才创建
     agent.md                # 可选：轻量 FeaturePilot policy adapter
     frontend.md             # 可选：前端/UI/视觉/设计系统规则
     backend.md              # 可选：后端/API/数据/安全规则
     prototype-style.md      # 可选：原型视觉风格参考
-  intel/                    # 生成的 source-backed 但 stale-prone 的导航线索
+  intel/                    # 可选；默认不存在
+    project-facts.md        # 可选生成事实：质量门禁与非显而易见边界
+    .freshness.json         # 仅保存生成 metadata
+    unknowns.md             # 可选、human-owned、lazy
+    decisions.md            # 可选、human-owned、lazy
 ```
+
+`manifest-only default` 是合法且完整的新项目状态。可选文件缺失时记为 `N/A`；SDD 从 manifest、相关 settings、可选 project facts、当前 change、当前源码/config 和搜索候选动态组装上下文，不要求静态 handoff。
+
+## Optional CodeGraph acceleration
+
+CodeGraph 是可选的本地代码地图，不是 FeaturePilot 的前置依赖。`fp-init` 未检测到可用 CLI 时必须提供“自动安装、展示安装步骤、跳过”三种选择；自动安装只允许使用：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+不得使用 `irm`、`curl`、远程安装脚本或 `npx`。缺少 npm 时不得自动安装 Node.js。Agent MCP 配置必须与 CLI 安装分开确认；CLI 原本已安装但项目没有 `.codegraph/` 时，首次建图也必须单独确认。自动安装选择本身包含当前项目首次建图授权。
+
+需要代码定位、符号关系、调用链、数据流或影响范围时，按需读取 `skills/_shared/codegraph.md`。后续调查遵循 `MCP → CLI → 原有搜索`，每个工作流最多一次健康检查和一次必要同步。CodeGraph 失败不得阻塞 FeaturePilot；图结果只作 `navigation-hint-only`，关键结论必须回到当前源码、测试和命令输出复核。
+
+已有 `fp-docs/manifest.md` 时，`fp-init` 进入 `refresh-existing-information-layer`：根据 `.freshness.json` 中的 source fingerprint 与 body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`。metadata 不持久化 stale verdict。`settings/*`、human-owned unknowns/decisions、active changes、archive/history 和冲突内容不得批量覆盖。manifest 已列出的旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 仅作一版只读提示，不创建、刷新或要求。
+
+任何代码修改流程首次写入源码后必须把图状态标记为 `dirty-after-write`，并禁止继续查询旧图。`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 和 `fp-module-review` 在写入后的用户可见返回前，对工作流开始时已存在的图最多执行一次 `post-write-sync`；失败只记录并回退，不阻塞验证、审查或完成，也不得隐式创建新图。
 
 ## OpenSpec-inspired artifact model
 
@@ -93,7 +119,7 @@ When archiving, preserve history under `fp-docs/archive/YYYY-MM-DD-<slug>/` and 
 Preferred path:
 
 1. `/fp-explore <question>` when the user wants read-only investigation or option comparison before choosing a workflow; empty input performs bounded orientation only.
-2. `/fp-init` when the project has no `fp-docs/` workspace or wants the full information layer (`fp-docs/manifest.md` as single entry point, optional `fp-docs/settings/agent.md`/`frontend.md`/`backend.md`/`prototype-style.md`, `fp-docs/intel/`).
+2. `/fp-init` when the project has no workspace or needs refresh. New projects use the `manifest-only default`; settings, project facts, and human-owned knowledge are optional and created only through their approval gates.
 3. For `/fp-prd <idea>`, use PRD-first by default; use Prototype-first when the user asks to see/adjust a prototype first or the requirement is UI-heavy.
 4. `/fp-prd` must not create directories or write `prd.md`/`prototype.html` before the relevant confirmation summary is explicitly approved.
 5. `/fp-start <slug>` to pick up the PRD and continue into proposal, design, plan, execution, review, and archive.

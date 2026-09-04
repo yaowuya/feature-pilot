@@ -10,6 +10,8 @@ Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills
 4. For UI/frontend/prototype work, read relevant sections of `settings/frontend.md` and, when generating prototypes, `settings/prototype-style.md` if present.
 5. For backend/API/data/security work, read relevant sections of `settings/backend.md` if present.
 
+A `manifest-only workspace is valid`. Optional settings, `intel/project-facts.md`, `.freshness.json`, `intel/unknowns.md`, and `intel/decisions.md` may all be absent; record them as `N/A` and continue from current artifacts/source/config. Assemble `dynamic task context` from what exists instead of requiring a static handoff file.
+
 ## Process document language
 
 - Write FeaturePilot-generated process-document prose in Chinese by default, including titles, explanations, decisions, requirements, task descriptions, acceptance text, review findings, and archive/history summaries.
@@ -22,10 +24,16 @@ Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills
 - Current code and command output win for current-state facts. Approved PRD/proposal/design/tasks win for target-state requirements.
 - Public skills must not hardcode customer vendors, component libraries/prefixes, design tokens, backend frameworks, API envelopes, or workflow policy. Put customer rules in target-project settings.
 
+## Optional CodeGraph route
+
+需要定位代码、符号、调用链、数据流、影响范围或相关源码候选时，按需读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md`。CodeGraph 只加速候选定位；不可用时继续现有搜索，不降低当前源码验证、读取预算、只读和授权边界。无需代码调查的阶段不得为了“预热”而加载、安装或构建代码图。
+
 ## Compatibility and ownership
 
 - Missing `fp-docs/manifest.md` does not block normal workflows. Recommend `/fp-init`, continue from current code/settings when safe, and create only artifacts owned by the active phase.
 - Only `fp-init` may create or repair project-level `manifest.md`, `settings/`, or `intel/`, and it requires approval before overwriting existing files.
+- `intel/unknowns.md` and `intel/decisions.md` are human-owned and lazy. Other workflows keep ordinary unknowns/decisions change-local or ask the user; absence is never a blocker.
+- `v2 never creates or refreshes legacy files`. For one release, manifest-listed `unknowns-and-decisions.md`, `refresh-policy.md`, `sdd-handoff.md`, and older generated intel have `legacy-information-layer-read-compatibility` as optional read-only hints only. They are not current proof or required inputs; no workflow, including `fp-init`, produces or refreshes them.
 - Requirement/design/plan/execution phases may write only the active change under `fp-docs/changes/<slug>/` plus its execution state.
 - Artifact layout is governed by the mandatory artifact-layout contract already loaded by the owning skill. Every PRD, proposal, design, and task-plan Producer or Consumer must follow it for canonical paths, semantic splitting, safety limits, manifests, ownership, overview rules, resolution, and historical structural-conflict rejection. There is no compatibility fallback.
 - `.fp-execute/progress.md` is an append-only recovery/evidence log, not a second completion authority. The single checkbox in the resolved task-owner file is the planned completion state. On mismatch, inspect the owner file, git history, tests, and actual implementation, then reconcile checkbox and ledger before continuing; never declare completion from a ledger-only record or blindly re-execute it.
