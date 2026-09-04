@@ -4,8 +4,7 @@ description: Use when a user explicitly invokes /fp-prd or $fp-prd, or explicitl
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
@@ -74,7 +73,7 @@ If none of the above is true, run `fp-prd-grill-me` Batch Confirmation Mode: Pha
 
 Writing `fp-docs/prd-*.md`, `fp-docs/*.prd.md`, or any PRD outside the canonical pair `fp-docs/changes/<slug>/prd.md` / `fp-docs/changes/<slug>/prd/00-index.md` is invalid. If such a legacy path exists, offer to migrate or regenerate into one canonical form; do not keep writing to the legacy path.
 
-The generated logical PRD must use the Mandatory PRD Structure exactly. Do not rename, merge, remove, reorder, or add top-level sections. Do not replace required headings with synonyms. Do not change required table columns. The PRD may add rows and may repeat `3.N <功能名称>` blocks for multiple features, but every feature block must keep the exact five subsections `功能说明` / `交互逻辑` / `异常处理` / `页面元素` / `原型` together in one owner file.
+The generated logical PRD must use the Mandatory PRD Structure exactly. Do not rename, merge, remove, reorder, or add top-level sections. Do not replace required headings with synonyms. Do not change required table columns. The PRD may add rows and may repeat `3.N <功能名称>` blocks for multiple features, but every newly generated feature block must keep the exact four subsections `功能说明` / `交互逻辑` / `异常处理` / `原型` together in one owner file. Historical blocks with `页面元素` and `3.N.5 原型` remain readable; do not add that legacy field to new PRDs.
 
 ## Input
 
@@ -133,15 +132,12 @@ At the start, choose one of two modes from user intent:
 3. Stop code-fact investigation as soon as the next useful product question is known.
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
 5. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
-6. Select the final PRD form before writing:
-   - for form selection, default to the small form in `prd.md` when the complete logical artifact is expected to stay within 500 lines and 30,000 characters;
-   - use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves;
-   - preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
+6. Select the final PRD form before writing per the shared artifact-layout contract: default to the small form in `prd.md`; use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only under that contract's overflow/approval/setting gates. Preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
 6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
 7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
 8. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
 9. Write the selected form from `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
-10. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html` and reference it from the unique fragment that owns the complete `3.N` feature block and its `3.N.5 原型` subsection.
+10. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html` and reference it from the unique fragment that owns the complete `3.N` feature block and its `3.N.4 原型` subsection.
 11. Run PRD self-review and report the canonical entrypoint and prototype path.
 
 ### Prototype-first mode
@@ -167,7 +163,7 @@ Use this mode to make the prototype the primary clarification artifact before PR
 9. After prototype confirmation, derive PRD decisions from the confirmed prototype plus the interview answers. Use `fp-prd-grill-me` to ask only remaining PRD-blocking Bucket C questions one at a time; do not re-ask prototype decisions that the user already confirmed through the prototype.
 10. Select `prd.md` or `prd/00-index.md` before writing using the same semantic split and size rules as PRD-first mode. Preserve an existing canonical form unless an explicitly approved conversion is required.
 11. Show the final PRD confirmation summary with selected form, canonical entrypoint, planned fragment ownership when split, and any overwrite, revision, or conversion/removal action. Wait for explicit approval.
-12. Write the selected form using the Mandatory PRD Structure verbatim. The unique owner of the complete feature block and its `3.N.5 原型` subsection must reference the confirmed `prototype.html` and state that the requirements were derived from the confirmed prototype.
+12. Write the selected form using the Mandatory PRD Structure verbatim. The unique owner of the complete feature block and its `3.N.4 原型` subsection must reference the confirmed `prototype.html` and state that the requirements were derived from the confirmed prototype.
 13. Run PRD self-review and report the canonical entrypoint and prototype path.
 
 Do not create directories or write files before the relevant confirmation summary is approved. In Prototype-first mode, `prototype.html` may be written after prototype confirmation, but every PRD Markdown form must wait until the prototype is reviewed and explicitly confirmed.
@@ -202,7 +198,7 @@ Prototype requirements:
 
 - Single-file HTML/CSS/JS.
 - No external CDN.
-- Existing-product work should follow existing pages, `fp-ui-spec`, `fp-ux-spec`, Figma, or screenshot facts.
+- Existing-product work should follow existing pages, `fp-frontend-spec`, Figma, or screenshot facts.
 - Prototype expresses information structure and interaction, not final implementation.
 - Prototype must support simple interactions, not just static markup.
 

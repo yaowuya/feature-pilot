@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -148,9 +148,9 @@ function Test-DecisionLedgerSet([string[]]$sections, [string]$requiredPrefix) {
 
 function Test-PreWriteConfirmationEvidence([string]$section, [string[]]$requiredIds) {
     try {
-        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
-        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
-        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*$')
+        $covered = [regex]::Match($section, '(?m)^-[ \t]*Covered IDs:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
+        $outstanding = [regex]::Match($section, '(?m)^-[ \t]*Outstanding blocking decisions:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
+        $authorization = [regex]::Match($section, '(?m)^-[ \t]*Explicit user authorization to write:[ \t]*(?<value>[^\r\n]+)[ \t]*(?:\r(?=\n))?$')
         if (-not $covered.Success -or -not $outstanding.Success -or -not $authorization.Success) { return $false }
 
         foreach ($id in $requiredIds) {
@@ -179,10 +179,11 @@ $brainstormSkillPath = Join-Path $root 'skills\fp-brainstorm\SKILL.md'
 $designTemplatePath = Join-Path $root 'skills\fp-brainstorm\design-template.md'
 $startSkillPath = Join-Path $root 'skills\fp-start\SKILL.md'
 $decisionLedgerPath = Join-Path $root 'skills\_shared\decision-ledger.md'
-$proposeCommandPath = Join-Path $root 'commands\fp-propose.md'
-$brainstormCommandPath = Join-Path $root 'commands\fp-brainstorm.md'
 $startCommandPath = Join-Path $root 'commands\fp-start.md'
 $validatorPath = Join-Path $root 'scripts\validate-plugin.ps1'
+$designReviewSkillPath = Join-Path $root 'skills\fp-design-review\SKILL.md'
+$reviewTemplatePath = Join-Path $root 'skills\fp-design-review\review-template.md'
+$designReviewCommandPath = Join-Path $root 'commands\fp-design-review.md'
 
 foreach ($path in @(
     $proposalSkillPath,
@@ -191,10 +192,11 @@ foreach ($path in @(
     $designTemplatePath,
     $startSkillPath,
     $decisionLedgerPath,
-    $proposeCommandPath,
-    $brainstormCommandPath,
     $startCommandPath,
-    $validatorPath
+    $validatorPath,
+    $designReviewSkillPath,
+    $reviewTemplatePath,
+    $designReviewCommandPath
 )) {
     Assert-Condition (Test-Path $path) "required decision-gate surface is missing: $path"
 }
@@ -205,10 +207,11 @@ $brainstormSkill = Read-Utf8 $brainstormSkillPath
 $designTemplate = Read-Utf8 $designTemplatePath
 $startSkill = Read-Utf8 $startSkillPath
 $decisionLedger = Read-Utf8 $decisionLedgerPath
-$proposeCommand = Read-Utf8 $proposeCommandPath
-$brainstormCommand = Read-Utf8 $brainstormCommandPath
 $startCommand = Read-Utf8 $startCommandPath
 $validator = Read-Utf8 $validatorPath
+$designReviewSkill = Read-Utf8 $designReviewSkillPath
+$reviewTemplate = Read-Utf8 $reviewTemplatePath
+$designReviewCommand = Read-Utf8 $designReviewCommandPath
 
 $statusAnchors = @('PRD-confirmed', 'code-verified', 'user-confirmed', 'not-applicable', 'needs-user-confirmation')
 
@@ -301,6 +304,19 @@ Assert-Condition (Test-PersistedDecisionLedger $designLedgerFixture 'D') 'concre
 Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceFixture @('P-001')) 'concrete proposal pre-write confirmation evidence is invalid'
 Assert-Condition (Test-PreWriteConfirmationEvidence $designEvidenceFixture @('D-001')) 'concrete design pre-write confirmation evidence is invalid'
 
+$proposalEvidenceNoFinalNewlineFixture = @(
+    '- Covered IDs: `P-001`'
+    '- Outstanding blocking decisions: `none`'
+    '- Explicit user authorization to write: P-001: user message 42 approves proposal.md and target paths'
+) -join "`n"
+$proposalEvidenceLfFixture = $proposalEvidenceNoFinalNewlineFixture + "`n"
+$proposalEvidenceCrlfFixture = $proposalEvidenceLfFixture.Replace("`n", "`r`n")
+$proposalEvidenceBareCrFixture = $proposalEvidenceNoFinalNewlineFixture + "`r"
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceLfFixture @('P-001')) 'LF pre-write confirmation evidence fixture is invalid'
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceCrlfFixture @('P-001')) 'CRLF pre-write confirmation evidence fixture is invalid'
+Assert-Condition (Test-PreWriteConfirmationEvidence $proposalEvidenceNoFinalNewlineFixture @('P-001')) 'pre-write confirmation evidence fixture without a final newline is invalid'
+Assert-Condition (-not (Test-PreWriteConfirmationEvidence $proposalEvidenceBareCrFixture @('P-001'))) 'mutation survived: pre-write confirmation evidence may end with a bare CR'
+
 $proposalPendingMutation = Replace-Required $proposalLedgerFixture 'PRD-confirmed' 'needs-user-confirmation' 'proposal terminal status'
 Assert-Condition (-not (Test-PersistedDecisionLedger $proposalPendingMutation 'P')) 'mutation survived: a pending proposal decision may be persisted'
 $designMissingEvidenceMutation = Replace-Required $designLedgerFixture 'D-001: user selected option A in message 42' '' 'design evidence record'
@@ -359,15 +375,39 @@ Assert-Anchors $brainstormSkill @(
     'do not repeat the Figma question'
 ) 'fp-brainstorm inherited visual-source gate'
 Assert-Anchors $brainstormSkill @('globally unique D-NNN sequence') 'fp-brainstorm cross-end decision ownership'
+Assert-Anchors $startSkill @('fp-design-review', 'review.md', '评审入口摘要', '未复制决策正文', '重新生成') 'fp-start review entry'
+Assert-Anchors $designReviewSkill @(
+    'review.md',
+    'review-template.md',
+    'fp-docs/changes/<slug>/review.md',
+    '评审关注点',
+    '决策统计',
+    '建议评审顺序',
+    '建议抽查路径',
+    'design/00-index.md',
+    'manifest order',
+    'canonical-first',
+    '不得复制决策正文',
+    '不得编造',
+    '阻塞'
+) 'fp-design-review skill'
+Assert-Anchors $reviewTemplate @(
+    '# <功能描述> — 开发设计评审',
+    '评审导航摘要',
+    '决策统计',
+    '数据变更',
+    '接口变更',
+    '评审关注点',
+    '建议评审顺序',
+    '建议抽查路径',
+    '设计入口',
+    '不得复制决策正文',
+    '不得编造'
+) 'design review template'
+Assert-Anchors $designReviewCommand @('fp-design-review', 'review.md', 'Gate checksum', '不得复制决策正文') 'commands/fp-design-review.md'
 Assert-Anchors $startSkill @('globally unique D-NNN sequence', 'Covered IDs') 'fp-start cross-end decision recovery'
 
-foreach ($surface in @(
-    @{ Name = 'commands/fp-propose.md'; Text = $proposeCommand },
-    @{ Name = 'commands/fp-brainstorm.md'; Text = $brainstormCommand },
-    @{ Name = 'commands/fp-start.md'; Text = $startCommand }
-)) {
-    Assert-Anchors $surface.Text @('Decision Ledger', 'per-item confirmation') $surface.Name
-}
+Assert-Anchors $startCommand @('Decision Ledger', 'per-item confirmation') 'commands/fp-start.md'
 
 Assert-Anchors $startCommand @('fresh implementer/reviewer isolation') 'commands/fp-start.md SDD trigger'
 Assert-Anchors $validator @(

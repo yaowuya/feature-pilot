@@ -1,11 +1,10 @@
 ---
 name: fp-propose
-description: 为新功能变更生成并确认 proposal.md 提案文档
+description: Use when a FeaturePilot change needs a reviewable proposal derived from an approved PRD or confirmed feature description before technical design.
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
@@ -37,7 +36,7 @@ One logical proposal selects exactly one form before writing:
 - small: `fp-docs/changes/<slug>/proposal.md`;
 - split: `fp-docs/changes/<slug>/proposal/00-index.md` plus indexed fragments.
 
-`proposal.md` and `proposal/00-index.md` are mutually exclusive. For form selection, default to the small form when the complete logical artifact is expected to stay within 500 lines and 30,000 characters. Use split form only when the small form is expected to exceed either hard limit, the user explicitly approves split form, or an applicable target-project setting explicitly requires it. Multiple features, page areas, subsystems, change scopes, or ownership domains guide fragment boundaries after splitting; they do not trigger split form by themselves. The split index owns only navigation and the authoritative `| Order | File | Kind | Owns |` fragment manifest. Logical concatenation in manifest order must pass logical template validation against the exact Why / What Changes / Capabilities / Out of Scope / Impact order.
+`proposal.md` and `proposal/00-index.md` are mutually exclusive. For form selection, default to the small form; use split form only under the shared artifact-layout contract's overflow/approval/setting gates, with semantic boundaries framing fragments after splitting only. The split index owns only navigation and the authoritative `| Order | File | Kind | Owns |` fragment manifest. Logical concatenation in manifest order must pass logical template validation against the exact Why / What Changes / Capabilities / Out of Scope / Impact order.
 
 ---
 

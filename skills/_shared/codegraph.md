@@ -41,27 +41,35 @@ npm install -g @colbymchenry/codegraph@latest
 
 ## fp-init 授权状态机
 
-CLI 不可用时，一次只询问一个决定：
+CodeGraph 全程可选。fp-init 根据 CLI 可用性对每种情形只询问**一个决定**，一次批准覆盖该情形的全部副作用（全局安装、用户级 MCP 配置、项目首次建图）；各步按顺序执行并逐步汇报，任一步失败即回退并继续普通 init。只要用户选择“展示安装步骤”或“跳过”，就 `must not` 把任何提及过的命令当作已授权执行。
 
-1. **自动安装（推荐）**：说明 npm 全局安装影响并执行唯一允许的 npm 命令；该选择同时授权为当前项目执行首次建图。
-2. **展示安装步骤**：只展示 npm 前置条件、CLI 安装、可选 MCP 配置和项目建图命令，本轮不执行。
-3. **跳过**：不安装、不配置、不建图，继续普通 init。
+### CLI 不可用 — 一个决定（安装 + MCP + 首次建图）
 
-CLI 可用后，Agent MCP 配置使用独立确认门：
+仅允许一条安装命令，先展示包名、全局安装影响与命令：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+选项（`auto-install` 的两种变体都 `includes first graph build`）：
+
+1. **自动安装并配置（推荐）**：安装 → 验证版本 → Agent MCP 配置 → 首次建图，顺序执行并逐步汇报。
+2. **仅自动安装并建图（不配置 MCP）**：不改用户级配置。
+3. **展示安装步骤**（`show-install-steps`）：只展示 npm 前置条件、CLI 安装、可选 MCP 配置和建图命令，本轮不执行。
+4. **跳过**（`skip-codegraph`）：不安装、不配置、不建图。
+
+CLI **可用**时（`cli-available-single-confirmation`），把 Agent MCP 配置与（尚无项目图时的）首次建图合并为一次确认，因为 MCP 会修改 Claude Code、Codex 等 Agent 的用户级 MCP 或 instructions 配置，须在选项里明确说明：
 
 ```text
 codegraph install --target=auto --location=global --yes
+codegraph init <project-root>
 ```
 
-该命令可能修改 Claude Code、Codex 等 Agent 的用户级 MCP 或 instructions 配置。只有明确确认后才执行；成功后提示重启相应 Agent。当前工作流不等待 MCP 热加载，继续使用 CLI。跳过 MCP 不影响 CLI 查询或建图。
-
-目标项目根目录没有 `.codegraph/` 时：
-
-- 本轮自动安装成功：自动安装选择已经授权首次建图，执行 `codegraph init <project-root>`。
-- CLI 原本已安装：单独询问是否构建，明确同意后才执行 `codegraph init <project-root>`。
+- 本轮自动安装成功且没有项目图：自动安装选择已含首次建图授权，直接执行 `codegraph init <project-root>`。
+- CLI 原本已安装：合并确认中选择“配置 MCP 并建图”或“仅建图”后才执行对应命令。
 - 展示步骤或跳过：不构建。
 
-不得在 `fp-init` 之外静默创建项目代码图。
+MCP 执行成功后提示重启相应 Agent；当前工作流不等待 MCP 热加载，继续使用 CLI。跳过 MCP 不影响 CLI 查询或建图。不得在 `fp-init` 之外静默创建项目代码图。
 
 ## 项目图健康检查和工作流状态
 

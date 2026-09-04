@@ -117,6 +117,19 @@ Evidence root: `.fp-execute/visual/<task-id>/<case-id>/`.
 - Local runtime screenshot must not replace reference.png. current.png requires stable data and stable environment. Optional diff/missing diff explanation must not hide absent core source/runtime evidence.
 - Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
+## UI/E2E Delivery Evidence (frontend/UI only)
+
+Link the matching Visual Evidence Manifest row by Task ID + Case ID; do not repeat its visual provenance or screenshot fields.
+
+| Case ID | UI Delivery Level | Source-derived condition / requirement | Lifecycle stage | E2E Applicability | Independent visual review | Independent E2E verifier result | E2E evidence root | Coverage matrix | Cleanup | Mocked Core API / blocker |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `<case-id>` | `static-only | interactive | business-flow` | `<source/requirement reference>` | `SOURCE_READY | STATIC_UI_READY | VISUAL_REVIEW_PASS | INTERACTION_READY | FRONTEND_E2E_PASS | BLOCKED` | `REQUIRED | N/A with rationale` | `.fp-execute/reviews/<task-id>-<case-id>-visual-review-<visual-attempt>.md` / `<verdict>` | `<e2e-result.md path/status or N/A>` | `.fp-execute/e2e/<task-id>/<case-id>/` or `N/A` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` or `N/A` | `<result>` | `false | N/A | BLOCKED rationale` |
+
+- A `static-only` case records both E2E path fields as `N/A` and creates no E2E scaffolding after its visual pass and evidence-backed reason.
+- Independent visual review evidence is append-only per `visualAttempt`, which is persisted per Task ID + Case ID independently from task-review `reviewAttempt` / `reviewScopeId`. It records Reviewed HEAD, review start/end, and SHA-256 for the manifest/reference/current/optional diff; the package proves current HEAD equals the recorded Reviewed HEAD, the review end precedes E2E start, and the hashes still match. A freshness mismatch after `visualAttempt` 3 is `BLOCKED` and cannot dispatch attempt 4.
+- The independent visual review must exist and issue `VISUAL_REVIEW_PASS` before any required E2E verifier evidence. E2E verifier evidence then includes the real-browser command, environment identity, destination, start/end, attempts, test IDs, artifacts, source-derived coverage, cleanup, and business-flow persistence/permission result.
+- Required E2E cannot be skipped or self-confirmed by the implementer. A mock violation, unsafe `BLOCKED` coverage condition, or core UI/E2E gap cannot be `PASS_WITH_NOTES`, review debt, or a manual waiver.
+
 ## Full Diff With Context
 
 ```diff

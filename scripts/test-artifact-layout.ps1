@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 
 function Assert-Condition([bool]$Condition, [string]$Message) {
     if (-not $Condition) { throw "Test failed: $Message" }
@@ -88,7 +88,6 @@ function New-ValidPrd {
     $featureDescription = U '\u529f\u80fd\u8bf4\u660e'
     $interaction = U '\u4ea4\u4e92\u903b\u8f91'
     $exception = U '\u5f02\u5e38\u5904\u7406'
-    $pageElements = U '\u9875\u9762\u5143\u7d20'
     $prototype = U '\u539f\u578b'
     $nonFunctional = U '\u975e\u529f\u80fd\u9700\u6c42'
     $performance = U '\u6027\u80fd\u8981\u6c42'
@@ -97,7 +96,6 @@ function New-ValidPrd {
     $tests = U '\u6d4b\u8bd5\u5efa\u8bae'
     $questions = U '\u5f85\u786e\u8ba4\u95ee\u9898'
     $exceptionHeader = U '\u5f02\u5e38\u573a\u666f|\u89e6\u53d1\u6761\u4ef6|\u7cfb\u7edf\u5904\u7406\u65b9\u5f0f|\u7528\u6237\u63d0\u793a'
-    $elementHeader = U '\u5143\u7d20\u540d|\u7c7b\u578b|\u8bf4\u660e|\u6821\u9a8c\u89c4\u5219'
     $auditHeader = U '\u64cd\u4f5c|\u662f\u5426\u8bb0\u5f55\u65e5\u5fd7|\u8bb0\u5f55\u4fe1\u606f'
     $testHeader = U '\u573a\u666f|\u524d\u7f6e\u6761\u4ef6|\u64cd\u4f5c|\u9884\u671f\u7ed3\u679c'
     return (@(
@@ -110,9 +108,7 @@ function New-ValidPrd {
         "#### 3.1.2 $interaction", '', '- Submit, validate, and save.', '',
         "#### 3.1.3 $exception", '',
         "| $($exceptionHeader.Replace('|', ' | ')) |", '|---|---|---|---|', '| invalid | invalid input | reject | fix input |', '',
-        "#### 3.1.4 $pageElements", '',
-        "| $($elementHeader.Replace('|', ' | ')) |", '|---|---|---|---|', '| name | input | policy name | required |', '',
-        "#### 3.1.5 $prototype", '', '- No prototype for this validator fixture.', '',
+        "#### 3.1.4 $prototype", '', '- No prototype for this validator fixture.', '',
         "## $(U '\u56db\u3001')$nonFunctional", '', "### 4.1 $performance", '', '- P95 under two seconds.', '',
         "### 4.2 $security", '', '- Enforce authorization.', '',
         "### 4.3 $audit", '',
@@ -121,6 +117,20 @@ function New-ValidPrd {
         "| $($testHeader.Replace('|', ' | ')) |", '|---|---|---|---|', '| save | authorized | submit | success |', '',
         "## $(U '\u516d\u3001')$questions", '', '- None.'
     ) -join "`n") + "`n"
+}
+
+function New-LegacyPageElementsPrd {
+    function U([string]$Escaped) { return ConvertFrom-Json ('"' + $Escaped + '"') }
+    $pageElements = U '页面元素'
+    $prototype = U '原型'
+    $elementHeader = U '元素名|类型|说明|校验规则'
+    $currentPrototype = "#### 3.1.4 $prototype`n`n- No prototype for this validator fixture."
+    $legacyFeatureTail = (@(
+        "#### 3.1.4 $pageElements", '',
+        "| $($elementHeader.Replace('|', ' | ')) |", '|---|---|---|---|', '| name | input | policy name | required |', '',
+        "#### 3.1.5 $prototype", '', '- No prototype for this validator fixture.'
+    ) -join "`n")
+    return (New-ValidPrd).Replace($currentPrototype, $legacyFeatureTail)
 }
 
 function New-ValidProposal {
@@ -372,6 +382,31 @@ Add-Test 'rejects incomplete PRD logical template' {
     $fixture = New-Fixture 'prd-template-incomplete'
     Write-FixtureFile $fixture 'prd.md' "# PRD stub`n"
     Assert-ThrowsLike { Invoke-Validation $fixture } 'Artifact layout invalid:*PRD logical template is missing*'
+}
+
+Add-Test 'accepts current four-subsection PRD without page elements' {
+    $fixture = New-Fixture 'prd-current-four-subsections'
+    Write-FixtureFile $fixture 'prd.md' (New-ValidPrd)
+    $output = Invoke-Validation $fixture
+    Assert-Condition (($output -join "`n") -like '*Artifact layout valid:*') 'current PRD without page elements should pass'
+}
+
+Add-Test 'rejects current PRD missing prototype subsection' {
+    $fixture = New-Fixture 'prd-current-missing-prototype'
+    $withoutPrototype = [regex]::Replace(
+        (New-ValidPrd),
+        '(?ms)^#### 3\.1\.4 [^\r\n]+\r?\n\r?\n- No prototype for this validator fixture\.\r?\n\r?\n',
+        ''
+    )
+    Write-FixtureFile $fixture 'prd.md' $withoutPrototype
+    Assert-ThrowsLike { Invoke-Validation $fixture } 'Artifact layout invalid:*PRD logical template is missing required feature fields for 3.1*'
+}
+
+Add-Test 'accepts legacy page-elements PRD in Consumer mode' {
+    $fixture = New-Fixture 'prd-legacy-page-elements-consumer'
+    Write-FixtureFile $fixture 'prd.md' (New-LegacyPageElementsPrd)
+    $output = Invoke-Validation $fixture 'Consumer'
+    Assert-Condition (($output -join "`n") -like '*Artifact layout valid:*') 'legacy PRD with page elements should remain readable in Consumer mode'
 }
 
 Add-Test 'rejects proposal logical section order' {

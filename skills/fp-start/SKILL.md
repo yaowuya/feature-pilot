@@ -1,11 +1,10 @@
 ---
 name: fp-start
-description: 启动并严格执行全流程开发向导（propose → brainstorm → plan → execute）。用于中大型或需要 FeaturePilot 留痕的需求；必须按阶段门禁执行，显式加载 fp-propose、fp-brainstorm、fp-plan、fp-execute 子 skill，生成并核验对应产物，等待用户确认后才能进入下一阶段。
+description: Use when a user asks to run or resume the full FeaturePilot workflow for a feature after any required PRD work.
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving or producing change artifacts; it is the normative layout, ownership, historical-layout rejection, and validation contract.
@@ -43,15 +42,27 @@ If it is missing:
 - **范围纪律**：不得跳过 proposal/design/plan 直接实现；只有在“小需求分流”中判断适合 `fp-quick` 且用户明确确认后，才允许切换到 `fp-quick`。
 - **失败处理**：在 Claude Code 中，子 skill 不可用或调用失败时停在当前门禁并报告，不进入文件 fallback。索引或目标目录缺失时，先说明实际发现，再按下文对应的 artifact 规则处理。只有第一个契约明确限定的非 Claude Code Codex/Markdown 环境可读取 FeaturePilot 分发源码中的 skill 文件继续；不要假装已调用或已生成。
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 仅当用户显式要求解释当前 routing、stage artifact、checkpoint，或明确接受一次图解建议时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-start
+topic: <exact current routing/stage artifact/checkpoint>
+active-slug: <caller-resolved slug or N/A>
+pending-gate: <exact quick/full, proposal, design, plan, or SDD-mode gate>
+allowed-sources:
+  - <current argument, current canonical artifacts, and already-verified ledger/checkpoint evidence and summary>
+return-to: <fp-start + same stage gate>
+-->
+```
+
+图解不得替代 quick/full 选择、proposal/design/plan post-write confirmation、resume evidence 或 SDD continuation mode，不得加载下一阶段。返回后保持 stage 和 gate 不变，重新呈现完全相同的 `pending-gate` 并等待用户显式答复。
+
 ## Shared canonical artifact resolution
 
-Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts:
-
-1. Detect both alternatives before reading either: `prd.md` or `prd/00-index.md`; `proposal.md` or `proposal/00-index.md`; `design/backend.md` or `design/backend/00-index.md`; `design/frontend.md` or `design/frontend/00-index.md`; `tasks/plan-backend.md` or `tasks/backend/00-index.md`; and `tasks/plan-frontend.md` or `tasks/frontend/00-index.md`.
-2. A Producer writes exactly one canonical form. A Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility. Migration requires explicit approval, one validated canonical form, and deletion of obsolete paths before the phase continues.
-3. For split form, the directory `00-index.md` is the sole canonical entry; parse its fragment table and read every listed file in exact manifest order. Reject a missing listed file, duplicate owner, or unindexed fragment; never use a recursive glob, filesystem order, or body link as ordering evidence.
-4. For split plans, only manifest rows whose Kind is `tasks` produce `tasks`-kind task-owner files. Every task ID and checkbox has one unique task owner; indexes, context/interface/coverage fragments, and overview contain no executable checkbox.
-5. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist. A single-end plan never has an overview. Only for a valid two-end overview, validate cross-end references/cycles and recompute derived progress from the unique owner checkboxes.
+Every phase uses the shared contract's canonical-first Consumer resolution before reading, resuming, validating, or handing off artifacts: detect both alternatives before reading either (`prd.md`/`prd/00-index.md`; `proposal.md`/`proposal/00-index.md`; `design/backend.md`/`design/backend/00-index.md`; `design/frontend.md`/`design/frontend/00-index.md`; `tasks/plan-backend.md`/`tasks/backend/00-index.md`; `tasks/plan-frontend.md`/`tasks/frontend/00-index.md`). A Producer writes exactly one canonical form. A Consumer rejects every indexless split, historical path, and dual form as a structural conflict. There is no read-only compatibility. Migration requires explicit approval, one validated canonical form, and deletion of obsolete paths before the phase continues. For split form, the directory `00-index.md` is the sole canonical entry; parse its fragment table and read every listed file in exact manifest order; reject a missing listed file, duplicate owner, or unindexed fragment; never use a recursive glob, filesystem order, or body link as ordering evidence. For split plans, only manifest rows whose Kind is `tasks` produce `tasks`-kind task-owner files; every task ID and checkbox has one unique task owner; indexes, context/interface/coverage fragments, and overview contain no executable checkbox. `tasks/00-overview.md` exists exactly when both backend and frontend plans exist; a single-end plan never has an overview; only for a valid two-end overview, validate cross-end references/cycles and recompute derived progress from the unique owner checkboxes.
 
 Resume and post-write checks record resolved mode, entry, ordered fragments, task owners, and structural conflicts. Producer phases never read or update historical combinations in place; migration needs explicit approval under the shared contract.
 
@@ -145,6 +156,7 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 
 阶段完成检查属于**写入后产物确认**，与 `fp-brainstorm` 内部的写入前内容确认不同：
 - 用工具确认 `design/00-index.md` 及实际涉及端解析出的 small file 或 split `00-index.md` 存在；split design 还必须按 manifest order 确认每个 listed fragment 存在。
+- 加载 `${CLAUDE_PLUGIN_ROOT}/skills/fp-design-review/SKILL.md` 生成 `fp-docs/changes/<slug>/review.md` 并向用户展示其评审入口摘要（决策统计、评审关注点、建议评审顺序）；生成阻塞或发现 review.md 复制了台账或设计正文时，修复来源设计后重新生成，不得编造。review.md 是评审导航摘要：未复制决策正文，不改变任何台账状态；它是 fp-start 的写入后产物确认步骤，不属于 `fp-brainstorm`。
 - 从每个 actual-end 的 unique detailed owner 解析 Decision Ledger 与 Pre-write Confirmation Evidence。每个 design-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved。合并所有 owner 后必须仍是 globally unique D-NNN sequence，且每个 owner 的 `Covered IDs` 恰好覆盖其台账行；否则 return to the owning phase `fp-brainstorm` 补齐指定 `D-NNN` 的逐项确认，不得进入计划。
 - 向用户展示关键架构决策、改动模块、前端组件/布局映射（如涉及）。
 - 明确询问用户是否确认设计。

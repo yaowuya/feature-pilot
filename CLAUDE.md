@@ -10,7 +10,7 @@
 
 - CodeGraph 是可选的本地代码地图，不是 FeaturePilot 的强依赖。
 - `fp-init` 未检测到 CLI 时提供自动安装、展示步骤和跳过；自动安装只使用 `npm install -g @colbymchenry/codegraph@latest`，不得使用 `irm`、`curl`、远程安装脚本或 `npx`。
-- Agent MCP 配置独立确认；首次建图和后续消费严格遵守 `skills/_shared/codegraph.md`。
+- 对应当前 CLI 状态，安装 / Agent MCP 配置 / 首次建图由一次批准覆盖并按顺序逐步汇报（MCP 会修改用户级配置，须在选项中明确）；CLI 已安装时 MCP 与建图合并为一次确认。首次建图和后续消费严格遵守 `skills/_shared/codegraph.md`。
 - 后续代码调查按 `MCP → CLI → 原有搜索`；图结果只用于导航，失败时回退，关键结论仍须验证当前源码、测试和命令输出。
 - `fp-init` v2 的 `manifest-only default` 只为新项目创建 `fp-docs/manifest.md`；settings、`intel/project-facts.md`、human-owned unknowns/decisions 均按批准懒创建。
 - 已有信息层进入 `refresh-existing-information-layer`，根据 `.freshness.json` metadata 实时计算 project facts 的 stale/conflict，只在确认后执行 `refresh-stale-intel`，不批量覆盖人工内容。旧 handoff/refresh/unknowns 合并文件仅作一版只读提示，不是门禁。

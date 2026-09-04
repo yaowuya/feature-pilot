@@ -4,8 +4,7 @@ description: Use when coordinating FeaturePilot task plan generation after propo
 ---
 ## FeaturePilot workspace and information layer
 
-If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。
+插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 
@@ -18,9 +17,9 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving 
 
 ## Canonical input resolution
 
-Resolve the proposal representation before reading either form: detect `proposal.md` and `proposal/00-index.md` first, reject both-present or indexless-directory state as a structural conflict, then read the small file or every split fragment in complete manifest order. The resolved logical proposal is that one file or the ordered concatenation of all indexed fragments; body links, recursive glob order, and filename guesses are not inputs.
+按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 以 canonical-first Consumer 解析。Resolve the proposal representation before reading either form: detect `proposal.md` 与 `proposal/00-index.md` 双候选，reject 双形式或 indexless-directory 为 structural conflict，再读取 small file 或按 complete manifest order 读取全部 split fragments；logical content 是那一份文件或全部 indexed fragments 的有序拼接；body links、recursive glob order 与 filename guesses 都不是输入。
 
-For each design end, detect `design/<end>.md` and `design/<end>/00-index.md` before reading either form. Reject dual, indexless, missing-fragment, unindexed-fragment, duplicate-owner, invalid-manifest, or historical paths as a structural conflict. Small mode reads the end file; split mode reads every fragment in complete manifest order. Whenever any design end exists, require `design/00-index.md` and verify that its exact `End / Canonical entrypoint / Mode` rows match every and only the actual end representations. Do not infer fragments from body links.
+对每个设计端，detect `design/<end>.md` 与 `design/<end>/00-index.md` 双候选后再读任一份；reject dual、indexless、missing-fragment、unindexed-fragment、duplicate-owner、invalid-manifest 或 historical paths 为 structural conflict。Small mode 读端文件；split mode 按 manifest order 读取全部 fragments。任一设计端存在时，必须有 `design/00-index.md` 且其 `End / Canonical entrypoint / Mode` 行精确匹配实际端；不得从 body links 推断 fragments。
 
 ## Historical layout blocker
 
@@ -86,10 +85,28 @@ Pass the resolved logical proposal content, resolved logical design content, can
 - 哪一端被明确跳过，以及跳过原因。
 - 每个 task ID 的唯一 owner file，以及跨端依赖摘要。
 
+### JIT `fp-eli5` handoff
+
+This is an explicit-only JIT path. 若用户在计划确认前显式要求通俗解释当前计划、task ownership、依赖顺序，或明确接受一次图解建议，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/eli5-handoff.md`，加载 `fp:fp-eli5`，并传入。Before invoking, replace every <...> metavariable with the current session's exact value; never send an unresolved metavariable.
+
+```markdown
+<!-- fp-eli5-handoff
+caller: fp-plan
+topic: <exact current plan/task ownership/dependencies>
+active-slug: <exact current slug>
+pending-gate: <exact explicit plan confirmation prompt>
+allowed-sources:
+  - <confirmed proposal/design, canonical plan entries, task-owner files, dependencies, and completion-check summary>
+return-to: <fp-plan + explicit plan confirmation>
+-->
+```
+
+图解不得改写计划、更新 task checkbox、解决 planning blocker、确认计划或选择/启动执行入口。返回后计划仍未确认，重新呈现同一个 explicit plan confirmation 并等待用户显式答复。
+
 输出计划摘要后，明确询问用户是否确认计划。
 
 写出每端所选的 canonical small file 或 split directory 只表示计划草案已生成，不等于用户确认。没有用户明确确认前，不得进入 `fp-execute`、`fp-execute-sdd`，也不得修改业务代码。
 
 用户确认后输出：`✅ 执行计划已确认，进入执行阶段`
 
-默认推荐使用 `fp-execute` 在当前上下文直接完成计划，并使用 `automationMode=full` 连续执行；用户明确要求逐任务确认时改用 `automationMode=semi`。只有用户明确要求 `fp-execute-sdd`、SDD 或多代理隔离执行时，才把执行入口交给 `fp-execute-sdd`，不要根据任务数量、模块跨度或风险自动切换。
+执行入口：推荐使用 `fp-execute` 在当前上下文直接完成计划；只有用户明确要求 `fp-execute-sdd`、SDD 或多代理隔离执行时才切换，不按任务数量或复杂度自动切换。自动化模式与二选一路由由外层 `fp-start` 阶段 4 统一裁决，本 skill 不展开执行模式细节。

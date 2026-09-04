@@ -317,6 +317,7 @@ function Test-BrowserScreenshotSeparation([string]$text) {
 
 $figma = Read-Utf8 'skills\fp-figma\SKILL.md'
 $figmaCommand = Read-Utf8 'commands\fp-figma.md'
+$directExecuteSkill = Read-Utf8 'skills\fp-execute\SKILL.md'
 $preservationTemplate = Read-Utf8 'skills\fp-figma\figma-preservation-template.md'
 $capabilitiesTemplate = Read-Utf8 'skills\fp-figma\figma-capabilities-template.md'
 $figmaReviewTemplate = Read-Utf8 'skills\fp-figma\figma-review-template.md'
@@ -331,6 +332,7 @@ $reviewSkill = Read-Utf8 'skills\fp-final-review\SKILL.md'
 $finalReviewer = Read-Utf8 'skills\fp-final-review\final-reviewer.md'
 $finalTemplate = Read-Utf8 'skills\fp-final-review\final-review-template.md'
 $finalPackage = Read-Utf8 'skills\fp-final-review\final-review-package-template.md'
+$finalSharedContract = Read-Utf8 'skills\fp-final-review\final-review-contract.md'
 $validator = Read-Utf8 'scripts\validate-plugin.ps1'
 $focusedValidatorSource = Read-Utf8 'scripts\test-figma-evidence-contract.ps1'
 $mutationFixtureMarker = '# Mutation fixtures operate only in memory'
@@ -358,7 +360,10 @@ foreach ($conditionalMutationFixture in $conditionalMutationFixtures) {
     ) "mutation fixture must fail fast instead of being conditionally skipped: $conditionalMutationFixture"
 }
 
+Assert-Condition ($figma -match '(?m)^description: Use when .*Figma.*node URL') 'fp-figma discovery pointer must name the Figma node URL trigger'
 Assert-Anchors $figma @(
+    'figma:figma-design-to-code',
+    'before calling `get_design_context`',
     'get_design_context',
     'before implementation',
     'Figma MCP',
@@ -398,6 +403,10 @@ Assert-Anchors $figmaCommand @(
     'PRES-*',
     'not install silently'
 ) 'fp-figma command quality checksum'
+
+Assert-Anchors $directExecuteSkill @(
+    '${CLAUDE_PLUGIN_ROOT}/skills/fp-figma/figma-review-template.md'
+) 'direct execution Figma review resource'
 
 Assert-Anchors $preservationTemplate @(
     '# Figma Preservation Contract',
@@ -477,8 +486,8 @@ Assert-Anchors $taskReviewer @(
 ) 'task reviewer Figma quality contract'
 
 Assert-Anchors $executeSkill @(
-    'every required FIGCAP-* is PASS',
-    'every core PRES-* is PASS',
+    'every required `FIGCAP-*` is PASS',
+    'every core `PRES-*` is PASS',
     'capability non-pass',
     'preservation non-pass'
 ) 'SDD controller Figma quality contract'
@@ -494,9 +503,13 @@ Assert-Anchors $reviewSkill @(
 Assert-Anchors $finalTemplate @(
     'Figma Capability and Preservation Coverage',
     'Overall Figma result',
+    'final-review-contract.md'
+) 'final review template Figma projection'
+Assert-Anchors $finalSharedContract @(
     'every required `FIGCAP-*`',
-    'core `PRES-*`'
-) 'final review template Figma quality contract'
+    'core `PRES-*`',
+    'Figma Completion Status:'
+) 'shared final-review Figma quality contract'
 
 $plannedCaseAnchors = @(
     'Visual Evidence Manifest',
@@ -520,6 +533,7 @@ $reviewVisualOutput = Get-MarkdownSection $reviewSkill '2.1 Visual Evidence Gate
 $finalReviewerOutput = Get-MarkdownSection $finalReviewer 'Required Method' 'final reviewer'
 $finalOutput = Get-MarkdownSection $finalTemplate 'Visual Evidence' 'final report'
 $finalPackageOutput = Get-MarkdownSection $finalPackage 'Visual Evidence' 'final review package'
+$finalSharedVisualOutput = Get-MarkdownSection $finalSharedContract 'Visual Evidence' 'shared final-review contract'
 $decisionOutput = Get-MarkdownSection $executeSkill 'Visual review decision table' 'visual decision table'
 
 foreach ($surface in @(
@@ -530,6 +544,7 @@ foreach ($surface in @(
     @{ Name = 'task reviewer table'; Text = $reviewerOutput }
     @{ Name = 'final report table'; Text = $finalOutput }
     @{ Name = 'final review package table'; Text = $finalPackageOutput }
+    @{ Name = 'shared final-review Visual Evidence table'; Text = $finalSharedVisualOutput }
 )) {
     Assert-Condition (Test-CanonicalVisualTable $surface.Text) "$($surface.Name) is not the canonical parsed Visual Evidence table"
 }
@@ -544,8 +559,7 @@ foreach ($surface in @(
     @{ Name = 'task reviewer'; Text = $reviewerOutput }
     @{ Name = 'final review skill'; Text = $reviewVisualOutput }
     @{ Name = 'final reviewer'; Text = $finalReviewerOutput }
-    @{ Name = 'final report'; Text = $finalOutput }
-    @{ Name = 'final review package'; Text = $finalPackageOutput }
+    @{ Name = 'shared final-review contract'; Text = $finalSharedVisualOutput }
 )) {
     Assert-Condition (Test-SourceRuntimeProvenance $surface.Text) "$($surface.Name) lost independent source/runtime provenance"
     Assert-Condition (Test-BrowserScreenshotSeparation $surface.Text) "$($surface.Name) lost browser/screenshot separation"
@@ -565,7 +579,7 @@ Assert-Condition (Test-ExactVisualVerdict $reviewerOutput) 'task reviewer visual
 Assert-Condition (Test-ExactVisualVerdict $finalOutput) 'final report visual verdict is not exactly one canonical line'
 Assert-Condition (Test-ExactVisualVerdict $finalPackageOutput) 'final review package visual verdict is not exactly one canonical line'
 Assert-Condition (Test-VisualDecisionTable $decisionOutput) 'visual decision table is not the ordered, exhaustive canonical classifier'
-Assert-Condition (Test-CoreBlockerDebt $finalPackageOutput) 'final review package does not preserve core visual blocker/debt rules'
+Assert-Condition (Test-CoreBlockerDebt $finalSharedVisualOutput) 'shared final-review contract does not preserve core visual blocker/debt rules'
 Assert-Anchors $finalPackageOutput @(
     'Case artifacts',
     'manifest.md',
@@ -622,11 +636,12 @@ Assert-Condition (
 ) 'generic screenshot/browser/manual-check path-or-reason escape hatch is still present'
 
 Assert-Anchors $planSkill @(
-    'project-configured',
-    'browser runner',
+    'existing project runner',
+    'browser extension',
+    'local `playwright-cli`',
+    'BROWSER_CAPABILITY_GATE',
     'do not silently install',
-    'explicit task',
-    'authorization',
+    'customer',
     'do not define a global pixel threshold'
 ) 'runner-neutral frontend planning'
 
@@ -711,8 +726,8 @@ Require-MutationBaseline (Test-SourceRuntimeProvenance $packageOutput) 'review p
 $deletedRuntimeProvenance = Replace-Required $packageOutput $canonicalVisualProvenance '' 'runtime provenance deleted'
 Assert-Condition (-not (Test-SourceRuntimeProvenance $deletedRuntimeProvenance)) 'mutation survived: runtime provenance may be deleted'
 
-Require-MutationBaseline (Test-CoreBlockerDebt $finalPackageOutput) 'final package core blocker/debt rule'
-$mutatedCoreDebt = Replace-Required $finalPackageOutput $canonicalCoreBlockerDebt 'At attempt 3 core source/runtime missing may become debt.' 'core gap attempt-3 debt exception'
+Require-MutationBaseline (Test-CoreBlockerDebt $finalSharedVisualOutput) 'shared final-review core blocker/debt rule'
+$mutatedCoreDebt = Replace-Required $finalSharedVisualOutput $canonicalCoreBlockerDebt 'At attempt 3 core source/runtime missing may become debt.' 'core gap attempt-3 debt exception'
 Assert-Condition (-not (Test-CoreBlockerDebt $mutatedCoreDebt)) 'mutation survived: core visual gap may become debt'
 
 foreach ($fixture in @(
@@ -726,7 +741,7 @@ foreach ($fixture in @(
     @{ Name = 'customer token'; Payload = ' Use --customer-token.' }
     @{ Name = 'unsafe fixture'; Payload = ' Use fixture: production database dump.' }
 )) {
-    $mutatedNeutrality = Insert-AfterRequired $planSkill 'project-configured Playwright/browser runner' $fixture.Payload $fixture.Name
+    $mutatedNeutrality = Insert-AfterRequired $planSkill 'do not define a global pixel threshold' $fixture.Payload $fixture.Name
     Assert-Condition (-not (Test-PublicNeutrality $mutatedNeutrality)) "mutation survived public neutrality: $($fixture.Name)"
 }
 

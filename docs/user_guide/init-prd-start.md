@@ -66,7 +66,7 @@ npm install -g @colbymchenry/codegraph@latest
 
 FeaturePilot 不使用 `irm`、`curl`、`install.ps1`、`install.sh` 或 `npx` 安装 CodeGraph。系统缺少 npm 时，它不会自动安装 Node.js，也不会切换安装方式；会说明前置条件并继续普通初始化。
 
-CLI 可用后，`/fp-init` 会单独询问是否配置 Claude Code/Codex MCP。MCP 配置可能修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
+CLI 可用后，`/fp-init` 会把 Agent MCP 配置与（必要时）首次建图合并为一次确认，一次批准覆盖并逐步汇报。MCP 配置会修改用户级配置，成功后通常需要重启相应 Agent；跳过 MCP 不影响 CLI 建图和查询。
 
 项目根目录没有 `.codegraph/` 时：本轮自动安装已包含首次建图授权；如果 CLI 原本已安装，则会再次询问是否为当前项目建图。已有图和新图都必须通过 `codegraph status <project-root> --json` 验证，不能只凭目录存在判断可用。FeaturePilot 不会未经允许修改 `.gitignore` 或删除失败索引。
 
@@ -96,7 +96,7 @@ codegraph sync <project-root> --quiet
 
 ### 可选设置文件
 
-`/fp-init` 会逐项询问是否生成可选 settings，只有批准后才创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
+`/fp-init` 会一次列出可选 settings（agent/frontend/backend/prototype-style），逐文件确认后只为被批准的文件创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
 
 建议原则：
 
@@ -383,3 +383,9 @@ FeaturePilot 会提示建议 `/fp-init`，但不会强制停止。后续如需�
 计划确认后的默认执行入口是 `fp-execute`，它只维护简单 progress ledger，在当前上下文连续完成任务，随后运行一次独立 `fp-final-review`。
 
 只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，才使用复杂执行模式，以获得任务 brief、逐任务独立审查、修复循环和 SDD final review；不要仅根据任务规模或风险自动切换。
+
+### UI/E2E delivery gate
+
+每个 UI-bearing task 声明 `static-only`、`interactive` 或 `business-flow`。Visual Evidence Manifest 与 UI/E2E Delivery Contract 是两份独立记录，只按 `Task ID + Case ID` 关联；不要重复视觉证据。`static-only` 只有在视觉通过后并记录 evidence-backed reason 时，才可将 E2E 记为 `N/A`。
+
+`interactive` 和 `business-flow` 必须运行 real browser E2E，并遵守 zero-mock rule；覆盖范围来自需求与源码分支/边界，不限于主流程。优先复用 existing project runner、已安装 browser extension 或本机已有 `playwright-cli`。三者均不可用时，FeaturePilot 进入 `BROWSER_CAPABILITY_GATE`，向客户展示影响和精确可选安装命令，并由客户选择 extension、全局 local CLI 或暂不安装；不得静默安装（never silently install）或修改目标项目依赖、lockfile、配置、CI 或浏览器组件。`business-flow` 还要证明 real core API、real persistence or permission result 与 cleanup。Core UI/E2E blocker cannot be waived or overridden before archive。
