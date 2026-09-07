@@ -467,6 +467,11 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
+$readmeDocsContractValidator = Join-Path $root 'scripts\test-readme-docs-contract.ps1'
+Assert-Condition (Test-Path $readmeDocsContractValidator) 'focused README/docs contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $readmeDocsContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused README/docs contract validator failed'
+
 $agentsRouterValidator = Join-Path $root 'scripts\test-agents-router-contract.ps1'
 Assert-Condition (Test-Path $agentsRouterValidator) 'focused AGENTS router validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $agentsRouterValidator
