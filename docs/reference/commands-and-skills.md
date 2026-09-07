@@ -105,6 +105,6 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 
 ## 下一步
 
-- [3 分钟安装与更新](../getting-started.md)
+- [安装、更新与运行时同步](../getting-started.md)
 - [架构与产物参考](architecture-and-artifacts.md)
 - [返回项目首页](../../README.md)

@@ -706,13 +706,12 @@ Assert-Condition ($startCommandText.Contains('默认加载 `fp-execute`')) 'fp-s
 Assert-Condition ($startCommandText.Contains('只有用户明确要求 `fp-execute-sdd`')) 'fp-start command checksum is missing explicit SDD opt-in'
 Assert-Condition ($startCommandText.Contains('SDD 逐项确认或自动连续')) 'fp-start command checksum is missing SDD continuation selection'
 
-foreach ($publicExecutionDoc in @(
-    @{ Path = 'README.md'; Text = Read-Utf8 (Join-Path $root 'README.md') }
-    @{ Path = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
-)) {
-    Assert-Condition ($publicExecutionDoc.Text.Contains('默认执行入口是 `fp-execute`')) "$($publicExecutionDoc.Path) is missing the default direct executor"
-    Assert-Condition ($publicExecutionDoc.Text.Contains('只有用户明确要求 `fp-execute-sdd`')) "$($publicExecutionDoc.Path) is missing explicit SDD opt-in"
-}
+$commandsReferenceExecution = Read-Utf8 (Join-Path $root 'docs\reference\commands-and-skills.md')
+Assert-Condition ($commandsReferenceExecution.Contains('计划确认后，默认执行入口是 `fp-execute`')) 'commands reference is missing the default direct executor'
+Assert-Condition ($commandsReferenceExecution.Contains('用户明确要求 SDD') -and $commandsReferenceExecution.Contains('.fp-execute/progress.md')) 'commands reference is missing explicit-or-resumed SDD routing'
+$userGuideExecution = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
+Assert-Condition ($userGuideExecution.Contains('默认执行入口是 `fp-execute`')) 'docs/user_guide/init-prd-start.md is missing the default direct executor'
+Assert-Condition ($userGuideExecution.Contains('只有用户明确要求 `fp-execute-sdd`')) 'docs/user_guide/init-prd-start.md is missing explicit SDD opt-in'
 
 $requirementProducerContracts = @{
     'skills\fp-prd\SKILL.md' = @('prd.md', 'prd/00-index.md', 'fragment manifest', 'logical template', 'mutually exclusive')

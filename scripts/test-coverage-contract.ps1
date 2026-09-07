@@ -444,8 +444,7 @@ Assert-Condition (Test-FinalReportForcesZeroSkipped $zeroSkippedTemplateMutation
 Assert-Condition (-not (Test-FinalReportForcesZeroSkipped $finalReportTemplate)) 'final report forces factual skipped count to zero instead of checking unexpected skips'
 
 Assert-Condition ($command.Contains('fp-docs/changes/<slug>-coverage/')) 'command lacks the coverage change root'
-Assert-Condition ($readme.Contains('commands/fp-coverage.md')) 'README lacks fp-coverage command'
-Assert-Condition ($readme.Contains('`fp-coverage`')) 'README lacks fp-coverage skill'
+Assert-Condition ($readme.Contains('`fp-coverage`')) 'README lacks fp-coverage discovery'
 Assert-Condition ($readme.Contains('docs/user_guide/fp-coverage.md')) 'README lacks the fp-coverage user guide link'
 Assert-Condition ($mainGuide.Contains('fp-coverage.md')) 'main user guide lacks the fp-coverage guide link'
 Assert-Condition (Test-SpecialtyGraphLifecycle $mainGuide 'fp-coverage') 'main user guide lacks fp-coverage dirty-after-write/post-write-sync lifecycle'
