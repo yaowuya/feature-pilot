@@ -292,19 +292,28 @@ Assert-Condition (-not $artifactLayoutText.Contains('Classify recognized histori
 Assert-Condition ($artifactLayoutText.Contains('exact `## Fragment Manifest` section')) 'shared artifact-layout contract is missing the exact split-index section heading'
 Assert-Condition ($artifactLayoutText.Contains('must declare every such edge exactly once') -and $artifactLayoutText.Contains('never substitutes for or adds an edge')) 'shared artifact-layout contract does not require exact owner-graph edge declarations'
 
-$publicSurfaces = @(
-    [pscustomobject]@{ Name = 'README.md'; Text = Read-Utf8 (Join-Path $root 'README.md') }
+$artifactPublicSurfaces = @(
+    [pscustomobject]@{ Name = 'docs\reference\architecture-and-artifacts.md'; Text = Read-Utf8 (Join-Path $root 'docs\reference\architecture-and-artifacts.md') }
     [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
     [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = [string]$codexPlugin.interface.longDescription }
 )
+$commandsReferenceText = Read-Utf8 (Join-Path $root 'docs\reference\commands-and-skills.md')
+$prdPublicSurfaces = @(
+    [pscustomobject]@{ Name = 'docs\reference\commands-and-skills.md'; Text = $commandsReferenceText }
+    [pscustomobject]@{ Name = 'docs\user_guide\init-prd-start.md'; Text = $artifactPublicSurfaces[1].Text }
+    [pscustomobject]@{ Name = '.codex-plugin\plugin.json interface.longDescription'; Text = $artifactPublicSurfaces[2].Text }
+)
 $publicContractExpectations = @{
-    'README.md' = @(
-        '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
-        '只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分'
-        '功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分'
-        '过程文档的叙述性内容默认使用中文'
+    'docs\reference\architecture-and-artifacts.md' = @(
+        'compact-first'
+        '500 lines'
+        '30,000 characters'
+        '用户明确批准 split form'
+        '目标项目设置明确要求 split form'
+        '功能数、子系统、页面区域、任务组或 ownership domain 只用于已选 split form 的语义分片，不单独触发拆分'
+        '过程文档的叙述内容默认使用中文'
         '保留必要英文'
-        '当前用户明确语言指令优先于目标项目设置'
+        '当前用户明确指定的语言优先于目标项目设置'
     )
     'docs\user_guide\init-prd-start.md' = @(
         '预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form'
@@ -336,16 +345,16 @@ $publicArtifactAnchors = @(
     'two-end-only'
     'no read-only compatibility'
 )
-$fullAnchorPublicAutoSplitMutation = $publicSurfaces[0].Text + "`nMultiple subsystems default to split form."
-Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['README.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
+$fullAnchorPublicAutoSplitMutation = $artifactPublicSurfaces[0].Text + "`nMultiple subsystems default to split form."
+Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['docs\reference\architecture-and-artifacts.md']) 'public auto-split mutation fixture lost a per-surface contract anchor'
 Assert-Condition (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) 'public auto-split mutation fixture lost a shared public artifact anchor'
-$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['README.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
+$fullAnchorPublicContractAccepted = (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicContractExpectations['docs\reference\architecture-and-artifacts.md']) -and (Test-ContainsEveryAnchor $fullAnchorPublicAutoSplitMutation $publicArtifactAnchors) -and (-not (Test-SemanticAutoSplitTrigger $fullAnchorPublicAutoSplitMutation)) -and (-not (Test-ObsoleteSemanticFirstGuidance $fullAnchorPublicAutoSplitMutation))
 Assert-Condition (-not $fullAnchorPublicContractAccepted) 'public validation predicate accepts a full-anchor surface with appended `Multiple subsystems default to split form.`'
-$missingSemanticScopesMutation = $publicSurfaces[0].Text.Replace('功能、子系统、页面区域、任务组或 ', '')
-Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['README.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
-Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
-Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($publicSurfaces[0].Text + "`n语义优先")) 'obsolete guidance detector misses Chinese 语义优先 wording'
-foreach ($surface in $publicSurfaces) {
+$missingSemanticScopesMutation = $artifactPublicSurfaces[0].Text.Replace('功能数、子系统、页面区域、任务组或 ', '')
+Assert-Condition (-not (Test-ContainsEveryAnchor $missingSemanticScopesMutation $publicContractExpectations['docs\reference\architecture-and-artifacts.md'])) 'public contract accepts removal of the feature/subsystem/page-area/task-group non-trigger scopes'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($artifactPublicSurfaces[0].Text + "`nSemantic-first")) 'obsolete guidance detector misses case-variant Semantic-first wording'
+Assert-Condition (Test-ObsoleteSemanticFirstGuidance ($artifactPublicSurfaces[0].Text + "`n语义优先")) 'obsolete guidance detector misses Chinese 语义优先 wording'
+foreach ($surface in $artifactPublicSurfaces) {
     foreach ($anchor in $publicContractExpectations[$surface.Name]) {
         Assert-Condition ($surface.Text.Contains($anchor)) "$($surface.Name) is missing the public compact-first/process-language contract: $anchor"
     }
@@ -389,15 +398,17 @@ Assert-Condition (-not (Test-ProposalMdOnlyOutputSummary 'Do not generate propos
 Assert-Condition (-not (Test-ForbiddenPlanDualRecipe $chineseBackendPlanExclusiveControl)) 'plan dual-recipe detector rejects Chinese backend mutual exclusion'
 Assert-Condition (-not (Test-ForbiddenPlanDualRecipe $chineseFrontendPlanExclusiveControl)) 'plan dual-recipe detector rejects Chinese frontend mutual exclusion'
 
-foreach ($surface in $publicSurfaces) {
+foreach ($surface in $prdPublicSurfaces) {
     Assert-Condition (-not (Test-ForbiddenBroadPrdAutoTrigger $surface.Text)) "$($surface.Name) advertises a broad rough/product/pain/feature intent as an automatic fp-prd trigger"
+}
+foreach ($surface in $artifactPublicSurfaces) {
     Assert-Condition (-not (Test-ProposalMdOnlyOutputSummary $surface.Text)) "$($surface.Name) contains a proposal.md-only output summary"
     Assert-Condition (-not (Test-ForbiddenPlanDualRecipe $surface.Text)) "$($surface.Name) retains a forbidden stable-plan-plus-split-directory recipe"
 }
 $exactPublicPrdTrigger = 'Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.'
 $obsoleteChineseDiscoveryTrigger = '"\u53EA\u6709\u5728\u7528\u6237\u660E\u786E\u8C03\u7528 `/fp-prd`\uFF0C\u6216\u660E\u786E\u8981\u6C42\u521B\u5EFA\u3001\u7F16\u5199\u3001\u4FEE\u8BA2\u6216\u8865\u5168 PRD \u65F6\uFF0C\u624D\u53D1\u73B0\u5E76\u4F7F\u7528 `fp-prd`"' | ConvertFrom-Json
 $obsoleteChineseStartTrigger = '"\u53EA\u6709\u5728\u7528\u6237\u660E\u786E\u8C03\u7528 `/fp-prd`\uFF0C\u6216\u660E\u786E\u8981\u6C42\u521B\u5EFA\u3001\u7F16\u5199\u3001\u4FEE\u8BA2\u6216\u8865\u5168 PRD \u65F6\uFF0C\u624D\u542F\u52A8\u8BE5 skill"' | ConvertFrom-Json
-foreach ($surface in $publicSurfaces) {
+foreach ($surface in $prdPublicSurfaces) {
     $exactTriggerCount = [regex]::Matches($surface.Text, [regex]::Escape($exactPublicPrdTrigger)).Count
     Assert-Condition ($exactTriggerCount -eq 1) "$($surface.Name) must contain the exact public fp-prd trigger contract exactly once"
     foreach ($obsoleteTrigger in @(
@@ -409,7 +420,7 @@ foreach ($surface in $publicSurfaces) {
         Assert-Condition (-not $surface.Text.Contains($obsoleteTrigger)) "$($surface.Name) still contains an obsolete adjacent fp-prd trigger sentence"
     }
 }
-foreach ($surface in $publicSurfaces) {
+foreach ($surface in $artifactPublicSurfaces) {
     foreach ($anchor in $publicArtifactAnchors) {
         Assert-Condition ($surface.Text.Contains($anchor)) "$($surface.Name) is missing the public artifact/discovery contract: $anchor"
     }
@@ -466,6 +477,11 @@ foreach ($skill in $skills) {
     $anchoredWorkspaceContract = '`${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`'
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
+
+$readmeDocsContractValidator = Join-Path $root 'scripts\test-readme-docs-contract.ps1'
+Assert-Condition (Test-Path $readmeDocsContractValidator) 'focused README/docs contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $readmeDocsContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused README/docs contract validator failed'
 
 $agentsRouterValidator = Join-Path $root 'scripts\test-agents-router-contract.ps1'
 Assert-Condition (Test-Path $agentsRouterValidator) 'focused AGENTS router validator is missing'
@@ -690,13 +706,12 @@ Assert-Condition ($startCommandText.Contains('默认加载 `fp-execute`')) 'fp-s
 Assert-Condition ($startCommandText.Contains('只有用户明确要求 `fp-execute-sdd`')) 'fp-start command checksum is missing explicit SDD opt-in'
 Assert-Condition ($startCommandText.Contains('SDD 逐项确认或自动连续')) 'fp-start command checksum is missing SDD continuation selection'
 
-foreach ($publicExecutionDoc in @(
-    @{ Path = 'README.md'; Text = Read-Utf8 (Join-Path $root 'README.md') }
-    @{ Path = 'docs\user_guide\init-prd-start.md'; Text = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md') }
-)) {
-    Assert-Condition ($publicExecutionDoc.Text.Contains('默认执行入口是 `fp-execute`')) "$($publicExecutionDoc.Path) is missing the default direct executor"
-    Assert-Condition ($publicExecutionDoc.Text.Contains('只有用户明确要求 `fp-execute-sdd`')) "$($publicExecutionDoc.Path) is missing explicit SDD opt-in"
-}
+$commandsReferenceExecution = Read-Utf8 (Join-Path $root 'docs\reference\commands-and-skills.md')
+Assert-Condition ($commandsReferenceExecution.Contains('计划确认后，默认执行入口是 `fp-execute`')) 'commands reference is missing the default direct executor'
+Assert-Condition ($commandsReferenceExecution.Contains('用户明确要求 SDD') -and $commandsReferenceExecution.Contains('.fp-execute/progress.md')) 'commands reference is missing explicit-or-resumed SDD routing'
+$userGuideExecution = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
+Assert-Condition ($userGuideExecution.Contains('默认执行入口是 `fp-execute`')) 'docs/user_guide/init-prd-start.md is missing the default direct executor'
+Assert-Condition ($userGuideExecution.Contains('只有用户明确要求 `fp-execute-sdd`')) 'docs/user_guide/init-prd-start.md is missing explicit SDD opt-in'
 
 $requirementProducerContracts = @{
     'skills\fp-prd\SKILL.md' = @('prd.md', 'prd/00-index.md', 'fragment manifest', 'logical template', 'mutually exclusive')

@@ -203,7 +203,6 @@ Assert-Condition ($mainGuide.Contains('fp-module-review.md')) 'main user guide l
 
 foreach ($surface in @(
     @{ Name = 'module-review guide'; Text = $moduleGuide },
-    @{ Name = 'README'; Text = $readme },
     @{ Name = 'main guide'; Text = $mainGuide }
 )) {
     Assert-Condition (-not (Test-ReviewOnlyFixPermission $surface.Text)) "$($surface.Name) permits fixing in review-only mode"
@@ -215,7 +214,7 @@ foreach ($surface in @(
     Assert-Condition (-not (Test-ReplacesFinalReview $surface.Text)) "$($surface.Name) says module review replaces fp-final-review"
 }
 
-$publicModuleSurfaces = $moduleGuide + "`n" + $readme + "`n" + $mainGuide
+$publicModuleSurfaces = $moduleGuide + "`n" + $mainGuide
 foreach ($mutation in @(
     @{ Text = $publicModuleSurfaces + "`nreview-only may enter FIXING and edit production source."; Detector = { param($text) Test-ReviewOnlyFixPermission $text }; Name = 'review-only fixing' },
     @{ Text = $publicModuleSurfaces + "`nAn observable behavior change may use manager approval instead of a stable Finding ID."; Detector = { param($text) Test-NonIdBehaviorApproval $text }; Name = 'non-ID approval' },

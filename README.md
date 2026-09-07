@@ -1,327 +1,152 @@
 # FeaturePilot (`fp`)
 
-FeaturePilot 是一个 AI 功能开发引导员，覆盖“需求 → 原型/设计 → 计划 → 执行 → 归档”的完整链路。
+> **把一句需求，稳稳带到可交付代码。**
 
-当前版本（`1.0.0`）同时提供 Claude Code、Codex 与 DeepSeek Harness 加载能力，并保留 Codex 可直接读取的 Markdown/AGENTS.md fallback；统一使用 `fp-*` 命名。详见 [1.0.0 release notes](docs/release_notes/1.0.0.md)。
+让 AI 写出第一版代码，已经不难。难的是：需求变了还能接着做，换个会话不用重头讲，交付时说得清“为什么这样改、到底验证了什么”。
 
-## 1.0.0 发布重点
+**FeaturePilot 是你的 AI 功能开发引导员。** 从需求、设计到执行、审查和归档，它把开发过程留在项目里，而不只留在聊天记录里。
 
-- **最小信息层**：新项目采用 `manifest-only default`，只创建 `fp-docs/manifest.md`；settings、project facts 与 human-owned knowledge 按明确批准懒创建。SDD 按任务动态组装上下文，不再依赖静态 handoff。
-- **PRD 与原型门禁**：仅在用户明确调用或要求创建、编写、修订或补全 PRD 时进入 `fp-prd`；UI-heavy 或用户要求时支持 Prototype-first。
-- Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
-- **新鲜度与代码导航**：`project-facts.md` 的 stale/conflict 由 metadata 实时计算；CodeGraph 是可选导航层，统一使用 npm 安装、写后 dirty/sync 保护和当前源码复核。
-- **轻量执行与有界 SDD**：`fp-execute` 保持直接完成确认任务；`fp-execute-sdd` 使用证据包、稳定 review scope、最多三次审查与主流程阻塞判定，避免无限复审。
-- **证据优先终审**：`fp-final-review` 支持完整 Scope Matrix、跨变更 owner 识别、命令安全分类、增量证据与最终审查包。
-- **模块专项审查**：`fp-module-review` 面向一个大型功能模块或多个相关模块，使用稳定 Finding、逐项批准门禁和受控 TDD 修复持续收敛。
-- **Figma 真实运行时质量门禁**：有可信 Figma UI 设计时只以它作为 UI 参考；以 `FIGCAP-*` 功能账本、`PRES-*` 既有功能保护、独立只读审查和 real-runtime visual case 联合判定。缺可信浏览器能力时由客户选择复用/安装方式，未验证只可报告 `CANNOT_VERIFY`，不得宣称 Figma 改造完成。
-- **产物与语言规则**：PRD、proposal、design、plan 使用 compact-first 且 small/split 互斥；过程文档叙述默认中文，代码与精确技术/schema 术语保留必要英文。
-- **Claude Code + Codex + DeepSeek Harness 三入口**：各端共享同一套阶段门禁，并提供本地运行时同步 skill 以校验源码、安装源与缓存一致性。
+支持 **Claude Code、Codex 与 DeepSeek Harness** · 当前版本 **`1.0.0`** · [发布说明](docs/release_notes/1.0.0.md)
 
-## Staged UI/E2E delivery
+[开始使用](docs/getting-started.md) · [命令速查](docs/reference/commands-and-skills.md) · [技术参考](docs/reference/architecture-and-artifacts.md)
 
-UI-bearing tasks declare `static-only`, `interactive`, or `business-flow`. Visual evidence and E2E evidence are separate records linked only by `Task ID + Case ID`, so the visual manifest is not duplicated. A `static-only` case may use E2E `N/A` only after visual pass and with an evidence-backed reason.
+## AI 写得很快，为什么开发还是会失控？
 
-`interactive` and `business-flow` require real browser E2E with a zero-mock rule; coverage includes source-derived branches and boundary conditions, not only the happy path. Prefer an existing project runner, installed browser extension, or existing local `playwright-cli`. If none is usable, FeaturePilot presents `BROWSER_CAPABILITY_GATE` so the customer can choose an extension, a global local-CLI installation, or no installation; it never silently changes the target project’s dependencies, lockfile, configuration, CI, or browser components. A `business-flow` also proves the real core API, real persistence or permission result, and cleanup. Core UI/E2E blockers cannot be waived or overridden before archive.
+假设你给 AI 提了一个需求：
 
-## Claude Code 插件结构
+> “给订单列表加一个批量审批功能。”
 
-- `.claude-plugin/plugin.json`：Claude Code 插件清单。
-- `.claude-plugin/marketplace.json`：本地开发插件市场。
-- `.codex-plugin/plugin.json`：Codex 插件清单，加载同一套 `skills/`。
-- `commands/`：Claude Code 斜杠命令。
-- `skills/`：FeaturePilot 流程技能。Claude Code 与 Codex 从仓库直接加载；DeepSeek Harness 由 `sync-plugin-runtimes` 把它安装到用户技能根 `~/.dsh/skills`（`$DSH_HOME` 优先）再自动扫描。
+按钮很快就有了，接口也接上了。接着，问题来了：
 
-## 核心命令
+- 选中的订单，有几条没有审批权限，怎么办？
+- 一批请求只成功了一半，页面该怎么提示？
+- 明天换个会话，AI 还知道哪些行为不能改吗？
 
-| 命令文件 | 用途 |
-|---|---|
-| `commands/fp-init.md` | 以 `manifest-only default` 初始化 `fp-docs/manifest.md`；经批准后再懒创建 settings、project facts 或 human-owned knowledge；可选配置 CodeGraph/项目族示例 |
-| `commands/fp-explore.md` | 只读调查当前代码事实、行为、约束、风险和可选方案；支持空输入的有界项目概览，不创建产物、不进入实现 |
-| `commands/fp-eli5.md` | 显式按需直接展示零基础专业中文图解；仓库主题单向复用现有 `fp-explore` standalone，默认不写仓库 |
-| `commands/fp-prd.md` | 仅在明确调用或明确要求编写 PRD 时启动访谈；支持 Prototype-first 先出 `prototype.html` 再沉淀 PRD |
-| `commands/fp-start.md` | 接住 PRD 或需求描述，启动“提案 → 设计 → 计划 → 执行 → 归档”完整链路；中段恢复（propose/brainstorm/plan）也统一经 `/fp-start <slug>` 进入 |
-| `commands/fp-quick.md` | 快速处理无需完整文档链路的小型需求 |
-| `commands/fp-coverage.md` | 先固定覆盖率统计口径，再按可恢复的模块级批次补充测试，最终以最新完整测试全部通过且精确覆盖率达标作为双重验收门禁 |
-| `commands/fp-module-review.md` | 大型或多模块专项审查、Finding 门禁与受控修复 |
-| `commands/fp-design-review.md` | 从已确认设计生成开发设计评审入口 review.md；可由 fp-start 阶段 2 自动触发或单独刷新 |
-| `commands/fp-final-review.md` | 归档前最终整分支只读审查 |
-| `commands/fp-archive.md` | 归档已完成的变更 |
-| `commands/fp-figma.md` | Figma UI 分析、改造与质量审查入口 |
+这些问题，不是再生成一段代码就能解决的。
 
-## 核心技能
+**我们缺的不是更多代码，而是一个能把需求、决定和验证结果接起来的过程。** FeaturePilot 要做的，就是让开发不必每次从回忆开始。
 
-- `fp-init`：新项目默认只创建 `fp-docs/manifest.md`；可选 settings 逐项批准，discovery 只生成 `intel/project-facts.md` 与 metadata-only `.freshness.json`，项目级 `unknowns.md`/`decisions.md` 有实际内容并批准后才懒创建。
-- `fp-explore`：公共自然语言探索入口，也是 `fp-prd`、`fp-start`、`fp-quick` 的共享只读调查能力；内部调用使用结构化 profile，但产品决策、确认、写入和实现始终由调用方负责。
-- `fp-eli5`：只在显式 `/fp-eli5`、`$fp-eli5` 或明确图解请求下运行；普通概念直接解释，仓库主题由它单向调用未修改的 `fp-explore` public standalone。默认直接展示中文图解，不依赖原始 HTML 标签或 Mermaid；只有用户明确要求且宿主提供专用网页图解能力时，才生成临时网页图解。技术标识仅置于末尾“真实依据”区，默认不写仓库；图解不构成需求、确认或验证证据。
-- `fp-prd` / `fp-prd-grill-me`：显式 PRD 编写意图下的需求澄清；支持默认 PRD-first 与 Prototype-first（先生成 `prototype.html`，确认后再沉淀 PRD）。
-- `fp-start`：完整阶段门禁调度入口，可以接住 `fp-prd` 产出的 PRD。
-- `fp-propose`：生成 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md` 及其 manifest 分片，两种形式互斥。
-- `fp-brainstorm`：生成后端/前端技术设计。
-- `fp-plan` / `fp-plan-backend` / `fp-plan-frontend`：生成细粒度 TDD 执行计划。
-- `fp-figma`：使用 Figma-only source、能力账本、既有功能保护和独立视觉/功能 review；浏览器工具只复用已发现能力或按客户选择安装，不静默安装。
-- `fp-execute`：默认执行入口，在当前上下文按 TDD 直接完成已确认计划，每个任务只做一次 inline 自审。
-- `fp-execute-sdd`：用户明确需要 fresh implementer/reviewer、任务隔离和多轮审查时使用的 SDD 执行模式。
-- `fp-coverage`：独立单元测试覆盖率专项；冻结项目既有统计口径，通过可恢复的模块级批次提升覆盖率，过程状态和 coverage 报告统一写入 `fp-docs/changes/<slug>-coverage/`，只有 fresh full-suite `exit code = 0` 且 exact coverage（精确覆盖率）达标时才完成。`.fp-coverage/progress.md` 只保存有界恢复索引，完整合同和运行证据拆到 `contract.md`、`baselines/`、`batches/`、`verifications/`；单元测试发现的生产/测试代码问题写入 `issues.md`，在 `FINAL_VERIFYING` completion boundary 生成并核对引用 fresh final verification 的 `final-report.md` 后，才进入 `COMPLETE`。新项目缺少 coverage 工具时保持 `RESOLVING` + `CANNOT_VERIFY` 并展示 approval-gated `coverage-tooling-bootstrap`；用户批准后才安装并持久化依赖、写最小配置和重新建立 fresh baseline。优先复用既有工具；Django 无现成方案时，已有 pytest 只推荐 `pytest-cov`，否则推荐 `pytest + pytest-cov`，`pytest-django` 仅按测试集成需要加入。
-- `fp-module-review`：针对一个大型功能模块或多个相关模块的持续专项审查，可在稳定 Finding 和逐项批准门禁下执行受控修复。
-- `fp-final-review`：FeaturePilot 变更归档或合并前的最终整分支只读审查。
-- `fp-archive`：归档变更。
+## FeaturePilot 怎么接住开发过程？
 
-## 架构图
+还是以“批量审批”为例，它不急着让 AI 动手，而是把事情一步步讲清楚：
 
-```mermaid
-flowchart LR
-    subgraph Entry[运行入口]
-        CC["Claude Code\ncommands/fp-*.md"]
-        CX["Codex\nAGENTS.md + skills/"]
-    end
-
-    subgraph Workflow[共享流程契约]
-        S["FeaturePilot skills\nfp-prd → fp-propose → fp-brainstorm\n→ fp-plan → fp-execute（默认）"]
-        G["执行契约\n直接 TDD · inline 自审\n独立 fp-final-review"]
-        SDD["显式选择\nfp-execute-sdd\nbrief · reviewer · fix loop"]
-    end
-
-    subgraph Context[项目上下文]
-        M["fp-docs/manifest.md\n唯一信息层入口"]
-        C["fp-docs/settings/\nagent · frontend · backend · prototype-style"]
-        I["fp-docs/intel/（可选）\nproject-facts + freshness metadata\nhuman-owned knowledge 按需创建"]
-    end
-
-    subgraph Artifacts[变更产物]
-        A["fp-docs/changes/<slug>/\nprd · proposal · design · tasks"]
-        E[".fp-execute/\n直接执行：progress\nSDD：briefs · packages · reviews"]
-        H["fp-docs/archive/ + history/\n归档与历史"]
-    end
-
-    CC --> S
-    CX --> S
-    S --> G
-    S -. 用户明确要求 SDD .-> SDD
-    M --> S
-    C --> S
-    I --> S
-    S --> A
-    G --> E
-    SDD --> E
-    E --> H
-    I -. stale-prone .-> G
-```
-
-两种入口共享同一套 Markdown 流程契约：Claude Code 通过命令进入，Codex 通过 `AGENTS.md` 和技能文件进入。`manifest-only default` 是合法工作区；settings/intel 缺失时记为 `N/A`。SDD 根据当前任务动态组装上下文，不依赖静态 handoff；实际事实仍以当前代码、测试和命令输出为准。
-
-上下文效率采用三层设计：`commands/` 只做薄入口和 gate checksum；所有 skill 每条工作流只加载一次 `skills/_shared/workspace-rules.md`；PRD、proposal、design、plan、review 模板只在对应写入门禁通过后加载。运行 `scripts/measure-context.ps1` 可查看相对优化前基线的静态上下文降幅。
-
-代码搜索可以使用可选的本地 CodeGraph 加速层。`fp-init` 未检测到 CodeGraph 时会提供“自动安装、展示安装步骤、跳过”；自动安装只使用官方 npm 全局方式：
+1. **先问清楚要做什么。** 谁能审批？失败时怎么处理？哪些需求这次不做？需要 PRD 时，再专门整理成产品需求文档。
+2. **再确认准备怎么做。** 页面如何反馈，接口如何配合，原有功能如何保留——在编码前把关键取舍摆出来。
+3. **把大需求拆成小任务。** 每一步改哪里、依赖什么、怎么验收，都有据可查。
+4. **边做边验证。** 默认先写测试再实现；涉及页面和交互时，还要按交付范围检查真实运行效果。
+5. **做完留下交接现场。** 完成了什么、还有什么风险、验证结果在哪里，下一次对话能接着看。
 
 ```text
-npm install -g @colbymchenry/codegraph@latest
+说清需求 → 确认方案 → 拆解任务 → 实现与验证 → 审查与归档
 ```
 
-对应当前 CLI 状态，CodeGraph 的安装 / Agent MCP 配置 / 首次建图由一次批准覆盖并按顺序逐步汇报（MCP 会修改用户级配置，须在选项中明确）。建图完成后，FeaturePilot 的代码调查按 `MCP → CLI → 原有搜索` 选择路径，每个工作流最多做一次健康检查和一次必要同步。CodeGraph 是可选导航层，任何安装、配置、建图、同步或查询失败都会回退到原有渐进式搜索；图结果不会替代当前源码、测试和命令输出。
+**你负责方向和关键确认，FeaturePilot 负责把这些决定带到后面的每一步。**
 
-再次运行 `fp-init` 时，如果已有 `fp-docs/manifest.md`，流程进入 `refresh-existing-information-layer`。它根据 `.freshness.json` 中的 source fingerprint/body hash 实时计算 `project-facts.md` section 的 stale/conflict，展示清单后才执行 `refresh-stale-intel`；metadata 不保存 stale verdict。旧 `unknowns-and-decisions.md`、`refresh-policy.md`、`sdd-handoff.md` 只保留一版只读兼容，不创建、刷新或要求。
+它不是“一句话自动上线”的承诺。没有验证过的地方，就应该如实留在待办里。
 
-代码修改流程第一次写入源码后将图标记为 `dirty-after-write`，后续不得查询写入前的旧图。`fp-execute`、`fp-execute-sdd`、`fp-quick`、`fp-coverage` 和 `fp-module-review` 在写入后的返回边界对已有图执行一次 `post-write-sync`，让下一流程从当前工作树继续；同步失败不阻塞验证和交付，原来没有图的项目也不会被隐式建图。
+## 3 分钟开始
 
-## 借鉴 OpenSpec 的设计
+不用先记住所有命令，先跑通一个小任务。
 
-FeaturePilot 吸收了 OpenSpec 中低仪式感、适合存量项目的设计，但把命令聚焦在 AI 功能开发流程上：
+### 1. 安装到你的运行时
 
-- **低成本初始化**：`/fp-init` 的 `manifest-only default` 只创建 `fp-docs/manifest.md`；其他信息层文件按批准懒创建。
-- **以变更目录作为审查单元**：每个功能放在 `fp-docs/changes/<slug>/` 下，PRD、提案、设计、任务、执行记录和审查都在同一个目录中。
-- **产物依赖图，而不是重流程**：推荐路径是 `PRD → 提案 → 设计 → 任务 → 执行`，但已有产物会被复用，不会强迫重复访谈。
-- **归档保留历史**：完成后的变更移动到 `fp-docs/archive/YYYY-MM-DD-<slug>/`，并在 `fp-docs/history/history.md` 中记录为什么做、做了什么。
+按 [三端安装指南](docs/getting-started.md) 选择你的运行时，完成安装后，按对应要求重启工具或开启新会话。
 
-## 低成本使用流程
+下面用 `/fp-*` 表示流程入口；在 Codex 或 DeepSeek Harness 中，也可以直接说“使用 fp-quick 帮我完成这个修改”。具体加载方式见安装指南。
 
-FeaturePilot 的默认使用方式尽量轻量。完整主线指南见 [`docs/user_guide/init-prd-start.md`](docs/user_guide/init-prd-start.md)；两个独立专项流程见：
-
-- [`fp-coverage` 用户指南](docs/user_guide/fp-coverage.md)：冻结覆盖率口径，按可恢复批次补测，并以 fresh full-suite 与 exact coverage 双门验收。
-- [`fp-module-review` 用户指南](docs/user_guide/fp-module-review.md)：对大型或多个相关模块分 wave 审查，登记稳定 Finding，并在批准后执行受控修复。
-
-1. **可选探索**：运行 `/fp-explore <问题>` 调查当前实现或比较方案；空输入只做有界项目概览。探索不创建 FeaturePilot 产物，也不修改代码。
-2. **可选图解**：显式运行 `/fp-eli5 <主题>` 获取零基础专业解释；仓库主题先由现有 `fp-explore` standalone 取证，默认直接展示可跨运行时阅读的中文图解，不使用原始 HTML 标签或 Mermaid。用户明确要求且宿主具备专用网页图解能力时才使用网页图解；默认不写仓库且不推进任何门禁。
-3. **可选初始化**：运行 `/fp-init`，可选安装 CodeGraph 并构建代码图，默认仅创建 manifest；settings、project facts、human-owned unknowns/decisions 都在各自明确批准后按需创建。
-4. **需求设计**：当你确实要创建、编写、修订或补全 PRD 时，显式运行 `/fp-prd <想法>`；完成确认后写入 PRD 的小型或拆分形式。如果明确希望先看页面/交互，可走 Prototype-first，先生成并确认 `prototype.html` 后再沉淀 PRD。
-5. **开发接续**：运行 `/fp-start <slug>`，读取 PRD，生成开发提案，然后继续进入设计、计划、执行、审查和归档。计划确认后的默认执行入口是 `fp-execute`。
-6. **覆盖率专项**：运行 `/fp-coverage <目标>`，复用项目现有 test/coverage 工具并冻结统计口径；局部结果和历史报告只用于选批次，过程状态、`coverage.xml`、`htmlcov/` 及其他 coverage 报告统一进入 `fp-docs/changes/<slug>-coverage/`，完成需要 fresh full-suite `exit code = 0` 与 exact coverage 同时达标。缺少 coverage 工具时不会只给终止型 `BLOCKED`：流程保持 `RESOLVING` + `CANNOT_VERIFY`，展示包含精确依赖、命令、修改文件、source 和报告路径的 `coverage-tooling-bootstrap` 批准门禁；用户批准后才持久化依赖和最小配置并重新运行 fresh baseline。Django 无既有 coverage 方案时推荐 `pytest + pytest-cov`（已有 pytest 时只补 `pytest-cov`，`pytest-django` 按需）。
-7. **模块专项审查**：运行 `/fp-module-review <一个大型模块或多个相关模块>`，建立独立 `fp-docs/module-reviews/<slug>/` 工作区，按稳定 Finding 和行为变化批准门禁持续审查、修复与复验；它不替代归档前的 `fp-final-review`。
-8. **无配置也可运行**：如果没有 `agent.md`，FeaturePilot 会基于当前代码、相邻实现和用户回答继续工作。
-
-只有用户明确要求 `fp-execute-sdd`、SDD 或 fresh implementer/reviewer 隔离时，`fp-start` 才进入复杂模式；不会仅根据计划规模或风险自动切换。该模式会使用任务说明、全新上下文实现代理、逐任务审查、修复循环和最终整分支审查。
-
-`fp-coverage` 的 coverage 过程产物使用独立 change 根目录，不写在项目根；恢复状态、详细运行证据、代码问题和最终总结按职责拆分：
-
-```text
-fp-docs/changes/<slug>-coverage/
-├── issues.md                    # 首个 unit-test-discovered 生产/测试代码问题出现时创建
-├── final-report.md              # completion boundary 生成并核对后才进入 COMPLETE
-├── .fp-coverage/
-│   ├── progress.md              # 有界当前状态、证据索引和 next action
-│   ├── contract.md              # 冻结口径、命令、批准和路径合同
-│   ├── baselines/<run-id>.md    # initial / periodic full evidence
-│   ├── batches/<batch-id>.md    # owner batch RED/GREEN evidence
-│   └── verifications/<run-id>.md # final verification attempts
-├── .coverage                    # coverage raw data 示例
-├── coverage.xml                 # 项目工具的机器可读报告示例
-├── htmlcov/                     # 项目工具的 HTML 报告示例
-└── <other-coverage-reports>     # 其他已声明的 coverage 输出
-```
-
-`progress.md` 不是 append-only 全量命令日志或第二 completion authority；canonical split paths 是 `.fp-coverage/contract.md`、`.fp-coverage/baselines/`、`.fp-coverage/batches/` 和 `.fp-coverage/verifications/`。恢复时只按索引读取当前 contract、最新 fresh evidence、active batch 和 issues。`issues.md` 只记录单元测试执行、归因或补测中发现并有测试/源码证据的 `production-code` 与 `test-code` 问题，不记录依赖、环境、coverage 配置或普通未覆盖元素；Developer review 只能由开发者明确更新。测试源码和批准的 fixture 仍保留在项目既有测试目录。
-
-## 项目配置
-
-FeaturePilot 是公共插件，不内置任何客户组件库、设计系统、仓库结构或审查策略。目标项目如需定制行为，可以在自己的 `fp-docs/settings/agent.md`、`fp-docs/settings/frontend.md`、`fp-docs/settings/backend.md`、`fp-docs/settings/prototype-style.md` 中声明。
-
-```text
-fp-docs/
-  manifest.md                 # FeaturePilot 信息层唯一入口
-  settings/                   # 可选；批准具体文件后才出现
-    agent.md                  # 可选：轻量 FeaturePilot policy adapter
-    frontend.md               # 可选：前端/UI/视觉/设计系统规则
-    backend.md                # 可选：后端/API/数据/安全规则
-    prototype-style.md        # 可选：原型视觉风格参考
-  intel/                      # 可选；manifest-only 时不存在
-    project-facts.md          # 可选生成事实缓存
-    .freshness.json           # metadata-only
-    unknowns.md               # 可选、human-owned、lazy
-    decisions.md              # 可选、human-owned、lazy
-```
-
-规则：
-
-- 如果 `fp-docs/manifest.md` 存在，Agent 必须先读取它，再按 manifest 发现相关 settings 和 intel。
-- 如果没有配置文件，Agent 回退到当前代码、相邻实现和公共默认规则。
-- 客户项目应通过 `fp-docs/settings/` 定制规则，而不是修改公共插件源码。
-- 公共插件不得假设任何客户组件库、供应商、组件前缀、设计 token、后端框架或工作流策略。
-
-## 输出目录
-
-FeaturePilot 生成的文档统一放在目标项目的 `fp-docs/` 下。`fp-docs/changes/<slug>/` 中每个逻辑产物只能选择一种 canonical form：
-
-| 逻辑产物 | 小型形式 | 拆分形式 |
-|---|---|---|
-| PRD | `prd.md` | `prd/00-index.md` 加 manifest 中列出的分片 |
-| Proposal | `proposal.md` | `proposal/00-index.md` 加 manifest 中列出的分片 |
-| Backend design | `design/backend.md` | `design/backend/00-index.md` 加 manifest 中列出的分片 |
-| Frontend design | `design/frontend.md` | `design/frontend/00-index.md` 加 manifest 中列出的分片 |
-| Backend plan | `tasks/plan-backend.md` | `tasks/backend/00-index.md` 加 manifest 中列出的分片 |
-| Frontend plan | `tasks/plan-frontend.md` | `tasks/frontend/00-index.md` 加 manifest 中列出的分片 |
-
-产物形式采用紧凑优先（compact-first）且 small/split 互斥（mutually exclusive）：预计完整逻辑产物不超过 500 行和 30,000 字符时默认使用 small form；只有预计超过任一硬限制、用户明确批准 split form，或目标项目设置明确要求 split form 时才拆分。功能、子系统、页面区域、任务组或 ownership domain 只用于拆分后的语义边界，不单独触发拆分。
-
-FeaturePilot 过程文档的叙述性内容默认使用中文；代码、命令、路径、技术标识符、API 字段和契约要求精确匹配的 schema 关键词保留必要英文。当前用户明确语言指令优先于目标项目设置。
-
-每个 Markdown 文件（包括 index 与 fragment）继续执行 500 行和 30,000 字符双重硬上限；超过任一硬限制就继续按语义拆分。
-
-整体目录如下；竖线表示二选一，不允许同时生成：
-
-```text
-fp-docs/
-  manifest.md                     # FeaturePilot 信息层唯一入口
-  settings/                       # 仅 fp-init 在明确批准后创建，非必须
-    agent.md                      # 可选：轻量 FeaturePilot policy adapter
-    frontend.md                   # 可选：前端/UI/视觉/设计系统规则
-    backend.md                    # 可选：后端/API/数据/安全规则
-    prototype-style.md            # 可选：原型视觉风格参考
-  intel/                          # 可选；仅 fp-init 按批准创建 project facts / human-owned knowledge
-  changes/<slug>/                 # 按需由各阶段创建
-    prd.md | prd/00-index.md
-    proposal.md | proposal/00-index.md
-    design/
-      00-index.md                  # 只列实际存在的端及其 canonical entrypoint
-      backend.md | backend/00-index.md
-      frontend.md | frontend/00-index.md
-    tasks/
-      00-overview.md                # 仅当前后端与前端计划都存在时生成；无 task checkbox
-      plan-backend.md | backend/00-index.md
-      plan-frontend.md | frontend/00-index.md
-    .fp-execute/
-      progress.md                  # 直接执行与 SDD 共用的恢复证据
-      briefs/                      # 仅 SDD
-      packages/                    # 仅 SDD
-      reviews/                     # 独立 fp-final-review 或 SDD review
-  archive/                      # 由 fp-archive 自动创建
-  history/history.md             # 由 fp-archive 自动创建
-```
-
-`design/00-index.md` 只是 change-level 端映射。`tasks/00-overview.md` 是 two-end-only overview：只在后端和前端计划同时存在时生成；单端计划无论小型还是拆分都不能有 overview。双端 overview 只保存两端 canonical entrypoint、跨端依赖/阶段，以及从唯一 owner checkbox 派生的进度总数。每个 `backend-NNN` / `frontend-NNN` 任务只有一个真实 checkbox，位于小计划文件或一个 `tasks` kind 分片中；端内 index、context/interface/coverage 分片和 `.fp-execute/progress.md` 都不是第二份完成状态。
-
-Consumer 先检测 canonical 小型文件与 split directory 的 `00-index.md`，再按 manifest 顺序读取，不能依赖递归 glob、文件系统顺序或正文链接。There is no read-only compatibility：根级 `design-backend.md` / `design-frontend.md`、任何 design/task stable-file-plus-directory pair、`prd.md` 与 `prd/` 并存、`proposal.md` 与 `proposal/` 并存，在 Producer 和 Consumer 中都属于结构冲突。继续前必须经明确批准迁移到唯一 canonical form 并删除 obsolete paths。
-
-## 本地安装测试（Claude Code）
-
-在 Claude Code 中添加本仓库作为开发插件市场：
-
-```text
-/plugin marketplace add <path-to-feature-pilot>
-/plugin install fp@fp-dev
-```
-
-重启 Claude Code 后使用命令，例如：
+### 2. 建立最小工作区
 
 ```text
 /fp-init
-/fp-explore 当前审批流的入口和权限边界是什么
-/fp-eli5 当前权限校验调用链
-/fp-prd 我想做一个批量审批体验优化
-/fp-start <prd-slug 或 功能描述>
-/fp-coverage 将项目现有 combined unit test coverage 提升到 <目标阈值>
-/fp-module-review 审查 <一个大型模块或多个相关模块>
-/fp-final-review <change slug>
 ```
 
-维护者可在修改命令或技能后运行仓库一致性校验：
+默认只创建一份项目导航文件 `fp-docs/manifest.md`。不必先填满配置表，其他信息在需要时经你批准再补。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-plugin.ps1
+### 3. 从今天手头的事开始
+
+只是改一处文案？不用走完整文档流程：
+
+```text
+/fp-quick 修复订单列表的空状态文案
 ```
 
-## Codex 使用方式
+想先把“批量审批”整理成 PRD？明确告诉它：
 
-Codex 可通过 `.codex-plugin/plugin.json` 安装 FeaturePilot，并从同一仓库加载 `skills/`。本地开发安装使用 personal marketplace：把插件源同步到 `~/plugins/fp`，确保 `~/.agents/plugins/marketplace.json` 包含 `fp` 本地条目，然后执行 `codex plugin add fp@personal`；重装后新建任务以加载最新技能。
-
-`/fp-*` 仍是工作流标签，不是 Claude Code 斜杠命令。安装后可直接要求 Codex 使用 `fp:fp-start`、`fp:fp-prd` 等技能；未安装插件时，也可以读取本仓库 `AGENTS.md` 和同名 skill 作为 fallback。
-
-Codex 执行时应先读取匹配 skill，再遵循与 Claude Code 相同的阶段门禁：
-   - `fp-prd` 必须先完成 PRD interview gate；Prototype-first 必须先确认原型再写 PRD；
-   - 提案确认后才能设计；
-   - 设计确认后才能计划；
-   - 计划确认后才能执行；
-   - 完成后执行审查，再归档。
-
-Codex 同样必须使用 lazy context：不要批量读取 `fp-docs/settings/`、`fp-docs/intel/`、历史 changes/archive/history；generated intel 只是导航线索，不是当前事实来源。
-
-## DeepSeek Harness 使用方式
-
-DeepSeek Harness 没有 plugin.json/marketplace 概念，而是通过扫描固定文件系统技能根加载技能。FeaturePilot 由 `sync-plugin-runtimes` 把仓库 `skills/`（`fp-*` 与 `_shared/`）安装到用户技能根 `~/.dsh/skills`（`$DSH_HOME/skills` 优先），即可在每个 DSH 项目中被识别：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1
+```text
+/fp-prd 为订单批量审批编写 PRD
 ```
 
-只验证、不写入：
+PRD 确认后，再接着进入完整开发：
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1 -VerifyOnly
+```text
+/fp-start <prd-slug>
 ```
 
-DSH 用 Chokidar 监听技能根，写入后新开会话即自动加载，无需重启（区别于 Claude Code / Codex 的缓存刷新）。
+把 `<prd-slug>` 换成这份 PRD 所在变更目录的名称。已有明确需求，也可以直接交给 `fp-start`，不必为了走流程补一份 PRD。
 
-DSH 中的使用方式与 Codex 一致：`/fp-*` 是技能名，不是 Claude Code 斜杠命令。在 DSH 输入框键入 `/fp-init`、`/fp-prd`、`/fp-start <slug>` 等，或在对话中直接要求使用 `fp:fp-start`、`fp:fp-prd` 等技能。DSH 的 `skill` 工具把 `${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前技能 base directory 的父目录（即 `~/.dsh/skills`），`_shared/` 与其同级，因此跨技能共享契约（`workspace-rules.md`、`artifact-layout.md`、`decision-ledger.md`、`codegraph.md`）可正常解析。
+还没想好要不要改？先只读探索，不动代码：
 
-DSH 同样遵守与 Codex 相同的阶段门禁和 lazy context 规则（见上节）。
+```text
+/fp-explore 当前审批功能的入口、权限边界和风险是什么
+```
 
-## 1.0.0 版本范围
+## 按场景选择入口
 
-已包含（`1.0.0`）：
+不必一次学完。遇到哪个问题，就打开哪个入口。
 
-- 初始化：`fp-init`。
-- 需求设计：`fp-prd`、`fp-prd-grill-me`、`fp-propose`、`fp-brainstorm`；包含 PRD-first、Prototype-first、PRD interview gate、mandatory PRD template、prototype style extraction/lazy consumption。
-- 完整启动链路：`fp-start` 及其依赖的 `fp-plan`、`fp-execute`、`fp-execute-sdd`、`fp-final-review`、`fp-archive`。
-- 信息层规则：`manifest-only default`、按批准懒创建的 settings/intel、动态 SDD 上下文、project facts freshness，以及可选 CodeGraph 导航与写后同步边界。
-- 执行和审查：简化的 `fp-execute`、最多三次的 SDD 审查、Scope Matrix、命令安全、最终证据包与 Figma 真实运行时视觉验收。
-- Claude Code / Codex / DeepSeek Harness 三入口：插件运行时与 Markdown 技能说明保持同一套阶段门禁，并可通过本地同步 skill 校验各端缓存一致性。
+| 你现在想做什么 | 从这里开始 |
+|---|---|
+| 看懂项目，或者给新人讲清楚 | `fp-explore` 只读调查；`fp-eli5` 按需图解 |
+| 让项目接入这套流程 | `fp-init` 初始化或刷新工作区 |
+| 把想法整理成 PRD，再推进开发 | `fp-prd` → `fp-start` |
+| 快速完成一个局部小改动 | `fp-quick` |
+| 按 Figma 做 UI，或准备设计评审 | `fp-figma` / `fp-design-review` |
+| 审计与实施达梦、OceanBase 适配 | `fp-db-adapter` 专项技能 |
+| 补足单元测试，或系统审查大型模块 | `fp-coverage` / `fp-module-review` |
+| 确认这次变更能否交付、归档 | `fp-final-review` → `fp-archive` |
 
-未包含独立 TypeScript CLI；当前版本优先交付 Claude Code 原生插件、Codex 可读流程文档与 DeepSeek Harness 技能根安装。
+各入口的适用范围、触发方式与使用边界，见 [命令与技能参考](docs/reference/commands-and-skills.md)。
+
+## 它会留下什么？
+
+不是一堆为了流程而写的文档，而是下次接手时真正需要的答案：
+
+- **为什么做？** 已确认的目标、范围和关键决定。
+- **做到哪了？** 拆好的任务、执行进度和下一步。
+- **凭什么说完成了？** 测试、审查与实际验证的结果，以及尚未解决的风险。
+
+这些内容按阶段保存在目标项目的 `fp-docs/` 中。小改动走轻量流程，不要求每次都生成全套文档。
+
+换会话、换协作者时，可以从项目里的记录和当前代码继续，而不是重新翻完一长串聊天。
+
+目录结构、配置方法和产物规则，统一放在 [架构与产物参考](docs/reference/architecture-and-artifacts.md)。
+
+## 为什么它适合长期协作？
+
+**一个人开发，少一点反复解释。** 已确认的边界有地方可查，中断之后有线索可接。
+
+**多人一起做，少一点“我以为”。** 评审不只看最终代码，还能对照需求、计划和验证结果。
+
+**切换 AI 工具，不必换一套工作方法。** Claude Code、Codex 与 DeepSeek Harness 共享同一套流程技能；加载方式不同，关键确认和验证要求一致。
+
+FeaturePilot 不替代你的工程判断，也不承诺消除所有返工。它让需要判断的地方更早出现，让做过的判断不容易丢失。
+
+## 继续深入
+
+首页讲“为什么用、从哪开始”，专业细节按需查阅：
+
+| 想了解什么 | 去哪里看 |
+|---|---|
+| 三端安装、更新与同步 | [开始使用](docs/getting-started.md) |
+| 所有入口、执行模式与适用边界 | [命令与技能参考](docs/reference/commands-and-skills.md) |
+| 架构、配置、目录与验证规则 | [架构与产物参考](docs/reference/architecture-and-artifacts.md) |
+| 从初始化到 PRD，再到完整开发 | [主线使用指南](docs/user_guide/init-prd-start.md) |
+| 如何提升单元测试覆盖率 | [`fp-coverage` 专项指南](docs/user_guide/fp-coverage.md) |
+| 如何审查并持续修复大型模块 | [`fp-module-review` 专项指南](docs/user_guide/fp-module-review.md) |
+| 当前版本有哪些能力 | [1.0.0 发布说明](docs/release_notes/1.0.0.md) |
+
+## 维护与验证
+
+准备贡献命令、技能或文档？验证命令和维护说明见 [维护与验证指南](docs/getting-started.md#验证仓库插件)。
+
+**不必从一个大项目开始。选一个你今天就想解决的小问题，让 FeaturePilot 陪你把它做完。**

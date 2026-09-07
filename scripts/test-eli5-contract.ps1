@@ -170,11 +170,13 @@ foreach ($path in $disallowedPaths) {
 }
 
 $readme = Read-Utf8 (Join-Path $root 'README.md')
+$commandsReference = Read-Utf8 (Join-Path $root 'docs\reference\commands-and-skills.md')
 $codexPlugin = Read-Utf8 (Join-Path $root '.codex-plugin\plugin.json') | ConvertFrom-Json
-foreach ($anchor in @('commands/fp-eli5.md', '`fp-eli5`', '/fp-eli5', '直接展示中文图解', '原始 HTML 标签', '专用网页图解', '默认不写仓库')) {
-    Assert-Condition ($readme.Contains($anchor)) "README.md is missing public anchor $anchor"
+Assert-Condition ($readme.Contains('fp-eli5')) 'README.md is missing fp-eli5 discovery'
+foreach ($anchor in @('`fp-eli5`', '/fp-eli5', '直接展示中文图解', '原始 HTML 标签', '专用网页图解', '默认不写仓库')) {
+    Assert-Condition ($commandsReference.Contains($anchor)) "commands reference is missing fp-eli5 anchor $anchor"
 }
-foreach ($surface in @($readme)) {
+foreach ($surface in @($readme, $commandsReference)) {
     foreach ($field in @('active-slug:', 'pending-gate:', 'allowed-sources:', 'return-to:')) {
         Assert-Condition (-not $surface.Contains($field)) "public docs must not copy internal field $field"
     }

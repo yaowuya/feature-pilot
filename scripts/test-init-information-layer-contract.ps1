@@ -39,7 +39,7 @@ $review = Read-Utf8 'skills\fp-final-review\SKILL.md'
 $finalReviewer = Read-Utf8 'skills\fp-final-review\final-reviewer.md'
 $finalReviewTemplate = Read-Utf8 'skills\fp-final-review\final-review-template.md'
 $command = Read-Utf8 'commands\fp-init.md'
-$readme = Read-Utf8 'README.md'
+$architectureReference = Read-Utf8 'docs\reference\architecture-and-artifacts.md'
 $guide = Read-Utf8 'docs\user_guide\init-prd-start.md'
 $claude = Read-Utf8 'CLAUDE.md'
 $validator = Read-Utf8 'scripts\validate-plugin.ps1'
@@ -48,7 +48,7 @@ foreach ($surface in @(
     @{ Name = 'fp-init'; Text = $init }
     @{ Name = 'fp-init templates'; Text = $templates }
     @{ Name = 'fp-init command'; Text = $command }
-    @{ Name = 'README'; Text = $readme }
+    @{ Name = 'architecture reference'; Text = $architectureReference }
     @{ Name = 'user guide'; Text = $guide }
     @{ Name = 'CLAUDE'; Text = $claude }
 )) {
