@@ -450,13 +450,6 @@ Assert-Condition ($readme.Contains('docs/user_guide/fp-coverage.md')) 'README la
 Assert-Condition ($mainGuide.Contains('fp-coverage.md')) 'main user guide lacks the fp-coverage guide link'
 Assert-Condition (Test-SpecialtyGraphLifecycle $mainGuide 'fp-coverage') 'main user guide lacks fp-coverage dirty-after-write/post-write-sync lifecycle'
 Assert-Condition (Test-SpecialtyGraphLifecycle $mainGuide 'fp-module-review') 'main user guide lacks fp-module-review dirty-after-write/post-write-sync lifecycle'
-Assert-Condition ($readme.Contains('fresh full-suite')) 'README lacks fresh full-suite gate'
-Assert-Condition ($readme.Contains('exact coverage')) 'README lacks exact coverage gate'
-Assert-Condition ($readme.Contains('fp-docs/changes/<slug>-coverage/')) 'README lacks the coverage change artifact root'
-Assert-Condition ($readme.Contains('coverage.xml') -and $readme.Contains('htmlcov/')) 'README lacks coverage report placement examples'
-Assert-Condition ($readme.Contains('coverage-tooling-bootstrap') -and $readme.Contains('pytest-cov')) 'README lacks the approved missing-tool bootstrap and Django fallback'
-Assert-Condition ($readme.Contains('issues.md') -and $readme.Contains('final-report.md')) 'README lacks code issues and final report artifacts'
-Assert-Condition ($readme.Contains('.fp-coverage/contract.md') -and $readme.Contains('baselines/') -and $readme.Contains('batches/') -and $readme.Contains('verifications/')) 'README lacks split evidence paths'
 Assert-Condition (-not (Test-HardcodedCoverageTarget $readme)) 'README coverage example or prose hardcodes a default target percentage'
 Assert-Condition ($validator.Contains('test-coverage-contract.ps1')) 'global validator does not invoke fp-coverage suite'
 
@@ -490,7 +483,6 @@ Assert-Condition (-not ($coverageGuide -match '(?is)final-report\.md[^.]{0,160}(
 
 foreach ($surface in @(
     @{ Name = 'coverage guide'; Text = $coverageGuide },
-    @{ Name = 'README'; Text = $readme },
     @{ Name = 'main guide'; Text = $mainGuide }
 )) {
     Assert-Condition (-not (Test-CompletionShortcut $surface.Text)) "$($surface.Name) permits weak or non-zero-exit completion evidence"
@@ -509,7 +501,7 @@ foreach ($surface in @(
     Assert-Condition (-not (Test-HardcodedCoverageTarget $surface.Text)) "$($surface.Name) hardcodes a default target percentage"
 }
 
-$publicCoverageSurfaces = $coverageGuide + "`n" + $readme + "`n" + $mainGuide
+$publicCoverageSurfaces = $coverageGuide + "`n" + $mainGuide
 foreach ($mutation in @(
     @{ Text = $publicCoverageSurfaces + "`nLocal rounded coverage may prove completion even when the final command exits non-zero."; Detector = { param($text) Test-CompletionShortcut $text }; Name = 'completion shortcut' },
     @{ Text = $publicCoverageSurfaces + "`nCoverage artifacts can be generated at the project root and moved into coverage-change-root afterward."; Detector = { param($text) Test-ProjectRootCoverageOutputPermission $text }; Name = 'run-then-move' },

@@ -43,4 +43,22 @@ foreach ($anchor in @(
 }
 Assert-Condition (Test-LocalMarkdownLinks 'docs\getting-started.md' $gettingStarted) 'getting-started contains a broken local link'
 
+$commandsReference = Read-Utf8 'docs\reference\commands-and-skills.md'
+foreach ($command in @(Get-ChildItem (Join-Path $root 'commands') -Filter 'fp-*.md' -File)) {
+    Assert-Condition (
+        [regex]::Matches($commandsReference, '(?<![A-Za-z0-9-])' + [regex]::Escape($command.BaseName) + '(?![A-Za-z0-9-])').Count -ge 1
+    ) "commands reference omits $($command.BaseName)"
+}
+foreach ($anchor in @(
+    '# FeaturePilot'
+    'fp-execute'
+    'fp-execute-sdd'
+    '../user_guide/fp-coverage.md'
+    '../user_guide/fp-module-review.md'
+    '../getting-started.md'
+)) {
+    Assert-Condition ($commandsReference.Contains($anchor)) "commands reference lost anchor: $anchor"
+}
+Assert-Condition (Test-LocalMarkdownLinks 'docs\reference\commands-and-skills.md' $commandsReference) 'commands reference contains a broken local link'
+
 Write-Output 'README/docs contract validation passed.'

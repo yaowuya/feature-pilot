@@ -337,15 +337,17 @@ foreach ($anchor in @(
 }
 
 $readme = Read-Utf8 (Join-Path $root 'README.md')
+$commandsReference = Read-Utf8 (Join-Path $root 'docs\reference\commands-and-skills.md')
 $userGuide = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
 foreach ($surface in @(
     @{ Name = 'README.md'; Text = $readme },
+    @{ Name = 'commands reference'; Text = $commandsReference },
     @{ Name = 'user guide'; Text = $userGuide }
 )) {
     Assert-Condition ($surface.Text.Contains('/fp-explore') -or $surface.Text.Contains('fp-explore')) "$($surface.Name) does not document fp-explore"
     Assert-Condition (-not $surface.Text.Contains('quick-candidate-files:')) "$($surface.Name) copied the internal return schema"
     Assert-Condition (-not $surface.Text.Contains('approved-research-boundary:')) "$($surface.Name) copied the internal invocation schema"
 }
-Assert-Condition ($readme.Contains('commands/fp-explore.md')) 'README command table lacks fp-explore'
+Assert-Condition ($commandsReference.Contains('fp-explore')) 'commands reference lacks fp-explore'
 
 Write-Output 'FeaturePilot fp-explore contract validation passed.'
