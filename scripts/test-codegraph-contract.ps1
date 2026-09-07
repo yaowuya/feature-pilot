@@ -152,7 +152,8 @@ foreach ($surface in @(
 
 $validator = Read-Utf8 (Join-Path $root 'scripts\validate-plugin.ps1')
 $claude = Read-Utf8 (Join-Path $root 'CLAUDE.md')
-$readme = Read-Utf8 (Join-Path $root 'README.md')
+$gettingStarted = Read-Utf8 (Join-Path $root 'docs\getting-started.md')
+$architectureReference = Read-Utf8 (Join-Path $root 'docs\reference\architecture-and-artifacts.md')
 $guide = Read-Utf8 (Join-Path $root 'docs\user_guide\init-prd-start.md')
 
 Assert-Condition ($validator.Contains('test-codegraph-contract.ps1')) 'global validator does not invoke CodeGraph suite'
@@ -162,11 +163,17 @@ Assert-Condition ($validator.Contains('dirty-after-write')) 'global validator do
 Assert-Condition ($validator.Contains('post-write-sync')) 'global validator does not anchor completion sync'
 foreach ($surface in @(
     @{ Name = 'CLAUDE.md'; Text = $claude },
-    @{ Name = 'README.md'; Text = $readme },
+    @{ Name = 'getting-started'; Text = $gettingStarted },
     @{ Name = 'user guide'; Text = $guide }
 )) {
     Assert-Condition ($surface.Text.Contains('CodeGraph')) "$($surface.Name) does not document CodeGraph"
     Assert-Condition ($surface.Text.Contains('npm install -g @colbymchenry/codegraph@latest')) "$($surface.Name) lacks npm-only install command"
+}
+foreach ($surface in @(
+    @{ Name = 'CLAUDE.md'; Text = $claude },
+    @{ Name = 'architecture reference'; Text = $architectureReference },
+    @{ Name = 'user guide'; Text = $guide }
+)) {
     Assert-Condition ($surface.Text.Contains('refresh-existing-information-layer')) "$($surface.Name) lacks existing-information-layer refresh mode"
     Assert-Condition ($surface.Text.Contains('dirty-after-write')) "$($surface.Name) lacks write invalidation"
     Assert-Condition ($surface.Text.Contains('post-write-sync')) "$($surface.Name) lacks completion sync"

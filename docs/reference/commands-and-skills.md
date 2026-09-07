@@ -24,6 +24,8 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 
 ## 完整命令表
 
+`fp-prd` 的公开触发契约是：Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicitly asks to create, write, revise, or complete a PRD or product requirements document.
+
 | Claude Code 命令 | 对应 skill | 何时使用 |
 |---|---|---|
 | `/fp-init` | `fp-init` | 第一次采用 FeaturePilot，或刷新已有信息层与可选 CodeGraph |
@@ -91,7 +93,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 
 - `fp-figma` 面向可信 Figma node，保留既有行为并建立视觉、能力和 E2E 证据；
 - `fp-design-review` 把已确认设计整理成开发者可评审的入口，不代替设计确认；
-- UI/E2E 与 Figma 的专业证据边界由架构与产物参考集中说明。
+- UI/E2E 与 Figma 的专业证据边界见 [架构与产物参考](architecture-and-artifacts.md)。
 
 ### 数据库适配
 
@@ -104,4 +106,5 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 ## 下一步
 
 - [3 分钟安装与更新](../getting-started.md)
+- [架构与产物参考](architecture-and-artifacts.md)
 - [返回项目首页](../../README.md)

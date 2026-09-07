@@ -53,6 +53,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin
 
 DSH 通过 Chokidar 监听技能根。同步后新开会话即可加载，无需重启。
 
+## 可选 CodeGraph
+
+CodeGraph 是代码定位和影响分析的可选导航层，不是 FeaturePilot 前置依赖。`fp-init` 未检测到 CLI 时会提供自动安装、展示步骤或跳过；对应当前 CLI 状态只询问一个决定，一次批准覆盖所选路径中的全局安装、可选用户级 Agent MCP 配置和当前项目首次建图，并按顺序逐步汇报。唯一允许的自动安装命令是：
+
+```text
+npm install -g @colbymchenry/codegraph@latest
+```
+
+FeaturePilot 不使用 `irm`、`curl`、远程安装脚本或 `npx` 安装 CodeGraph，也不会在缺少 npm 时自动安装 Node.js。CLI 已安装时，MCP 配置与尚缺的首次建图仍合并为一次确认；Agent MCP 配置会修改用户级配置，因此会在选项中明确说明。CodeGraph 的查询与写后新鲜度见 [架构与产物参考](reference/architecture-and-artifacts.md)。
+
 ## 一次同步三端
 
 在维护 FeaturePilot 仓库时，使用同一脚本更新 Claude Code、Codex 和 DeepSeek Harness，并逐文件比较 SHA-256：

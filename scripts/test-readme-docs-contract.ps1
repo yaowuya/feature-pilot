@@ -61,4 +61,26 @@ foreach ($anchor in @(
 }
 Assert-Condition (Test-LocalMarkdownLinks 'docs\reference\commands-and-skills.md' $commandsReference) 'commands reference contains a broken local link'
 
+$architectureReference = Read-Utf8 'docs\reference\architecture-and-artifacts.md'
+foreach ($anchor in @(
+    '# FeaturePilot'
+    'skills/_shared/workspace-rules.md'
+    'skills/_shared/artifact-layout.md'
+    'skills/_shared/decision-ledger.md'
+    'skills/_shared/codegraph.md'
+    'skills/_shared/ui-e2e-contract.md'
+    'manifest-only default'
+    'compact-first'
+    '500 lines'
+    '30,000 characters'
+    'BROWSER_CAPABILITY_GATE'
+    'dirty-after-write'
+    'post-write-sync'
+    'fp-docs/archive/'
+)) {
+    Assert-Condition ($architectureReference.Contains($anchor)) "architecture reference lost anchor: $anchor"
+}
+Assert-Condition ($commandsReference.Contains('architecture-and-artifacts.md')) 'commands reference does not link the architecture reference'
+Assert-Condition (Test-LocalMarkdownLinks 'docs\reference\architecture-and-artifacts.md' $architectureReference) 'architecture reference contains a broken local link'
+
 Write-Output 'README/docs contract validation passed.'
