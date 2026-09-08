@@ -575,6 +575,11 @@ Assert-Condition (Test-Path $prototypeArtifactValidator) 'prototype artifact tes
 & powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeArtifactValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'prototype artifact tests failed'
 
+$prototypeIgnoreValidator = Join-Path $root 'scripts\test-prototype-ignore.ps1'
+Assert-Condition (Test-Path $prototypeIgnoreValidator) 'prototype Git ignore tests are missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeIgnoreValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'prototype Git ignore tests failed'
+
 $prdSkillPath = Join-Path $root 'skills\fp-prd\SKILL.md'
 $prdSkillText = Read-Utf8 $prdSkillPath
 $prdFrontmatter = [regex]::Match($prdSkillText, '(?s)\A---\r?\n(?<body>.*?)\r?\n---')

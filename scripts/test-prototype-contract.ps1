@@ -55,4 +55,9 @@ foreach ($test in @('test-prototype-contract.ps1', 'test-prototype-artifacts.ps1
 Assert-Contains (Read-Utf8 'commands/fp-init.md') @('no-frontend', 'approved-prototype-provisioning') 'init command'
 Assert-Contains (Read-Utf8 'commands/fp-prd.md') @('project-native', 'standalone-html') 'PRD command'
 Assert-Contains (Read-Utf8 'docs/user_guide/init-prd-start.md') @('prototype-bases/', 'project-native', 'Mock') 'guide'
+Assert-Contains $contract @('prototype.gitignore', 'prototype-gitignore-guard', 'git check-ignore --no-index', 'git ls-files', 'git rm --cached', 'managed block', 'local-only') 'Git protection'
+foreach ($surface in @($prototypeInit, $prd, $archive, $workspace)) {
+    Assert-Contains $surface @('prototype-gitignore-guard', 'fp-docs/.gitignore') 'prototype writer Git protection'
+}
+Assert-Contains $validator @('test-prototype-ignore.ps1') 'Git ignore test registration'
 Write-Host 'Prototype contract checks passed (static coverage, not runtime or fidelity proof).'

@@ -13,7 +13,7 @@ description: Use when a project needs its reusable frontend prototype base initi
 
 - **no-full-init**：不得调用完整 fp-init，不运行其 CodeGraph 安装/MCP 配置、settings 生成或 discovery。已有项目不需要重新初始化信息层。
 - **no-manifest-required**：主 `fp-docs/manifest.md` 不存在也可运行；只在批准后创建基座和必要父目录，不创建主 manifest、settings 或 intel。
-- 基座写入范围仅为 `fp-docs/prototype-bases/<app-id>/`，不修改生产入口、其它 app、现有 change 原型或人工设置。
+- 基座产物范围仅为 `fp-docs/prototype-bases/<app-id>/`；另可按共享 prototype-gitignore-guard 维护 `fp-docs/.gitignore` 的受管块，必须先保护再写原型。不修改生产入口、其它 app、现有 change 原型或人工设置。
 - **manifest-section-only**：主 manifest 已存在时，可在精确 diff 获批后仅登记/更新它的 `Prototype Bases` 小节。其余内容必须保持不变；不能把基座批准当成整个信息层的修改权。
 - 来自 fp-init 的 caller context 可复用已验证前端事实、选定 app 和精确批准范围；不能凭“init 已批准”推断安装、覆盖或索引编辑也已批准。
 
@@ -29,9 +29,9 @@ description: Use when a project needs its reusable frontend prototype base initi
 
 ## Existing base and write decision
 
-先检查目标目录、manifest、sourceEntry、mockEntry、previewEntry 和来源记录。目录已存在但缺少有效 manifest 时报告不完整状态，先确认恢复/替换范围，不覆盖成新项目。
+先检查目标目录、manifest、sourceEntry、mockEntry、previewEntry 和来源记录，并检查 prototype-gitignore-guard。缺少 `fp-docs/.gitignore` 保护或存在已跟踪原型也是必须处理的缺项，不能因基座 fresh 而跳过；获批后先补保护，再写原型。目录已存在但缺少有效 manifest 时报告不完整状态，先确认恢复/替换范围，不覆盖成新项目。
 
-- **fresh-reuse**：来源及 ownedFiles 指纹未变、没有人工冲突且没有明确重建请求时，默认复用并跳过源码修改/重建。若仅缺验证或索引，单独提出补验证/登记的最小批准范围，不重跑构建全流程。区分“本轮检查结构/指纹”与“本轮重新构建/视觉验证”，不伪称做过后者；未完成的验证仍如实保留。
+- **fresh-reuse**：来源及 ownedFiles 指纹未变、没有人工冲突且没有明确重建请求时，默认复用并跳过源码修改/重建。若仅缺验证、索引或 Git 保护，单独提出补齐缺项的最小批准范围，不重跑构建全流程。区分“本轮检查结构/指纹”与“本轮重新构建/视觉验证”，不伪称做过后者；未完成的验证仍如实保留。
 - 来源变化：展示 source 指纹差异及受影响的基座文件。
 - 人工修改：展示 ownedFiles 差异及保留/合并/替换建议，逐文件取得明确批准；不通过更新 hash 掩盖修改。
 - app-id、appRoot、框架或来源身份不一致：停止并澄清目标/迁移，不自动覆盖另一个应用。
@@ -42,7 +42,7 @@ description: Use when a project needs its reusable frontend prototype base initi
 
 ## Build, verify and register
 
-取得相关明确批准后，执行共享 prototype-contract 的 Init provisioning and refresh；不复制另一套构建规则。fresh-reuse 时只执行已批准的缺项验证/索引登记，若没有缺项直接报告复用，不进入下面的源码修改与构建步骤：
+取得相关明确批准后，执行共享 prototype-contract 的 Init provisioning and refresh；不复制另一套构建规则。fresh-reuse 时只执行已批准的 Git 保护/缺项验证/索引登记，若没有缺项直接报告复用，不进入下面的源码修改与构建步骤：
 
 1. 创建/更新本基座的原生源码入口、必要组件/布局包装、配置和 Mock 场景；沿用当前框架，不改写为纯 HTML 冒充原生复用。
 2. Mock/网络隔离先于 UI 加载，检查 build-time 和 browser-time 业务请求；不连接真实后端，不复制会话、密钥或真实客户数据。

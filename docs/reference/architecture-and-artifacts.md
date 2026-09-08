@@ -108,6 +108,8 @@ fp-docs/
 
 fp-prd 将本需求原型放在 `changes/<slug>/prototype/`，记录 baseReference，只修改隔离源码并重新构建；与旧 `prototype.html` 互斥。基座刷新不会覆盖已有需求，人工风格设置不自动重写。静态包通过本地服务预览，原型的 Mock 证据不是生产 E2E。
 
+原型全部是 local-only：由原型操作维护 `fp-docs/.gitignore` 的受管块，排除基座、change/归档内的 native 目录和旧 HTML；该 ignore 文件及普通需求/设计/设置/真实验证文档正常进入 Git。已跟踪原型须显式批准取消跟踪且不删本地文件，忽略规则不清除历史。其他 checkout 缺少本地原型不等于 PRD 结构损坏，需要使用时再初始化/生成。
+
 ### 已有信息层刷新
 
 再次运行 `fp-init` 且根目录已有 manifest 时，流程进入 `refresh-existing-information-layer`。它根据 `.freshness.json` 的 source fingerprint 与 body hash 实时计算 project facts 的 stale/conflict，展示清单并确认后才刷新；settings、human-owned knowledge、active changes、archive/history 和冲突内容不会被批量覆盖。

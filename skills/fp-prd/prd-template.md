@@ -97,7 +97,7 @@ flowchart TD
 #### 3.1.4 原型
 
 - 原型模式：<project-native / standalone-html / 不生成>
-- 原型入口：<native 为 prototype/manifest.json 与 prototype/preview/index.html；legacy 为 prototype.html；填写实际相对链接>
+- 原型入口：<native 为 prototype/manifest.json 与 prototype/preview/index.html；legacy 为 prototype.html；填写实际相对链接，注明原型仅保留本地、不随 Git 提交>
 - 源码与基座：<native 源码/Mock 入口、baseReference 版本；legacy 写不适用>
 - 预览与验证：<已验证的本地命令/URL、场景、实际检查及限制；Mock 不等于真实 E2E>
 - 原型依据：<项目真实组件/基座 / 已有页面 / Figma / 截图 / UI/UX spec>

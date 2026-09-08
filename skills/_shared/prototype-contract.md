@@ -33,6 +33,21 @@
 
 默认原型源码/配置位于所属基座或 change 原型目录。可以只读引用当前前端组件和样式，使用原包管理器/构建器；不复制整个仓库或 node_modules。不在生产目录新增文件来绕过路径限制：确有此需要时先报告明确额外范围，未批准就停止该基座构建，普通 PRD 可继续。
 
+## Local-only Git protection
+
+**prototype-gitignore-guard**：原型是 local-only 工作文件，基座、需求原型及归档原型的源码、Mock、manifest、预览、资源和原型专属证据均不得提交。只有原型操作触发此门禁；无前端或不生成原型时，不改变 manifest-only 初始化默认产物。
+
+在创建、修改、复用或归档原型前：
+
+1. 读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype.gitignore`，并检查项目根下 `fp-docs/.gitignore` 的现有内容及相关 tracked prototypes。将所需 .gitignore diff 和索引处置纳入当前操作的明确批准范围；fresh-reuse 也必须补齐此保护，但不因此重建源码。
+2. 获批后，在任何原型写入前创建或维护 `fp-docs/.gitignore` 的 `FeaturePilot local prototypes` managed block。文件不存在时使用模板；无 block 时用换行隔开原有末行后追加；恰有一个完整 block 时仅替换该块，保留块外规则。重复/不完整标记先报告冲突，不覆盖整文件，不修改根 .gitignore 或用户的其它规则。
+3. `.gitignore` 本身应纳入版本控制；PRD、proposal、design、tasks、settings、intel 与真实 `.fp-execute` 证据不属于排除范围。legacy HTML 保持自包含，不把原型专属 sidecar 资源散落到排除目录外。
+4. 在 Git 仓库内，以项目根为 cwd，对相关实际/计划路径运行 `git check-ignore --no-index`，逐路径校验或逐项核对命中清单，不能把批量命令退出 0 当作全部已忽略；再用 `git ls-files` 单独检查索引。不能只凭规则存在就宣称原型已排除；下层 .gitignore 或后置否定规则可覆盖上层规则，检测到冲突须先经批准解决或停止原型写入/合规完成报告。
+5. 已跟踪的原型不会被 .gitignore 自动取消跟踪。先列出精确路径，只有获得对应批准后才执行 `git rm --cached`（目录需要递归选项）；保留本地文件，不删除文件、不重写历史。未获批准时报告此门禁未满足，不用 `git add -f` 绕过规则，也不自动替用户提交或推送。
+6. 原型生成/移动后及准备提交前，再检查实际忽略结果与索引；索引中不得包含上述原型路径。非 Git 项目仍先维护 .gitignore，为后续初始化保留保护，但明确 Git 检查未执行，不自动初始化 Git。
+
+所有写入此 managed block 的权限都仅用于原型版本控制保护，不扩大信息层写入权。原型被 Git 排除不代表已从历史提交中移除。
+
 ## Native manifest: fp-prototype/v1
 
 以下是字段结构示例，不是可直接执行的模板。路径、命令、版本和 SHA256 都必须换成当前项目的验证值；无法确认时不伪造 ready manifest。
@@ -120,6 +135,8 @@
 
 ## Consumer and archive resolution
 
-读取原型前检查互斥/不完整状态。native 读取 manifest、相关场景源码和证据，静态 preview 用于交互/视觉参考；不能把源码/fixtures 当成批准的业务规则或生产实现。legacy 保持原单文件规则：内联 HTML/CSS/JS、本地模拟、无 CDN/业务后端。
+读取原型前检查互斥/不完整状态。原型不随 Git 提交，其他 checkout 缺少本地原型是预期情况：报告 local-only 未提供，普通 PRD 正文读取可继续；确实需要原型操作或验证时，转到基座初始化/需求原型生成，不能冒称已查看或验证。已有 prototype 目录缺 manifest 的结构冲突仍须阻止使用。
+
+native 读取 manifest、相关场景源码和证据，静态 preview 用于交互/视觉参考；不能把源码/fixtures 当成批准的业务规则或生产实现。legacy 保持原单文件规则：内联 HTML/CSS/JS、本地模拟、无 CDN/业务后端。
 
 归档时整个 change 原型目录一起移动，不删除基座或重写其它 change。先检查相对资源/入口和实际本地预览能否在目标归档路径工作；artifact-relative 命令 cwd 随位置解析，project-relative 的旧源/命令可过期，不自动改写执行。静态可查看与源码可重建分开报告；缺旧源可保留静态查看，但不能声称可重建。重建仍须核对 sources/baseReference、新鲜度和命令授权。

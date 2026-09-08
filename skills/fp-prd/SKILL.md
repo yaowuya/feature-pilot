@@ -196,6 +196,8 @@ Do not load the output template during interview turns. After the final PRD conf
 
 Generate a prototype only when confirmed necessary for a page, dialog, complex form/table, wizard, dashboard, or unclear interaction. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` before choosing paths, generating or reviewing either mode.
 
+Apply **prototype-gitignore-guard** before either mode is written/reused: include the managed-block diff for `fp-docs/.gitignore` and any tracked-prototype disposition in the approval summary, establish the ignore rules first, and verify actual Git ignore/index state. This narrow control-file permission does not authorize other information-layer edits. Prototype source, Mock, preview and evidence are local-only and must not be committed.
+
 - For **project-native**, follow Change-local incremental generation and Mock, preview and fidelity gate. Verify the selected base with `CheckFreshness` or equivalent; record `baseReference`, source/Mock entries, commands/cwd and actual evidence. Missing or stale bases route to `/fp-prototype-init`; PRD cannot build or overwrite the shared base. Do not silently fall back to HTML.
 - For **standalone-html**, preserve the old single-file HTML/CSS/JS, no-CDN and local-Mock behavior. It is a deliberate lightweight/legacy mode, not the default substitute for an existing framework.
 - Apply current project frontend rules and real components/styles through `fp-frontend-spec`; Figma/screenshots and prototype-style provide confirmed constraints, not permission to ignore the current framework. Do not copy a project-family example's standalone output choice into a native project.

@@ -128,6 +128,7 @@ codegraph sync <project-root> --quiet
 - 多应用：先选择 app；每个 app 独立记录源码位置、框架和构建 cwd。
 - 单独批准：先展示参考页面、文件、命令/cwd、安装/配置/截图影响；可以初始化、仅报告或跳过。信息层仍可保持 manifest-only。
 - 产物：`fp-docs/prototype-bases/<app-id>/manifest.json`、原生源码/Mock、`preview/index.html` 与本地资源。
+- 原型仅保留本地、不提交 Git：原型操作前会按批准维护 `fp-docs/.gitignore`，排除整个基座、需求原型及归档原型（包括旧 prototype.html）。保留已有忽略规则，`.gitignore` 本身及 PRD/settings/真实 E2E 证据仍可提交。已跟踪原型需另经批准取消跟踪，保留本地文件；fresh 基座也要补齐该保护。
 - 验证：独立构建、localhost 预览、业务网络隔离，并与原项目同条件对照。未完成检查就如实报告，不以结构校验代替保真证明。
 - 刷新：单独运行 `/fp-prototype-init`，针对选定基座检查相关源文件指纹和人工修改，批准后更新；fresh 基座默认复用，不重复构建，也不会覆盖已评审需求原型。
 

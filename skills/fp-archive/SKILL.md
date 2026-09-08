@@ -38,6 +38,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` onc
 3. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
 4. 若存在原型，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`，拒绝双模式/不完整目录，检查完整 native 原型包或旧 HTML。源码、Mock、preview 与证据一并保留；先确认相对资源与声明的本地预览方式，区分静态可查看和源码可重建。不得执行未经批准的 manifest 命令，原型 Mock 证据不能替代下方真实 UI/E2E gate。
 
+存在原型时还需检查共享 **prototype-gitignore-guard**。若需补写 `fp-docs/.gitignore` 或处理已跟踪原型，将精确 diff/路径放入 Step 3 的批准范围；批准后在移动前完成保护，移动后再次验证归档原型仍被忽略且不在 Git 索引。只保留本地原型，不通过归档把原型加入提交。
+
 ### Step 2.1: UI/E2E Final Gate
 
 在展示移动摘要或请求用户确认前，读取当前 change 的最新（latest）final review 报告及其 `UI/E2E Gate`，并核对该 gate 引用的 task/case evidence、coverage matrix 与 cleanup 记录。报告必须能证明它覆盖当前目标快照；报告或 gate 缺失、过期、歧义，或引用证据缺失，都使归档 `BLOCKED`。
