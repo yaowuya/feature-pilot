@@ -19,16 +19,18 @@ It only creates product requirements artifacts:
 
 - small PRD: `fp-docs/changes/<slug>/prd.md`; or
 - split PRD: `fp-docs/changes/<slug>/prd/00-index.md` plus indexed fragments;
-- optionally `fp-docs/changes/<slug>/prototype.html`
+- optionally one prototype: native `fp-docs/changes/<slug>/prototype/manifest.json` with editable framework source, Mock and `preview/index.html`, or legacy `fp-docs/changes/<slug>/prototype.html`.
 
-`prd.md` and `prd/00-index.md` are mutually exclusive forms of one logical template. Select exactly one before writing. `prototype.html` remains a single sibling file in either form.
+`prd.md` and `prd/00-index.md` are mutually exclusive forms of one logical template. Select exactly one before writing. 原型独立于 PRD 的 small/split 表示；涉及原型时读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`，它拥有模式选择、基座、路径、构建与验证规则。
 
-It supports two modes:
+It supports two order modes:
 
-1. **PRD-first mode（默认）**: confirm PRD-blocking decisions, write the selected PRD form, optionally write `prototype.html`.
-2. **Prototype-first mode（原型优先）**: confirm prototype-blocking decisions, write/review/iterate `prototype.html` first, then generate the selected PRD form from the confirmed prototype and decisions.
+1. **PRD-first mode（默认）**: confirm PRD-blocking decisions, write the selected PRD form, optionally generate the resolved prototype.
+2. **Prototype-first mode（原型优先）**: confirm prototype-blocking decisions, generate/review/iterate the resolved prototype first, then generate the selected PRD form from the confirmed prototype and decisions.
 
-It must not create `proposal.md`, `design.md`, or `tasks/`, and must not enter implementation.
+原型渲染默认在已有前端使用 **project-native**：消费已确认 app 的基座，以同框架源码增量实现，全部业务数据 Mock，构建静态预览；**standalone-html** 仅保留既有形式或用户明确选择的轻量/降级路径。PRD-first/Prototype-first 不决定渲染技术。创建隔离原型源码不是生产实现授权。
+
+It must not create `proposal.md`, `design.md`, or `tasks/`, and must not enter production implementation or modify shared prototype bases.
 
 ## Required Interview Skill
 
@@ -94,9 +96,10 @@ Default read set:
 
 1. `fp-docs/manifest.md`, if present — read as an index only.
 2. `fp-docs/intel/unknowns.md` and `fp-docs/intel/decisions.md`, only if the manifest lists actual directly relevant project-level content. Their absence is not a blocker; keep ordinary questions as `change-local unknowns` and ask through the PRD interview.
-3. `fp-docs/settings/prototype-style.md`, only when generating or updating `prototype.html`.
+3. `fp-docs/settings/prototype-style.md`, only when generating or updating a prototype.
 4. `fp-docs/settings/frontend.md`, only when UI/page/prototype behavior is involved.
 5. `fp-docs/settings/backend.md`, only when backend/API/data/security/permission behavior affects product decisions.
+6. For native prototypes only, the selected app's exact base manifest and relevant sources/evidence under `fp-docs/prototype-bases/<app-id>/`; follow `prototype-contract.md`, not a recursive scan of all bases.
 
 Default do-not-read set:
 
@@ -118,6 +121,14 @@ If a relevant intel artifact is stale or has unknown freshness:
 - Mention stale/uncertain intel in the confirmation summary only when it affects a product decision.
 - Do not refresh or rewrite project-level intel during `fp-prd`; `supported-init-rerun`：建议重新运行 `/fp-init`，由其展示实时 stale/conflict 清单并执行批准门禁。
 
+## Business closure gate
+
+在两种模式中都遵循 `fp-prd-grill-me` 的 Business-first analysis：先确认业务如何运行，再把已确认规则落到页面与交互。`fp-prd-grill-me` 拥有分析顺序与决策门禁，输出模板拥有内容落点与自检；不新增业务分析产物。
+
+- PRD 确认摘要必须概括现状/目标流程、变化与范围、角色/系统影响、适用的业务状态/规则/异常闭环，以及不改结论的依据；简单功能按访谈规则缩减，不虚构复杂流程。
+- 原型确认只覆盖已演示的行为。原型未展示的业务规则、后台能力和异常处置仍由访谈确认，不能从画面反推为产品事实。
+- **业务闭环门禁：** 影响范围、风险或验收的未知事项解决后才进入最终 PRD 写入确认；3–5 只是提问目标，不是问题上限，也不为凑数提问。未决事项不可伪装成非阻塞问题；明确授权的假设须在摘要和 PRD 对应位置标明。
+
 ## Process
 
 At the start, choose one of two modes from user intent:
@@ -133,12 +144,12 @@ At the start, choose one of two modes from user intent:
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
 5. Generate a kebab-case slug, then resolve the existing PRD paths under `fp-docs/changes/<slug>/` according to the shared artifact-layout contract. Do not write yet.
 6. Select the final PRD form before writing per the shared artifact-layout contract: default to the small form in `prd.md`; use split form in `prd/00-index.md` plus a fragment manifest and indexed fragments only under that contract's overflow/approval/setting gates. Preserve an existing canonical form unless the confirmed change requires an explicitly approved conversion.
-6. Show a confirmation summary containing confirmed decisions, assumptions, non-blocking open questions, prototype decision, selected form, canonical entrypoint, and planned fragment ownership when split. Include any overwrite, revision, or conversion/removal action.
-7. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
-8. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
-9. Write the selected form from `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
-10. If a prototype is confirmed as needed, write `fp-docs/changes/<slug>/prototype.html` and reference it from the unique fragment that owns the complete `3.N` feature block and its `3.N.4 原型` subsection.
-11. Run PRD self-review and report the canonical entrypoint and prototype path.
+7. Show a confirmation summary containing the Business closure gate results, confirmed decisions, assumptions, non-blocking open questions, selected PRD form, canonical entrypoint, and fragment ownership when split. When a prototype is needed, first resolve its mode/path/base and freshness through Prototype Rules, then include source/Mock scope, build/preview commands/cwd and all dependency/configuration effects. Include any overwrite, revision, or conversion/removal action.
+8. Wait for explicit user approval of that summary. A recommendation from the assistant is not approval.
+9. Create only the necessary project-root artifact path for the approved form. Do not create or modify `fp-docs/manifest.md`, `settings/`, or `intel/`; recommend `/fp-init` separately when they are absent.
+10. Write the selected form from `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. The logical PRD must preserve exact top-level headings 一 through 六, exact subsection headings, exact table columns, exact ordering, and no extra top-level sections. In split form, write the final fragments directly in manifest order; do not generate and mechanically cut a monolith.
+11. If a prototype is confirmed as needed, execute the Prototype Rules below for the approved rendering mode and reference the resolved manifest/preview or legacy HTML from the unique owner of the complete feature block and its `3.N.4 原型` subsection.
+12. Run PRD self-review and report the canonical entrypoint and prototype path.
 
 ### Prototype-first mode
 
@@ -146,27 +157,18 @@ Use this mode to make the prototype the primary clarification artifact before PR
 
 1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, invoke `fp:fp-explore` through the Skill tool, run `prd-facts`, and pass only verified facts and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
 2. Load `fp-prd-grill-me`; it owns the Prototype-first interview even when `prd-facts` ran.
-3. Generate a kebab-case slug early for artifact paths and resolve any existing `prd.md`, `prd/00-index.md`, `prd/`, and `prototype.html`, but do not write files yet. Block structural conflicts before prototype work.
-4. Use `fp-prd-grill-me` Prototype-first interview to confirm only prototype-blocking decisions first:
-   - target page or interaction scenario;
-   - primary user and job-to-be-done;
-   - page entry and core workflow;
-   - key screens/regions/components;
-   - required fields, table columns, actions, states, and validation;
-   - visual source: existing page, Figma, screenshot, `fp-docs/settings/prototype-style.md`, or neutral default;
-   - concrete interactions the prototype must demonstrate.
-4. Show a prototype confirmation summary with target path `fp-docs/changes/<slug>/prototype.html`, including any overwrite/revision action, and wait for explicit user approval.
-5. Create only `fp-docs/changes/<slug>/` if it is missing.
-6. Write `fp-docs/changes/<slug>/prototype.html` first. If `fp-docs/settings/prototype-style.md` exists, read and apply it before writing. If it does not exist, use neutral defaults and offer style extraction after the prototype is accepted.
-7. Report the prototype path and ask the user to review it. Do **not** write either PRD Markdown form yet.
-8. If the user requests prototype changes, update `prototype.html` and ask for review again. Repeat until the user explicitly says the prototype is confirmed.
-9. After prototype confirmation, derive PRD decisions from the confirmed prototype plus the interview answers. Use `fp-prd-grill-me` to ask only remaining PRD-blocking Bucket C questions one at a time; do not re-ask prototype decisions that the user already confirmed through the prototype.
-10. Select `prd.md` or `prd/00-index.md` before writing using the same semantic split and size rules as PRD-first mode. Preserve an existing canonical form unless an explicitly approved conversion is required.
-11. Show the final PRD confirmation summary with selected form, canonical entrypoint, planned fragment ownership when split, and any overwrite, revision, or conversion/removal action. Wait for explicit approval.
-12. Write the selected form using the Mandatory PRD Structure verbatim. The unique owner of the complete feature block and its `3.N.4 原型` subsection must reference the confirmed `prototype.html` and state that the requirements were derived from the confirmed prototype.
-13. Run PRD self-review and report the canonical entrypoint and prototype path.
+3. Generate a kebab-case slug early and resolve existing PRD forms and both prototype paths (`prototype.html`, `prototype/manifest.json`). Apply artifact-layout and prototype-contract conflict handling before any write.
+4. Use `fp-prd-grill-me` Prototype-first interview to confirm prototype-blocking decisions: target user/page/workflow, relevant business and UI states, fields/actions/validation, concrete interactions, visual sources, and rendering mode. For project-native, include selected app, baseReference, incremental source/Mock scope and verified build/preview commands with cwd.
+5. Show a prototype confirmation summary with the selected mode, canonical path and native source/preview paths, demonstrated behavior, remaining business unknowns, and all write/build/dependency/overwrite effects. Wait for explicit user approval; existing base setup approval is not this approval.
+6. Create only the approved change-owned paths and generate the prototype using Prototype Rules. Do not create project-level bases, settings or intel.
+7. Report the source and preview paths, verified local preview command/URL, actual verification and limitations. Ask the user to review; do **not** write either PRD Markdown form yet.
+8. For requested changes, update prototype source/Mock, rebuild and revalidate the selected prototype; do not patch compiled preview output. Repeat review until explicit confirmation.
+9. After prototype confirmation, derive only demonstrated PRD decisions from the confirmed prototype plus interview answers. Apply the Business closure gate and use `fp-prd-grill-me` for remaining Bucket C questions one at a time; do not re-ask confirmed decisions.
+10. Select the PRD canonical form and show the final summary with Business closure gate results, entrypoint, fragment ownership and overwrite/conversion/removal actions. Wait for explicit approval.
+11. Write the Mandatory PRD Structure verbatim. The owner of `3.N.4 原型` references the confirmed native manifest/preview or legacy HTML and distinguishes demonstrated requirements from separately confirmed business decisions.
+12. Run self-review and report the canonical PRD and prototype entrypoints.
 
-Do not create directories or write files before the relevant confirmation summary is approved. In Prototype-first mode, `prototype.html` may be written after prototype confirmation, but every PRD Markdown form must wait until the prototype is reviewed and explicitly confirmed.
+Do not create directories, write files or run build/preview/install commands before their relevant summary is approved. Prototype-first permits prototype generation before PRD writing, not a bypass of PRD or production implementation gates.
 
 ### Existing artifact and conflict handling
 
@@ -176,7 +178,7 @@ Before every PRD write or revision, check `prd.md`, `prd/`, and `prd/00-index.md
 - If `prd/` exists without `prd/00-index.md`, stop and report the incomplete split artifact.
 - If exactly one canonical form exists, preserve it unless the confirmed content requires conversion. State the conversion and obsolete-path removal in the pre-write summary and wait for explicit approval.
 - For an existing canonical artifact, ask whether to revise it, overwrite/replace it, or cancel. Do not append content outside the logical template.
-- If `prototype.html` exists, ask whether to revise it, overwrite/replace it, or cancel before writing it.
+- If either prototype form exists, apply prototype-contract resolution, preserve the current mode and ask whether to revise, replace/convert, or cancel. Both forms or an incomplete native directory block prototype work; do not hide conflicts by choosing another filename.
 
 A conversion must transfer all unique content, validate the new logical artifact, and remove the old form before completion so `prd.md` and `prd/` never remain together as Producer output.
 
@@ -192,50 +194,27 @@ Do not load the output template during interview turns. After the final PRD conf
 
 ## Prototype Rules
 
-Generate `prototype.html` only when confirmed necessary for a page, dialog, complex form/table, wizard, dashboard, or unclear interaction.
+Generate a prototype only when confirmed necessary for a page, dialog, complex form/table, wizard, dashboard, or unclear interaction. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` before choosing paths, generating or reviewing either mode.
 
-Prototype requirements:
+- For **project-native**, follow Change-local incremental generation and Mock, preview and fidelity gate. Verify the selected base with `CheckFreshness` or equivalent; record `baseReference`, source/Mock entries, commands/cwd and actual evidence. Missing or stale bases route to `/fp-prototype-init`; PRD cannot build or overwrite the shared base. Do not silently fall back to HTML.
+- For **standalone-html**, preserve the old single-file HTML/CSS/JS, no-CDN and local-Mock behavior. It is a deliberate lightweight/legacy mode, not the default substitute for an existing framework.
+- Apply current project frontend rules and real components/styles through `fp-frontend-spec`; Figma/screenshots and prototype-style provide confirmed constraints, not permission to ignore the current framework. Do not copy a project-family example's standalone output choice into a native project.
+- Every confirmed control/field/action must be operable, validation visible, and required loading/empty/success/error/permission states demonstrable. If intentionally static, record why in prototype source and the PRD. Unknown business rules return to the interview.
+- All business data/state is local Mock; no real backend calls. Native build/preview/network/fidelity verification is separate from real E2E. If a required check cannot run, report the gap rather than completion.
 
-- Single-file HTML/CSS/JS.
-- No external CDN.
-- Existing-product work should follow existing pages, `fp-frontend-spec`, Figma, or screenshot facts.
-- Prototype expresses information structure and interaction, not final implementation.
-- Prototype must support simple interactions, not just static markup.
+### Prototype Style Consumption and Extraction
 
-Interactive prototype minimum:
+Read `fp-docs/settings/prototype-style.md` when present. In native mode, real components/tokens/styles are the rendering source; style settings add approved constraints rather than a second handwritten UI. Missing style settings do not justify neutral replacements for known existing components.
 
-- Buttons, tabs, filters, forms, dialogs, expand/collapse, table row actions, or wizard steps that appear in the PRD must be clickable or otherwise operable.
-- Form fields must accept input and show basic validation/error feedback for required or invalid values described in PRD.
-- Loading, empty, success, and error states mentioned in PRD must be switchable through simple controls or simulated interactions.
-- If the PRD includes a submit/confirm action, the prototype must show the resulting state change or message.
-- If no meaningful interaction exists, write an inline comment in `prototype.html` explaining why the prototype is intentionally static.
-
-Do not use backend calls. Simulate data and state in local JavaScript only.
-
-### Prototype Style Extraction
-
-After generating the first prototype for a project, recommend a separate settings handoff to the user:
-
-> 检测到这是项目的第一个原型。是否需要在确认原型后，通过 `/fp-init` 或单独的设置更新流程，将当前原型的视觉风格（配色、字体、间距、组件样式、布局模式）提取到 `fp-docs/settings/prototype-style.md`？后续 PRD 生成原型时会自动参考该风格文件，保持视觉一致。
-
-`fp-prd` itself must not create or update `fp-docs/settings/prototype-style.md` or `fp-docs/manifest.md`. If the user wants extraction, hand off to `/fp-init` or an explicit settings workflow after PRD/prototype completion.
-
-### Prototype Style Consumption
-
-Before generating a new `prototype.html`:
-
-1. Check if `fp-docs/settings/prototype-style.md` exists.
-2. If present, read it and apply its color palette, typography, spacing, component patterns, and layout patterns to the new prototype.
-3. If the user requests a different visual direction, apply the new direction and offer to update `prototype-style.md` after approval.
-4. If `prototype-style.md` is missing, proceed with sensible neutral defaults and recommend extraction after the first prototype.
+For an explicitly chosen greenfield/standalone prototype with no visual source, use confirmed neutral defaults. After its first accepted prototype, recommend `/fp-init` or a separately approved settings update to extract reusable style. `fp-prd` must not write `settings/prototype-style.md` or `fp-docs/manifest.md`, and it must not offer to re-extract an already registered native base on every requirement.
 
 ## Self-Review
 
-Run the checklist in `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. If any check fails, fix the PRD/prototype before reporting completion.
+Run the structure and business-closure checklists in `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. Repair presentation defects using confirmed content. If a failure exposes an unresolved product decision, return to `fp-prd-grill-me` and obtain an updated confirmation summary before revising; do not invent rules to make the checklist pass. Report completion only after both checklists pass.
 
 ## Invalid Output Recovery
 
-If self-review finds structural drift, do not report completion. Rewrite the selected canonical form to conform exactly to Mandatory PRD Structure while preserving confirmed content. If `prototype.html` lacks required interactions, update it before reporting.
+If self-review finds structural drift, do not report completion. Rewrite the selected canonical form to conform exactly to Mandatory PRD Structure while preserving confirmed content. If the resolved prototype lacks confirmed interactions, update its source and rerun required prototype checks before reporting.
 
 ## Output
 
@@ -250,8 +229,8 @@ Replace `<slug>` with the completed change slug when it is known. This prompt is
 Report:
 
 - PRD canonical entrypoint: `prd.md` or `prd/00-index.md`.
-- Prototype path, if generated.
-- If this is the project's first prototype, recommend extracting visual style to `fp-docs/settings/prototype-style.md`.
+- Prototype mode, source/manifest and preview paths, verified local preview command/URL, base version, actual checks and limitations, if generated.
+- For a first greenfield/standalone prototype without registered style, recommend style extraction through `/fp-init`; do not repeat this for an existing native base.
 - Confirmed key requirements.
 - Non-blocking open questions.
 - Required next step: explicitly tell the user they can run `/fp-start <slug>` to resolve the PRD through the shared artifact-layout contract, read split fragments in manifest order when present, and continue into design, planning, and development.

@@ -22,7 +22,7 @@
 
 ### 它会创建什么
 
-`/fp-init` 只负责目标项目的信息层。v2 的 `manifest-only default` 默认只在项目根目录创建：
+`/fp-init` 默认建立目标项目的信息层，也可按单独批准建立前端原型基座。v2 的 `manifest-only default` 默认只在项目根目录创建：
 
 ```text
 fp-docs/
@@ -45,7 +45,8 @@ fp-docs/
 | `fp-docs/settings/agent.md` | 通用工作流与项目政策 adapter | 工作流/权限/验证策略相关时 |
 | `fp-docs/settings/frontend.md` | 前端、UI、设计系统、视觉验收规则 | UI/页面/组件/前端实现相关时 |
 | `fp-docs/settings/backend.md` | 后端、API、数据、安全、权限规则 | 后端/API/数据/安全相关时 |
-| `fp-docs/settings/prototype-style.md` | HTML 原型视觉风格参考 | 生成或更新 `prototype.html` 时 |
+| `fp-docs/settings/prototype-style.md` | 原型视觉与交互约束 | 生成或更新任一原型模式时 |
+| `fp-docs/prototype-bases/<app-id>/manifest.json` | 同技术栈基座的源码、Mock、构建、静态预览及来源索引 | 仅该 app 的原型工作；实时验证来源 |
 | `fp-docs/intel/project-facts.md` | 可选生成事实缓存，只含质量门禁与非显而易见的契约/架构/安全边界 | 仅相关时读取并回到当前源码复核 |
 | `fp-docs/intel/.freshness.json` | metadata-only：source fingerprint、body hash、生成时间/版本 | `/fp-init` 实时计算 stale/conflict 时 |
 | `fp-docs/intel/unknowns.md` / `decisions.md` | 可选 human-owned 项目知识 | 仅有实际内容、已批准且当前问题相关时 |
@@ -96,7 +97,7 @@ codegraph sync <project-root> --quiet
 
 ### 可选设置文件
 
-`/fp-init` 会一次列出可选 settings（agent/frontend/backend/prototype-style），逐文件确认后只为被批准的文件创建对应目录/文件。批准 discovery 后也只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑。项目级 unknowns/decisions 仅在确有内容并单独批准写入范围后懒创建；它们缺失不是阻塞。
+`/fp-init` 会一次列出适用的可选 settings，逐文件确认后只创建被批准的文件；已确认无前端时省略 frontend/prototype-style。批准 discovery 后仍只创建 `project-facts.md` 和 `.freshness.json`，不保存 CodeGraph 拓扑，也不授权原型构建。项目级 unknowns/decisions 仍按需批准，缺失不是阻塞。
 
 建议原则：
 
@@ -104,6 +105,33 @@ codegraph sync <project-root> --quiet
 - 现有文件不覆盖，除非用户明确批准。
 - 项目已有 `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `CURSOR.md` 时，只在 manifest 中记录引用，不复制大段内容到 `settings/agent.md`。
 - 公共 FeaturePilot 插件不内置客户组件库、后端框架、API envelope 或设计 token；客户规则应落在目标项目自己的 `fp-docs/settings/*.md`。
+
+### 单独初始化或刷新原型基座
+
+**项目已经 init 过，只想补建或刷新原型时，直接运行：**
+
+```text
+/fp-prototype-init
+```
+
+多前端项目可以指定已知 app-id 或项目内 app-root，例如：
+
+```text
+/fp-prototype-init apps/admin
+```
+
+该技能只处理原型基座，不重跑信息层、CodeGraph 安装/MCP、settings 或 discovery。主 manifest 不存在也可以运行，不会顺带创建它；已有主 manifest 只在精确 diff 获批后更新 Prototype Bases 小节，其余内容不变。
+
+有前端时，它建立 **project-native** 基座：Vue 项目使用 Vue、React 项目使用 React，复用现有页面骨架、真实组件、主题、字体和图标，业务数据全部 **Mock**。源码可独立运行，并构建为不依赖业务后端的静态预览；不是重新仿写一份纯 HTML。首次完整 `/fp-init` 的可选原型阶段也委托同一技能，不维护第二套逻辑。
+
+- 无前端：跳过，不创建基座/空原型，不安装前端依赖；SSR/服务端模板不能简单判定为无前端。
+- 多应用：先选择 app；每个 app 独立记录源码位置、框架和构建 cwd。
+- 单独批准：先展示参考页面、文件、命令/cwd、安装/配置/截图影响；可以初始化、仅报告或跳过。信息层仍可保持 manifest-only。
+- 产物：`fp-docs/prototype-bases/<app-id>/manifest.json`、原生源码/Mock、`preview/index.html` 与本地资源。
+- 验证：独立构建、localhost 预览、业务网络隔离，并与原项目同条件对照。未完成检查就如实报告，不以结构校验代替保真证明。
+- 刷新：单独运行 `/fp-prototype-init`，针对选定基座检查相关源文件指纹和人工修改，批准后更新；fresh 基座默认复用，不重复构建，也不会覆盖已评审需求原型。
+
+后续 `/fp-prd` 在本需求目录复制必要的基座自有源码/配置快照，记录基座版本，再增量修改新功能。项目组件继续只读引用；共享基座和正式生产代码不随 PRD 被修改。缺失/过期基座需要先处理，不能自动降级为 HTML。
 
 ### CW / 嘉为项目示例
 
@@ -169,10 +197,11 @@ Use fp-prd only when the user explicitly invokes /fp-prd or $fp-prd, or explicit
 ```text
 fp-docs/changes/<slug>/prd.md                    # 小型形式
 fp-docs/changes/<slug>/prd/00-index.md           # 拆分形式的唯一入口
-fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
+fp-docs/changes/<slug>/prototype/manifest.json   # project-native：源码、Mock、preview/index.html 与资产
+fp-docs/changes/<slug>/prototype.html            # 旧或明确选择的 standalone-html
 ```
 
-上面两个 PRD 路径是二选一，不允许并存；拆分形式还包含 `00-index.md` manifest 列出的编号分片。
+上面两个 PRD 路径是二选一，不允许并存；拆分形式还包含 `00-index.md` manifest 列出的编号分片。原型独立选择一种模式，`prototype.html` 与 `prototype/` 不得并存；原型目录不是 PRD 分片。
 
 禁止把 PRD 写到 `fp-docs/prd-*.md` 或 `fp-docs/*.prd.md`。
 
@@ -184,7 +213,7 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 2. 批量展示 Bucket A/B 已确定项，给用户一次性审阅和纠错。
 3. Bucket C 待确认项必须一问一答逐个提问；助手不能自问自答。
 4. 输出确认摘要：已确认决策、假设、非阻塞问题、是否生成原型、目标路径。
-5. 等用户明确批准后，才创建目录和写入 PRD 的小型或拆分形式，以及获批的 `prototype.html`。
+5. 等用户明确批准后，才创建 PRD/原型路径、修改隔离源码，并执行获批的构建/预览命令；原型摘要包含模式、app、基座版本、Mock 场景及文件/命令影响。
 
 例外只有三类：
 
@@ -192,14 +221,26 @@ fp-docs/changes/<slug>/prototype.html   # 仅在确认需要原型时生成
 - 用户明确说“无需提问，按以下假设生成”。
 - 已有访谈答案和确认摘要获得用户批准。
 
+### 先业务、后页面
+
+`/fp-prd` 不只整理页面改动。访谈会先梳理现状流程与依据、目标流程、变化与角色/系统影响，再确认适用的业务状态、规则和异常闭环，最后映射到页面及原型。
+
+- 例如提现改版，不能只写按钮和成功提示；还要明确申请如何流转、谁来处理、失败后业务处于什么状态，以及用户在哪里看到最终结果。
+- “后台无需修改”也要说明现有能力和依据；没有证据时保留未知，不擅自判定要改或不改。
+- 简单筛选、文案或纯展示调整可简述流程/状态不变及理由；新业务明确没有现状流程，不虚构后台或状态机。
+- Bucket C 通常以 3–5 个问题为目标，但高影响问题不因数量降级；超过时继续逐个确认或由用户明确缩小范围，已确认清楚的也不凑问题。
+- 原型确认只覆盖已经展示的行为，未讨论的业务规则、后台影响和异常处置仍须在 PRD 写入前确认。
+
+这些内容放在既有六章中，不增加顶级章节或额外业务分析文件。完成前会检查：拿掉页面描述是否仍能说明业务如何运行，以及测试是否验证业务结果而不只是点击反馈。
+
 ### PRD-first 与 Prototype-first
 
 | 模式 | 适用场景 | 产物顺序 |
 |---|---|---|
-| PRD-first（默认） | 普通需求、后端/API/流程需求、已有明确业务目标 | 先确认 PRD 决策 → 写入 PRD 的 canonical 小型或拆分形式 → 如需要再写 `prototype.html` |
-| Prototype-first | 用户说“先看原型/先出页面/先做交互稿”，或需求 UI-heavy | 先确认 prototype-blocking 决策 → 写 `prototype.html` → 用户确认原型 → 补齐 PRD 决策 → 写入 PRD 的 canonical 小型或拆分形式 |
+| PRD-first（默认） | 普通需求、后端/API/流程需求、已有明确业务目标 | 确认 PRD 决策后写 PRD，再按确认生成原型 |
+| Prototype-first | 用户要求先看原型，或 UI-heavy 需求 | 确认原型决策，生成并评审原型，再补齐业务决策、确认并写 PRD |
 
-生成原型时，如果存在 `fp-docs/settings/prototype-style.md`，必须先读取并应用；没有则使用中性默认样式，并建议在首个原型确认后提取项目原型风格。
+顺序模式不决定技术栈。已有前端推荐 project-native，基于真实组件/主题和当前基座增量修改源码、重建预览；legacy 或明确轻量模式使用 standalone-html。原型设置存在时按需读取，但缺少 prototype-style 不代表可以用中性样式替换已有真实组件。只有明确的绿地/轻量模式且没有视觉来源时才使用已确认的中性默认，并建议首个原型确认后通过 init 提取风格。
 
 ### PRD 模板要求
 

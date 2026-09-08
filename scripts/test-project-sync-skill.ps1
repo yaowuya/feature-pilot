@@ -119,4 +119,9 @@ else {
 }
 Assert-Condition ($parseErrors.Count -eq 0) ("Sync script has PowerShell parse errors: $parseErrorMessage")
 
+Assert-Condition ($canonical.Contains('-ClaudeOnly')) 'Sync skill lacks Claude-only usage'
+Assert-Condition ($script.Contains('[switch]$ClaudeOnly')) 'Sync script lacks Claude-only selection'
+Assert-Condition ($script.Contains("'commands', 'skills', 'scripts'")) 'Runtime helper scripts are absent from hash verification'
+Assert-Condition ($script.Contains('if (-not $ClaudeOnly)')) 'Non-Claude work must have an explicit guard'
+
 Write-Output 'Project sync skill contract passed.'

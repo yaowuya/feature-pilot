@@ -69,6 +69,7 @@ flowchart LR
 | [`skills/_shared/artifact-layout.md`](../../skills/_shared/artifact-layout.md) | canonical form、split manifest、hard limit、任务 owner、Producer/Consumer 校验 |
 | [`skills/_shared/decision-ledger.md`](../../skills/_shared/decision-ledger.md) | 提案与设计决策状态、逐项确认、独立写入授权和恢复证据 |
 | [`skills/_shared/codegraph.md`](../../skills/_shared/codegraph.md) | CodeGraph 安装、查询、回退、当前源码复核和写后新鲜度 |
+| [`skills/_shared/prototype-contract.md`](../../skills/_shared/prototype-contract.md) | 前端能力识别、原生基座/单 HTML 兼容、Mock 隔离、源码/静态资产、版本及保真证据 |
 | [`skills/_shared/ui-e2e-contract.md`](../../skills/_shared/ui-e2e-contract.md) | UI Delivery Level、视觉/E2E 生命周期、真实浏览器证据和不可豁免门禁 |
 
 这些 contract 是 Agent 行为的单一事实源。本文解释它们如何协作，不覆盖其精确措辞。
@@ -100,6 +101,12 @@ fp-docs/
 - project facts 只在用户批准 discovery 后生成；
 - human-owned unknowns/decisions 只在确有内容并批准时创建；
 - 缺失的可选文件记录为 `N/A`，不是阻塞条件。
+
+### 原生原型基座
+
+有 Web 前端时，可单独运行 `fp-prototype-init` 建立/复用/刷新 `fp-docs/prototype-bases/<app-id>/`：同框架源码、真实组件/样式、Mock、静态 preview 及局部 manifest。fp-init 的可选阶段委托同一技能，不维护第二套流程。无前端跳过；settings/discovery/CodeGraph 批准不自动授权构建或安装。主 manifest 缺失也不强制初始化；若存在，只能在精确 diff 获批后编辑 Prototype Bases 小节。
+
+fp-prd 将本需求原型放在 `changes/<slug>/prototype/`，记录 baseReference，只修改隔离源码并重新构建；与旧 `prototype.html` 互斥。基座刷新不会覆盖已有需求，人工风格设置不自动重写。静态包通过本地服务预览，原型的 Mock 证据不是生产 E2E。
 
 ### 已有信息层刷新
 

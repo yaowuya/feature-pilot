@@ -36,6 +36,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` onc
 1. canonical-first Consumer（对面是 Producer）：按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 解析 mutually exclusive 唯一 canonical form：detect both alternatives before reading either（`prd.md`/`prd/00-index.md`、`proposal.md`/`proposal/00-index.md`、`design/backend.md`/`design/backend/00-index.md`、`design/frontend.md`/`design/frontend/00-index.md`、`tasks/plan-backend.md`/`tasks/backend/00-index.md`、`tasks/plan-frontend.md`/`tasks/frontend/00-index.md`）；split 按 manifest order 读取 fragments。`tasks/00-overview.md` exists exactly when both backend and frontend plans exist; A single-end plan never has an overview。indexless split、任何 historical path、dual form、缺失/重复 manifest entry、duplicate owner、unindexed fragment、`tasks`-kind 之外的 executable checkbox、task ID/checkbox 无 unique task owner 或重复、dependency cycle，都作为 structural conflict 阻塞。There is no read-only compatibility；必须先迁移为唯一 canonical form 并删除 obsolete paths。
 2. 只在解析出的 task-owner files 中检查未完成 checkbox；再检查 `.fp-execute/progress.md` 的 unfinished/blocked/failed 记录。ledger 只是恢复证据，冲突时结合 git、实际文件和验证结果对账。
 3. 检查目标归档目录 `fp-docs/archive/YYYY-MM-DD-<slug>/` 是否已存在。
+4. 若存在原型，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`，拒绝双模式/不完整目录，检查完整 native 原型包或旧 HTML。源码、Mock、preview 与证据一并保留；先确认相对资源与声明的本地预览方式，区分静态可查看和源码可重建。不得执行未经批准的 manifest 命令，原型 Mock 证据不能替代下方真实 UI/E2E gate。
 
 ### Step 2.1: UI/E2E Final Gate
 
@@ -63,6 +64,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/fp-final-review/final-review-contract.md` onc
    ```
 
 ### Step 5: 更新 history.md
+
+若包含原型，先在实际归档位置重新解析入口、相对资源及已批准的本地预览；失败时报告实际移动状态与缺失项，不宣称归档完成或继续写成功记录。不得为验证静态查看而执行过期构建命令，也不把缺失旧源伪装为可重建。
 
 在 `fp-docs/history/history.md` 末尾追加：
 

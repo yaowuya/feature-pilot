@@ -1,6 +1,6 @@
 # Canway / CW Prototype Style Example
 
-Use this file when generating or updating `fp-docs/changes/<change-slug>/prototype.html` for Canway / CW-style management-console pages.
+Use this file as an editable visual/interaction reference for Canway / CW-style management-console prototypes. For `project-native`, reuse the target project's real framework, components and tokens under its prototype base; the single-HTML implementation section below applies only to explicitly selected `standalone-html` or an existing legacy prototype.
 
 This is an editable starter draft distilled from provided Canway project prototypes and settings. Verify target-project screenshots, Figma, existing pages, and `frontend.md` before treating it as authoritative.
 

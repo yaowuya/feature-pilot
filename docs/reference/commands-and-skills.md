@@ -11,6 +11,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | 快速了解仓库现状、调用链或方案差异 | `fp-explore` | 只读事实与选项，不推进开发流程 |
 | 把复杂概念讲给零基础读者 | `fp-eli5` | 直接展示中文图解，默认不写仓库 |
 | 初始化或刷新 FeaturePilot 工作区 | `fp-init` | 最小 `fp-docs/manifest.md`，其他信息按批准创建 |
+| 已 init，只想补建或刷新原型基座 | `fp-prototype-init` | 同框架、全 Mock 的独立基座，不重跑信息层初始化 |
 | 把模糊想法澄清成 PRD | `fp-prd` | 经访谈和确认的 PRD；UI-heavy 场景可先做原型 |
 | 从 PRD 或需求启动完整开发 | `fp-start` | 提案、设计、计划、执行、终审与归档主线 |
 | 快速完成一个小而明确的修改 | `fp-quick` | 跳过完整文档链，但保留探索、确认与验证 |
@@ -29,6 +30,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | Claude Code 命令 | 对应 skill | 何时使用 |
 |---|---|---|
 | `/fp-init` | `fp-init` | 第一次采用 FeaturePilot，或刷新已有信息层与可选 CodeGraph |
+| `/fp-prototype-init [app-id 或 app-root]` | `fp-prototype-init` | 单独创建、复用或刷新前端原型基座；不需要重跑 fp-init |
 | `/fp-explore <问题>` | `fp-explore` | 在选择流程或修改代码前调查事实、行为、约束、风险与方案 |
 | `/fp-eli5 <主题>` | `fp-eli5` | 明确需要零基础专业图解时；默认直接展示，不依赖原始 HTML 标签或 Mermaid，默认不写仓库；只有显式要求且宿主支持时才使用专用网页图解 |
 | `/fp-prd <想法>` | `fp-prd`、`fp-prd-grill-me` | 明确要创建、编写、修订或补全 PRD 时 |
