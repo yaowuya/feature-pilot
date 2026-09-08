@@ -72,6 +72,18 @@ For target-state requirements, user instructions and approved active change arti
 - Backend-related phases must read `settings/backend.md` when present.
 ```
 
+## Prototype Base Registration
+
+仅由 fp-prototype-init 在基座构建/刷新及既有主 manifest 的精确 diff 获批后，将此节加入/更新主 manifest；主 manifest 缺失、no-frontend、仅报告、跳过或未批准时不添加。全局入口仍为 fp-docs/manifest.md。原型局部 metadata 的 schema/所有权由 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` 定义，不复制到 intel 或人工风格设置。
+
+```markdown
+## Prototype Bases
+
+| App | App Root | Manifest | When To Read |
+| --- | --- | --- | --- |
+| <app-id> | <verified app root> | `prototype-bases/<app-id>/manifest.json` | only prototype work for this app; verify source/owned-file fingerprints live |
+```
+
 ## Project Facts
 
 Target: `fp-docs/intel/project-facts.md`
@@ -234,6 +246,12 @@ Target: `fp-docs/settings/frontend.md`
 - Design sources:
 - Mapping rules:
 
+## Prototype Base Reference
+
+- Selected app and root:
+- Base manifest: <approved prototype-bases/<app-id>/manifest.json pointer, or not initialized>
+- Source/build/preview rules: shared prototype-contract; verify current inputs before use.
+
 ## Preview and Visual Verification
 
 - Local preview command:
@@ -294,7 +312,8 @@ Target: `fp-docs/settings/prototype-style.md`
 
 ## Usage
 
-- Use when creating or updating `fp-docs/changes/<slug>/prototype.html`.
+- Use when creating or updating a native `fp-docs/changes/<slug>/prototype/manifest.json` prototype or explicitly selected legacy `prototype.html`.
+- Native prototypes render real project components/styles; these settings are approved constraints, not a replacement implementation.
 
 ## Visual Sources
 

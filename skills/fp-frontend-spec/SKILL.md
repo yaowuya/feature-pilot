@@ -24,6 +24,12 @@ Before making UI visual or interaction decisions, read the target project's conf
 
 If settings are absent, do not invent a design system. Infer only from existing code and ask the user when visual requirements are ambiguous or behavior changes product semantics.
 
+## Native prototype context
+
+用于基座/需求原型时读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`，只读取当前 app 的基座 manifest 和实际相关组件/样式/providers。已有前端使用同框架真实组件，不从文字风格重新仿写 HTML；检查版本、样式入口、字体/图标、布局、路由/国际化上下文和 Mock 隔离。
+
+基座 metadata 是来源指针，不覆盖当前源码或人工约束；过期时报告并交由 `/fp-prototype-init` 按批准刷新。输出来源说明放在调用方的基座证据或 `3.N.4 原型` 内，不为原型另建 frontend design 文件。原型的 Mock/截图不充当真实 E2E 或 Figma 专属 UI 证据。
+
 ## What to extract
 
 Record concrete values in the design or plan only when they come from settings, Figma, screenshot evidence, or existing code:

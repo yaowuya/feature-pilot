@@ -32,6 +32,7 @@ Assert-Condition (-not $agents.Contains('| Owns |')) 'AGENTS.md caches owner sum
 
 $intentTargets = @(
     '`skills/fp-init/SKILL.md`'
+    '`skills/fp-prototype-init/SKILL.md`'
     '`skills/fp-explore/SKILL.md`'
     '`skills/fp-eli5/SKILL.md`'
     '`skills/fp-start/SKILL.md`'

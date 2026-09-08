@@ -40,6 +40,10 @@ fp-docs/changes/<slug>/
 
 The vertical bar above means “one form or the other”; it does not permit both.
 
+## Prototype assets
+
+When prototype input/output is present, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` before resolving it. Detect both `prototype.html` and `prototype/manifest.json` (including an indexless `prototype/` directory) before choosing one. Native framework source, Mock, evidence and preview assets are one prototype, not PRD/proposal/design/task Markdown fragments. Preserve existing legacy prototypes or use the explicitly selected native mode; migration and archive obey that contract's approval, source and relative-asset rules. The canonical Markdown forms above are unchanged.
+
 ## Split selection and safety limits
 
 A Producer selects one form before writing. Default to the small form whenever the complete logical artifact is expected to fit within both hard limits below.

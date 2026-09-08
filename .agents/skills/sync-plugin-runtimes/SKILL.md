@@ -23,6 +23,14 @@ description: Use when the current FeaturePilot repository must be synchronized t
 powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1
 ```
 
+用户只要求更新 Claude Code 时，必须使用单端模式，不读取或改动其它运行时的安装目标：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1 -ClaudeOnly
+```
+
+`-ClaudeOnly -VerifyOnly` 只验证仓库与 Claude cache；不要求 Codex/DSH 已安装。不传 `-ClaudeOnly` 才执行原有三端流程。
+
 只验证、不写入：
 
 ```powershell
@@ -44,10 +52,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin
 
 ## Completion contract
 
-只有以下条件全部满足才能报告完成：
+`-ClaudeOnly` 的完成条件只包含仓库/Claude 插件验证、原安装 scope 的 enabled 状态，以及两个清单、commands、skills、scripts 与实际 Claude cache 的逐文件 SHA-256 一致；不声称其它端已更新。脚本与测试等运行依赖也必须比对，不能仅核对 skills 文本。完成后只提示重启 Claude Code。
+
+默认三端模式只有以下条件全部满足才能报告完成：
 
 1. 仓库验证和 Claude 插件验证通过。
-2. `.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`commands/`、`skills/` 的 SHA-256 在四个位置完全一致。
+2. `.claude-plugin/plugin.json`、`.codex-plugin/plugin.json`、`commands/`、`skills/`、`scripts/` 的 SHA-256 在四个位置完全一致。
 3. 仓库 `skills/` 与 DSH 技能根 `~/.dsh/skills`（或 `$DSH_HOME/skills`）中本仓库拥有的 `fp-*`、`_shared/` 逐文件 SHA-256 一致。
 4. 两端安装状态为 enabled，且 cache 路径来自当前配置和安装元数据。
 5. 没有向 Codex 插件源复制 `.agents/`、`.claude/` 或 `.git/`；没有向 DSH 技能根复制 `commands/`、`.agents/`、`.claude/` 或 `.git/`。

@@ -443,6 +443,7 @@ $canonicalNormativeLines = @(
     '## Applicability and UI Delivery Level',
     'Every UI-bearing task declares one `UI Delivery Level` and records why that level applies:',
     'This contract is mandatory for UI-bearing work in `fp-figma`, `fp-execute`, `fp-execute-sdd`, and `fp-final-review`.',
+    'Prototype-only assets created by fp-prototype-init/fp-prd (including delegated fp-init setup) follow `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`, not the production UI delivery lifecycle. During source inventory, record their canonical ownership and evidence of isolation separately; a directory name alone is not an exemption. Shared/production UI edits, or prototype code mounted/imported into a production entry, remain in the real UI/E2E scope. Prototype Mock checks cannot mark any required real case covered or waive a blocker.',
     '- `static-only`: only static presentation is in scope. It needs visual `PASS` / `VISUAL_REVIEW_PASS` evidence and an evidence-backed `E2E Applicability: N/A` reason.',
     '- `interactive`: user interaction is in scope. It requires real browser front-end E2E and `E2E Applicability: REQUIRED`.',
     '- `business-flow`: a user-visible flow crosses a real business boundary. It requires real browser front-end E2E, proof of the real core API, `Mocked Core API: false`, the real persistence or permission result, and cleanup of test-created data.',
@@ -679,6 +680,14 @@ $invalidBacktickInfoFence = $contract + [Environment]::NewLine + '```text`' + [E
 Assert-Condition (
     -not (Test-ClosedNormativeLineSequence $invalidBacktickInfoFence $canonicalNormativeLines)
 ) 'mutation survived: a backtick fence with a backtick in its info string may hide normative text'
+$mutatedPrototypeDirectoryWaiver = Replace-Required $contract 'a directory name alone is not an exemption' 'any prototype directory is automatically exempt' 'prototype directory bypass'
+Assert-Condition (
+    -not (Test-ClosedNormativeLineSequence $mutatedPrototypeDirectoryWaiver $canonicalNormativeLines)
+) 'mutation survived: prototype directory alone may bypass real UI/E2E'
+$mutatedPrototypeMockEvidence = Replace-Required $contract 'Prototype Mock checks cannot mark any required real case covered or waive a blocker.' 'Prototype Mock checks may mark real cases covered.' 'prototype Mock evidence bypass'
+Assert-Condition (
+    -not (Test-ClosedNormativeLineSequence $mutatedPrototypeMockEvidence $canonicalNormativeLines)
+) 'mutation survived: prototype Mock evidence may replace real E2E'
 $mutatedClosedMockAcceptance = $contract + [Environment]::NewLine + 'Mock data is acceptable for an E2E run.'
 Assert-Condition (
     -not (Test-ClosedNormativeLineSequence $mutatedClosedMockAcceptance $canonicalNormativeLines)

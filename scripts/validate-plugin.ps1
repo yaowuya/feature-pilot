@@ -560,6 +560,26 @@ Assert-Condition (Test-Path $decisionGateContractValidator) 'focused decision-ga
 & powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused decision-gate contract validator failed'
 
+$prdBusinessContractValidator = Join-Path $root 'scripts\test-prd-business-contract.ps1'
+Assert-Condition (Test-Path $prdBusinessContractValidator) 'focused PRD business contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prdBusinessContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused PRD business contract validator failed'
+
+$prototypeContractValidator = Join-Path $root 'scripts\test-prototype-contract.ps1'
+Assert-Condition (Test-Path $prototypeContractValidator) 'prototype contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'prototype contract validator failed'
+
+$prototypeArtifactValidator = Join-Path $root 'scripts\test-prototype-artifacts.ps1'
+Assert-Condition (Test-Path $prototypeArtifactValidator) 'prototype artifact tests are missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeArtifactValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'prototype artifact tests failed'
+
+$prototypeIgnoreValidator = Join-Path $root 'scripts\test-prototype-ignore.ps1'
+Assert-Condition (Test-Path $prototypeIgnoreValidator) 'prototype Git ignore tests are missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeIgnoreValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'prototype Git ignore tests failed'
+
 $prdSkillPath = Join-Path $root 'skills\fp-prd\SKILL.md'
 $prdSkillText = Read-Utf8 $prdSkillPath
 $prdFrontmatter = [regex]::Match($prdSkillText, '(?s)\A---\r?\n(?<body>.*?)\r?\n---')
@@ -919,6 +939,7 @@ foreach ($example in [regex]::Matches($taskLayoutTemplate, '(?s)```markdown\r?\n
 
 $skillAnchors = @{
     'fp-init' = @('templates.md', 'project-family-examples.md', 'Lightweight discovery boundaries', 'Never overwrite', 'auto-install', 'show-install-steps', 'skip-codegraph', 'npm install -g @colbymchenry/codegraph@latest', 'codegraph install --target=auto --location=global --yes', 'codegraph init <project-root>', 'refresh-existing-information-layer', 'stale-generated-intel', 'refresh-stale-intel', 'preserve-manual-settings', 'user-edit-conflict')
+    'fp-prototype-init' = @('prototype-contract.md', 'no-full-init', 'no-manifest-required', 'manifest-section-only', 'fresh-reuse', 'approved-prototype-provisioning', 'CheckFreshness')
     'fp-prd' = @('Bucket A/B', 'Bucket C', 'Prototype-first', 'explicitly approved', 'prd-template.md')
     'fp-prd-grill-me' = @('one question per turn', 'MUST NOT decide Bucket C', 'Minimal Fact Exploration')
     'fp-propose' = @('proposal-template.md', 'Why / What Changes / Out of Scope / Impact', 'fp-docs/changes/<slug>/proposal.md')
