@@ -102,7 +102,7 @@ $returnFields = @(
     'profile-fields'
 )
 $profileFields = @(
-    'prd-existing-behavior', 'prd-technical-constraints', 'prd-product-decisions',
+    'prd-product-surface-facts', 'prd-implementation-evidence', 'prd-technical-constraints', 'prd-product-decisions',
     'start-active-stage', 'start-route-assessment', 'start-reusable-context',
     'quick-candidate-files', 'quick-reusable-patterns', 'quick-verification',
     'quick-scope-assessment'
@@ -254,7 +254,7 @@ $prdSkill = Read-Utf8 (Join-Path $root 'skills\fp-prd\SKILL.md')
 $prdCommand = Read-Utf8 (Join-Path $root 'commands\fp-prd.md')
 foreach ($anchor in @(
     'profile: prd-facts', 'caller: fp-prd', 'budget-profile: small',
-    'prd-existing-behavior', 'prd-technical-constraints', 'prd-product-decisions',
+    'prd-product-surface-facts', 'prd-implementation-evidence', 'prd-technical-constraints', 'prd-product-decisions',
     'purely greenfield', 'fp-prd-grill-me', 'Bucket C'
 )) {
     Assert-Condition ($prdSkill.IndexOf($anchor, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) "fp-prd integration is missing $anchor"

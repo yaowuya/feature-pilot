@@ -34,8 +34,12 @@ Code exploration may **not** decide:
 
 - target users and business value;
 - MVP vs out-of-scope boundaries;
+- whether an existing module should be split, merged, or replaced by a new one;
 - risk acceptance, permission policy, audit needs, or operational fallback expectations;
+- lifecycle, version, or reference semantics;
 - acceptance criteria, success metrics, or prototype expectations.
+
+`prd-product-surface-facts` may be described as current product behavior after fact conversion; `prd-implementation-evidence` stays an implementation fact, never a product answer; `prd-product-decisions` are always user-owned. A high-confidence code fact is not a high-confidence product decision.
 
 Unless the user provided a complete PRD or explicitly authorized assumption-based generation, run Batch Confirmation Mode: Phase 1 batch-review Bucket A/B decisions, then Phase 2 ask Bucket C questions sequentially one at a time with a 3-5 question target. Do not self-answer Bucket C.
 
@@ -56,6 +60,29 @@ Unless the user provided a complete PRD or explicitly authorized assumption-base
 
 完成标准是拿掉页面描述后仍能解释业务如何开始、流转、结束及异常如何收束；不能闭环的高影响决策保持未决并进入 C 提问。
 
+## Business-object and relation phases
+
+在业务骨架之后、任何页面或组件问题之前，按顺序完成下列建模。结果落入同一套 A/B 审阅与 C 提问，不新增产物。只有需求确实涉及多个业务对象时才展开，并且下列每一项都是 Bucket C，必须由用户确认。
+
+1. **对象清单**：列出需求中的核心名词，逐项判定是独立业务对象、页面字段，还是当前实现的内部概念。只做字段、不承载身份与生命周期的名词不构成业务对象。
+2. **关系消歧**：每对可能相关的对象先确认关系类型——归属、绑定、引用、筛选条件、数据来源、使用限制或无关系。关系类型确认前不得询问一对一、一对多或多对多，也不得把 UI 顺序、现有字段或外键暗示成业务关系。
+3. **生命周期与引用语义**：对适用对象确认创建/草稿/启用/停用/归档等状态、各状态可编辑与可被引用的范围、引用方绑定对象本身还是具体版本、新版本是否自动生效、旧版本失效后既有引用如何处理、历史结果是否冻结。
+4. **内容模型审阅**：当需求围绕可配置内容、模板、字段或区块展开时，先确认目标内容模型是否复用当前区块、是否拆分、是否合并、是否新增当前实现不存在的区块、默认显隐、数据范围由谁配置、是否随版本冻结。当前代码枚举不作为目标内容模型。
+
+**版本触发器**：出现下列任一模式时自动执行第 3 项——可配置对象被其他对象引用；配置修改可能影响历史结果；同一配置需长期复用；已发布内容不可随意变化；消费方需要稳定、可追溯结果。
+
+**中性问法**：询问两个对象的关系时，不得预设存在持久关系，先给出关系类型选项：
+
+```markdown
+对象 A 在这里对对象 B 的作用是什么？
+- 决定归属
+- 形成绑定或引用
+- 仅用于筛选候选
+- 仅作为数据来源
+- 只限制可用范围
+- 两者没有业务关系
+```
+
 ## Batch Confirmation Mode
 
 The PRD interview has two phases: **batch review** (Buckets A/B), then **sequential questions** (Bucket C only).
@@ -64,11 +91,19 @@ The PRD interview has two phases: **batch review** (Buckets A/B), then **sequent
 
 For every item in the PRD Blocking Decisions list, classify it into one of three buckets:
 
-**Bucket A — Confident Inference（可自行确定）：** The assistant has enough information from user input, code facts, existing product patterns, or common best practices to propose a reasonable answer with high confidence. These go into the batch summary as "已确定" items. The assistant proposes them; the user reviews and corrects as needed.
+**Bucket A — Confident Inference（可自行确定）：** The assistant has enough information from user input, verified current product behavior, or existing product patterns to propose a reasonable answer with high confidence. Bucket A contains only:
 
-**Bucket B — Low-Risk Default（低风险默认）：** The decision has a clear industry-standard or product-convention default that carries low risk if wrong. Propose the default, mark confidence level, and include in the batch summary.
+- decisions the user already stated explicitly;
+- current product behavior verified in this session;
+- wording, structure, or summarization that changes no scope, risk, or behavior.
+
+Bucket A never contains product inference about scope, roles, deployment, objects, relations, lifecycle, or acceptance.
+
+**Bucket B — Low-Risk Default（低风险默认）：** The decision has a clear industry-standard or product-convention default that is easily reversible, cheap to get wrong, and changes no data boundary, permission, lifecycle, or acceptance criteria. Propose the default, mark confidence level, and include in the batch summary. Anything failing any of those conditions is Bucket C.
 
 **Bucket C — Must Ask（必须提问）：** The decision has high impact, no clear default, genuinely ambiguous trade-offs, or the assistant's confidence is low. **The assistant MUST NOT decide Bucket C items.** These become the "需确认" questions and must be asked one at a time.
+
+**Always Bucket C:** deployment and isolation boundary; the relationship between two business objects; lifecycle and states; whether versioning is needed; whether a consumer binds the object or a specific version; whether a new version takes effect automatically; how existing references behave after a version is deactivated; whether historical results are frozen; the main delivery experience and secondary output scope; new content blocks absent from current implementation; high-risk failure and fallback policy; any new business object.
 
 **HARD RULE:** The assistant must NEVER self-answer Bucket C items. Bucket C items can only be resolved by the user's explicit answer.
 
@@ -92,16 +127,16 @@ return-to: <fp-prd-grill-me + same review item/question>
 
 ### Phase 1: Batch Review (Buckets A/B)
 
-1. Reuse caller-provided verified facts; explore only missing facts within Minimal Fact Exploration and read relevant settings.
-2. Apply Business-first analysis, then classify every applicable PRD Blocking Decision into Bucket A, B, or C. Keep evidence, user-confirmed decisions, and proposed defaults distinguishable.
+1. Reuse caller-provided product-surface facts and implementation evidence; explore only missing facts within Minimal Fact Exploration and read relevant settings. Apply fact conversion: describe current behavior in product language and keep member names, paths, interfaces, and fields out of the batch summary.
+2. Apply Business-first analysis and the Business-object and relation phases, then classify every applicable PRD Blocking Decision into Bucket A, B, or C. Keep evidence, user-confirmed decisions, and proposed defaults distinguishable, and never present an assistant recommendation as a user decision.
 3. Output a single batch review message:
 
 ```markdown
 ## PRD 决策确认
 
-以下是根据你的需求、现有代码和常见实践整理的决策。请快速审阅，有异议的指出即可，没异议我会直接使用。
+以下是建议采用的默认项（待批量确认）：根据你的需求、当前产品行为和常见实践整理。请快速审阅，有异议的指出即可。
 
-### 已确定
+### 建议采用的默认项（待批量确认）
 
 | # | 桶 | 决策项 | 推断结果 | 置信度 | 依据 |
 |---|---|---|---|---|---|
@@ -161,15 +196,18 @@ Before `fp-prd` writes either PRD form or the resolved prototype, confirm every 
 
 - Target users, roles, and user stories.
 - Business problem, pain point, and expected outcome.
+- Deployment and isolation boundary: single instance or multi-tenant, organization/project/space/business isolation, which roles create, use, view and manage, and whether data is shared across scopes.
 - MVP scope, out-of-scope items, and delivery boundary.
 - Current and target business workflows, their differences, affected roles/systems and evidence for unchanged scope, following Business-first analysis.
+- Business objects, their relation types, lifecycles, reference/version semantics, historical consistency, and the target content model, following the Business-object and relation phases.
 - Business-state transitions, rules, approval, async work, scheduling, or frontend/backend coordination when applicable.
+- Main delivery experience and secondary output scope: which output is designed in depth and which only needs a consistency requirement.
 - Page entry, key interactions, and critical page elements.
 - Key fields, validation rules, and data boundaries.
 - Permission model, visibility, and unauthorized access risk.
 - Audit/operation log requirements.
-- High-risk error handling and fallback behavior.
-- Whether a prototype is needed; its rendering mode, selected app/baseReference and source/Mock/build scope; and which simple interactions the resolved prototype must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
+- High-risk error handling and fallback behavior: the object's state after failure, who owns recovery, retry/cancel boundary, and where the result becomes visible.
+- Whether a prototype is needed; the user's explicit choice among direct PRD, lightweight product wireframe, or runnable interaction prototype; its rendering mode, selected app/baseReference and source/Mock/build scope; and which simple interactions the resolved prototype must support, such as dialog open/close, form validation, search/filter, table selection, step navigation, submit success/error, loading, or permission-disabled states.
 - Acceptance criteria and core test scenarios.
 - PRD form and split strategy for multi-change input: default to the small form in compact `prd.md`; use the mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only under the shared artifact-layout contract's overflow/approval/setting gates, keeping complete feature blocks together on semantic boundaries.
 - Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
@@ -178,7 +216,7 @@ Before `fp-prd` writes either PRD form or the resolved prototype, confirm every 
 
 ## Prototype-first Interview
 
-When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. Apply Business-first analysis only to the business chain, actors, rules and states that the prototype will demonstrate; retain other business unknowns for confirmation before PRD writing. The goal is to create a reviewable the resolved prototype before writing either PRD Markdown form. 原型确认只覆盖已演示的行为，不自动确认未展示的业务规则、异常闭环或后台不改结论。
+When `fp-prd` selects Prototype-first mode, this skill narrows the interview to prototype-blocking decisions first. It still requires the user's explicit prototype choice; a UI-heavy idea alone never triggers this interview. Apply Business-first analysis and the Business-object and relation phases first to the business chain, objects, relations, rules and states that the prototype will demonstrate; retain other business unknowns for confirmation before PRD writing. The goal is to create a reviewable the resolved prototype before writing either PRD Markdown form. 原型确认只覆盖已演示的行为，不自动确认未展示的业务规则、异常闭环、版本语义或后台不改结论。
 
 Prototype-first still uses the same Bucket A/B/C discipline:
 
@@ -269,7 +307,9 @@ When all PRD-blocking decisions are confirmed, return to `fp-prd` with:
 - Confirmed user stories.
 - Confirmed scope and out-of-scope items.
 - Confirmed current/target business flow and changes, actor/system impacts with evidence for unchanged scope, and applicable state/rule/exception closure; distinguish verified facts, user decisions and authorized assumptions.
-- Confirmed workflow/prototype decision.
+- Confirmed business objects, relation types, lifecycle and reference/version semantics, and target content model, with the user's decision as the source for each.
+- Confirmed main delivery experience, secondary output scope, and each feature's confirmed user stories and goals.
+- Confirmed workflow/prototype decision, including the user's explicit prototype choice.
 - Confirmed prototype interactions, if the resolved prototype will be generated.
 - Confirmed non-functional requirements.
 - Non-blocking open questions, each with why it is non-blocking.
