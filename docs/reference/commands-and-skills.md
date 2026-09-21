@@ -12,7 +12,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | 把复杂概念讲给零基础读者 | `fp-eli5` | 直接展示中文图解，默认不写仓库 |
 | 初始化或刷新 FeaturePilot 工作区 | `fp-init` | 最小 `fp-docs/manifest.md`，其他信息按批准创建 |
 | 已 init，只想补建或刷新原型基座 | `fp-prototype-init` | 同框架、全 Mock 的独立基座，不重跑信息层初始化 |
-| 把模糊想法澄清成 PRD | `fp-prd` | 经访谈和确认的 PRD；UI-heavy 场景可先做原型 |
+| 把模糊想法澄清成 PRD | `fp-prd` | 经产品访谈和确认的 PRD；原型需用户显式选择 |
 | 从 PRD 或需求启动完整开发 | `fp-start` | 提案、设计、计划、执行、终审与归档主线 |
 | 快速完成一个小而明确的修改 | `fp-quick` | 跳过完整文档链，但保留探索、确认与验证 |
 | 根据 Figma 改造 UI | `fp-figma` | 设计映射、实现、视觉与能力证据 |
@@ -81,7 +81,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 
 ### 需求与完整开发
 
-阅读 [初始化、PRD 与完整主线](../user_guide/init-prd-start.md)，了解 `fp-init → fp-prd → fp-start` 的使用方式、Prototype-first 和阶段确认。
+阅读 [初始化、PRD 与完整主线](../user_guide/init-prd-start.md)，了解 `fp-init → fp-prd → fp-start` 的使用方式、原型显式选择和各阶段确认。
 
 ### 覆盖率提升
 

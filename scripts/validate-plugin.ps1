@@ -565,6 +565,11 @@ Assert-Condition (Test-Path $prdBusinessContractValidator) 'focused PRD business
 & powershell -NoProfile -ExecutionPolicy Bypass -File $prdBusinessContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused PRD business contract validator failed'
 
+$prdProductFirstValidator = Join-Path $root 'scripts\test-prd-product-first-contract.ps1'
+Assert-Condition (Test-Path $prdProductFirstValidator) 'focused PRD product-first contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $prdProductFirstValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused PRD product-first contract validator failed'
+
 $prototypeContractValidator = Join-Path $root 'scripts\test-prototype-contract.ps1'
 Assert-Condition (Test-Path $prototypeContractValidator) 'prototype contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $prototypeContractValidator

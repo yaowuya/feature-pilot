@@ -5,7 +5,9 @@ description: Use when a project needs its reusable frontend prototype base initi
 
 # FeaturePilot Prototype Init
 
-单独创建、复用或刷新同技术栈、可独立运行、业务数据全 Mock 的项目原型基座。既可由用户直接调用，也可作为 fp-init 的可选阶段；不生成某个需求的 PRD 或 change 原型。
+单独创建、复用或刷新可独立运行、业务数据全 Mock 的项目原型基座。既可由用户直接调用，也可作为 fp-init 的可选阶段；不生成某个需求的 PRD 或 change 原型。
+
+已有前端默认建立 **`static-modular`** 静态基座：多文件静态资产、`delivery: no-build`、入口可 `file://` 直接打开。需要真实组件运行时、真实组件库行为或后续开发复用时，显式选择 **`project-native`**。模式由需求和用户选择决定，不是失败后的自动降级。
 
 ## Required context and ownership
 
@@ -36,23 +38,36 @@ description: Use when a project needs its reusable frontend prototype base initi
 - 人工修改：展示 ownedFiles 差异及保留/合并/替换建议，逐文件取得明确批准；不通过更新 hash 掩盖修改。
 - app-id、appRoot、框架或来源身份不一致：停止并澄清目标/迁移，不自动覆盖另一个应用。
 
-按共享契约 **approved-prototype-provisioning** 展示一次审批摘要：目标 app 与代表性页面、真实组件/主题复用、新增或修改路径、Mock 场景、构建/预览命令及 cwd、依赖/lockfile/配置/截图影响。提供创建/选择性刷新、仅报告、跳过；需要恢复人工内容时把该文件的明确处置纳入批准范围。
+按共享契约 **approved-prototype-provisioning** 展示一次审批摘要：目标 app 与代表性页面、**模式选择及理由**（默认推荐 `static-modular`）、真实组件/主题复用方式、新增或修改路径、Mock 场景、预览命令及 cwd、依赖/lockfile/配置/截图影响。`static-modular` 无构建步骤，摘要中明确写"不安装依赖、不运行构建器"，不要把构建命令留空造成误解；`project-native` 才列出构建命令。提供创建/选择性刷新、仅报告、跳过；需要恢复人工内容时把该文件的明确处置纳入批准范围。
 
 若主 manifest 已存在，读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 的 Prototype Base Registration 片段，提出仅 `Prototype Bases` 的精确 diff。用户可以批准基座但不登记索引；此时不写主 manifest，完成后报告精确基座路径。没有主 manifest 时直接略过此登记，不要求先运行 fp-init。
 
 ## Build, verify and register
 
-取得相关明确批准后，执行共享 prototype-contract 的 Init provisioning and refresh；不复制另一套构建规则。fresh-reuse 时只执行已批准的 Git 保护/缺项验证/索引登记，若没有缺项直接报告复用，不进入下面的源码修改与构建步骤：
+取得相关明确批准后，执行共享 prototype-contract 的 Init provisioning and refresh；不复制另一套构建规则。fresh-reuse 时只执行已批准的 Git 保护/缺项验证/索引登记，若没有缺项直接报告复用，不进入下面的源码修改与验证步骤：
 
-1. 创建/更新本基座的原生源码入口、必要组件/布局包装、配置和 Mock 场景；沿用当前框架，不改写为纯 HTML 冒充原生复用。
-2. Mock/网络隔离先于 UI 加载，检查 build-time 和 browser-time 业务请求；不连接真实后端，不复制会话、密钥或真实客户数据。
-3. 执行获批构建、独立 localhost 预览、网络和视觉对照；使用 `CheckFreshness` 或等价校验核对实际来源/自有文件。命令/JSON 校验通过不等于运行或还原度通过。
-4. 写入真实的 fp-prototype/v1 metadata 和证据。只有对应基座产物已存在且结构有效后，才按已获批 diff 更新已有主 manifest 的 Prototype Bases 引用；索引不写长期 ready/stale 结论。
-5. 若构建或浏览器条件不足，报告 blocked/未验证及实际已写文件，不发布虚假成功引用，不自动安装或降级；不影响已有信息层和旧需求原型。
+**`static-modular`（默认）：**
+
+1. 从代表性页面提炼结构、密度与视觉语义，创建 `css/tokens.css`、`css/layout.css`、`css/components.css`。token 必须来自真实来源（既有 scss/token 文件、`settings/prototype-style.md`、Figma 或截图），不得凭印象编造。
+2. 编写 `js/network-guard.js` 并置于 `scriptOrder[0]`；无构建环境下由它禁用 `fetch`/`XMLHttpRequest`/`WebSocket`/`EventSource`，并暴露 `window.__FP_PROTOTYPE__`。
+3. 编写 `js/components.js` 渲染助手与 Mock 场景，然后创建入口 HTML 与 `componentMap`（生产组件 → 静态类，逐行可核对）。
+4. 入口与所有顺序脚本只能使用 classic script：不得出现 `type="module"`、ESM `import`/`export` 或 CDN 引用，否则 `file://` 直接打开不成立。
+5. 运行结构自检（`validate-prototype.ps1`）、`file://` 直接打开、网络与视觉对照；写入 evidence 与真实 hashes。
+
+**`project-native`（显式选择）：**
+
+1. 创建/更新本基座的原生源码入口、必要组件/布局包装、配置和 Mock 场景；沿用当前框架构建产物。
+2. Mock/网络隔离先于 UI 加载，检查 build-time 和 browser-time 业务请求。
+3. 执行获批构建、独立 localhost 预览、网络和视觉对照。
+
+两种模式共同要求：不连接真实后端，不复制会话、密钥或真实客户数据；用 `CheckFreshness` 或等价校验核对实际来源/自有文件，命令/JSON 校验通过不等于运行或还原度通过。
+
+4. 写入真实的 `fp-prototype/v1` metadata 和证据（`static-modular` 的 `verification` 用 `structure` 替代 `build`）。只有对应基座产物已存在且结构有效后，才按已获批 diff 更新已有主 manifest 的 Prototype Bases 引用；索引不写长期 ready/stale 结论。
+5. 若预览或浏览器条件不足，报告 blocked/未验证及实际已写文件，不发布虚假成功引用，不自动安装或降级；不影响已有信息层和旧需求原型。
 6. 若写入原型源码/配置，对已有图执行共享契约的 dirty-after-write/post-write-sync；无图不建图，失败不阻塞主流程。
 
 ## Output and caller return
 
-简洁报告：app-id/appRoot、created/refreshed/reused/skipped/no-frontend/blocked、基座 manifest 与源码/预览入口、实际验证及限制、主索引已更新或未修改。仅执行过的构建/预览命令才报告为已验证。
+简洁报告：app-id/appRoot、mode、created/refreshed/reused/skipped/no-frontend/blocked、基座 manifest 与入口/预览路径、实际验证及限制、主索引已更新或未修改。仅执行过的检查才报告为已验证；`static-modular` 明确报告未运行构建（因为没有构建步骤），不得把"无需构建"说成"构建通过"。
 
 独立调用完成后，可给出 `/fp-prd <需求>` 作为后续入口，不自动进入需求编写或生产实现。若由 fp-init 调用，return 给 caller 同一结果及实际写入/审批状态，只继续其尚未完成的信息层步骤；不得重跑本技能、重复询问或由 fp-init 再写一次基座/索引。

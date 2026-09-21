@@ -2,6 +2,16 @@
 
 Read this file only after the final PRD confirmation summary is approved and immediately before writing or validating `prd.md` or `prd/00-index.md` plus its fragments.
 
+## PRD audience and voice
+
+默认读者为产品经理、业务方、设计师和研发评审者。使用直接、可理解的产品语言。
+
+- 每个功能先说明用户、问题和价值，再说明规则、交互、异常和结果。
+- 只描述 Who / Why / What / Rule / Outcome，不描述 How。
+- 代码探索结果必须先转换为用户可感知的当前行为，再写进 PRD。
+- 代码和实现证据不得直接复制到 PRD；除非用户明确要求技术型 PRD，正文不得包含源码路径、文件名、行号、类名、函数名、模型名、接口名、字段设计、数据库/队列/事务实现、构建命令、端口、SHA、Git 状态或验证计数。
+- 实现方式进入 proposal、design 和 tasks；原型技术元数据只保存在 prototype manifest 与 evidence。
+
 ## Representation rules
 
 - Small form is `fp-docs/changes/<slug>/prd.md`; split form is `fp-docs/changes/<slug>/prd/00-index.md` plus indexed fragments. `prd.md` and `prd/` are mutually exclusive.
@@ -96,12 +106,12 @@ flowchart TD
 
 #### 3.1.4 原型
 
-- 原型模式：<project-native / standalone-html / 不生成>
-- 原型入口：<native 为 prototype/manifest.json 与 prototype/preview/index.html；legacy 为 prototype.html；填写实际相对链接，注明原型仅保留本地、不随 Git 提交>
-- 源码与基座：<native 源码/Mock 入口、baseReference 版本；legacy 写不适用>
-- 预览与验证：<已验证的本地命令/URL、场景、实际检查及限制；Mock 不等于真实 E2E>
-- 原型依据：<项目真实组件/基座 / 已有页面 / Figma / 截图 / UI/UX spec>
-- 未生成原因：<如不需要原型>
+- 原型入口：<prototype/preview/index.html 或遗留 prototype.html 的相对链接；注明原型仅保留本地、不随 Git 提交>
+- 演示范围：<该原型演示了哪些页面、状态和交互>
+- 已确认结论：<从原型确认的产品规则、文案和可见状态>
+- 未覆盖范围：<原型没有证明的业务规则、权限、版本、异常或后台能力>
+
+原型小节只记录上文四项。原型模式、源码与 Mock 入口、基座与哈希、构建/预览命令与 cwd、端口、资源清单、网络与浏览器验证记录、Git ignore/index 状态一律只保存在 `prototype/manifest.json` 与原型 evidence，不写入 PRD。
 
 ## 四、非功能需求
 
@@ -149,8 +159,20 @@ flowchart TD
 - Required tables retain their exact columns.
 - User story, goal, requirements, exceptions, permissions, logs, and tests align.
 - Complex flows have Mermaid; simple flows explain why no diagram is needed.
-- Prototype decision is explicit; generated prototypes implement the confirmed core interactions.
+- Prototype decision is explicit and the user selected it; generated prototypes implement the confirmed core interactions.
 - No `TBD`, `TODO`, `待补充`, `按需处理`, or `类似上面` remains.
+
+## Product-language self-review
+
+- 不看代码也能理解需求价值和完整业务流程；业务的开始、流转、结束和异常收束都能说清。
+- 正文不含源码路径、文件名、行号、类名、函数名、模型名、接口名和字段设计。
+- 正文不含 SHA、端口、启动命令、Git 状态、构建日志、文件数或资源计数。
+- 当前实现事实已转换为用户可感知行为；页面描述没有替代业务规则。
+- PRD 没有提前决定 proposal/design 阶段的实现方案。
+- 原型技术元数据只存在于 manifest/evidence；PRD 原型小节只有入口、演示范围、已确认结论和未覆盖范围。
+- 所有首次出现的业务术语都能被非研发读者理解。
+- “关联、绑定、归属、同步、继承、自动升级”等关系词都有用户明确确认的来源。
+- 产品读者检查：不懂代码的产品经理能否只看这份 PRD，说明谁在什么条件下做什么、业务对象如何流转、失败后如何恢复、结果在哪里可见？必须理解代码、API、数据库或构建命令才成立的 PRD 不通过。
 
 ## Business-closure self-review
 

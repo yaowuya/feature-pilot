@@ -36,7 +36,7 @@ For empty input, perform only bounded orientation: applicable root instructions,
 
 Allowed pairs are exact: `fp-prd` + `prd-facts`, `fp-start` + `start-routing`, and `fp-quick` + `quick`.
 
-- `prd-facts`: existing user-visible behavior, implementation entrypoints, interface/data facts, adjacent product patterns, and technical constraints. It never answers product scope, goals, acceptance criteria, permissions policy, or prototype decisions.
+- `prd-facts`: existing user-visible behavior as product-language current behavior, implementation entrypoints, interface/data facts, adjacent product patterns, and technical constraints. It never answers product scope, goals, acceptance criteria, permissions policy, or prototype decisions.
 - `start-routing`: current PRD/stage evidence, quick-versus-full evidence, implementation boundaries, and minimum reusable next-phase context. It never selects the route or advances a stage.
 - `quick`: candidate files, reusable code/test patterns, verification paths, blockers, and advisory quick suitability. It never plans, approves, implements, or validates the change.
 
@@ -83,7 +83,8 @@ external-research: not-needed|not-authorized|proposed|completed
 external-research-gap: <bounded local-evidence gap or none>
 next-caller-action: <recommended caller action>
 profile-fields:
-  prd-existing-behavior: <required for prd-facts, otherwise n/a>
+  prd-product-surface-facts: <required for prd-facts, otherwise n/a>
+  prd-implementation-evidence: <required for prd-facts, otherwise n/a>
   prd-technical-constraints: <required for prd-facts, otherwise n/a>
   prd-product-decisions: <questions for the user, never answers; otherwise n/a>
   start-active-stage: <required for start-routing, otherwise n/a>
@@ -96,6 +97,8 @@ profile-fields:
 -->
 
 A recognized profile keeps its profile-specific fields even when blocked. Invalid invocation uses `status: blocked`, `budget-status: not-started-invalid-invocation`, and `n/a` where a profile field cannot be determined.
+
+`prd-product-surface-facts` is the only prd-facts field safe by default for PRD prose, and only after the caller converts it to product language. `prd-implementation-evidence` stays implementation detail for later design and execution; PRD writers must not copy it into PRD prose.
 
 ## Repository investigation flow
 
@@ -286,7 +289,7 @@ Internal profiles default to `not-authorized`. Return `external-research: propos
 
 ### prd-facts
 
-Return `prd-existing-behavior`, `prd-technical-constraints`, and unanswered `prd-product-decisions`. Do not infer preservation from current UI, enums, routes, APIs, or permissions. `fp-prd-grill-me` owns interview classification and confirmation.
+Return `prd-product-surface-facts`, `prd-implementation-evidence`, `prd-technical-constraints`, and unanswered `prd-product-decisions`. Keep the three fact layers separate: `prd-product-surface-facts` describes what a user can currently see, operate, and perceive; `prd-implementation-evidence` records source, interface, model, call-chain, and test evidence; `prd-technical-constraints` records compatibility and cross-end change constraints. Do not infer preservation from current UI, enums, routes, APIs, or permissions, and do not promote an implementation capability into target product scope. `fp-prd-grill-me` owns interview classification and confirmation.
 
 ### start-routing
 

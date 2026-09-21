@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $root = Split-Path -Parent $PSScriptRoot
 
@@ -38,9 +38,15 @@ Assert-Condition (-not $workspace.Contains("Only init's separately approved prov
 Assert-Contains $prd @('Missing or stale bases route to `/fp-prototype-init`') 'PRD base recovery'
 Assert-Contains $contract @('**fp-prototype-init**', 'manifest-section-only') 'shared base owner'
 
-Assert-Contains $contract @('project-native', 'standalone-html', 'mock-only', 'no-frontend', 'unknown', 'SSR', 'Storybook', 'baseReference', 'CheckFreshness', 'prototype/manifest.json', 'prototype-bases/<app-id>/manifest.json', 'build-time', 'browser-time', 'not real E2E', 'sourceEntry', 'ownedFiles', 'prototype-conflict') 'shared contract'
-Assert-Contains $init @('prototype-contract.md', 'no-frontend', 'approved-prototype-provisioning', 'manifest-only default', 'prototype-bases/', 'prototype-provisioning is not discovery') 'init'
-Assert-Contains $prd @('prototype-contract.md', 'project-native', 'standalone-html', 'prototype/manifest.json', 'baseReference', 'CheckFreshness') 'PRD'
+Assert-Contains $contract @('project-native', 'standalone-html', 'static-modular', 'mock-only', 'no-frontend', 'unknown', 'SSR', 'Storybook', 'baseReference', 'CheckFreshness', 'prototype/manifest.json', 'prototype-bases/<app-id>/manifest.json', 'build-time', 'browser-time', 'not real E2E', 'sourceEntry', 'ownedFiles', 'prototype-conflict') 'shared contract'
+Assert-Contains $contract @('delivery', 'no-build', 'componentMap', 'scriptOrder', 'directOpen', 'network-guard.js', 'type="module"', 'classic script') 'static-modular contract'
+Assert-Contains $contract @('static-modular` 与 `project-native` 共用同一 `schema`', 'commands.build` 必须为 `null`', '没有 `framework` 字段') 'static-modular unified schema'
+Assert-Contains $contract @('static-modular`（已有前端默认推荐）', 'project-native`（需要真实组件运行时才选）', '不是失败后的自动降级') 'static-modular default mode'
+Assert-Contains $contract @('它按 `mode` 分派两种字段规则') 'validator mode dispatch'
+Assert-Contains $init @('prototype-contract.md', 'no-frontend', 'approved-prototype-provisioning', 'manifest-only default', 'prototype-bases/', 'prototype-provisioning is not discovery', 'static-modular') 'init'
+Assert-Contains $prd @('prototype-contract.md', 'static-modular', 'project-native', 'standalone-html', 'prototype/manifest.json', 'baseReference', 'CheckFreshness') 'PRD'
+Assert-Contains $prototypeInit @('static-modular', 'project-native', 'componentMap', 'scriptOrder', 'no-build') 'prototype init mode selection'
+Assert-Contains $templates @('| App | App Root | Mode | Manifest | When To Read |', 'static-modular') 'init templates mode column'
 Assert-Condition (-not $prd.Contains('- Single-file HTML/CSS/JS.')) 'PRD still forces single HTML globally'
 Assert-Condition (-not $prd.Contains('`prototype.html` remains a single sibling file in either form.')) 'PRD still assumes one prototype path'
 Assert-Contains $grill @('prototype-contract.md', 'project-native', 'baseReference') 'interview'
