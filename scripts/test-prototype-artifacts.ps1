@@ -22,6 +22,43 @@ function Check([string]$name, [string]$path, [bool]$fresh, [string]$errorText = 
     Write-Host "PASS $name"
 }
 function Save([string]$folder, [object]$value) { Put "$folder/manifest.json" ($value | ConvertTo-Json -Depth 15) }
+function StaticManifest([string]$folder, [string]$kind, [string]$appId = 'static-app') {
+    Put "$folder/css/tokens.css" ':root { --fixture: 1; }'
+    Put "$folder/js/guard.js" 'window.__FP_PROTOTYPE__ = { dataMode: "mock-only" };'
+    Put "$folder/js/components.js" 'window.render = function () { return "fixture"; };'
+    Put "$folder/examples/index.html" '<!doctype html><title>Fixture</title><script src="../js/guard.js"></script><script src="../js/components.js"></script>'
+    Put "$folder/evidence/verification.md" '# Fixture verification'
+    $owned = @('css/tokens.css', 'js/guard.js', 'js/components.js', 'examples/index.html', 'evidence/verification.md')
+    return [ordered]@{
+        schema = 'fp-prototype/v1'; kind = $kind; mode = 'static-modular'; appId = $appId; appRoot = 'app'
+        delivery = 'no-build'; entry = 'examples/index.html'
+        commands = @{ build = $null; preview = @{ relativeTo = 'artifact'; cwd = '.'; run = 'DO-NOT-EXECUTE preview' } }
+        componentMap = @(@{ source = 'bk-button'; static = '.fixture-button' })
+        sources = @(@{ path = 'app/Button.vue'; sha256 = (Hash 'app/Button.vue') })
+        ownedFiles = $owned | ForEach-Object { @{ path = $_; sha256 = (Hash "$folder/$_") } }
+        dataMode = 'mock-only'; networkPolicy = 'deny-business-network'
+        scenarios = @('default')
+        verification = @{ structure = 'not-run'; preview = 'not-run'; network = 'not-run'; visual = 'not-run'; evidence = 'evidence/verification.md' }
+        directOpen = @{ relativeTo = 'artifact'; path = 'examples/index.html'; protocol = 'file' }
+        scriptOrder = @('js/guard.js', 'js/components.js')
+    }
+}
+function StaticChange([string]$folder, [string]$baseRelative, [string]$appId = 'static-app') {
+    $manifest = StaticManifest $folder 'change' $appId
+    Put "$folder/src/app.js" 'window.renderPage = function () { return "fixture"; };'
+    Put "$folder/mocks/data.js" 'window.MOCKS = [];'
+    Put "$folder/preview/index.html" '<!doctype html><title>Fixture change</title><script src="../js/guard.js"></script><script src="../js/components.js"></script><script src="../src/app.js"></script>'
+    $manifest.entry = 'preview/index.html'
+    $manifest.sourceEntry = 'src/app.js'
+    $manifest.mockEntry = 'mocks/data.js'
+    $manifest.previewEntry = 'preview/index.html'
+    $manifest.baseReference = @{ path = $baseRelative; sha256 = (Hash $baseRelative) }
+    $manifest.scriptOrder = @('js/guard.js', 'js/components.js', 'src/app.js')
+    $extra = @('src/app.js', 'mocks/data.js', 'preview/index.html')
+    $manifest.ownedFiles = @($manifest.ownedFiles) + @($extra | ForEach-Object { @{ path = $_; sha256 = (Hash "$folder/$_") } })
+    $manifest.directOpen = @{ relativeTo = 'artifact'; path = 'preview/index.html'; protocol = 'file' }
+    return $manifest
+}
 function Manifest([string]$folder, [string]$kind) {
     Put "$folder/src/main.js" 'export const app = "fixture only";'
     Put "$folder/src/mock.js" 'export const rows = [];'
@@ -52,6 +89,82 @@ try {
     Push-Location $root
     try { Check 'relative project follows PowerShell location' "$base/manifest.json" $true '' '.' }
     finally { Pop-Location }
+
+    $sbase = 'fp-docs/prototype-bases/static-app'
+    $sm = StaticManifest $sbase 'base'
+    Save $sbase $sm
+    Check 'valid static base with no baseReference key' "$sbase/manifest.json" $true
+    $sm.schema = 'fp-static-prototype/v1'; Save $sbase $sm
+    Check 'unmigrated static schema rejected' "$sbase/manifest.json" $false 'unsupported schema'
+    $sm.schema = 'fp-prototype/v1'
+    $sm.delivery = 'build'; Save $sbase $sm
+    Check 'built static mode rejected' "$sbase/manifest.json" $false 'delivery must be no-build'
+    $sm.delivery = 'no-build'
+    $sm.commands.build = @{ relativeTo = 'artifact'; cwd = '.'; run = 'DO-NOT-EXECUTE build' }; Save $sbase $sm
+    Check 'static build command rejected' "$sbase/manifest.json" $false 'build command must be null'
+    $sm.commands.build = $null
+    $sm.framework = @{ name = 'vue'; version = '3.5.0' }; Save $sbase $sm
+    Check 'static base tolerates framework absence check' "$sbase/manifest.json" $true
+    $sm.Remove('framework')
+    $compact = $sm.scriptOrder
+    $sm.scriptOrder = @('js/components.js', 'js/guard.js'); Save $sbase $sm
+    Check 'network guard must load first' "$sbase/manifest.json" $false 'network guard must be the first scriptOrder entry'
+    $sm.scriptOrder = $compact
+    $sm.scriptOrder = @('js/guard.js', 'js/guard.js'); Save $sbase $sm
+    Check 'duplicate scriptOrder rejected' "$sbase/manifest.json" $false 'duplicate scriptOrder entry'
+    $sm.scriptOrder = $compact
+    Put "$sbase/js/loose.js" 'window.loose = true;'
+    $sm.scriptOrder = @('js/guard.js', 'js/loose.js'); Save $sbase $sm
+    Check 'unowned scriptOrder entry rejected' "$sbase/manifest.json" $false 'ownedFiles missing entry: js/loose.js'
+    Remove-Item -LiteralPath (Join-Path $root "$sbase/js/loose.js")
+    $sm.scriptOrder = $compact
+    Save $sbase $sm
+    $guardBackup = [IO.File]::ReadAllText((Join-Path $root "$sbase/js/components.js"))
+    Put "$sbase/js/components.js" 'import { x } from "./guard.js";'
+    Check 'module syntax breaks direct open' "$sbase/manifest.json" $false 'module syntax breaks direct file open'
+    [IO.File]::WriteAllText((Join-Path $root "$sbase/js/components.js"), $guardBackup, $utf8)
+    $entryBackup = [IO.File]::ReadAllText((Join-Path $root "$sbase/examples/index.html"))
+    Put "$sbase/examples/index.html" '<!doctype html><script type="module" src="../js/guard.js"></script>'
+    Check 'module script tag breaks direct open' "$sbase/manifest.json" $false 'module script breaks direct file open'
+    [IO.File]::WriteAllText((Join-Path $root "$sbase/examples/index.html"), $entryBackup, $utf8)
+    $sm.directOpen.protocol = 'http'; Save $sbase $sm
+    Check 'non-file directOpen rejected' "$sbase/manifest.json" $false 'invalid directOpen protocol'
+    $sm.directOpen.protocol = 'file'
+    $sm.directOpen.path = 'examples/missing.html'; Save $sbase $sm
+    Check 'missing directOpen path rejected' "$sbase/manifest.json" $false 'missing file'
+    $sm.directOpen.path = 'examples/index.html'
+    $sm.entry = 'examples/missing.html'; Save $sbase $sm
+    Check 'missing static entry rejected' "$sbase/manifest.json" $false 'missing file'
+    $sm.entry = 'examples/index.html'
+    $componentBackup = $sm.componentMap
+    $sm.Remove('componentMap'); Save $sbase $sm
+    Check 'static base without componentMap rejected' "$sbase/manifest.json" $false 'missing property componentMap'
+    $sm.componentMap = @(@{ source = ''; static = '.x' }); Save $sbase $sm
+    Check 'empty componentMap source rejected' "$sbase/manifest.json" $false 'invalid componentMap source'
+    $sm.componentMap = $componentBackup
+    Save $sbase $sm
+    Check 'static base restored' "$sbase/manifest.json" $true
+
+    $schange = 'fp-docs/changes/static-filter/prototype'
+    $sc = StaticChange $schange "$sbase/manifest.json"
+    Save $schange $sc
+    Check 'valid static change' "$schange/manifest.json" $true
+    $sc.Remove('baseReference'); Save $schange $sc
+    Check 'static change without baseReference rejected' "$schange/manifest.json" $false 'missing property baseReference'
+    $sc.baseReference = @{ path = "$sbase/manifest.json"; sha256 = (Hash "$sbase/manifest.json") }
+    $sc.Remove('sourceEntry'); Save $schange $sc
+    Check 'static change without sourceEntry rejected' "$schange/manifest.json" $false 'missing property sourceEntry'
+    $sc.sourceEntry = 'src/app.js'
+    Save $schange $sc
+    Check 'static change restored' "$schange/manifest.json" $true
+    $sm.entry = 'examples/index.html. '; Save $sbase $sm
+    Check 'static entry alias rejected' "$sbase/manifest.json" $false 'unsafe path'
+    $sm.entry = 'examples/index.html'; Save $sbase $sm
+    [IO.File]::AppendAllText((Join-Path $root "$sbase/js/guard.js"), "`n// drift", $utf8)
+    Check 'static owned drift rejected' "$sbase/manifest.json" $true 'owned file changed'
+    $sm.scenarios = @('default', 'empty'); Save $sbase $sm
+    Check 'static base revision changed' "$schange/manifest.json" $true 'base revision changed'
+
     foreach ($field in @('schema', 'mode', 'kind', 'dataMode', 'networkPolicy')) {
         $original = $m[$field]
         $m[$field] = $true; Save $base $m

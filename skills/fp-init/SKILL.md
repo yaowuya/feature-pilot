@@ -22,7 +22,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - `approved-discovery-project-facts-only`：批准 discovery 后，生成的 Markdown 事实缓存最多只有 `fp-docs/intel/project-facts.md`，并配套 metadata-only 的 `fp-docs/intel/.freshness.json`。
 - `unknowns-and-decisions-human-owned-lazy`：只有本流程获得明确写入范围批准且确有项目级内容时，才创建 `intel/unknowns.md` 或 `intel/decisions.md`。
 - Never overwrite existing customer manifest/settings/intel without explicit approval.
-- 有 Web 前端时可委托 `fp-prototype-init` 按独立批准创建同技术栈、独立运行、全部业务数据 Mock 的 `fp-docs/prototype-bases/<app-id>/`；无前端跳过。基座源码不是生产实现，不改变 manifest-only default。
+- 有 Web 前端时可委托 `fp-prototype-init` 按独立批准创建可独立运行、业务数据全 Mock 的 `fp-docs/prototype-bases/<app-id>/`：默认 `static-modular` 静态基座（无构建、可 `file://` 打开），需要真实组件运行时时选 `project-native`；无前端跳过。基座不是生产实现，不改变 manifest-only default。
 
 ## OpenSpec-inspired init principles
 
@@ -179,7 +179,7 @@ If **any** of these exist:
 
 ### 5a. Detect frontend capability
 
-读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` 的 Capability and rendering mode，复用已知事实，有界核对实际浏览器/模板入口及构建配置。保留目标 appRoot、框架/版本、组件/样式入口和检测依据；多应用分别识别，SSR/模板及 unknown 不误判为无前端。
+读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md` 的 Capability and rendering mode，复用已知事实，有界核对实际浏览器/模板入口及构建配置。保留目标 appRoot、框架/版本、组件/样式入口和检测依据；多应用分别识别，SSR/模板及 unknown 不误判为无前端。已有前端默认推荐 `static-modular` 基座（无构建、入口可 `file://` 打开）；需要真实组件运行时或后续开发复用时才选 `project-native`。模式由用户选择决定，不因构建器缺失自动切换。
 
 **no-frontend**：确认不存在 Web UI 时，后续 settings/项目族建议省略 frontend.md 与 prototype-style.md，不初始化基座、不创建空原型、不安装前端依赖。已有人工文件不删除；用户明确提出新增前端时才重新确认绿地需求。检测不确定先澄清，不替用户选框架。
 

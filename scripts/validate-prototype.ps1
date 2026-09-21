@@ -15,6 +15,10 @@ function Value([object]$object, [string]$name) {
     Require ($null -ne $property) "missing property $name"
     return $property.Value
 }
+function Optional([object]$object, [string]$name) {
+    if ($null -eq $object) { return $null }
+    return $object.PSObject.Properties[$name]
+}
 function Text([object]$value, [string]$name) {
     Require (($value -is [string]) -and -not [string]::IsNullOrWhiteSpace($value)) "invalid $name"
     return $value
@@ -51,9 +55,26 @@ function Read-Json([string]$path) {
     try { return [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) | ConvertFrom-Json }
     catch { throw "Prototype validation failed: invalid JSON: $($_.Exception.Message)" }
 }
+function Read-Text([string]$path) {
+    return [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8)
+}
 function Match-Hash([string]$path, [string]$expected, [string]$message) {
     Require (Test-Path -LiteralPath $path -PathType Leaf) "$message (missing file)"
     Require ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ceq $expected) $message
+}
+function Assert-Command([string]$project, [string]$artifact, [object]$command, [string]$name, [bool]$checkFreshness) {
+    $relativeTo = Text (Value $command 'relativeTo') 'command relativeTo'
+    Require ($relativeTo -cin @('project', 'artifact')) 'invalid command relativeTo'
+    $commandRoot = if ($relativeTo -ceq 'project') { $project } else { $artifact }
+    $cwd = Safe-Path $commandRoot (Value $command 'cwd') $true
+    [void](Text (Value $command 'run') 'command run')
+    if ($checkFreshness) { Require (Test-Path -LiteralPath $cwd -PathType Container) 'missing command cwd' }
+}
+# A no-build prototype is delivered by opening its entry through file://. Only
+# classic scripts load from a file:// page, so module syntax is a hard failure
+# for a prototype that claims direct file open, not a style preference.
+function Assert-Classic-Script([string]$filePath, [string]$label) {
+    Require (-not ((Read-Text $filePath) -match '(?m)^\s*(?:import|export)\b')) "module syntax breaks direct file open: $label"
 }
 
 Require (Test-Path -LiteralPath $ProjectRoot -PathType Container) 'missing project root'
@@ -76,31 +97,85 @@ if ($isChange) {
 }
 $m = Read-Json $path
 Require ((Text (Value $m 'schema') 'schema') -ceq 'fp-prototype/v1') 'unsupported schema'
-Require ((Text (Value $m 'mode') 'mode') -ceq 'project-native') 'invalid mode'
+$mode = Text (Value $m 'mode') 'mode'
+Require ($mode -cin @('project-native', 'static-modular')) 'invalid mode'
+$isStatic = $mode -ceq 'static-modular'
 $kind = Text (Value $m 'kind') 'kind'
 Require (($isBase -and $kind -ceq 'base') -or ($isChange -and $kind -ceq 'change')) 'kind does not match path'
 $appId = Text (Value $m 'appId') 'appId'
 Require ($appId -cmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') 'invalid appId'
 if ($isBase) { Require ($appId -ceq $baseId) 'appId does not match base path' }
 $appRoot = Safe-Path $project (Value $m 'appRoot') $true
-$framework = Value $m 'framework'
-[void](Text (Value $framework 'name') 'framework name')
-[void](Text (Value $framework 'version') 'framework version')
+if (-not $isStatic) {
+    $framework = Value $m 'framework'
+    [void](Text (Value $framework 'name') 'framework name')
+    [void](Text (Value $framework 'version') 'framework version')
+}
 Require ((Text (Value $m 'dataMode') 'dataMode') -ceq 'mock-only') 'dataMode must be mock-only'
 Require ((Text (Value $m 'networkPolicy') 'networkPolicy') -ceq 'deny-business-network') 'invalid networkPolicy'
-$entries = @((Value $m 'sourceEntry'), (Value $m 'mockEntry'), (Value $m 'previewEntry'))
-Require ($entries[2] -ceq 'preview/index.html') 'previewEntry must be preview/index.html'
-foreach ($entry in $entries) { [void](File-Path $artifact $entry) }
-$commands = Value $m 'commands'
-foreach ($name in @('build', 'preview')) {
-    $command = Value $commands $name
-    $relativeTo = Text (Value $command 'relativeTo') 'command relativeTo'
-    Require ($relativeTo -cin @('project', 'artifact')) 'invalid command relativeTo'
-    $commandRoot = if ($relativeTo -ceq 'project') { $project } else { $artifact }
-    $cwd = Safe-Path $commandRoot (Value $command 'cwd') $true
-    [void](Text (Value $command 'run') 'command run')
-    if ($CheckFreshness) { Require (Test-Path -LiteralPath $cwd -PathType Container) 'missing command cwd' }
+
+# Declared entrypoints. Both modes must prove every declared entry exists and is
+# owned; static also proves the classic-script and network-guard invariants that
+# make a no-build file:// delivery work.
+$entryPaths = @()
+$orderedScriptPaths = @()
+if (-not $isStatic) {
+    $entryPaths = @((Value $m 'sourceEntry'), (Value $m 'mockEntry'), (Value $m 'previewEntry'))
+    Require ($entryPaths[2] -ceq 'preview/index.html') 'previewEntry must be preview/index.html'
+    foreach ($entry in $entryPaths) { [void](File-Path $artifact $entry) }
+} else {
+    Require ((Text (Value $m 'delivery') 'delivery') -ceq 'no-build') 'delivery must be no-build'
+    $entryPaths += Text (Value $m 'entry') 'entry'
+    foreach ($optional in @('sourceEntry', 'mockEntry', 'previewEntry')) {
+        $property = Optional $m $optional
+        if ($null -ne $property) { $entryPaths += Text $property.Value $optional }
+    }
+    if ($isChange) {
+        foreach ($required in @('sourceEntry', 'mockEntry')) {
+            Require ($null -ne (Optional $m $required)) "missing property $required"
+        }
+    }
+    foreach ($entry in $entryPaths) { [void](File-Path $artifact $entry) }
+    $componentProperty = Optional $m 'componentMap'
+    if ($isBase) { Require ($null -ne $componentProperty) 'missing property componentMap' }
+    if ($null -ne $componentProperty) {
+        $componentRows = @($componentProperty.Value)
+        Require ($componentRows.Count -gt 0) 'componentMap required'
+        foreach ($row in $componentRows) {
+            [void](Text (Value $row 'source') 'componentMap source')
+            [void](Text (Value $row 'static') 'componentMap static')
+        }
+    }
+    $scriptOrder = @(Value $m 'scriptOrder')
+    Require ($scriptOrder.Count -gt 0) 'scriptOrder required'
+    $seenScripts = @{}
+    foreach ($script in $scriptOrder) {
+        $relative = Text $script 'scriptOrder entry'
+        Require (-not $seenScripts.ContainsKey($relative)) 'duplicate scriptOrder entry'
+        $seenScripts[$relative] = $true
+        $orderedScriptPaths += File-Path $artifact $relative
+        $entryPaths += $relative
+    }
+    $directOpen = Value $m 'directOpen'
+    Require ((Text (Value $directOpen 'relativeTo') 'directOpen relativeTo') -ceq 'artifact') 'invalid directOpen relativeTo'
+    Require ((Text (Value $directOpen 'protocol') 'directOpen protocol') -ceq 'file') 'invalid directOpen protocol'
+    $directRelative = Text (Value $directOpen 'path') 'directOpen path'
+    $directPath = File-Path $artifact $directRelative
+    $entryPaths += $directRelative
+    $normalizedEntryHtml = (Read-Text $directPath).Replace([char]39, '"')
+    Require (-not ($normalizedEntryHtml -match '(?i)type\s*=\s*"module"')) 'module script breaks direct file open: entry'
+    foreach ($scriptPath in $orderedScriptPaths) { Assert-Classic-Script $scriptPath $scriptPath }
+    Require ((Read-Text $orderedScriptPaths[0]).Contains('__FP_PROTOTYPE__')) 'network guard must be the first scriptOrder entry'
 }
+
+$commands = Value $m 'commands'
+Assert-Command $project $artifact (Value $commands 'preview') 'preview' $CheckFreshness
+if ($isStatic) {
+    Require ($null -eq (Value $commands 'build')) 'build command must be null for a no-build prototype'
+} else {
+    Assert-Command $project $artifact (Value $commands 'build') 'build' $CheckFreshness
+}
+
 $sourceRows = @(Value $m 'sources')
 Require ($sourceRows.Count -gt 0) 'sources required'
 $sourcePaths = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)
@@ -118,7 +193,8 @@ foreach ($file in $owned) {
     $ownedPaths[$relative] = File-Path $artifact $relative
     [void](Digest (Value $file 'sha256'))
 }
-foreach ($entry in $entries) { Require ($ownedPaths.ContainsKey($entry)) "ownedFiles missing entry: $entry" }
+foreach ($entry in $entryPaths) { Require ($ownedPaths.ContainsKey($entry)) "ownedFiles missing entry: $entry" }
+
 $pendingDirectories = New-Object 'System.Collections.Generic.Stack[string]'
 $pendingDirectories.Push($artifact)
 while ($pendingDirectories.Count -gt 0) {
@@ -132,6 +208,7 @@ while ($pendingDirectories.Count -gt 0) {
         }
     }
 }
+
 $scenarios = @(Value $m 'scenarios')
 Require ($scenarios.Count -gt 0) 'scenarios required'
 $seenScenarios = @{}
@@ -140,12 +217,22 @@ foreach ($scenario in $scenarios) {
     Require (-not $seenScenarios.ContainsKey($id)) 'duplicate scenario'
     $seenScenarios[$id] = $true
 }
+
 $verification = Value $m 'verification'
 $needsEvidence = $false
-foreach ($name in @('build', 'preview', 'network', 'visual')) {
+$verificationNames = if ($isStatic) { @('structure', 'preview', 'network', 'visual') } else { @('build', 'preview', 'network', 'visual') }
+foreach ($name in $verificationNames) {
     $result = Text (Value $verification $name) "verification $name"
     Require ($result -cin @('not-run', 'passed', 'blocked')) "invalid verification $name"
     if ($result -cne 'not-run') { $needsEvidence = $true }
+}
+if ($isStatic) {
+    $directFileProperty = Optional $verification 'directFile'
+    if ($null -ne $directFileProperty) {
+        $directFileResult = Text $directFileProperty.Value 'verification directFile'
+        Require ($directFileResult -cin @('not-run', 'passed', 'blocked')) 'invalid verification directFile'
+        if ($directFileResult -cne 'not-run') { $needsEvidence = $true }
+    }
 }
 $evidence = Value $verification 'evidence'
 if ($needsEvidence -or $null -ne $evidence) {
@@ -153,9 +240,11 @@ if ($needsEvidence -or $null -ne $evidence) {
     [void](File-Path $artifact $evidence)
     Require ($ownedPaths.ContainsKey($evidence)) 'ownedFiles missing evidence'
 }
-$base = Value $m 'baseReference'
+$baseProperty = Optional $m 'baseReference'
+$base = if ($null -ne $baseProperty) { $baseProperty.Value } else { $null }
 if ($isBase) { Require ($null -eq $base) 'baseReference must be null for base' }
 else {
+    Require ($null -ne $base) 'missing property baseReference'
     $basePath = Value $base 'path'
     Require ($basePath -ceq "fp-docs/prototype-bases/$appId/manifest.json") 'invalid baseReference path'
     $baseFullPath = Safe-Path $project $basePath
@@ -167,4 +256,8 @@ if ($CheckFreshness) {
     foreach ($source in $sourceRows) { Match-Hash $sourcePaths[$source.path] (Digest $source.sha256) "stale source: $($source.path)" }
     foreach ($file in $owned) { Match-Hash $ownedPaths[$file.path] (Digest $file.sha256) "owned file changed: $($file.path)" }
 }
-Write-Output 'Native prototype structure valid; commands not executed; build, network isolation and fidelity require separate evidence.'
+if ($isStatic) {
+    Write-Output 'Static-modular prototype structure valid; commands not executed; direct file open, network isolation and fidelity require separate evidence.'
+} else {
+    Write-Output 'Native prototype structure valid; commands not executed; build, network isolation and fidelity require separate evidence.'
+}
