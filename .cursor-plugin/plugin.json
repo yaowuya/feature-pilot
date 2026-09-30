@@ -1,0 +1,13 @@
+{
+  "name": "fp",
+  "version": "1.0.0",
+  "description": "FeaturePilot：需求、设计、计划、执行与归档工作流。",
+  "author": {
+    "name": "zhong"
+  },
+  "repository": "https://github.com/yaowuya/feature-pilot",
+  "license": "MIT",
+  "skills": "./skills/",
+  "rules": "./adapters/cursor/rules/",
+  "commands": []
+}

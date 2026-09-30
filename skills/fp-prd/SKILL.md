@@ -96,7 +96,7 @@ Before writing any PRD file, load and follow `fp-prd-grill-me`.
 
 ### Shared code-fact exploration
 
-在进入 PRD-first 或 Prototype-first 访谈前，仅当输入非空、涉及现有产品/页面/API/模型/权限/兼容行为、当前仓库事实能够降低技术不确定性，且需求并非纯绿地场景时，才使用当前运行时原生技能机制加载一次 `fp:fp-explore`，并向其 `prd-facts` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在访谈和写入前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。空输入仍按既有规则立即停止，不执行探索。
+在进入 PRD-first 或 Prototype-first 访谈前，仅当输入非空、涉及现有产品/页面/API/模型/权限/兼容行为、当前仓库事实能够降低技术不确定性，且需求并非纯绿地场景时，才使用当前运行时原生技能机制加载一次 `fp:fp-explore`，并向其 `prd-facts` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，按共享 workspace 契约的名称映射调用 `fp:fp-explore`（Cursor 使用 `fp-explore`）；否则，使用运行时的 `available skills` 元数据提供的对应 `SKILL.md` 入口，或 Cursor 已确认插件根下的 `skills/fp-explore/SKILL.md`，读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并在访谈和写入前停止。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`。空输入仍按既有规则立即停止，不执行探索。
 
 <!-- fp-explore-invoke
 profile: prd-facts
@@ -195,7 +195,7 @@ At the start, choose one of two modes from user intent:
 
 ### PRD-first mode
 
-1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, invoke `fp:fp-explore` through the Skill tool, run the `prd-facts` invocation above, apply Fact conversion, and pass only product-language current behavior plus unanswered product decisions into `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp:fp-explore` using the Shared code-fact exploration loading order, run the `prd-facts` invocation above, apply Fact conversion, and pass only product-language current behavior plus unanswered product decisions into `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
 2. Load `fp-prd-grill-me`; it owns the interview even when `prd-facts` ran.
 3. Stop code-fact investigation as soon as the next useful product question is known.
 4. Use `fp-prd-grill-me` Batch Confirmation Mode to confirm PRD-blocking decisions in the interview order it owns: intent, deployment/usage boundary, business objects, relations, lifecycle and reference semantics, content model, journey and output scope, then exceptions/permissions/logs/acceptance. Unless the user provided a complete PRD or explicitly authorized assumption-based generation, Phase 1 must batch-review Bucket A/B decisions, then Phase 2 must ask Bucket C questions one at a time with a 3-5 question target. Do not self-answer Bucket C.
@@ -212,7 +212,7 @@ At the start, choose one of two modes from user intent:
 
 Use this mode to make the prototype the primary clarification artifact before PRD writing. The user must have selected the runnable-interaction prototype option, or explicitly asked for a prototype first.
 
-1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, invoke `fp:fp-explore` through the Skill tool, run `prd-facts`, apply Fact conversion, and pass only product-language current behavior and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
+1. For a non-empty existing-product request that meets the Shared code-fact exploration conditions, load `fp:fp-explore` using the Shared code-fact exploration loading order, run `prd-facts`, apply Fact conversion, and pass only product-language current behavior and unanswered decisions to `fp-prd-grill-me`. For a purely greenfield idea, skip repository exploration.
 2. Load `fp-prd-grill-me`; it owns the Prototype-first interview even when `prd-facts` ran. Before any page question, it must complete the business-object, relation, and lifecycle phases.
 3. Generate a kebab-case slug early and resolve existing PRD forms and both prototype paths (`prototype.html`, `prototype/manifest.json`). Apply artifact-layout and prototype-contract conflict handling before any write.
 4. Use `fp-prd-grill-me` Prototype-first interview to confirm prototype-blocking decisions: target user/page/workflow, relevant business and UI states, fields/actions/validation, concrete interactions, visual sources, and rendering mode. For project-native, include selected app, baseReference, incremental source/Mock scope and verified build/preview commands with cwd.

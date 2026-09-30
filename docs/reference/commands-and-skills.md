@@ -1,6 +1,6 @@
 # FeaturePilot 命令与技能参考
 
-FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Claude Code 使用 `/fp-*` 命令；Codex 与 DeepSeek Harness 把这些名称当作工作流标签，并加载对应的 `fp:*` skill。
+FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Claude Code 使用 `/fp-*` 命令；Cursor 使用同名原生 skill；Codex 与 DeepSeek Harness 把这些名称当作工作流标签，并加载对应的 `fp:*` skill。
 
 命令文件是薄入口，真正的流程、门禁和恢复规则由 `skills/` 中的同名 skill 负责。本文帮助人选择入口，不替代运行时契约。
 
@@ -54,6 +54,12 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 ### Codex 与 DeepSeek Harness
 
 `/fp-*` 是工作流标签，而不是 Claude Code 风格的斜杠命令实现。安装后可以直接要求运行时使用 `fp:fp-start`、`fp:fp-prd` 等 skill。根目录 `AGENTS.md` 是 Codex fallback router，会把意图映射到同一套 `skills/`。
+
+### Cursor
+
+在聊天框输入 `/`，选择 `fp-start`、`fp-prd` 等原生 skill；也可用自然语言明确要求使用对应 skill。Cursor manifest 直接指向共享 `skills/`，通过 `commands: []` 排除 Claude 的薄命令适配器，因此无需为每个入口维护一份 Cursor command。上方“Claude Code 命令”表描述的是 Claude 命令文件；Cursor 从对应 skill 获得流程，`fp-db-adapter` 等没有 Claude command 文件的技能也可被发现。[Cursor skill 调用说明](https://cursor.com/docs/skills#how-skills-work)
+
+Cursor 的路径适配 rule 帮助把共享资源定位到实际插件根目录；它不替代 skill 的确认、执行和验证要求。安装与加载检查见 [Cursor 安装指南](../getting-started.md#cursor)。
 
 ### 内部子技能
 

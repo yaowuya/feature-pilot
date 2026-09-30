@@ -1,0 +1,14 @@
+---
+description: FeaturePilot skill loading and plugin resource resolution in Cursor
+alwaysApply: true
+---
+
+# FeaturePilot in Cursor
+
+仅在使用 FeaturePilot 的 `fp-*` skill 时应用以下加载规则；其他工作不进入 FeaturePilot 流程。
+
+- 使用 Cursor 原生 skills；用户入口为 `/fp-start`、`/fp-quick` 等短名称。共享流程中的 `fp:fp-*` 是跨运行时工作流标识，在 Cursor 中映射为 `fp-*`，不是 Claude Code 的 command 或必须存在的 `Skill` tool。
+- 从 Cursor 提供的当前 skill 的已安装 `skills/fp-*/SKILL.md` 来源路径确定插件根目录。第一次读取共享契约时，可相对该 skill 目录读取 `../_shared/workspace-rules.md`。如果只有本规则的来源路径，则从已安装的 `adapters/cursor/rules/featurepilot.mdc` 向上解析到插件根目录。两种来源都不存在时报告安装/来源路径不可用并停止，不猜路径。
+- `${CLAUDE_PLUGIN_ROOT}` 是共享文档中的逻辑路径别名，映射到上述已确认的插件根目录；不要假设 Cursor 会在 Markdown 中替换该变量，也不要把它作为未解析的 shell 环境变量使用。
+- 子 skill 优先通过运行时确实提供的原生加载机制加载；否则读取该已安装插件根目录下确切的 `skills/<skill-name>/SKILL.md` 全文。资源缺失时报告不完整安装并停止，不搜索消费者项目中的 `skills/**`，不凭记忆模拟调用。
+- 加载后遵循 `skills/_shared/workspace-rules.md` 的共享契约和当前 skill 的阶段门禁；本规则只负责 Cursor 适配，不复制或改变工作流。

@@ -1,17 +1,17 @@
 ---
 name: sync-plugin-runtimes
-description: Use when the current FeaturePilot repository must be synchronized to its locally installed Claude Code, Codex, and DeepSeek Harness plugin runtimes, including unchanged-version cache refresh or installation verification.
+description: Use when the current FeaturePilot repository must be synchronized to its locally installed Claude Code, Codex, Cursor, and DeepSeek Harness plugin runtimes, including unchanged-version cache refresh or installation verification.
 ---
 
 # Sync Plugin Runtimes
 
 ## Overview
 
-这是当前仓库专用的本地同步流程，不是 FeaturePilot 插件能力。唯一执行入口是 `scripts/sync-plugin-runtimes.ps1`；它根据本机 marketplace 与安装元数据识别目标，同步 Codex 插件源，把 `skills/` 同步到 DeepSeek Harness 用户技能根，并验证 Claude Code、Codex 的实际 cache 与 DSH `~/.dsh/skills`（或 `$DSH_HOME/skills`）的一致性。
+这是当前仓库专用的本地同步流程，不是 FeaturePilot 插件能力。Cursor 单端模式委托给仓库 `scripts/install-cursor-plugin.ps1`，不依赖其他端安装。唯一执行入口是 `scripts/sync-plugin-runtimes.ps1`；它根据本机 marketplace 与安装元数据识别目标，同步 Codex 插件源，把 `skills/` 同步到 DeepSeek Harness 用户技能根，并验证 Claude Code、Codex 的实际 cache 与 DSH `~/.dsh/skills`（或 `$DSH_HOME/skills`）的一致性。
 
 ## When to use
 
-在用户要求“把当前插件同步/更新到 Codex、Claude Code 或 DeepSeek Harness”、检查各端安装是否与当前源码一致，或遇到 same-version 更新显示 latest 但 cache 仍旧时使用。
+在用户要求“把当前插件同步/更新到 Codex、Claude Code、Cursor 或 DeepSeek Harness”、检查各端安装是否与当前源码一致，或遇到 same-version 更新显示 latest 但 cache 仍旧时使用。
 
 不要用于发布远程 marketplace、修改版本号或同步其他仓库。
 
@@ -29,7 +29,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin
 powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1 -ClaudeOnly
 ```
 
-`-ClaudeOnly -VerifyOnly` 只验证仓库与 Claude cache；不要求 Codex/DSH 已安装。不传 `-ClaudeOnly` 才执行原有三端流程。
+`-ClaudeOnly -VerifyOnly` 只验证仓库与 Claude cache；不要求 Codex/DSH 已安装。不传单端开关时执行原有三端流程，不隐式安装 Cursor。
+
+用户只要求安装/更新 Cursor 时使用：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin-runtimes\scripts\sync-plugin-runtimes.ps1 -CursorOnly
+```
+
+`-CursorOnly` 与 `-ClaudeOnly` 互斥。Cursor 模式支持 `-CursorHome <path>`（默认 `~/.cursor`）和 `-VerifyOnly`，直接委托独立安装器，仅校验 Cursor 包及目标；不运行依赖其他端的流程。仓库整体校验另行运行 `scripts/validate-plugin.ps1`。只修改 `<CursorHome>/plugins/local/fp` 中受管理的文件，保留未知文件与其他插件，目标缺少本安装器标记或受管理文件被人工修改时停止。不得据此声称已安装 marketplace 版本；同名 marketplace 版本可能优先于本地副本。
 
 只验证、不写入：
 
@@ -39,7 +47,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin
 
 用户明确要求同步时，直接执行正常模式；不增加第二次业务确认。运行环境要求批准用户目录写入时，按工具权限流程申请。若 target identity 不唯一或不匹配，必须停止，不能猜测。
 
-## Required behavior
+## Required behavior（默认三端与 ClaudeOnly）
 
 - 先运行仓库插件校验，再读取两个插件清单；Claude 与 Codex 的插件名和基础版本必须一致。
 - 从 marketplace 配置、Claude 安装元数据和 Codex cache 约定解析路径；禁止写死用户名、仓库绝对路径或按目录时间猜目标。
@@ -51,6 +59,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\.agents\skills\sync-plugin
 - 输出插件版本、解析出的路径和验证结论；最后提示重启 Claude Code，并在 Codex 中创建 new task 以加载最新 Skill；DSH 由 Chokidar 监听用户技能根，新会话即自动加载，无需重启。
 
 ## Completion contract
+
+Cursor 单端以 `.cursor-plugin/`、`skills/`、`scripts/`、`adapters/cursor/` 与本地副本受管理文件的 SHA-256 一致为完成条件。`-VerifyOnly` 不写入任何文件或目录。安装成功后提示 Restart / Developer: Reload Window，并在 Customize 检查实际来源；组织可能禁用本地插件导入。文件校验通过不能代替 Cursor IDE/CLI 中的加载实测。
+
 
 `-ClaudeOnly` 的完成条件只包含仓库/Claude 插件验证、原安装 scope 的 enabled 状态，以及两个清单、commands、skills、scripts 与实际 Claude cache 的逐文件 SHA-256 一致；不声称其它端已更新。脚本与测试等运行依赖也必须比对，不能仅核对 skills 文本。完成后只提示重启 Claude Code。
 

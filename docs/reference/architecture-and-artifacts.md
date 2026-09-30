@@ -2,7 +2,7 @@
 
 本文面向希望理解 FeaturePilot 内部结构、信息层和证据模型的开发者。它是人类可读的技术说明；Agent 执行时仍以 [`skills/`](../../skills/) 和 [`skills/_shared/`](../../skills/_shared/) 中的运行时契约为准。
 
-## 一张图看懂三端架构
+## 一张图看懂四端架构
 
 ```mermaid
 flowchart LR
@@ -10,6 +10,7 @@ flowchart LR
         CC[Claude Code\ncommands/fp-*.md]
         CX[Codex\nAGENTS.md router]
         DSH[DeepSeek Harness\n~/.dsh/skills]
+        CURSOR[Cursor\n.cursor-plugin/plugin.json]
     end
 
     subgraph Contract[共享流程]
@@ -29,6 +30,7 @@ flowchart LR
     CMD --> SKILL
     CX --> SKILL
     DSH --> SKILL
+    CURSOR --> SKILL
     SKILL --> SHARED
     MANIFEST --> SKILL
     SETTINGS --> SKILL
@@ -36,11 +38,12 @@ flowchart LR
     SKILL --> CHANGE
 ```
 
-三种运行时共享同一套 Markdown skill：
+四种运行时共享同一套 Markdown skill：
 
 - Claude Code 通过 `commands/fp-*.md` 进入；
 - Codex 通过根目录 `AGENTS.md` 把意图路由到 skill；
-- DeepSeek Harness 从用户技能根加载 `fp-*` 与 `_shared/`。
+- DeepSeek Harness 从用户技能根加载 `fp-*` 与 `_shared/`；
+- Cursor manifest 直接发现 `skills/`，原生调用同名 skill，并用 `adapters/cursor/rules/` 锚定插件资源路径。
 
 安装、更新和缓存刷新方式见 [开始使用 FeaturePilot](../getting-started.md)。
 
@@ -48,7 +51,7 @@ flowchart LR
 
 ### command：薄入口
 
-`commands/` 只负责接收参数、加载同名 skill，并保留少量 gate checksum。它不拥有完整流程，也不应复制大量规则。
+`commands/` 是 Claude Code 的薄入口，只负责接收参数、加载同名 skill，并保留少量 gate checksum。它不拥有完整流程，也不应复制大量规则。Cursor 通过 manifest 的 `commands: []` 关闭该目录的发现，避免与原生 skills 重复。
 
 ### skill：工作流所有者
 
@@ -60,6 +63,14 @@ flowchart LR
 - `fp-coverage`、`fp-module-review`、`fp-db-adapter` 负责专项流程。
 
 完整入口选择见 [命令与技能参考](commands-and-skills.md)。
+
+### Cursor：共享资源的路径适配
+
+`.cursor-plugin/plugin.json` 把 `skills` 指向 `./skills/`、`rules` 指向 `./adapters/cursor/rules/`；`.cursor-plugin/marketplace.json` 用单个 `source: "."` 条目指向同一根插件。Cursor 适配层不复制工作流内容，`skills/` 与 `_shared/` 仍只有一份事实源。[Cursor 插件参考](https://cursor.com/docs/reference/plugins)
+
+资源根从当前已加载 skill、插件根或适配 rule 的实际来源路径推导，不能从消费者项目 cwd 猜测。共享 Markdown 中的 `${CLAUDE_PLUGIN_ROOT}` 是 FeaturePilot 的逻辑占位符，在 Cursor 中也映射到这个已解析根目录；不要求环境里存在同名变量，也不宣称 Cursor 会自动替换 Markdown 正文。官方明确记载的 `${CURSOR_PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_ROOT}` 自动展开适用于 MCP 配置字段。[MCP 路径变量](https://cursor.com/docs/reference/plugins#mcp-servers)
+
+独立安装脚本复制并校验受管文件，维护 wrapper 的 `-CursorOnly` 委托它；这属于运行时分发，不增加另一套 skills。SHA-256 一致只能证明文件一致，IDE/CLI 实际发现、路径解析和工作流加载仍需 smoke check。具体操作见 [Cursor 安装指南](../getting-started.md#cursor)。
 
 ### shared contract：跨流程规则
 
@@ -210,7 +221,7 @@ CodeGraph 是可选加速，不是 FeaturePilot 的前置条件。
 - 同步失败只记录并回退，不影响验证和完成；
 - 原来没有图时不会在完成阶段隐式建图。
 
-安装命令、MCP 配置边界和三端同步方式见 [开始使用 FeaturePilot](../getting-started.md)。
+安装命令、MCP 配置边界和各运行时同步方式见 [开始使用 FeaturePilot](../getting-started.md)。
 
 ## UI/E2E、Figma 与 final review
 

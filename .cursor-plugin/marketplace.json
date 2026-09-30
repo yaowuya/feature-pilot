@@ -1,0 +1,13 @@
+{
+  "name": "feature-pilot",
+  "owner": {
+    "name": "zhong"
+  },
+  "plugins": [
+    {
+      "name": "fp",
+      "source": ".",
+      "description": "FeaturePilot：需求、设计、计划、执行与归档工作流。"
+    }
+  ]
+}

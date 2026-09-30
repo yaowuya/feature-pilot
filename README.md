@@ -6,7 +6,7 @@
 
 **FeaturePilot 是你的 AI 功能开发引导员。** 从需求、设计到执行、审查和归档，它把开发过程留在项目里，而不只留在聊天记录里。
 
-支持 **Claude Code、Codex 与 DeepSeek Harness** · 当前版本 **`1.0.0`** · [发布说明](docs/release_notes/1.0.0.md)
+支持 **Claude Code、Codex、DeepSeek Harness 与 Cursor** · 当前版本 **`1.0.0`** · [发布说明](docs/release_notes/1.0.0.md)
 
 [开始使用](docs/getting-started.md) · [命令速查](docs/reference/commands-and-skills.md) · [技术参考](docs/reference/architecture-and-artifacts.md)
 
@@ -50,9 +50,9 @@
 
 ### 1. 安装到你的运行时
 
-按 [三端安装指南](docs/getting-started.md) 选择你的运行时，完成安装后，按对应要求重启工具或开启新会话。
+按 [运行时安装指南](docs/getting-started.md) 选择你的运行时，完成安装后，按对应要求重启工具或开启新会话。Cursor 可独立安装，无需先配置其他运行时。
 
-下面用 `/fp-*` 表示流程入口；在 Codex 或 DeepSeek Harness 中，也可以直接说“使用 fp-quick 帮我完成这个修改”。具体加载方式见安装指南。
+下面用 `/fp-*` 表示流程入口；Cursor 可直接选择同名原生 skill，各运行时也可说“使用 fp-quick 帮我完成这个修改”。具体加载方式见安装指南。
 
 ### 2. 建立最小工作区
 
@@ -127,7 +127,7 @@ PRD 确认后，再接着进入完整开发：
 
 **多人一起做，少一点“我以为”。** 评审不只看最终代码，还能对照需求、计划和验证结果。
 
-**切换 AI 工具，不必换一套工作方法。** Claude Code、Codex 与 DeepSeek Harness 共享同一套流程技能；加载方式不同，关键确认和验证要求一致。
+**切换 AI 工具，不必换一套工作方法。** Claude Code、Codex、DeepSeek Harness 与 Cursor 共享同一套流程技能；加载方式不同，关键确认和验证要求一致。
 
 FeaturePilot 不替代你的工程判断，也不承诺消除所有返工。它让需要判断的地方更早出现，让做过的判断不容易丢失。
 
@@ -137,7 +137,7 @@ FeaturePilot 不替代你的工程判断，也不承诺消除所有返工。它�
 
 | 想了解什么 | 去哪里看 |
 |---|---|
-| 三端安装、更新与同步 | [开始使用](docs/getting-started.md) |
+| 四种运行时的安装、更新与同步 | [开始使用](docs/getting-started.md) |
 | 所有入口、执行模式与适用边界 | [命令与技能参考](docs/reference/commands-and-skills.md) |
 | 架构、配置、目录与验证规则 | [架构与产物参考](docs/reference/architecture-and-artifacts.md) |
 | 从初始化到 PRD，再到完整开发 | [主线使用指南](docs/user_guide/init-prd-start.md) |

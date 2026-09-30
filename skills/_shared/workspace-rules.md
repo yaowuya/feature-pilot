@@ -5,7 +5,13 @@ Read this file once per FeaturePilot workflow. Reuse it when later `fp-*` skills
 ## Plugin resource anchoring
 
 If any anchored plugin resource is missing or unreadable, stop, report the exact resource and an incomplete FeaturePilot installation/cache, and never search the consumer repository for `skills/**` or continue without it.
-下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。两端都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+下文以 `${CLAUDE_PLUGIN_ROOT}/...` 表示 Claude Code 安装后的插件资源。在 Codex/Markdown 中，从 available-skill 元数据提供的当前技能入口映射同一个 `skills/...` 插件相对路径。各运行时都不得在消费者项目中搜索插件文件。在 DeepSeek Harness 中，`${CLAUDE_PLUGIN_ROOT}/skills` 映射到当前 skill 的 base directory 的父目录，`_shared/` 与各 `fp-*` skill 目录同级。
+
+### Cursor loading adapter
+
+- Cursor 从原生 `skills/` 加载同一套 `SKILL.md`；共享指令中的 `fp:fp-*` 映射为 Cursor 的短名称 `fp-*`。优先使用确实可调用的运行时原生技能机制；不要求 Claude Code 的 `Skill` tool 或 command。
+- 插件根来自 Cursor 提供的当前已安装 `skills/fp-*/SKILL.md` 入口，或已加载的 `adapters/cursor/rules/featurepilot.mdc` 来源路径。首次可相对当前 skill 目录读取 `../_shared/workspace-rules.md`。`${CLAUDE_PLUGIN_ROOT}` 在这里是该已确认根目录的逻辑别名，不是 Cursor 对 Markdown 环境变量替换的保证；传给文件或 shell 工具前必须解析成实际路径。
+- 子 skill 的 `available skills` 元数据可以使用 `fp-*` 短名称。无原生加载工具时，从元数据入口或已经确认的同一插件根读取确切的 `skills/<skill-name>/SKILL.md` 全文；这属于文件读取 fallback，不声称已调用不存在的工具。缺少可信来源或目标资源时停止并报告不完整安装，禁止通过消费者项目搜索或猜测用户目录来补齐。
 
 ## Root and read order
 

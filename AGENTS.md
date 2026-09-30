@@ -1,12 +1,12 @@
 # FeaturePilot (`fp`) for Codex and other agents
 
-FeaturePilot is an AI feature-development guide for `需求 → 原型/设计 → 计划 → 执行 → 归档`. This repository ships the same `skills/` to Claude Code, Codex, and DeepSeek Harness. Current release: `1.0.0`.
+FeaturePilot is an AI feature-development guide for `需求 → 原型/设计 → 计划 → 执行 → 归档`. This repository ships the same `skills/` to Claude Code, Codex, Cursor, and DeepSeek Harness. Current release: `1.0.0`.
 
 `AGENTS.md` is a router, not a workflow contract cache. Resolve the current intent, read the matching skill completely, then read every conditional contract whose trigger matches before acting. Those files own the behavior; this file owns only discovery. If a routed resource is missing or unreadable, stop and report the incomplete plugin installation rather than searching the target repository for a substitute.
 
-## Codex fallback router
+## Codex and Cursor skill router
 
-Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as workflow labels and load the matching installed skill:
+Codex and Cursor do not run Claude Code slash commands directly. Treat `/fp-*` names as workflow labels and load the matching installed skill. Cursor uses native `fp-*` skill names; its resource bootstrap lives in `adapters/cursor/rules/featurepilot.mdc`, and shared loading rules live in `skills/_shared/workspace-rules.md`:
 
 | User intent | Read first |
 |---|---|
