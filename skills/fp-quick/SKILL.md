@@ -28,7 +28,7 @@ If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shar
 
 ### 1. 用 fp-explore quick 探索项目背景
 
-使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `quick` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，直接调用 `fp:fp-explore`；否则，如果运行时的 `available skills` 元数据列出了 `fp:fp-explore` 及其 `SKILL.md` 入口路径，就从该路径读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并停止 quick 流程。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`；不要为了探索而加载完整的 `fp-propose` skill；无产物和实现前确认门禁保持不变。
+使用当前运行时原生技能机制加载一次 `fp:fp-explore`，然后向其 `quick` profile 提供下方结构化块。加载顺序如下：如果运行时提供可调用的 `Skill` tool，按共享 workspace 契约的名称映射调用 `fp:fp-explore`（Cursor 使用 `fp-explore`）；否则，使用运行时的 `available skills` 元数据提供的对应 `SKILL.md` 入口，或 Cursor 已确认插件根下的 `skills/fp-explore/SKILL.md`，读取已安装的 FeaturePilot 分发目录中的完整技能说明并严格执行。只有两种机制都无法解析或读取 `fp:fp-explore` 时，才报告插件可用性或安装失败，并停止 quick 流程。不得搜索消费者项目来寻找回退，也不得直接读取消费者项目中的 `skills/fp-explore/SKILL.md`；不要为了探索而加载完整的 `fp-propose` skill；无产物和实现前确认门禁保持不变。
 
 <!-- fp-explore-invoke
 profile: quick

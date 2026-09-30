@@ -24,7 +24,7 @@ $agents = Read-Utf8 $agentsPath
 
 Assert-Condition (@($agents -split "`r?`n").Count -le 60) 'AGENTS.md is not a low-context router'
 Assert-Condition ($agents.Contains('`AGENTS.md` is a router, not a workflow contract cache.')) 'AGENTS.md does not declare router-only ownership'
-Assert-Condition ($agents.Contains('## Codex fallback router')) 'AGENTS.md lacks the Codex fallback router'
+Assert-Condition ($agents.Contains('## Codex and Cursor skill router')) 'AGENTS.md lacks the Codex and Cursor skill router'
 Assert-Condition ($agents.Contains('## Conditional contract router')) 'AGENTS.md lacks the conditional contract router'
 Assert-Condition ($agents.Contains('| User intent | Read first |')) 'AGENTS.md intent router must be a two-column interface'
 Assert-Condition ($agents.Contains('| Trigger branch | Required read |')) 'AGENTS.md contract router must be a two-column interface'

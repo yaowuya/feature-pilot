@@ -1,14 +1,32 @@
+<#
+.SYNOPSIS
+Synchronizes installed FeaturePilot runtimes, or checks their files with VerifyOnly.
+.DESCRIPTION
+Defaults to Claude Code, Codex and DeepSeek Harness. CursorOnly delegates to the
+standalone local installer without accessing the other runtimes. CursorHome is
+valid only with CursorOnly; CursorOnly and ClaudeOnly are mutually exclusive.
+#>
 [CmdletBinding()]
 param(
     [string]$PluginRoot,
     [string]$CodexMarketplace = 'personal',
     [string]$ClaudeMarketplace = 'fp-dev',
     [switch]$VerifyOnly,
-    [switch]$ClaudeOnly
+    [switch]$ClaudeOnly,
+    [switch]$CursorOnly,
+    [string]$CursorHome
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+# Cursor is opt-in so existing three-runtime sync never installs another runtime.
+if ($ClaudeOnly -and $CursorOnly) {
+    throw '-ClaudeOnly and -CursorOnly are mutually exclusive.'
+}
+if ($PSBoundParameters.ContainsKey('CursorHome') -and -not $CursorOnly) {
+    throw '-CursorHome requires -CursorOnly.'
+}
 
 $excludedTopLevelNames = @('.git', '.agents', '.claude', '.worktrees')
 $coreFiles = @('.claude-plugin\plugin.json', '.codex-plugin\plugin.json')
@@ -416,6 +434,14 @@ else {
     Get-FullPath (Join-Path $PSScriptRoot '..\..\..\..')
 }
 
+# Delegate before full validation and Claude/Codex/DSH discovery: Cursor is independent.
+# The standalone installer validates its package and hashes; repository tests run separately.
+if ($CursorOnly) {
+    $cursorArguments = @{ PluginRoot = $repositoryRoot; VerifyOnly = $VerifyOnly }
+    if ($PSBoundParameters.ContainsKey('CursorHome')) { $cursorArguments.CursorHome = $CursorHome }
+    & (Join-Path $repositoryRoot 'scripts\install-cursor-plugin.ps1') @cursorArguments
+    return
+}
 Invoke-ExternalCommand -FilePath 'powershell' -Arguments @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $repositoryRoot 'scripts\validate-plugin.ps1')) | Out-Null
 $identity = Get-PluginIdentity $repositoryRoot
 $repoMap = Get-CoreFileMap $repositoryRoot

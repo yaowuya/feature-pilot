@@ -483,6 +483,14 @@ Assert-Condition (Test-Path $readmeDocsContractValidator) 'focused README/docs c
 & powershell -NoProfile -ExecutionPolicy Bypass -File $readmeDocsContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused README/docs contract validator failed'
 
+# Cursor packages shared skills independently; cover both discovery and safe local updates.
+foreach ($cursorSuite in @('test-cursor-plugin.ps1', 'test-cursor-install.ps1')) {
+    $cursorValidator = Join-Path $root ('scripts\' + $cursorSuite)
+    Assert-Condition (Test-Path $cursorValidator) "Cursor validator is missing: $cursorSuite"
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $cursorValidator
+    Assert-Condition ($LASTEXITCODE -eq 0) "Cursor validator failed: $cursorSuite"
+}
+
 $agentsRouterValidator = Join-Path $root 'scripts\test-agents-router-contract.ps1'
 Assert-Condition (Test-Path $agentsRouterValidator) 'focused AGENTS router validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $agentsRouterValidator
