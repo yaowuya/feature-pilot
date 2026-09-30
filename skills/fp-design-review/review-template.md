@@ -27,6 +27,8 @@ Generate applicable sections only. Omit an inapplicable data/state/interface/fro
 
 <按触发、处理、状态变化、结果与失败收束说明完整主线；只提炼设计已有内容。>
 
+<在主线中提炼最简单可行方案、复用点和新增复杂度的当前必要性，链接相应 design owner。>
+
 ## 核心对象与职责
 
 | 对象/模块 | 职责 | 不负责 | 协作对象 | 设计依据 |
@@ -91,6 +93,8 @@ Generate applicable sections only. Omit an inapplicable data/state/interface/fro
 | --- | --- | --- | --- |
 | <触发条件和错误结果> | <用户/数据/系统影响> | <已确认处理> | <design 锚点> |
 
+<提炼设计已有的简化取舍：延后内容与原因、适用上限、可验证升级触发条件和升级方向，并链接唯一 owner；无延后项时写“无”。检查是否保留当前验收、安全、权限隔离和数据一致性，不新增 debt 表或另行设计。>
+
 ### 迁移与发布
 
 <说明 schema/data migration、兼容窗口、发布顺序、回滚和监控；无适用项时说明设计为何无此风险。>
@@ -98,6 +102,8 @@ Generate applicable sections only. Omit an inapplicable data/state/interface/fro
 ### 验证清单
 
 - [ ] <可执行命令、测试或人工检查；写出预期结果和 design 锚点。>
+
+<验证清单同时覆盖已确认简化边界及实现时的注释自审，沿用上述复选框格式。>
 
 ## 评审顺序与抽查路径
 
@@ -131,6 +137,7 @@ The complete file must remain within 500 lines and 30,000 characters. If dedupli
 - 风险写出具体失败场景、影响和已确认处理，不使用“注意风险”等空泛措辞。
 - 复选框只用于验证清单和最终评审结论。
 - Decision Ledger 只统计，设计事实只提炼，不新增或改变结论。
+- 复杂度依据、延后项和代码草图注释只从 canonical design 提炼或精确摘录；依据不足时返回 `fp-brainstorm` 定点修订，不扫描源码或编造方案。
 - 字段定义只由模型代码或完整字段定义表之一承载；物理映射、字段/存储取舍和查询/索引表不重复字段事实。
 - 数据表格、代码和解释不重复表达同一事实。
 - `## 设计入口` 恰好出现一次。

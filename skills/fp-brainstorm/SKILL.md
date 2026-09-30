@@ -19,7 +19,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 【立即用工具执行】读取以下文件，理解功能范围与行为契约：
 - 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 解析已确认 proposal：检查 `fp-docs/changes/<slug>/proposal.md` 与 `proposal/00-index.md`；双形式直接阻塞，split form 严格按 manifest 顺序读取全部已列分片；同时读取 Impact owner 的 Handoff Decision Ledger，复用其中 `PRD-confirmed`、`code-verified`、`user-confirmed` 或 `not-applicable` 的范围事实，不重复提问
-- 读取与本次需求相关的真实代码、测试、路由、模型、组件和 API；以当前代码为准
+- 读取与本次需求相关的真实代码、测试、路由、模型、组件和 API；以当前代码为准，同时确认现有框架能力与项目 docstring/注释约定，作为共享工程质量契约的应用依据
 
 #### 项目模型规范调查
 
@@ -144,6 +144,10 @@ return-to: <fp-brainstorm + same D-NNN/checkpoint>
 
 收集足够决策后（通常 3-5 轮），针对核心架构提出 **2-3 个方案**，说明各自 trade-off，并给出推荐理由。等待用户按相关 `D-NNN` 确认方案或给出替代选择后继续；整体“确认方案”不能替代仍未决行的逐项确认。
 
+方案比较必须遵循 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`：先说明满足当前验收的最简单可行方案，优先复用现有代码与框架能力。新增抽象、分层、组件、依赖、缓存、异步或配置，必须指出当前需求、已有实际变体或可验证性能约束的证据；“未来可能需要”不能单独作为依据，方案比较也不要求另造架构。
+
+有意延后复杂能力时，在既有架构决策或风险 owner 中说明简化内容与原因、适用上限、可验证的升级触发条件和升级方向；其他位置只链接。没有延后项时写“无”。简化不得削减当前验收、安全、权限隔离或数据一致性；不另建 debt 文件、表或状态机。新的取舍仍按对应 `D-NNN` 确认。
+
 ### 第四步：展示与分离技术设计 (前后端分离)
 
 因为完整的全栈系统设计文档极易过载，涉及多个端时应拆分；但必须按实际范围生成：
@@ -194,6 +198,8 @@ Frontend design 必须让以下三个视觉连续性小节各出现恰好一次�
 如果 proposal 和代码探索都没有前端/UI 范围，不要生成任何 frontend design form、前端章节或空占位文件。
 
 每个 actual-end 的 detailed owner 必须填写 `设计范围适用性`。架构主线、核心对象与职责、具体风险或无风险结论，以及验证方案是必填范围，始终拥有 canonical owner section 与证据。数据模型、状态/并发、接口/权限/兼容和前端是条件范围：适用时记录 owner 并写对应章节；不适用时 owner 为 `N/A`，由 inventory 行持有证据化理由并省略正文。每个 owner 只负责本范围事实，不得跨范围复制内容。
+
+在现有架构主线、决策和风险章节交代上述复杂度依据与简化边界；验证方案覆盖这些边界。设计中的代码草图同步包含共享工程质量契约要求的 docstring 和必要注释，说明职责、非显然约束及取舍原因，供后续计划与实现沿用；不得用逐行翻译代码充数。
 
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，并将相关 `D-NNN` 更新为有来源和确认凭据的终态。章节审阅不能替代未决决策的逐项确认；任何 `needs-user-confirmation` 必须先被解决。
 

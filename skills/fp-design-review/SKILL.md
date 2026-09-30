@@ -50,6 +50,9 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 除数据模型外，按适用范围检查：
 
 - 架构主线的触发、处理、状态变化、结果和失败收束；
+- 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 检查设计是否说明满足当前验收的最简单可行方案、既有代码与框架复用，以及新增抽象、层、组件、依赖、缓存、异步或配置的当前必要性证据；未来可能需要不能单独成立；
+- 已记录的简化取舍是否保留当前验收、安全、权限隔离和数据一致性；有意延后项是否在唯一决策或风险 owner 说明内容与原因、适用上限、可验证升级触发条件及升级方向，无延后项是否明确写“无”；
+- 设计代码草图是否包含共享契约要求的 docstring/必要注释，验证安排是否覆盖简化边界和实现时的注释自审；
 - 核心对象的职责、非职责、协作关系和 design 锚点；
 - 状态入口、并发控制、执行顺序、失败恢复和可观察结果；
 - 接口资源与标识、权限、新旧入口的兼容或隔离边界；
@@ -68,6 +71,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - migration 影响。
 
 若适用信息不足，不生成或覆盖 `review.md`。输出“无法生成 review.md”、逐项缺失内容、需要修订的精确 design 章节，以及“返回 `fp-brainstorm` 做定点修订并重新确认设计”。不得只写“设计不完整”或“请补充信息”，不得重新扫描代码库、修改设计或自行补齐字段。
+
+适用的复杂度依据、简化取舍或代码草图必要说明缺失时，沿用上述 targeted revision；只依据 canonical design 评审，不扫描源码补证，不编造精简方案，不新增 debt 产物。
 
 ### 第四步：生成 review.md
 

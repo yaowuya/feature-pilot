@@ -6,6 +6,10 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` for project-root,
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` for canonical artifact resolution and structural rejection.
 
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` before judging code quality. Apply its completion checks to mapped-current/shared changes: required comments, justified complexity and valid simplification boundaries. Record violations with `path:line` in existing Findings and deferrals in existing risks; missing mandatory items forbid `PASS` / `PASS_WITH_NOTES` and cannot become `Review Debt`. Unchanged legacy documentation suggestions do not expand the change scope.
+
+Mandatory engineering-quality violations map to at least `High` in final review (`Important` in task review) and are main-flow blockers at every attempt. Missing required inspection evidence is `BLOCKED`, not a pass; cosmetic wording alone follows ordinary Low/Minor handling.
+
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once when final review includes UI-bearing scope; it owns the UI lifecycle and non-waiver policy, while this file projects only final-review fields.
 
 Local package/report templates retain their own headings, metadata, evidence rows, findings, and verdict output. Every local table shell below is a checked projection of this contract rather than an independent definition.

@@ -36,6 +36,7 @@ Codex does not run Claude Code slash commands directly. Treat `/fp-*` names as w
 | Any FeaturePilot workflow, including initialization or an absent information layer | `skills/_shared/workspace-rules.md` |
 | A PRD, proposal, design, task plan, overview, or archive artifact is read, written, converted, validated, reviewed, or archived | `skills/_shared/artifact-layout.md` |
 | Requirement, proposal, or design questions can change scope, behavior, architecture, interfaces, or acceptance | `skills/_shared/decision-ledger.md` |
+| Technical design, task planning, code implementation/fixes, design review, or code review | `skills/_shared/engineering-quality.md` |
 | Prototype applicability, native base setup/refresh, or prototype read/write/validation/archive | `skills/_shared/prototype-contract.md` |
 | Code location, symbols, call/data flow, impact, graph setup/refresh, or post-write graph state is involved | `skills/_shared/codegraph.md` |
 | Figma, frontend/UI planning or implementation, visual evidence, browser E2E, final review, or archive has UI-bearing scope | `skills/_shared/ui-e2e-contract.md` |

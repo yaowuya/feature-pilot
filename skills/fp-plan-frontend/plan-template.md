@@ -23,6 +23,7 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 - Visual source: <Figma / screenshot / existing page / settings>
 - Visual evidence runner: <existing project runner / installed browser extension / local playwright-cli / customer choice pending; no silent installation or project dependency/config change>
 - Verification commands: <source>
+- Engineering quality: `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`；<当前项目注释约定及证据；已确认设计的最小方案、简化边界和延后项 owner>
 
 ## File Structure
 
@@ -124,6 +125,8 @@ Expected: FAIL with `<specific missing behavior>`
 
 **Step 3: Write minimal implementation**
 
+沿用已确认的最小方案与项目既有组件、状态和框架能力。按 Global Constraints 同步编写必要的文档注释和行内/块注释，说明职责、非显然交互约束及简化取舍；不增加仅为未来准备的抽象，不独立拆“补注释”任务。
+
 **Template Outline:**
 - <source-backed container hierarchy, project components, slots, props, events>
 
@@ -150,6 +153,8 @@ Expected: PASS
 
 Run: `<exact lint/build/visual verification when required>`
 Expected: `<specific success result>`
+
+自审：实现仍满足当前验收和已确认简化边界；注释与行为一致，必要说明完整、没有逐行复述或过期内容。注释不足时在本任务内修正后再提交。
 
 **Step 5: Commit**
 

@@ -45,6 +45,8 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 - **状态**：[终态状态]
 - **是否阻塞**：[是 / 否]
 
+（涉及新增复杂度时，在“理由”中说明最简单可行方案为何不足，并给出当前需求、实际变体或性能约束的证据；遵循 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`，不以未来可能复用代替必要性依据。）
+
 ### 决策 2：[主题]
 - **选择**：[用户确认的选择]
 - **理由**：[依据]
@@ -76,6 +78,8 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 
 （按触发、处理、状态变化、结果和失败收束说明端内主线，并链接跨端 owner；不得只列文件。）
 
+（先说明满足当前验收的最简单可行方案及复用的代码、框架能力；新增抽象、层、组件、依赖、缓存、异步或配置的必要性由相应决策 owner 持有，此处只链接。简化不得削减当前验收、安全、权限隔离或数据一致性。）
+
 ### 核心对象与职责
 
 | 对象/模块 | 职责 | 不负责 | 协作对象 | 证据 |
@@ -92,7 +96,7 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 
 #### 接近实现的模型代码
 
-（适用时展示已确认字段、类型、默认值、`null`/`blank`、关联和 Meta；只形成设计草图，不伪装成已实现代码。使用本小节时省略“完整字段定义”。）
+（适用时展示已确认字段、类型、默认值、`null`/`blank`、关联和 Meta；只形成设计草图，不伪装成已实现代码。所有代码草图同步按共享工程质量契约和项目约定编写 docstring 与必要注释，解释职责、非显然约束和取舍原因，不逐行翻译代码。使用本小节时省略“完整字段定义”。）
 
 #### 完整字段定义
 
@@ -171,11 +175,15 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 | --- | --- | --- | --- | --- |
 | <触发条件与错误结果> | <用户/数据/系统影响> | <已确认处理> | <发布顺序、回滚条件、监控信号> | <design evidence> |
 
+（有意延后项在本节或既有架构决策中唯一记录：简化内容与原因、适用上限、可验证的升级触发条件及升级方向；此处只链接其他 owner，不重复正文。没有延后项时写“无”，不另建 debt 文件、表或状态机。实际代码中的说明遵循共享工程质量契约。）
+
 ### 验证方案
 
 | 验证项 | 命令或操作 | 预期结果 | 覆盖的设计结论 | 证据 owner |
 | --- | --- | --- | --- | --- |
 | <验证> | <可执行命令/人工步骤> | <可观察结果> | <章节/决策> | <本节或引用> |
+
+（覆盖当前验收和已确认简化边界，并安排实现时的注释自审；注释与实现同步完成，不拆成事后补注释任务。）
 ```
 
 For every actual end, place the Decision Ledger and Pre-write Confirmation Evidence in exactly one unique detailed owner: the small end file or one manifest-listed detail fragment. All design end owners use one globally unique D-NNN sequence. Cross-end decisions have one owner only; the split index records ownership only and does not duplicate decision body content. Each owner's `Covered IDs` lists exactly that owner's persisted IDs. Persisted ledger rows need a unique ID, source, blocking value, terminal status, and confirmation evidence; `needs-user-confirmation` must not persist in final design output.
@@ -193,6 +201,7 @@ Apply `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md` after resolving e
 - 按 fragment manifest 顺序检查完整 logical design，同时检查每个 end/fragment 的局部结构。
 - 每个 actual-end 都有完整的设计范围适用性 inventory；架构主线、核心对象、风险结论和验证方案始终有唯一 owner，条件范围适用时有 owner、不适用时由 inventory 持有证据化理由。
 - 先给出架构主线和已确认决策，再展开数据、接口、状态和前端细节。
+- 新增复杂度有当前证据，延后项有适用上限和可验证升级条件；代码草图的 docstring/注释解释职责与原因，并与设计一致。
 - 首次出现的必要术语使用直白解释，精确技术标识符保持不变。
 - 数据模型的字段定义只由模型代码或完整字段表之一拥有；物理映射、字段/存储取舍、查询/索引映射不重复字段事实。
 - Decision Ledger、Pre-write Confirmation Evidence、接口字段和代码保持原 schema 与原语义。

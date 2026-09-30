@@ -27,6 +27,7 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 ## Global Constraints
 
 - <exact version/dependency/contract/permission/migration/security/performance constraint>
+- Engineering quality: `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`；<当前项目 docstring/注释约定及证据；已确认设计的最小方案、简化边界和延后项 owner>
 
 ## File Structure
 
@@ -80,8 +81,11 @@ Expected: FAIL with `<specific reason>`
 
 **Step 3: Write minimal implementation**
 
+沿用已确认的最小方案与项目既有能力。按 Global Constraints 同步编写所需 docstring 和必要注释，说明职责、非显然约束及简化取舍；不增加仅为未来准备的抽象，不独立拆“补注释”任务。
+
 ```python
 def function(input):
+    """<说明当前行为的职责与返回语义，按需补充约束或副作用。>"""
     return expected
 ```
 
@@ -89,6 +93,8 @@ def function(input):
 
 Run: `pytest tests/path/test_file.py::test_specific_behavior -v`
 Expected: PASS
+
+自审：实现仍满足当前验收和已确认简化边界；docstring/注释与行为一致，必要说明完整、没有逐行复述或过期内容。注释不足时在本任务内修正后再提交。
 
 **Step 5: Commit**
 
