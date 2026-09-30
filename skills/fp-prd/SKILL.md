@@ -28,7 +28,7 @@ It supports two order modes:
 1. **PRD-first mode（默认）**: confirm PRD-blocking decisions, optionally run an explicitly user-selected prototype, write the selected PRD form.
 2. **Prototype-first mode（原型优先）**: only after the user explicitly selects it, confirm prototype-blocking decisions, generate/review/iterate the resolved prototype first, then generate the selected PRD form from the confirmed prototype and decisions.
 
-原型渲染默认在已有前端使用 **project-native**：消费已确认 app 的基座，以同框架源码增量实现，全部业务数据 Mock，构建静态预览；**standalone-html** 仅保留既有形式或用户明确选择的轻量/降级路径。PRD-first/Prototype-first 不决定渲染技术。创建隔离原型源码不是生产实现授权。
+已有前端的原型渲染默认使用 **static-modular**：复用已确认基座的静态资源，以同技术栈模块化源码和本地 Mock 生成可直接打开的预览，不运行构建。只有用户确认需要真实组件运行时、构建链或框架行为时才选择 **project-native**；**standalone-html** 仅用于用户明确选择的单文件轻量/遗留场景。PRD-first/Prototype-first 不决定渲染技术。创建隔离原型源码不是生产实现授权。
 
 It must not create `proposal.md`, `design.md`, or `tasks/`, and must not enter production implementation or modify shared prototype bases.
 
@@ -241,7 +241,7 @@ A conversion must transfer all unique content, validate the new logical artifact
 
 ## PRD output contract
 
-Do not load the output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md` completely.
+Do not load the shared writing contract or output template during interview turns. After the final PRD confirmation summary is explicitly approved and immediately before writing, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md` completely, then read `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md` completely. Apply the shared contract to the complete logical PRD without changing the Mandatory PRD Structure, confirmed product content, or product-language gate.
 
 - Small form writes only `prd.md`.
 - Split form writes only `prd/00-index.md` and its listed Markdown fragments. Its authoritative fragment manifest uses `| Order | File | Kind | Owns |`; every sibling fragment is listed exactly once, and the index owns navigation/ownership metadata only.
@@ -271,7 +271,7 @@ For an explicitly chosen greenfield/standalone prototype with no visual source, 
 
 ## Self-Review
 
-Run the structure, business-closure, and product-language checklists in `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md`. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run the same logical template validation over the concatenated logical PRD. Repair presentation defects using confirmed content. If a failure exposes an unresolved product decision, return to `fp-prd-grill-me` and obtain an updated confirmation summary before revising; do not invent rules to make the checklist pass. Report completion only after all three checklists pass.
+Run the structure, product-language, business-closure, and document-readability checklists in `${CLAUDE_PLUGIN_ROOT}/skills/fp-prd/prd-template.md` over the complete logical PRD. For split form, parse the fragment manifest, read every listed fragment in exact order, reject missing/unindexed/duplicate-owner fragments, and run all four checklists plus the same logical template validation over the manifest-ordered logical PRD. Repair presentation defects using confirmed content. If a failure exposes an unresolved product decision, return to `fp-prd-grill-me` and obtain an updated confirmation summary before revising; do not invent rules to make the checklist pass. Report completion only after all four checklists pass.
 
 ## Invalid Output Recovery
 

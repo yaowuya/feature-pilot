@@ -212,7 +212,7 @@ Before `fp-prd` writes either PRD form or the resolved prototype, confirm every 
 - PRD form and split strategy for multi-change input: default to the small form in compact `prd.md`; use the mutually exclusive split form in `prd/00-index.md` plus a fragment manifest only under the shared artifact-layout contract's overflow/approval/setting gates, keeping complete feature blocks together on semantic boundaries.
 - Existing PRD disposition when `prd.md`, `prd/`, or an incomplete/conflicting split form is present; any conversion/removal requires explicit approval.
 
-涉及原型模式、基座或构建/预览时，先读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`。访谈只确认需求与批准范围，不创建共享基座；project-native 的目标 app、baseReference、源码/Mock/预览路径及命令/cwd 纳入原型摘要。已有前端默认推荐原生复用，保留明确选择的 standalone-html，不因旧模板示例而自动仿写 HTML。
+涉及原型模式、基座或构建/预览时，先读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/prototype-contract.md`。访谈只确认需求与批准范围，不创建共享基座。已有前端默认推荐 `static-modular`；只有确认需要真实组件运行时、构建链或框架行为时才推荐 `project-native`，并把目标 app、baseReference、源码/Mock/预览路径及命令/cwd 纳入原型摘要。`standalone-html` 仅用于明确选择的单文件或遗留场景，不因旧模板示例自动仿写 HTML。
 
 ## Prototype-first Interview
 

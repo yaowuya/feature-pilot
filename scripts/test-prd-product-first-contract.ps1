@@ -39,6 +39,19 @@ function Test-UiHeavyAutoPrototype([string]$text) {
     return $false
 }
 
+function Test-PrdPrototypeModeDefaults([string]$skillText, [string]$grillText) {
+    return (
+        $skillText.Contains('已有前端的原型渲染默认使用 **static-modular**') -and
+        $skillText.Contains('只有用户确认需要真实组件运行时、构建链或框架行为时才选择 **project-native**') -and
+        $skillText.Contains('**standalone-html** 仅用于用户明确选择的单文件轻量/遗留场景') -and
+        $grillText.Contains('已有前端默认推荐 `static-modular`') -and
+        $grillText.Contains('只有确认需要真实组件运行时、构建链或框架行为时才推荐 `project-native`') -and
+        $grillText.Contains('`standalone-html` 仅用于明确选择的单文件或遗留场景') -and
+        -not $skillText.Contains('默认在已有前端使用 **project-native**') -and
+        -not $grillText.Contains('已有前端默认推荐原生复用')
+    )
+}
+
 $skill = Read-Utf8 'skills\fp-prd\SKILL.md'
 $grill = Read-Utf8 'skills\fp-prd-grill-me\SKILL.md'
 $template = Read-Utf8 'skills\fp-prd\prd-template.md'
@@ -154,6 +167,23 @@ Assert-Anchors $skill @(
     'A UI-heavy idea never selects this mode by itself',
     'present the three options (直接写 PRD / 先做轻量产品线框 / 先做可运行交互原型)'
 ) 'mode routing'
+Assert-Anchors $skill @(
+    '已有前端的原型渲染默认使用 **static-modular**'
+    '只有用户确认需要真实组件运行时、构建链或框架行为时才选择 **project-native**'
+    '**standalone-html** 仅用于用户明确选择的单文件轻量/遗留场景'
+) 'fp-prd prototype-mode default'
+Assert-Anchors $grill @(
+    '已有前端默认推荐 `static-modular`'
+    '只有确认需要真实组件运行时、构建链或框架行为时才推荐 `project-native`'
+    '`standalone-html` 仅用于明确选择的单文件或遗留场景'
+) 'PRD interview prototype-mode recommendation'
+Assert-Condition (-not $skill.Contains('默认在已有前端使用 **project-native**')) 'fp-prd still defaults an existing frontend to project-native'
+Assert-Condition (-not $grill.Contains('已有前端默认推荐原生复用')) 'PRD interview still defaults to ambiguous native reuse'
+Assert-Condition (Test-PrdPrototypeModeDefaults $skill $grill) 'PRD runtime consumers disagree with prototype-contract defaults'
+$projectNativeDefaultMutation = $skill.Replace('已有前端的原型渲染默认使用 **static-modular**', '已有前端的原型渲染默认使用 **project-native**')
+Assert-Condition (-not (Test-PrdPrototypeModeDefaults $projectNativeDefaultMutation $grill)) 'mutation survived: fp-prd may default existing frontends to project-native'
+$nativeReuseDefaultMutation = $grill.Replace('已有前端默认推荐 `static-modular`', '已有前端默认推荐原生复用')
+Assert-Condition (-not (Test-PrdPrototypeModeDefaults $skill $nativeReuseDefaultMutation)) 'mutation survived: the PRD interview may recommend ambiguous native reuse'
 Assert-Condition (-not (Test-UiHeavyAutoPrototype $skill)) 'fp-prd routes UI-heavy straight into Prototype-first'
 Assert-Condition (-not (Test-UiHeavyAutoPrototype $grill)) 'interview routes UI-heavy straight into Prototype-first'
 Assert-Condition (-not (Test-UiHeavyAutoPrototype $guide)) 'user guide routes UI-heavy straight into Prototype-first'
@@ -210,11 +240,12 @@ Assert-Anchors $grill @(
 
 # --- Public surfaces -----------------------------------------------------------
 Assert-Anchors $command @(
-    'UI-heavy 只作推荐，不自动切换',
-    '产品语言门禁',
+    'UI-heavy 只推荐',
+    '产品语言禁',
     'product-surface-facts',
-    '未获用户选择不创建原型工程'
+    '未选不建原型'
 ) 'commands/fp-prd.md gate checksum'
+Assert-Condition (-not (Test-UiHeavyAutoPrototype $command)) 'commands/fp-prd.md routes UI-heavy directly into prototype work'
 Assert-Anchors $guide @(
     'PRD 的默认读者是产品经理、业务方、设计师和研发评审者',
     '页面或交互较多的需求只会**推荐**原型',

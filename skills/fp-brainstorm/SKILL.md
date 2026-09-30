@@ -21,6 +21,40 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 - 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` 解析已确认 proposal：检查 `fp-docs/changes/<slug>/proposal.md` 与 `proposal/00-index.md`；双形式直接阻塞，split form 严格按 manifest 顺序读取全部已列分片；同时读取 Impact owner 的 Handoff Decision Ledger，复用其中 `PRD-confirmed`、`code-verified`、`user-confirmed` 或 `not-applicable` 的范围事实，不重复提问
 - 读取与本次需求相关的真实代码、测试、路由、模型、组件和 API；以当前代码为准
 
+#### 项目模型规范调查
+
+仅当本次变更涉及数据库模型时执行。`fp-brainstorm` 必须读取目标项目的真实代码，再展示和确认模型设计；设计阶段完成调查，`fp-design-review` 不重复扫描代码。
+
+调查至少覆盖：
+
+- 目标模型、公共基类、manager、mixin 和相邻版本模型；
+- 字段长度常量、字段类型和序列化惯例，以及字段与存储选择理由；
+- 显式字段与继承字段，以及是否重复存储；
+- 逻辑模型与实际物理表；
+- `null`、`blank`、默认值、索引、联合约束和排序；
+- 主要查询模式、过滤/排序/关联字段，以及查询模式与索引映射；
+- 审计、软删除和软删除后的唯一性含义；
+- 发布、下线、调试等生命周期数据的归属；
+- 模型元数据变化是否产生没有实际数据库收益的迁移。
+
+任何持久化技术都必须把主要查询模式映射到索引或访问路径，并用当前项目证据说明字段/存储取舍；不得只列字段、索引或存储类型而不解释其服务的读取、过滤、排序、关联和数据体积边界。
+
+#### Django 条件化检查
+
+仅当目标项目使用 Django 且本次涉及模型时，继续检查：
+
+- 公共 `Model`、manager 和 mixin 已提供的字段与查询行为；
+- abstract、proxy 和 multi-table inheritance 创建的物理表；
+- `verbose_name` 是否符合当前项目惯例；
+- `choices` 是否进入 migration state；选项经常变化时，必须把“模型层接受 migration”与“serializer/service 校验”作为真实选项交给用户确认，不得擅自统一选择；
+- `JSONField`、文本字段或压缩字段是否符合数据体积与读取方式；
+- 联合索引左前缀是否已覆盖单列查询；
+- 软删除记录是否继续占用唯一约束，以及该行为是否符合业务含义。
+
+非 Django 项目只执行对应 ORM 与 schema migration 检查，不生成 Django 专属内容。
+
+设计正文必须记录证据路径和最终结论。当前代码无法证明的新选择仍进入 Decision Ledger；不得把推荐写成 `code-verified`。
+
 If the proposal Handoff Decision Ledger or its Pre-write Confirmation Evidence is missing or unresolved, the proposal is not a confirmed design input: return to `fp-propose` for targeted recovery confirmation. Do not infer confirmation from its files, summary, or agent recommendation.
 
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为设计依据。当前代码仍是最终实现事实来源。
@@ -77,15 +111,27 @@ return-to: <fp-brainstorm + same D-NNN/checkpoint>
 > - 若后续计划/执行需要本地预览，只允许在实现到可运行页面后按 Visual Checks 做最小必要验证；不要提前启动 local viewer。
 
 - **先复用已确认视觉来源**：若 proposal Decision Ledger 或 PRD 已精确确认 Figma 链接、无 Figma 或截图来源，且与当前范围不冲突，将它记录为对应 `D-NNN` 的继承终态并直接应用该策略；`do not repeat the Figma question`。只有当 `inherited visual source is absent, conflicting, or ambiguous` 时，才创建 `needs-user-confirmation` 行并询问下列问题。
-- **【仅在视觉来源未确认时必问，且最先问】Figma 设计稿**：请问此功能是否有 Figma 设计稿(需依赖Figma MCP)？
-  - 选项 A：有，链接是：\_\_\_\_\_（请粘贴链接）
-  - 选项 B：没有，按 UI/UX 规范搭建
-  - 选项 C：有截图，将在后续步骤中提供
+- **【仅在视觉来源未确认时必问，且最先问】视觉来源决策**：先创建或定位“视觉来源”对应的实际 `D-NNN`；新建行保持 `needs-user-confirmation`。提问时使用实际 ID，不得用泛化确认替代该行的选择。
+  - **为什么现在需要这个决定**：视觉来源必须在展开前端设计前确定，否则组件映射、布局和验收基准会依赖未经确认的假设。
+  - **会影响哪些设计产物或运行行为**：该选择决定 `Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划和 `Visual Checks` 的证据来源，也影响实现后的运行时视觉一致性与后续维护方式。
+  - **请选择一个结果标签**：
+    - **以 Figma 作为视觉来源**
+      - 实际行为：确认后通过本插件内 `fp-figma` 拉取可访问的目标节点，提取设计事实并形成组件、布局和视觉验收映射。
+      - 主要代价或风险：依赖有效链接、Figma MCP 访问和设计稿时效；设计稿过期或节点不可访问时会降低结论可信度并增加映射维护成本。
+    - **以用户提供截图作为视觉来源**
+      - 实际行为：确认后读取用户提供的原图，以截图中的可见事实为主、UI/UX 规范为补充，记录可确认与不可确认的视觉点。
+      - 主要代价或风险：截图通常缺少响应式、交互态和隐藏状态信息，无法证明的部分仍需追问或在后续验证，视觉还原可能受限。
+    - **按 UI/UX 规则和相邻页面推导**
+      - 实际行为：确认后以 `fp-frontend-spec` 和相邻真实页面为证据推导组件、布局和检查项，不启动 Figma 或截图链路。
+      - 主要代价或风险：没有功能专属视觉基准，保真度取决于相邻页面是否适用；相邻模式变化时需同步维护推导结果。
+    - **其他（请描述）**
+  - **推荐**：推荐依据只使用已确认且可访问的证据。Figma 链接可访问、与当前范围一致且未过期时，推荐“以 Figma 作为视觉来源”；否则，若用户原始截图是当前唯一可信视觉证据，推荐“以用户提供截图作为视觉来源”；两者都不可用时，推荐“按 UI/UX 规则和相邻页面推导”。证据冲突或时效无法判断时不代选，说明冲突并保持 `needs-user-confirmation`。
+  - **确认方式**：请按实际 `D-NNN` 确认一个结果标签；选择 Figma 时同时提供链接，选择截图时说明原图提供方式，选择其他时描述预期证据和行为。
 
-  > **根据回答决定后续前端实现策略，并形成可延续的视觉契约：**
-  > - **选 A（有设计稿）**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出 `Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用项目组件的自封装理由、`Visual Checks`。这些详细小节只写入选定 frontend form 的一个详细内容所有者。**不得改用全局 `figma-to-vue`**。
-  > - **选 B（无设计稿或无Figma MCP）**：完全按照 `fp-frontend-spec` 的规范和相邻真实页面搭建；仍必须在选定 frontend form 的一个详细内容所有者中写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
-  > - **选 C（有截图）**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在选定 frontend form 的一个详细内容所有者中写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > **根据已确认的结果标签执行后续前端策略，并形成可延续的视觉契约：**
+  > - **采用“以 Figma 作为视觉来源”**：【立即用工具执行】调用 Figma MCP 工具并触发 **本插件内** `fp-figma` 的前两步（拉取数据与骨架剥离），在这个设计阶段提前输出 `Visual Source`、`Figma 节点/页面`、`UI 组件树与 Figma 解析映射`、项目组件映射、Flex/Grid 容器规划、不可用项目组件的自封装理由、`Visual Checks`。这些详细小节只写入选定 frontend form 的一个详细内容所有者。**不得改用全局 `figma-to-vue`**。
+  > - **采用“以用户提供截图作为视觉来源”**：以截图视觉事实为准，UI/UX 规范作为补充约束；如果截图来自用户提供的原始图片，优先读取原图事实，不用屏幕截图替代原图结论；在选定 frontend form 的一个详细内容所有者中写清截图来源、可确认/不可确认的视觉点、组件映射和 Visual Checks。
+  > - **采用“按 UI/UX 规则和相邻页面推导”**：完全按照 `fp-frontend-spec` 的规范和相邻真实页面搭建；仍必须在选定 frontend form 的一个详细内容所有者中写 `Visual Source: UI/UX spec + existing code`、组件映射、布局规划和 Visual Checks，不得自行发明颜色、尺寸或交互行为。
 
 - 页面/视图：新增哪些页面？菜单入口在哪里？
 - 组件复用：复用现有组件还是新建？是否需要参考现有页面/组件文件骨架？
@@ -147,6 +193,8 @@ Frontend design 必须让以下三个视觉连续性小节各出现恰好一次�
 
 如果 proposal 和代码探索都没有前端/UI 范围，不要生成任何 frontend design form、前端章节或空占位文件。
 
+每个 actual-end 的 detailed owner 必须填写 `设计范围适用性`。架构主线、核心对象与职责、具体风险或无风险结论，以及验证方案是必填范围，始终拥有 canonical owner section 与证据。数据模型、状态/并发、接口/权限/兼容和前端是条件范围：适用时记录 owner 并写对应章节；不适用时 owner 为 `N/A`，由 inventory 行持有证据化理由并省略正文。每个 owner 只负责本范围事实，不得跨范围复制内容。
+
 按下方"设计文档格式"逐节展开，**每节展示后等待用户确认**，并将相关 `D-NNN` 更新为有来源和确认凭据的终态。章节审阅不能替代未决决策的逐项确认；任何 `needs-user-confirmation` 必须先被解决。
 
 #### Pre-write content confirmation
@@ -174,7 +222,7 @@ The explicit pre-write gate covers the selected form, exact target paths, `desig
 
 未满足这些条件时，不得创建、覆盖或移除 `design/00-index.md`、任一 end small file、split index、fragment 或 obsolete path。
 
-【立即用工具执行】读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-brainstorm/design-template.md`，按实际涉及端写入设计文件。每个实际端的 unique detailed owner 写入自己的终态 `### Decision Ledger` 与 `### Pre-write Confirmation Evidence`；所有端共用 globally unique D-NNN sequence，跨端决策只能由一个 owner 持有，其他端只链接。每个 owner 的 `Covered IDs` 必须恰好覆盖自己的台账行。`design/00-index.md` 只记录 ownership，不复制决策正文，且不得持久化 `needs-user-confirmation`。
+【立即用工具执行】只有上述门禁全部满足后，才读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md`，再读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-brainstorm/design-template.md`，并按实际涉及端写入设计文件。每个实际端的 unique detailed owner 写入自己的终态 `### Decision Ledger` 与 `### Pre-write Confirmation Evidence`；所有端共用 globally unique D-NNN sequence，跨端决策只能由一个 owner 持有，其他端只链接。每个 owner 的 `Covered IDs` 必须恰好覆盖自己的台账行。`design/00-index.md` 只记录 ownership，不复制决策正文，且不得持久化 `needs-user-confirmation`。
 
 #### Post-write handoff
 
@@ -190,10 +238,11 @@ Post-write verification rejects dual forms, indirect change-index links, incompl
 
 ## 设计文档格式
 
-不要在 Socratic 问答期间加载输出模板。写入门禁通过后再完整读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-brainstorm/design-template.md`；前端范围还必须保留上文定义的 Visual Source、组件映射和 Visual Checks 契约。
+不要在 Socratic 问答期间加载共享文档风格契约或输出模板。写入门禁通过后，先完整读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md`，再完整读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-brainstorm/design-template.md`；前端范围还必须保留上文定义的 Visual Source、组件映射和 Visual Checks 契约。
 
 ## 提问原则
 
+- 每个问题必须遵循 `skills/_shared/decision-ledger.md#可理解的决策问题`：选项以采用后的真实业务或行为结果命名；用户表示不理解时，先用直白语言解释再重新提问，不得把该回答视为确认
 - 每次只问一个问题，等待回答后再问下一个
 - 提供 2-3 个选项，同时允许自由回答
 - 不要一次性抛出所有问题

@@ -560,6 +560,30 @@ Assert-Condition (Test-Path $decisionGateContractValidator) 'focused decision-ga
 & powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused decision-gate contract validator failed'
 
+$documentStyleContractValidator = Join-Path $root 'scripts\test-document-style-contract.ps1'
+Assert-Condition (Test-Path $documentStyleContractValidator) 'focused document-style contract validator is missing'
+$documentStyleContractValidatorBytes = [System.IO.File]::ReadAllBytes($documentStyleContractValidator)
+Assert-Condition (
+    $documentStyleContractValidatorBytes.Length -ge 3 -and
+    $documentStyleContractValidatorBytes[0] -eq 0xEF -and
+    $documentStyleContractValidatorBytes[1] -eq 0xBB -and
+    $documentStyleContractValidatorBytes[2] -eq 0xBF
+) 'focused document-style contract validator must use UTF-8 BOM'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $documentStyleContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused document-style contract validator failed'
+
+$designReviewContractValidator = Join-Path $root 'scripts\test-design-review-contract.ps1'
+Assert-Condition (Test-Path $designReviewContractValidator) 'focused design-review contract validator is missing'
+$designReviewContractValidatorBytes = [System.IO.File]::ReadAllBytes($designReviewContractValidator)
+Assert-Condition (
+    $designReviewContractValidatorBytes.Length -ge 3 -and
+    $designReviewContractValidatorBytes[0] -eq 0xEF -and
+    $designReviewContractValidatorBytes[1] -eq 0xBB -and
+    $designReviewContractValidatorBytes[2] -eq 0xBF
+) 'focused design-review contract validator must use UTF-8 BOM'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $designReviewContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused design-review contract validator failed'
+
 $prdBusinessContractValidator = Join-Path $root 'scripts\test-prd-business-contract.ps1'
 Assert-Condition (Test-Path $prdBusinessContractValidator) 'focused PRD business contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $prdBusinessContractValidator
@@ -949,7 +973,7 @@ $skillAnchors = @{
     'fp-prd-grill-me' = @('one question per turn', 'MUST NOT decide Bucket C', 'Minimal Fact Exploration')
     'fp-propose' = @('proposal-template.md', 'Why / What Changes / Out of Scope / Impact', 'fp-docs/changes/<slug>/proposal.md')
     'fp-brainstorm' = @('2-3', 'design-template.md', 'Visual Checks', 'design/00-index.md', 'design/backend.md', 'design/frontend.md')
-    'fp-design-review' = @('review-template.md', 'review.md', '评审关注点', '决策统计', '不得复制决策正文', 'design/00-index.md', 'manifest order', 'canonical-first', '阻塞')
+    'fp-design-review' = @('review-template.md', 'review.md', '设计充分性检查', '评审结论', '业务和技术主线', '主要风险', '不得复制台账行或机械复制叙述性设计正文', 'design/00-index.md', 'manifest order', 'canonical-first', '阻塞')
     'fp-plan' = @('fp-plan-backend', 'fp-plan-frontend', 'plan-backend.md', 'plan-frontend.md')
     'fp-plan-backend' = @('Global Constraints', 'Backend Interface Ledger', 'Coverage Matrix', 'plan-template.md')
     'fp-plan-frontend' = @('Global Constraints', 'Interfaces', 'Visual Checks', 'plan-template.md')

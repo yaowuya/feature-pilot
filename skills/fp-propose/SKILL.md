@@ -78,7 +78,7 @@ One logical proposal selects exactly one form before writing:
 2. 【立即用工具执行】确认目标项目根目录，并把输出限定在项目根目录下的 `fp-docs/changes/<slug>/proposal.md` 或 `fp-docs/changes/<slug>/proposal/00-index.md`。
 3. 如果项目根目录没有 `fp-docs/manifest.md`，只提示建议运行 `/fp-init`；不要强制初始化，也不要创建 manifest/settings/intel。
 4. 【立即用工具执行】仅在所有 proposal-required 台账行终态且获得 separate write authorization 后，创建已批准 form 所需的目录。
-5. 【立即用工具执行】读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md`，填写完整后直接写入批准的最终结构；不要先生成 monolith 再机械拆分。把终态 Decision Ledger 和 Pre-write Confirmation Evidence 写入 `Impact` 的 unique detailed owner；不得持久化 `needs-user-confirmation` 行。
+5. 【立即用工具执行】只有全部 proposal-required 台账行终态且获得 separate write authorization 后，才读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md`，再读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md`。按共享写作契约填写批准的最终结构并直接写入；不要先生成 monolith 再机械拆分。把终态 Decision Ledger 和 Pre-write Confirmation Evidence 写入 `Impact` 的 unique detailed owner；不得持久化 `needs-user-confirmation` 行。
 
 Split form requirements:
 
@@ -97,7 +97,7 @@ Existing artifact handling:
 
 只生成本阶段的一种 proposal form。不要预创建 `design.md`、`tasks.md`、`tasks/`；这些文件/目录只能由后续对应阶段在真正需要时创建。
 
-Do not load `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md` during exploration or questioning. Load it only after the pre-write confirmation gate, so early turns carry decisions rather than output boilerplate.
+Do not load the shared writing contract or `${CLAUDE_PLUGIN_ROOT}/skills/fp-propose/proposal-template.md` during exploration or questioning. Load them in that order only after the pre-write confirmation gate, so early turns carry decisions rather than output boilerplate.
 
 ---
 

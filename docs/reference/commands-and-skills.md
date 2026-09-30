@@ -16,7 +16,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | 从 PRD 或需求启动完整开发 | `fp-start` | 提案、设计、计划、执行、终审与归档主线 |
 | 快速完成一个小而明确的修改 | `fp-quick` | 跳过完整文档链，但保留探索、确认与验证 |
 | 根据 Figma 改造 UI | `fp-figma` | 设计映射、实现、视觉与能力证据 |
-| 从已确认设计准备开发评审 | `fp-design-review` | 可评审的 `review.md` 入口 |
+| 从已确认设计准备开发评审 | `fp-design-review` | 独立可读的完整 review.md 评审文档 |
 | 审计或实施达梦、OceanBase 适配 | `fp-db-adapter` skill | 两阶段数据库适配方案、确认、实施与验证 |
 | 提升单元测试覆盖率 | `fp-coverage` | 冻结口径、分批补测、完整验证 |
 | 审查大型模块并受控修复 | `fp-module-review` | 稳定 Finding、分 wave 审查与批准后修复 |
@@ -94,8 +94,12 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 ### Figma 与设计评审
 
 - `fp-figma` 面向可信 Figma node，保留既有行为并建立视觉、能力和 E2E 证据；
-- `fp-design-review` 把已确认设计整理成开发者可评审的入口，不代替设计确认；
+- `fp-design-review` 先核对 canonical design 是否足够评审，再生成独立可读的完整 `review.md`；信息不足时返回 `fp-brainstorm` 定点修订，不在评审阶段重新设计；
 - UI/E2E 与 Figma 的专业证据边界见 [架构与产物参考](architecture-and-artifacts.md)。
+
+PRD、proposal、design 和 review 统一遵循仓库内共享文档风格契约：先给目的、范围、主线或结论，再展开细节；使用清楚的段落、术语、空格和标点，同时保持代码、路径、API 字段、固定 schema 与 Decision Ledger 精确不变。
+
+`review.md` 是独立可读的完整评审文档。
 
 ### 数据库适配
 
