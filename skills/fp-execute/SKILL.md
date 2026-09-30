@@ -112,12 +112,12 @@ After a UI/E2E failure, diagnostic retries may continue only through attempt 3. 
 1. 从唯一 task-owner file 读取任务、Files、Reasoning、Depends on、Interfaces 和验收标准。
 2. 核对 checkbox、ledger、git 和实际文件，确认任务尚未完成。
 3. 先写失败测试并运行，确认因缺少目标行为而失败；不适合自动测试时记录原因和替代验证。
-4. 编写让测试通过的最小实现，不顺手重构无关范围。
+4. 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 编写最小实现并同步补齐 docstring、原因注释及适用的简化标记，不顺手重构无关范围。
 5. 运行目标测试，并按任务要求运行相关 lint、typecheck、build 或视觉验证。
-6. 做一次 inline 自审，检查正确性、命名、结构、契约、安全和前端视觉约束；发现问题立即修复并重跑受影响验证。
+6. 做一次 inline 自审，检查正确性、命名、结构、契约、安全和前端视觉约束，并按共享工程质量契约核验注释、复杂度依据与简化边界；缺失先修复，重跑受影响验证后才可完成任务。
 7. 验证通过后更新唯一 owner checkbox；双端计划同步派生进度。
 8. 按任务提交代码，提交信息与交付行为一致。
-9. 在 ledger 记录 commit 范围、验证命令、结果和残余风险。
+9. 在 ledger 记录 commit 范围、验证命令、结果、注释自审和残余风险；有意延后引用代码 `path:line` 与升级条件，无则记无。
 ## CodeGraph 写后刷新
 
 首次创建、修改、移动或删除源码、测试、配置、schema 或生成器输入时，立即把本工作流代码图状态标记为 `dirty-after-write`。此后 `never query a dirty graph`：本轮剩余定位全部使用当前源码的 `Glob/Grep/ranged Read`，不得继续使用写入前的 CodeGraph 结果。

@@ -32,11 +32,11 @@ Applicable Global Constraints:
 
 ## Review Method
 
-1. Read the task brief including the Relevant Project Information Layer section.
+1. Read the task brief including the Relevant Project Information Layer section and the controller-resolved engineering-quality contract path in Applicable Global Constraints.
 2. Read the implementer report.
 3. Read the review package, including commit list, diff stat, full diff, and test evidence.
 4. Inspect referenced source/test files read-only when needed for line evidence.
-5. Verify the implementation satisfies the exact task and does not exceed scope.
+5. Verify the implementation satisfies the exact task and does not exceed scope. Apply the engineering-quality completion checks to the actual diff: required docstrings/reason comments, current justification for complexity, and simplification marker boundaries/triggers; report violations in Code Quality with file:line evidence, and intentional deferrals in existing concerns. Required-item violations are at least Important and cannot become Review Debt.
 6. Verify Interfaces / Contract checks are implemented and consistent.
 7. Verify tests or alternative validations actually prove the behavior.
 8. For frontend tasks, verify Template Outline, Script Outline, Style Outline, and Visual Checks are respected.

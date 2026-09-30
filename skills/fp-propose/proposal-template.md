@@ -69,6 +69,18 @@ Read this file only after every proposal-required Decision Ledger row is termina
 - Explicit user authorization to write: <本次确认消息或等价明确授权>
 ```
 
+## Document readability self-review
+
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md` after resolving the complete logical proposal.
+
+- 按 fragment manifest 顺序检查完整 logical proposal，同时检查每个分片的局部结构。
+- `Why` 先说明痛点、目标和现在为什么做。
+- 每个 `What Changes` 小节只承载一个变更主题。
+- Capabilities 与 Out of Scope 使用可独立理解的行为结果，不使用需要自行解码的抽象标签。
+- `Impact` 中的路径和技术标识符保持精确，周围文字说明受影响模块和原因。
+- Decision Ledger 与 Pre-write Confirmation Evidence 保持原 schema 和原语义。
+- 纯表达缺陷可依据已确认内容修复；可能改变范围、影响或交付策略时返回 proposal 决策门禁。
+
 ## Structure self-review
 
 - Exactly one canonical form exists: `fp-docs/changes/<slug>/proposal.md` or `fp-docs/changes/<slug>/proposal/00-index.md` plus indexed fragments; the mutually exclusive pair never coexists.

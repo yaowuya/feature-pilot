@@ -148,6 +148,18 @@ flowchart TD
 - <仅记录非阻塞问题；如果没有，写“无”。每条必须说明为什么不阻塞。>
 ````
 
+## Document readability self-review
+
+Apply `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md` after resolving the complete logical PRD.
+
+- 按 fragment manifest 顺序检查完整 logical PRD，同时检查每个分片的局部结构。
+- 固定六章结构和必需四级标题保持不变；四级标题属于固定 schema 例外。
+- 每个功能先说明用户、问题、价值和业务结果，再说明规则、交互与异常。
+- 普通段落主题单一，术语与指代清楚；实现证据先转换为产品语言。
+- 不为缩短句子而拆散完整业务规则，也不得引入实现语言。
+- 表格只承载结构化规则、异常、日志和验收信息，不重复相邻正文。
+- 纯表达缺陷可依据已确认内容修复；可能改变产品含义时返回 `fp-prd-grill-me`。
+
 ## Structure self-review
 
 - Exactly one canonical form exists: `fp-docs/changes/<slug>/prd.md` or `fp-docs/changes/<slug>/prd/00-index.md` plus indexed fragments; the mutually exclusive pair never coexists.

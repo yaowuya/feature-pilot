@@ -35,6 +35,8 @@ Latest task/final review:
 Findings to fix:
 {FINDINGS}
 
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` at the absolute plugin path resolved and supplied by the controller, for both task and final scope. Missing mandatory input is BLOCKED; do not search the consumer repository for a replacement.
+
 ## Required Behavior
 
 A fixer may be dispatched only after review attempt 1 or 2 of 3. If the supplied attempt is 3 of 3, stop and report `BLOCKED` because the controller must classify the remaining findings instead. Do not request or imply a fourth review.
@@ -44,7 +46,7 @@ For a required UI/E2E case, fix only the exact lifecycle, real-browser, coverage
 1. Read all inputs.
 2. Confirm each finding is understood.
 3. Re-check the task brief's Relevant Project Information Layer section for task scope, or the resolved information-layer context for final scope, before applying fixes. If a stale-intel or stale-settings issue is discovered, surface it rather than patching around it.
-4. Edit only files needed to fix the listed findings.
+4. Edit only files needed to fix the listed findings; synchronize required docstrings, reason comments and simplification markers with the fix, and check the shared engineering-quality contract before claiming FIXED.
 5. Run the targeted tests/validation commands from the brief plus any regression command needed for the fixes.
 6. Commit the fix if code changes are made.
 7. Append a fix section to {REPORT_PATH}; task scope uses the existing task report, while final scope uses `.fp-execute/reports/final-review-fixes.md`. Do not create a separate unnamed report.

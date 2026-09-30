@@ -19,6 +19,8 @@ Read this task brief first and treat it as your source of truth:
 
 The brief contains task text, allowed files, reasoning, interfaces, global constraints, Relevant Project Information Layer, TDD/validation commands, scope exclusions, and commit instructions.
 
+Read the controller-resolved `skills/_shared/engineering-quality.md` path in Applicable Global Constraints before coding. It owns mandatory comments/docstrings, evidence-based simple design, simplification markers and completion checks; do not rely on inherited controller context.
+
 ## Information Layer Rules
 
 Before editing, read the task brief's Relevant Project Information Layer section. Re-open every referenced live source/config file before relying on it. Treat settings/intel as navigation and constraints, not proof of current behavior. If a referenced path is missing or stale, stop and report the blocker instead of guessing.
@@ -42,11 +44,11 @@ Follow the brief exactly:
 1. Confirm the working tree state relevant to this task.
 2. Write the failing test first, unless the brief explicitly requires alternative validation.
 3. Run the failure command and record the key expected failure.
-4. Implement the minimum code needed for this task only.
+4. Implement the minimum code needed for this task only, writing/updating the contract-required docstrings, reason comments and applicable simplification markers with the code.
 5. Run the pass command and relevant lint/build/type/visual checks.
 6. For every planned visual Case ID, replay the project-configured command/tool against the real target runtime route with the declared scenario/state, viewport, DPR, locale, theme, and deterministic non-sensitive fixture. Write `.fp-execute/visual/<task-id>/<case-id>/manifest.md`, preserve approved-source `reference.png`, capture real-runtime `current.png`, and record optional `diff.png` or the missing diff explanation. Browser interaction evidence is separate from screenshot evidence and exercises the approved states.
 7. For each UI case, record `SOURCE_READY`, `STATIC_UI_READY`, visual-manifest evidence, and (when required) `INTERACTION_READY` in the brief/report. You must never self-confirm `FRONTEND_E2E_PASS`: the controller sends a fresh independent E2E verifier after visual pass. For each required `FIGCAP-*` and `PRES-*` in the brief, collect the declared runtime replay evidence. A rendered control, handler, screenshot, or changed file alone is not `PASS`. Do not mark the Figma change COMPLETE; report code-editing, capability, preservation, and visual results separately.
-8. Self-review for scope, interfaces, global constraints, style, and test quality.
+8. Self-review for scope, interfaces, global constraints, style, and test quality, including every engineering-quality completion check against the diff. Repair missing or misleading comments and unsupported complexity before reporting DONE.
 9. Commit only this task's changes when validation passes.
 10. Write the full report file with evidence.
 
@@ -114,6 +116,8 @@ Status: DONE | DONE_WITH_CONCERNS | NEEDS_CONTEXT | BLOCKED
 - Tests: pass/fail
 - Global Constraints: pass/fail
 - Interfaces: pass/fail
+- Engineering quality: pass/fail; <comment coverage and complexity evidence with path:line>
+- Intentional deferrals: <none, or code marker path:line, boundary, trigger and upgrade path>
 - Concerns: <none or details>
 ```
 

@@ -79,15 +79,18 @@ Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification`
 - **验证方式**：测试、lint、构建、手工检查或浏览器验证。
 - **风险与回退**：只列真实风险。
 
+按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 选择满足当前需求的最简单方案；在内联计划中交代新增复杂度的依据和有意延后的边界，不为 quick 新建设计或技术债文件。
+
 在用户确认前不要修改业务代码。用户回复“确认”“继续”“按这个来”等明确许可后再执行。
 
 ### 4. 按计划实现
 
 执行时遵循项目现有模式：
 - 优先补充或调整测试，再写实现；若需求不适合自动化测试，说明原因并提供替代验证。
-- 后端按现有分层顺序修改：model/service/viewset/serializer/url/tests。
+- 后端按项目已有分层和依赖顺序修改，不为本次小需求补建不存在的层。
 - 前端按现有工程约束修改；优先遵循项目现有前端框架、脚本/状态管理写法、项目配置的设计系统、组件和样式 token。
 - 控制改动范围，不顺手重构无关代码。
+- 按共享工程质量契约同步编写/更新 docstring、原因注释及适用的简化标记；完成前对照 diff 自审，缺失必须补齐，不能仅凭测试通过宣告完成。
 - 遇到新阻塞时停下说明，不擅自扩大范围。
 
 首次写入源码、测试、配置、schema 或生成器输入后，将当前图状态标记为 `dirty-after-write`，并 `never query a dirty graph`；剩余定位只使用当前源码搜索。项目在写入前已有 `.codegraph/` 时，在最终汇报或任何写入后的阻塞返回前执行一次 `post-write-sync`：
@@ -104,6 +107,7 @@ codegraph sync <project-root> --quiet
 - 完成了什么
 - 改了哪些关键文件
 - 验证命令及结果
+- 注释自审结果；有意延后的 `path:line`、边界与升级条件（无则写无）
 - CodeGraph `post-write-sync` 的执行、跳过或失败状态
 - 未验证项或残余风险
 

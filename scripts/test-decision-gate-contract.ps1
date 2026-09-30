@@ -173,6 +173,90 @@ function Replace-Required([string]$text, [string]$oldValue, [string]$newValue, [
     return $text.Substring(0, $index) + $newValue + $text.Substring($index + $oldValue.Length)
 }
 
+function Get-LineCount([string]$text) {
+    if ($text.Length -eq 0) { return 0 }
+    $newlineCount = [regex]::Matches($text, '\r?\n').Count
+    if ($text -match '\r?\n\z') { return $newlineCount }
+    return $newlineCount + 1
+}
+
+function Get-CommandChecksumBullets([string]$text, [string]$surface) {
+    $checksumMatches = @([regex]::Matches($text, '(?ms)^Gate checksum：[ \t]*\r?\n(?<body>.*)\z'))
+    Assert-Condition ($checksumMatches.Count -eq 1) "$surface must contain exactly one Gate checksum section"
+    return @([regex]::Matches($checksumMatches[0].Groups['body'].Value, '(?m)^-[ \t]+(?<text>[^\r\n]+)\r?$') | ForEach-Object { $_.Groups['text'].Value })
+}
+
+function Assert-FpStartCommandChecksumContract([string]$text, [string]$surface) {
+    Assert-Condition ($text.Contains('description: 启动全流程开发向导')) "$surface lost its meaningful public description"
+    Assert-Condition ($text.Contains('`${CLAUDE_PLUGIN_ROOT}/skills/fp-start/SKILL.md`')) "$surface lost its exact skill loader"
+    Assert-Condition ($text.Contains('$ARGUMENTS')) "$surface no longer passes the command input"
+    Assert-Condition ($text.Contains('`${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md`')) "$surface lost canonical artifact delegation"
+
+    $bullets = @(Get-CommandChecksumBullets $text $surface)
+    Assert-Condition ($bullets.Count -eq 8) "$surface must contain exactly eight checksum bullets"
+
+    Assert-OrderedAnchors $bullets[0] @(
+        '`fp-explore`'
+        '用户确认'
+        '`fp-quick`'
+    ) "$surface checksum bullet 1 quick-route confirmation"
+    Assert-OrderedAnchors $bullets[1] @(
+        '`fp-propose`'
+        '`fp-brainstorm`'
+        '`fp-plan`'
+        '逐阶段核验/确认'
+        'proposal/design查'
+        'Decision Ledger/per-item confirmation'
+    ) "$surface checksum bullet 2 ordered stage gates"
+    Assert-OrderedAnchors $bullets[2] @(
+        'proposal/design 写门禁后加载共享文档风格契约'
+        '禁改确认内容/Decision Ledger/canonical layout'
+    ) "$surface checksum bullet 3 post-gate style contract"
+    Assert-OrderedAnchors $bullets[3] @(
+        '模型由 `fp-brainstorm` 核验'
+        '真实基类'
+        '继承字段'
+        '物理存储'
+        '约束'
+        'migration'
+        '评审禁重设计'
+    ) "$surface checksum bullet 4 model ownership"
+    Assert-OrderedAnchors $bullets[4] @(
+        '计划确认前禁改业务代码'
+        '执行仅用已确认 task 文件'
+        '禁聊天摘要'
+    ) "$surface checksum bullet 5 plan/execution-source boundary"
+    Assert-OrderedAnchors $bullets[5] @(
+        '默认加载 `fp-execute`'
+        '仅用户明确要求逐任务确认才用 `semi`'
+    ) "$surface checksum bullet 6 direct execution mode"
+    Assert-OrderedAnchors $bullets[6] @(
+        '只有用户明确要求'
+        '`fp-execute-sdd`'
+        '通用 `SDD`'
+        'fresh implementer/reviewer isolation'
+        '才进 SDD'
+        '再选 SDD'
+        'SDD 逐项确认'
+        '自动连续'
+    ) "$surface checksum bullet 7 SDD eligibility and mode"
+    Assert-OrderedAnchors $bullets[7] @(
+        '完成后由'
+        '`fp-final-review`'
+        '接管最终评审/交接'
+    ) "$surface checksum bullet 8 final-review ownership"
+    Assert-Condition ((Get-LineCount $text) -le 20) "$surface exceeds 20 lines"
+}
+
+function Test-FpStartCommandChecksumContract([string]$text) {
+    try {
+        Assert-FpStartCommandChecksumContract $text 'fp-start command fixture'
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 $proposalSkillPath = Join-Path $root 'skills\fp-propose\SKILL.md'
 $proposalTemplatePath = Join-Path $root 'skills\fp-propose\proposal-template.md'
 $brainstormSkillPath = Join-Path $root 'skills\fp-brainstorm\SKILL.md'
@@ -233,7 +317,15 @@ Assert-Anchors $decisionLedger @(
     'concrete decision ID',
     'user selection or message reference',
     'ID: user answer',
-    'selected value and message reference'
+    'selected value and message reference',
+    '可理解的决策问题',
+    '为什么现在需要这个决定',
+    '会影响哪些产物或运行行为',
+    '每个选项采用后的实际行为',
+    '主要代价或风险',
+    '推荐选项及推荐理由',
+    '以业务或行为结果命名',
+    '必须先用直白语言解释'
 ) 'shared decision ledger contract'
 Assert-Anchors $decisionLedger $statusAnchors 'shared decision ledger status set'
 
@@ -267,6 +359,41 @@ Assert-Anchors $brainstormSkill @(
 ) 'fp-brainstorm'
 Assert-Anchors $brainstormSkill $statusAnchors 'fp-brainstorm status set'
 
+$brainstormContext = Get-MarkdownSection $brainstormSkill '第一步：读取上下文' 'fp-brainstorm'
+$modelInvestigationHeading = '#### 项目模型规范调查'
+$djangoChecksHeading = '#### Django 条件化检查'
+$modelInvestigationStart = $brainstormContext.IndexOf($modelInvestigationHeading, [System.StringComparison]::Ordinal)
+$djangoChecksStart = $brainstormContext.IndexOf($djangoChecksHeading, [System.StringComparison]::Ordinal)
+Assert-Condition ($modelInvestigationStart -ge 0) 'fp-brainstorm context is missing the project model investigation section'
+Assert-Condition ($djangoChecksStart -gt $modelInvestigationStart) 'fp-brainstorm context is missing the scoped Django checks after model investigation'
+$modelInvestigation = $brainstormContext.Substring($modelInvestigationStart, $djangoChecksStart - $modelInvestigationStart)
+$djangoChecks = $brainstormContext.Substring($djangoChecksStart)
+
+Assert-Anchors $modelInvestigation @(
+    '仅当本次变更涉及数据库模型时执行'
+    '目标模型、公共基类、manager、mixin 和相邻版本模型'
+    '字段长度常量'
+    '字段与存储选择理由'
+    '显式字段与继承字段'
+    '逻辑模型与实际物理表'
+    '主要查询模式'
+    '查询模式与索引映射'
+    '软删除后的唯一性含义'
+    '没有实际数据库收益的迁移'
+    '任何持久化技术都必须把主要查询模式映射到索引或访问路径'
+) 'fp-brainstorm bounded project model investigation'
+Assert-Anchors $djangoChecks @(
+    '仅当目标项目使用 Django 且本次涉及模型时'
+    'abstract、proxy 和 multi-table inheritance'
+    '`choices` 是否进入 migration state'
+    '联合索引左前缀'
+    '不得擅自统一选择'
+    '非 Django 项目只执行对应 ORM 与 schema migration 检查'
+    '设计正文必须记录证据路径和最终结论'
+    '当前代码无法证明的新选择仍进入 Decision Ledger'
+    '不得把推荐写成 `code-verified`'
+) 'fp-brainstorm conditional Django model investigation'
+
 Assert-Anchors $proposalTemplate @(
     '### Handoff Decision Ledger',
     '### Pre-write Confirmation Evidence',
@@ -285,6 +412,14 @@ Assert-Anchors $designTemplate @(
     'must not persist',
     'placeholder'
 ) 'design template'
+Assert-Anchors $designTemplate @(
+    '接近实现的模型代码'
+    '逻辑模型与物理存储'
+    '继承字段与重复存储结论'
+    '索引、约束与软删除'
+    'Migration 影响'
+    '技术栈专项结论'
+) 'design template model review contract'
 
 $proposalLedger = Get-MarkdownSection $proposalTemplate 'Handoff Decision Ledger' 'proposal template'
 $designLedger = Get-MarkdownSection $designTemplate 'Decision Ledger' 'design template'
@@ -374,42 +509,131 @@ Assert-Anchors $brainstormSkill @(
     'inherited visual source is absent, conflicting, or ambiguous',
     'do not repeat the Figma question'
 ) 'fp-brainstorm inherited visual-source gate'
+
+$visualSourceQuestionHeading = '- **【仅在视觉来源未确认时必问，且最先问】视觉来源决策**'
+$visualSourceQuestionStart = $brainstormSkill.IndexOf($visualSourceQuestionHeading, [System.StringComparison]::Ordinal)
+Assert-Condition ($visualSourceQuestionStart -ge 0) 'fp-brainstorm is missing the concrete visual-source decision question'
+$visualSourceQuestionEnd = $brainstormSkill.IndexOf('- 页面/视图：', $visualSourceQuestionStart, [System.StringComparison]::Ordinal)
+Assert-Condition ($visualSourceQuestionEnd -gt $visualSourceQuestionStart) 'fp-brainstorm visual-source decision question has no bounded end before the next frontend topic'
+$visualSourceQuestion = $brainstormSkill.Substring($visualSourceQuestionStart, $visualSourceQuestionEnd - $visualSourceQuestionStart)
+Assert-Anchors $visualSourceQuestion @(
+    '创建或定位“视觉来源”对应的实际 `D-NNN`'
+    '`needs-user-confirmation`'
+    '为什么现在需要这个决定'
+    '会影响哪些设计产物或运行行为'
+    '`Visual Source`'
+    '`Figma 节点/页面`'
+    '`UI 组件树与 Figma 解析映射`'
+    'Flex/Grid 容器规划'
+    '`Visual Checks`'
+    '运行时视觉一致性'
+    '以 Figma 作为视觉来源'
+    '以用户提供截图作为视觉来源'
+    '按 UI/UX 规则和相邻页面推导'
+    '推荐依据只使用已确认且可访问的证据'
+    '其他（请描述）'
+    '采用“以 Figma 作为视觉来源”'
+    '采用“以用户提供截图作为视觉来源”'
+    '采用“按 UI/UX 规则和相邻页面推导”'
+) 'fp-brainstorm concrete visual-source decision question'
+Assert-OrderedAnchors $visualSourceQuestion @(
+    '为什么现在需要这个决定'
+    '会影响哪些设计产物或运行行为'
+    '以 Figma 作为视觉来源'
+    '以用户提供截图作为视觉来源'
+    '按 UI/UX 规则和相邻页面推导'
+    '推荐依据只使用已确认且可访问的证据'
+    '请按实际 `D-NNN` 确认一个结果标签'
+) 'fp-brainstorm visual-source question explanation/recommendation/confirmation order'
+$visualSourceBehaviorCount = [regex]::Matches($visualSourceQuestion, '实际行为：').Count
+$visualSourceRiskCount = [regex]::Matches($visualSourceQuestion, '主要代价或风险：').Count
+Assert-Condition ($visualSourceBehaviorCount -eq 3) "fp-brainstorm visual-source question must explain exactly three option behaviors; found $visualSourceBehaviorCount"
+Assert-Condition ($visualSourceRiskCount -eq 3) "fp-brainstorm visual-source question must explain exactly three option risks; found $visualSourceRiskCount"
+Assert-Condition (-not [regex]::IsMatch($visualSourceQuestion, '(?m)(?:选项\s*[ABC]|选\s*[ABC])')) 'fp-brainstorm visual-source question still uses generic A/B/C labels'
+
 Assert-Anchors $brainstormSkill @('globally unique D-NNN sequence') 'fp-brainstorm cross-end decision ownership'
-Assert-Anchors $startSkill @('fp-design-review', 'review.md', '评审入口摘要', '未复制决策正文', '重新生成') 'fp-start review entry'
+Assert-Anchors $startSkill @(
+    'fp-design-review'
+    'review.md'
+    '评审结论'
+    '业务和技术主线'
+    '主要风险'
+    '定点修订并重新确认'
+    '不得编造缺失设计'
+) 'fp-start complete review handoff'
 Assert-Anchors $designReviewSkill @(
-    'review.md',
-    'review-template.md',
-    'fp-docs/changes/<slug>/review.md',
-    '评审关注点',
-    '决策统计',
-    '建议评审顺序',
-    '建议抽查路径',
-    'design/00-index.md',
-    'manifest order',
-    'canonical-first',
-    '不得复制决策正文',
-    '不得编造',
+    'review.md'
+    'review-template.md'
+    'fp-docs/changes/<slug>/review.md'
+    '设计充分性检查'
+    '独立可读的完整评审文档'
+    '建议评审顺序'
+    '建议抽查路径'
+    'design/00-index.md'
+    'manifest order'
+    'canonical-first'
+    '不得复制台账行或机械复制叙述性设计正文'
+    '不得编造'
     '阻塞'
 ) 'fp-design-review skill'
 Assert-Anchors $reviewTemplate @(
-    '# <功能描述> — 开发设计评审',
-    '评审导航摘要',
-    '决策统计',
-    '数据变更',
-    '接口变更',
-    '评审关注点',
-    '建议评审顺序',
-    '建议抽查路径',
-    '设计入口',
-    '不得复制决策正文',
-    '不得编造'
+    '# <功能描述> — 开发设计评审'
+    '## 评审结论'
+    '## 业务和技术主线'
+    '## 核心对象与职责'
+    '## 主要风险、迁移、发布和验证'
+    '## 评审顺序与抽查路径'
+    '## 设计入口'
+    '不得复制 Decision Ledger rows'
+    '不得编造设计事实'
 ) 'design review template'
-Assert-Anchors $designReviewCommand @('fp-design-review', 'review.md', 'Gate checksum', '不得复制决策正文') 'commands/fp-design-review.md'
+Assert-Anchors $designReviewCommand @('fp-design-review', 'review.md', 'Gate checksum', '不复制台账/叙述正文') 'commands/fp-design-review.md'
 Assert-Anchors $startSkill @('globally unique D-NNN sequence', 'Covered IDs') 'fp-start cross-end decision recovery'
 
-Assert-Anchors $startCommand @('Decision Ledger', 'per-item confirmation') 'commands/fp-start.md'
+Assert-FpStartCommandChecksumContract $startCommand 'commands/fp-start.md'
 
-Assert-Anchors $startCommand @('fresh implementer/reviewer isolation') 'commands/fp-start.md SDD trigger'
+$startCommandMutations = @(
+    @{ Name = 'public description may become ambiguous'; Old = 'description: 启动全流程开发向导'; New = 'description: 启动' }
+    @{ Name = 'loader may stop targeting fp-start'; Old = '${CLAUDE_PLUGIN_ROOT}/skills/fp-start/SKILL.md'; New = '${CLAUDE_PLUGIN_ROOT}/skills/fp-route/SKILL.md' }
+    @{ Name = 'loader may drop command input'; Old = '$ARGUMENTS'; New = '$INPUT' }
+    @{ Name = 'loader may drop artifact-layout delegation'; Old = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md'; New = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md' }
+    @{ Name = 'quick route may omit fp-explore'; Old = '`fp-explore`'; New = '`fp-route`' }
+    @{ Name = 'quick route may omit user confirmation'; Old = '→用户确认→'; New = '→自动→' }
+    @{ Name = 'quick route may omit fp-quick'; Old = '`fp-quick`'; New = '`quick-mode`' }
+    @{ Name = 'full flow may omit fp-propose'; Old = '`fp-propose`→'; New = '`fp-scope`→' }
+    @{ Name = 'full flow may omit fp-brainstorm'; Old = '`fp-brainstorm`→'; New = '`fp-design`→' }
+    @{ Name = 'full flow may omit fp-plan'; Old = '`fp-plan` 逐阶段'; New = '`fp-tasks` 逐阶段' }
+    @{ Name = 'full-flow stages may be reordered'; Old = '`fp-propose`→`fp-brainstorm`→`fp-plan`'; New = '`fp-brainstorm`→`fp-propose`→`fp-plan`' }
+    @{ Name = 'a stage may skip verification or confirmation'; Old = '逐阶段核验/确认'; New = '阶段完成后继续' }
+    @{ Name = 'proposal/design may skip its Decision Ledger scope'; Old = 'proposal/design查'; New = '全程查' }
+    @{ Name = 'proposal/design may skip Decision Ledger verification'; Old = 'Decision Ledger/per-item confirmation'; New = 'decision notes/per-item confirmation' }
+    @{ Name = 'proposal/design may skip per-item confirmation'; Old = 'per-item confirmation'; New = 'summary confirmation' }
+    @{ Name = 'proposal/design may load style before its write gate'; Old = 'proposal/design 写门禁后加载共享文档风格契约'; New = 'proposal/design 加载共享文档风格契约' }
+    @{ Name = 'style repair may change confirmed semantics'; Old = '禁改确认内容'; New = '可改确认内容' }
+    @{ Name = 'model investigation may lose its conditional owner'; Old = '模型由 `fp-brainstorm`'; New = '模型由评审阶段' }
+    @{ Name = 'model investigation may omit real-base verification'; Old = '真实基类'; New = '模型结构' }
+    @{ Name = 'review may redesign the model'; Old = '评审禁重设计'; New = '评审可重设计' }
+    @{ Name = 'business code may change before plan confirmation'; Old = '计划确认前禁改业务代码'; New = '计划形成后可改业务代码' }
+    @{ Name = 'execution may consume unconfirmed or non-task input'; Old = '执行仅用已确认 task 文件'; New = '执行读取可用输入' }
+    @{ Name = 'execution may consume a chat summary'; Old = '禁聊天摘要'; New = '可用聊天摘要' }
+    @{ Name = 'fp-execute may stop being the default'; Old = '默认加载 `fp-execute`'; New = '可选 `fp-execute`' }
+    @{ Name = 'semi may be selected without an explicit user request'; Old = '仅用户明确要求逐任务确认才用 `semi`'; New = '逐任务确认时可用 `semi`' }
+    @{ Name = 'SDD routing may omit explicit fp-execute-sdd'; Old = '`fp-execute-sdd`/通用'; New = '`sdd-runner`/通用' }
+    @{ Name = 'SDD routing may omit a generic SDD request'; Old = '通用 `SDD`'; New = '专用模式' }
+    @{ Name = 'SDD routing may omit fresh implementer/reviewer isolation'; Old = 'fresh implementer/reviewer isolation'; New = 'isolated execution' }
+    @{ Name = 'SDD may be entered without an explicit user request'; Old = '只有用户明确要求 `fp-execute-sdd`'; New = '检测到 `fp-execute-sdd`' }
+    @{ Name = 'SDD may skip continuation-mode selection'; Old = '再选 SDD'; New = '直接 SDD' }
+    @{ Name = 'SDD may omit per-item confirmation mode'; Old = 'SDD 逐项确认'; New = 'SDD 手动模式' }
+    @{ Name = 'SDD may omit automatic continuous mode'; Old = '自动连续'; New = '批量模式' }
+    @{ Name = 'execution may omit the final-review handoff'; Old = '完成后由'; New = '完成后记录' }
+    @{ Name = 'final handoff may omit fp-final-review'; Old = '`fp-final-review`'; New = '`review-summary`' }
+    @{ Name = 'fp-final-review may not own final review and handoff'; Old = '接管最终评审/交接'; New = '生成摘要' }
+)
+foreach ($mutation in $startCommandMutations) {
+    $mutatedStartCommand = Replace-Required $startCommand $mutation.Old $mutation.New $mutation.Name
+    Assert-Condition (-not (Test-FpStartCommandChecksumContract $mutatedStartCommand)) "mutation survived: $($mutation.Name)"
+}
+
 Assert-Anchors $validator @(
     "`$decisionGateContractValidator = Join-Path `$root 'scripts\test-decision-gate-contract.ps1'",
     '& powershell -NoProfile -ExecutionPolicy Bypass -File $decisionGateContractValidator'

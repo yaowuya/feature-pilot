@@ -280,6 +280,7 @@ Before dispatching an implementer, write a brief using `${CLAUDE_PLUGIN_ROOT}/sk
 - Task ID, unique task-owner path, declared dependencies, task heading, and task checkbox text.
 - Full task text from the plan, not a summary.
 - Applicable `Global Constraints`.
+- Resolved `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` path, applicable comment conventions and approved simplification boundaries; pass this same resolved contract path to every implementer, fixer and task/final reviewer before dispatch, including final fixes without a task brief.
 - Relevant proposal/design excerpts.
 - Relevant prior interface outputs from completed tasks.
 - Exact allowed file paths from the plan.
@@ -332,7 +333,7 @@ Use `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/task-reviewer-prompt.md` for a 
 
 Reviewer must verify two gates:
 1. **Spec Compliance:** task brief, interfaces, constraints, visual checks, and validation evidence.
-2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness.
+2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness; apply the shared engineering-quality checks for required comments, justified complexity and bounded simplifications.
 
 For frontend/UI tasks the reviewer also verifies the persisted fresh visual-review artifact that issued `VISUAL_REVIEW_PASS`, emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY` and `E2E evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and independent real-browser evidence, and keeps browser interaction evidence separate from screenshot evidence.
 
@@ -352,6 +353,7 @@ Reviewer rules:
 - `CANNOT VERIFY FROM DIFF` is not a pass. The controller must inspect the relevant files/evidence and either resolve it or treat it as failed.
 - The reviewer reports finding severity and main-flow impact evidence; the controller owns continuation and blocker classification and must not rely only on `Ready for next task`.
 - Missing core visual source/runtime evidence is `CANNOT_VERIFY`, never PASS and never review debt.
+- Missing or misleading mandatory comments, unsupported new complexity, or invalid simplification boundaries under the engineering-quality contract block completion; do not classify these as non-blocking `Review Debt` after attempt 3. Preserve the existing retry cap and report `BLOCKED` if unresolved.
 
 ## Fix Loop
 
@@ -397,6 +399,7 @@ At failed attempt 3, record every remaining finding and classify it with evidenc
 
 A finding is a main-flow blocker when any of these observable conditions holds:
 - It is Critical, including data loss, a security issue, permission bypass, destructive production behavior, or migration risk that can corrupt data.
+- It violates a mandatory engineering-quality completion check: required comments are missing/misleading, new complexity has no current justification, or an intentional simplification lacks a valid boundary/trigger/upgrade path. Task-review Important / final-review High findings of this kind remain blockers at attempt 3; cosmetic wording and untouched legacy suggestions are excluded.
 - The approved core acceptance behavior is unavailable or the task has not delivered its primary goal.
 - A required build, core test, or required alternative validation fails, leaving this delivery unusable or preventing reliable downstream work.
 - An external API, field, route, event, permission action, or other declared interface contract is broken and blocks a dependent task.

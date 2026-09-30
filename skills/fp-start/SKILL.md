@@ -156,8 +156,8 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 
 阶段完成检查属于**写入后产物确认**，与 `fp-brainstorm` 内部的写入前内容确认不同：
 - 用工具确认 `design/00-index.md` 及实际涉及端解析出的 small file 或 split `00-index.md` 存在；split design 还必须按 manifest order 确认每个 listed fragment 存在。
-- 加载 `${CLAUDE_PLUGIN_ROOT}/skills/fp-design-review/SKILL.md` 生成 `fp-docs/changes/<slug>/review.md` 并向用户展示其评审入口摘要（决策统计、评审关注点、建议评审顺序）；生成阻塞或发现 review.md 复制了台账或设计正文时，修复来源设计后重新生成，不得编造。review.md 是评审导航摘要：未复制决策正文，不改变任何台账状态；它是 fp-start 的写入后产物确认步骤，不属于 `fp-brainstorm`。
-- 从每个 actual-end 的 unique detailed owner 解析 Decision Ledger 与 Pre-write Confirmation Evidence。每个 design-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved。合并所有 owner 后必须仍是 globally unique D-NNN sequence，且每个 owner 的 `Covered IDs` 恰好覆盖其台账行；否则 return to the owning phase `fp-brainstorm` 补齐指定 `D-NNN` 的逐项确认，不得进入计划。
+- 从每个 actual-end 的 unique detailed owner 解析 Decision Ledger 与 Pre-write Confirmation Evidence。每个 design-required 行必须终态并有来源/确认凭据；`placeholder`、`TBD`、`TODO`、`unknown`、generic `user answer`、bare `ID: user answer` 或 sample authorization 都属于 missing or unresolved。合并所有 owner 后必须仍是 globally unique D-NNN sequence，且每个 owner 的 `Covered IDs` 恰好覆盖其台账行，`Outstanding blocking decisions` 为 `none`，并具有 concrete explicit write authorization；否则保留已有 `review.md`，return to the owning phase `fp-brainstorm` 补齐指定 `D-NNN` 的逐项确认，不得调用评审或进入计划。
+- 证据门禁全部通过后，才加载 `${CLAUDE_PLUGIN_ROOT}/skills/fp-design-review/SKILL.md` 生成 `fp-docs/changes/<slug>/review.md`，并展示评审结论、业务和技术主线、主要风险、建议评审顺序与入口路径。设计充分性检查失败时，按其缺失清单返回 `fp-brainstorm` 定点修订并重新确认；`fp-start` 和 `fp-design-review` 都不得编造缺失设计。review.md 不复制决策正文，不改变台账状态，仍属于 fp-start 的写入后产物确认步骤。写后核验以完整评审文档为准；若生成结果机械复制内容或不完整，只允许在充分性通过后重新生成，并确认未复制决策正文。
 - 向用户展示关键架构决策、改动模块、前端组件/布局映射（如涉及）。
 - 明确询问用户是否确认设计。
 

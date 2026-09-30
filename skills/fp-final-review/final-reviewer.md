@@ -110,6 +110,7 @@ You review the whole branch against the approved FeaturePilot artifacts and fina
 - Information layer: dynamic task context identifies the exact manifest/settings/project-facts/change/source/search/Unknown inputs or `N/A`; review confidence comes from current brief/package proof, not static handoff existence.
 - Production readiness: deploy order, compatibility, security leakage, logging, performance, rollback.
 - Incremental integrity: attempt 2/3 resolves every prior finding disposition and reviews `lastReviewedHead..HEAD` plus affected contracts/tests/package/ledger without skipping the every-attempt gates.
+- Engineering quality: apply `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` via the shared final-review contract; verify required comments and simplification markers in current source, and current evidence for new complexity. Mandatory-item violations forbid approval; record them in existing Findings, with any valid deferrals in risks.
 
 ## Severity
 
