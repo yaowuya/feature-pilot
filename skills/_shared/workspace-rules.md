@@ -29,6 +29,10 @@ A `manifest-only workspace is valid`. Optional settings, `intel/project-facts.md
 - Language precedence is: current explicit user instruction, then an explicit target-project setting, then Chinese by default. A project setting never overrides the current user's explicit language request.
 - Preserve necessary English for code, commands, file paths, package/class/function/variable names, API fields, protocol terms, standard technical terms, and schema headings or enum values that another contract requires to match exactly.
 
+## Document-style on-demand route
+
+仅在实际准备输出面向人阅读的叙述性文档或文字报告时，才按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md` 加载共享写作规则。适用写入门禁通过后、读取输出模板前加载；直接展示的文字报告在形成内容前加载。同一工作流已加载时复用，不重复读取。不在启动、意图判断、探索、访谈、只读检查或等待授权时预加载；无文档产出时不读取。已具备 JIT 加载的 PRD、proposal、design 和 review 保留原顺序，不另行提前加载。
+
 ## Evidence and precedence
 
 - Generated intel is stale-prone navigation, never proof of current behavior. Revalidate exact files, contracts, commands, components, routes, permissions, and schemas from current source/config/command output.

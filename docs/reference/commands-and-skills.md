@@ -103,7 +103,7 @@ Cursor 的路径适配 rule 帮助把共享资源定位到实际插件根目录�
 - `fp-design-review` 先核对 canonical design 是否足够评审，再生成独立可读的完整 `review.md`；信息不足时返回 `fp-brainstorm` 定点修订，不在评审阶段重新设计；
 - UI/E2E 与 Figma 的专业证据边界见 [架构与产物参考](architecture-and-artifacts.md)。
 
-PRD、proposal、design 和 review 统一遵循仓库内共享文档风格契约：先给目的、范围、主线或结论，再展开细节；使用清楚的段落、术语、空格和标点，同时保持代码、路径、API 字段、固定 schema 与 Decision Ledger 精确不变。
+FeaturePilot 生成面向人阅读的叙述性文档和文字报告时，统一遵循仓库内共享文档风格契约，包含用户给出的六条简明写作规则。仅在实际准备输出文档时按需加载，不在探索、访谈或只读检查阶段预读；既有事实、精确技术内容和固定 schema 不因文风而改变。
 
 `review.md` 是独立可读的完整评审文档。
 

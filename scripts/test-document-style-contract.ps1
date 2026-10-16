@@ -280,6 +280,23 @@ function Assert-DocumentStyleRuleLayers([string]$text, [string]$surface) {
         '这些数值是生成与人工自检目标，不作为逐字计数失败条件。'
     ) "$surface recommended rules"
 
+    $sixRules = @(
+        '1. 不用陈词滥调：别用那些你在书报上见惯了的比喻和修辞。'
+        '2. 能短就别长：一个短词能说清，就别用长词。'
+        '3. 能删就删：只要删掉不影响意思，就果断删掉。'
+        '4. 多用主动句：能用主动语态，就别用被动语态。'
+        '5. 说人话：能用日常英语表达，就别用外来词、科学术语或行话。'
+        '6. 别死守规则：如果遵守规则会导致说出粗鄙不堪的话，那就打破它。'
+    )
+    $sixRuleSection = Get-UniqueMarkdownSectionMatch $text '### 六条简明写作规则' $surface
+    Assert-Condition ($sixRuleSection.Index -gt $recommended.Index -and $sixRuleSection.Index -lt $exceptions.Index) "$surface six rules must belong to recommendations"
+    $sixRuleBody = $sixRuleSection.Groups['body'].Value
+    Assert-OrderedAnchors $sixRuleBody $sixRules "$surface verbatim six rules"
+    foreach ($rule in $sixRules) {
+        Assert-Condition ([regex]::Matches($text, [regex]::Escape($rule)).Count -eq 1) "$surface must contain each exact rule once: $rule"
+    }
+    Assert-Condition ($sixRuleBody.Contains('不改变已确认事实、精确内容或写入门禁')) "$surface sixth rule may override confirmed content"
+
     $exceptionClauses = @(
         '代码、命令、路径、URL、哈希和 API 字段'
         '类名、函数名、数据库字段和其他精确技术标识符'
@@ -305,8 +322,34 @@ function Test-DocumentStyleRuleLayers([string]$text) {
     }
 }
 
+function Assert-DocumentOutputRoute([string]$text, [string]$surface) {
+    $language = Get-UniqueMarkdownSectionMatch $text '## Process document language' $surface
+    $jit = Get-UniqueMarkdownSectionMatch $text '## Document-style on-demand route' $surface
+    Assert-Condition ($jit.Index -gt $language.Index) "$surface JIT route must follow document language"
+    Assert-Anchors $jit.Groups['body'].Value @(
+        '仅在实际准备输出面向人阅读的叙述性文档或文字报告时'
+        '适用写入门禁通过后'
+        '${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md'
+        '读取输出模板前'
+        '不在启动、意图判断、探索、访谈、只读检查或等待授权时预加载'
+        '无文档产出时不读取'
+        '同一工作流已加载时复用，不重复读取'
+    ) "$surface JIT route"
+    Assert-Condition ([regex]::Matches($text, [regex]::Escape('${CLAUDE_PLUGIN_ROOT}/skills/_shared/document-style.md')).Count -eq 1) "$surface must have one shared-style route"
+}
+
+function Test-DocumentOutputRoute([string]$text) {
+    try {
+        Assert-DocumentOutputRoute $text 'workspace route fixture'
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 $contractPath = 'skills\_shared\document-style.md'
 $contract = Read-Utf8 $contractPath
+$workspace = Read-Utf8 'skills\_shared\workspace-rules.md'
 
 Assert-Anchors $contract @(
     'https://github.com/ruanyf/document-style-guide'
@@ -337,6 +380,12 @@ Assert-Anchors $contract @(
     '样式修复不得改变已确认需求、技术结论、字段含义或决策状态'
 ) 'shared document-style contract'
 Assert-DocumentStyleRuleLayers $contract 'shared document-style contract'
+Assert-DocumentOutputRoute $workspace 'shared workspace rules'
+
+$earlyStyleLoad = Replace-Required $workspace '不在启动、意图判断、探索、访谈、只读检查或等待授权时预加载' '启动时预加载' 'the no-preload route'
+Assert-Condition (-not (Test-DocumentOutputRoute $earlyStyleLoad)) 'mutation survived: style may load during startup'
+$noGate = Replace-Required $workspace '适用写入门禁通过后' '写入门禁前' 'the write-gate route'
+Assert-Condition (-not (Test-DocumentOutputRoute $noGate)) 'mutation survived: style may load before authorization'
 
 $attributionInversion = Replace-Required $contract '引用第三方文字、图片或规范时标明来源。' '引用第三方文字、图片或规范时无需标明来源。' 'the source-attribution rule'
 Assert-Condition (-not (Test-DocumentStyleRuleLayers $attributionInversion)) 'mutation survived: third-party sources need not be attributed'
@@ -360,6 +409,16 @@ $userExceptionCopied = Replace-Required $contract '## 建议遵守' "## 建议�
 Assert-Condition (-not (Test-DocumentStyleRuleLayers $userExceptionCopied)) 'mutation survived: user/error/quote exceptions may also appear as recommendations'
 $advisoryMoved = Replace-Required $contract '## 建议遵守' '## 必须遵守' 'the recommendation-layer heading'
 Assert-Condition (-not (Test-DocumentStyleRuleLayers $advisoryMoved)) 'mutation survived: recommendations may move into mandatory rules'
+$sixthRuleRemoved = Replace-Required $contract '6. 别死守规则：如果遵守规则会导致说出粗鄙不堪的话，那就打破它。' '6. 别死守规则。' 'sixth writing rule'
+Assert-Condition (-not (Test-DocumentStyleRuleLayers $sixthRuleRemoved)) 'mutation survived: a six-rule sentence may be shortened'
+$englishChanged = Replace-Required $contract '日常英语' '日常中文' 'the fifth rule original language'
+Assert-Condition (-not (Test-DocumentStyleRuleLayers $englishChanged)) 'mutation survived: the fifth rule may be translated'
+$firstRule = '1. 不用陈词滥调：别用那些你在书报上见惯了的比喻和修辞。'
+$secondRule = '2. 能短就别长：一个短词能说清，就别用长词。'
+$newline = if ($contract.Contains("`r`n")) { "`r`n" } else { "`n" }
+$rulesReordered = Replace-Required $contract ($firstRule + $newline + $secondRule) ($secondRule + $newline + $firstRule) 'the first two complete rules'
+Assert-Condition ($rulesReordered.Contains($firstRule) -and $rulesReordered.Contains($secondRule)) 'swap fixture must retain both original rules'
+Assert-Condition (-not (Test-DocumentStyleRuleLayers $rulesReordered)) 'mutation survived: the six-rule order may change'
 
 Assert-Condition (@($contract -split "`r?`n").Count -le 500) 'shared contract exceeds 500 lines'
 Assert-Condition ($contract.Length -le 30000) 'shared contract exceeds 30,000 characters'
@@ -557,9 +616,10 @@ $withoutDesignReviewAssignment = Replace-Required $validator $designReviewValida
 $outOfOrderValidatorWiring = Replace-Required $withoutDesignReviewAssignment $documentStyleValidatorAssignment ($designReviewValidatorAssignment + "`n" + $documentStyleValidatorAssignment) 'the document-style validator assignment'
 Assert-Condition (-not (Test-ValidatorWiringContract $outOfOrderValidatorWiring)) 'mutation survived: focused validators may be registered outside the required order'
 Assert-Anchors $commandsReference @(
-    'PRD、proposal、design 和 review'
+    'FeaturePilot 生成面向人阅读的叙述性文档和文字报告'
+    '六条简明写作规则'
+    '仅在实际准备输出文档时按需加载'
     '共享文档风格契约'
-    '独立可读的完整评审文档'
 ) 'commands and skills reference'
 
 $runtimeSurfaces = @(
