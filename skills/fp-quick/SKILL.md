@@ -49,6 +49,8 @@ approved-research-boundary:
 
 Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification` to build the inline plan. Treat `quick-scope-assessment` as advisory evidence only; `fp-quick` retains the final suitability decision. Keep current source and tests as the implementation truth and preserve the no-FeaturePilot-artifact boundary.
 
+**内部结果消费（不展示）**：按 `fp-explore` 的 Internal return contract 完成交接；在同一上下文加载时保留结果并继续本 skill，不以探索结束作为本轮聊天的结束。用户侧只展示简明中文：有阻塞时进入第 2 步提问，否则直接进入第 3 步展示计划；将影响实现或确认的风险、证据缺口和研究授权需求纳入问题或计划。`fp-explore-invoke`、`fp-explore-return` 与原始字段清单仅供内部消费，不在进度消息或最终答复中复述，也不包装成 HTML 注释、代码块或中间文件展示。
+
 读取 `fp-docs/settings/` 中与当前阶段相关的客户配置；不要读取历史 `fp-docs/changes/` 或 `fp-docs/archive/` 作为上下文依据。小需求必须以当前代码、测试和接口实现为准；若配置与代码冲突，以代码为准并向用户说明。
 
 检索必须聚焦，搜索优先于整文件读取，不要为了小需求全量阅读仓库。

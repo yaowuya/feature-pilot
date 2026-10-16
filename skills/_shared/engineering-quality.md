@@ -8,6 +8,23 @@
 - 注释语种与格式遵循目标项目明确约定和邻近代码；没有约定时使用团队可读的中文，保留必要技术标识符。Python/Django 细则仅在对应技术栈启用，不要求其他项目引入这些框架或分层。
 - 使用已有 docstring/lint/格式约定。不得为了本契约安装新的检查器、引入依赖、修改 CI 或创建独立文档体系。注释数量与覆盖率不是验收指标。
 
+## 已登记技术栈规范
+
+本节是内置规范消费的唯一入口；选用/登记由 `fp-init` 完成。只在本契约的技术阶段，对当前端/应用读取相关 `settings/backend.md` 或 `settings/frontend.md` 的 `Code Standards`，复用已读内容；纯产品讨论和只读探索不为此加载规范。
+
+| Built-in preset | 必须读取的插件相对资源 |
+| --- | --- |
+| `django` | `skills/_shared/code-standards/common.md` + `skills/_shared/code-standards/django.md` |
+| `vue` | `skills/_shared/code-standards/common.md` + `skills/_shared/code-standards/vue.md` |
+| `none` / `Unknown` / 无登记 | 不加载内置规范；沿用客户已知规范及本契约，不自行推断已采用 preset |
+
+- `backend-only` 只读适用后端登记，`frontend-only` 只读适用前端登记，跨端读两端，公共规范同一工作流只读一次。多应用按 `Applies to` 的 appRoot/版本限定；切到新应用时读取该应用已有登记，无登记记 N/A，不将一个应用的规范扩大到全仓。新增或更新登记须转 fp-init，经逐文件批准，消费者不补写 settings。
+- 按 workspace 的插件根映射把 `Rule resources` 解析为已安装资源，核对与上表一致；相对路径不是客户项目路径。已登记资源缺失/不可读、preset 无法解析或资源声明冲突时报告并停止依赖该规范的工作，不去客户仓库搜索替代、不静默降级。无登记或可选 settings 缺失不是安装故障。
+- 显式读取当前适用的 `Project rule sources`，客户文档路径从项目根解析；`Confirmed overrides` 只覆盖已确认的规则/端/范围，不把 Unknown 当豁免。客户明确规范和当前用户指令优先于内置默认，例外说明编号、范围和原因；未决冲突回到当前决策流程，存量源码不能自动取消目标要求。
+- 规则中的版本和附加框架细则按实际依赖适用，不为规范升级、安装依赖或构造不存在的公共能力。职责/注释与复杂度由本契约维护，代码规范文件不定义第二套相互冲突的 docstring 门禁。
+- 控制器把已解析的公共/对应端资源路径、appRoot、客户来源及 confirmed overrides 放入现有 `Applicable Global Constraints` 或审查上下文；独立 implementer、fixer 和 task/final reviewer 必须自行读取这些确切路径，不能只依赖控制器摘要或继承会话。无采用时记 `N/A`，不产生新 brief/状态文件。
+- 在现有自审/review 报告中分别记录规范符合性和已验证代码缺陷，规范项保留编号与实际证据；沿用当前技能的验收、严重度和授权边界。
+
 ## 写代码时同步写说明
 
 1. 新增业务模块、公开类/函数/方法，以及本次改变行为的公开对象，必须有准确的职责与契约说明。Python 使用 docstring；其他语言使用现有项目的文档注释形式。说明用途，并按需补充输入限制、返回语义、异常、副作用和调用前提，不复述签名与类型。已有说明准确且充分时保留即可。

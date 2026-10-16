@@ -77,6 +77,7 @@ Review the task's `dynamic task context`; absent optional sources are `N/A`.
 | --- | --- | --- | --- |
 | Manifest | `<path or N/A>` | `<index/precedence or N/A>` | `<evidence or N/A>` |
 | Relevant settings | `<paths or N/A>` | `<constraints or N/A>` | `<evidence or N/A>` |
+| Code standards | `<resolved common/end plugin paths and project sources, or N/A>` | `<appRoot/version and confirmed overrides>` | `<reviewer reads resources and checks current applicable evidence>` |
 | Optional project facts | `<path/section or N/A>` | `<navigation hint or N/A>` | `<re-opened source or N/A>` |
 | Current change artifacts | `<paths>` | `<target contract>` | `<canonical resolution evidence>` |
 | Current source/config | `<paths>` | `<current behavior>` | `<line/command evidence>` |

@@ -232,6 +232,14 @@ Target: `fp-docs/settings/frontend.md`
 - Source roots:
 - Route locations:
 
+## Code Standards
+
+- Built-in preset: <vue | none | Unknown; select from verified application evidence>
+- Rule resources: <skills/_shared/code-standards/common.md + skills/_shared/code-standards/vue.md when matched; otherwise N/A; plugin-relative, not project paths>
+- Applies to: <appRoot, actual framework/version and dependency/entry evidence; one group per app>
+- Project rule sources: <verified project-relative rule paths and scope, or none>
+- Confirmed overrides: <rule IDs, scope and reasons, or none; unresolved items stay Unknown>
+
 ## Component Library and Imports
 
 - Library:
@@ -276,6 +284,14 @@ Target: `fp-docs/settings/backend.md`
 - Framework:
 - Source roots:
 - API/router locations:
+
+## Code Standards
+
+- Built-in preset: <django | none | Unknown; select from verified application evidence>
+- Rule resources: <skills/_shared/code-standards/common.md + skills/_shared/code-standards/django.md when matched; otherwise N/A; plugin-relative, not project paths>
+- Applies to: <appRoot, actual framework/version and dependency/entry evidence; one group per app>
+- Project rule sources: <verified project-relative rule paths and scope, or none>
+- Confirmed overrides: <rule IDs, scope and reasons, or none; unresolved items stay Unknown>
 
 ## API / Service / Data Patterns
 

@@ -183,6 +183,12 @@ If **any** of these exist:
 
 **no-frontend**：确认不存在 Web UI 时，后续 settings/项目族建议省略 frontend.md 与 prototype-style.md，不初始化基座、不创建空原型、不安装前端依赖。已有人工文件不删除；用户明确提出新增前端时才重新确认绿地需求。检测不确定先澄清，不替用户选框架。
 
+### 5b. Select built-in stack standards
+
+复用 Section 5/5a 已读事实，有界核对后端候选应用的直接依赖与启动入口；任一端出现可信 Django / Vue 候选时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/stack-standards.md`。按其证据门槛分端确认并自动选用通用代码质量规范，不把 README、目录名或项目族示例当实际框架证明。无相关信号时跳过该资源，继续通用 init；不为选规范运行 discovery、安装依赖或改客户文件。
+
+保持每个 appRoot 的版本、证据、客户已有规范与选用结果在当前上下文，供 Section 6/7 已获批准的新 settings 创建使用。选用不等于登记，`settings-created-only-after-explicit-approval` 不变；已有 settings/规范只读保留，更新须展示精确 diff 并另获批准。
+
 ### 6. Detect labelled project-family examples
 
 After checking project docs, run only a small read-only project-family signal check. If no plausible signal exists, continue generic init without loading extra context. If a signal exists, read `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/project-family-examples.md` and follow its confidence, consent, selective-copy, and overwrite rules.
@@ -206,6 +212,8 @@ After checking project docs, run only a small read-only project-family signal ch
    → 生成（根据已有原型、截图、Figma 或相邻页面提炼初始草稿；不确定项写 Unknown）/ 跳过
 ```
 ```
+
+Section 5b 已确认 Django / Vue 时，在对应选项中说明将直接引用匹配的内置规范及 appRoot，无需再次选择规范。批准生成后，按 `stack-standards.md` 填入 `Code Standards` 的 preset、插件相对资源、版本证据、客户规范和明确覆盖；正文只在插件维护，不复制到 settings 或 `.claude/rules`。未命中的端使用 `none`，证据不足用 `Unknown`。已有文件与项目族示例的处理仍按各自批准边界执行。
 
 每个被确认生成的文件都从 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 读取对应模板写入：
 
@@ -274,6 +282,7 @@ After init, report:
 - Whether `settings/agent.md` was created/skipped/adopted.
 - Whether `settings/frontend.md` was created/skipped/adopted.
 - Whether `settings/backend.md` was created/skipped/adopted.
+- 内置代码规范按端/appRoot 的匹配、实际登记/保留/跳过/unknown、重要版本适配及未决项；仅检测到框架不宣称已登记或已验证。
 - Whether `settings/prototype-style.md` was created/skipped/adopted.
 - Frontend applicability (including no-frontend/unknown), selected app and prototype provisioning created/refreshed/reported/skipped/blocked; native source/manifest/preview paths, actual build/preview command and cwd, checks, gaps and whether the manifest base pointer was explicitly updated.
 - Whether optional `project-facts.md`/`.freshness.json` were created，或保持 manifest-only；是否经单独批准创建 human-owned unknowns/decisions。

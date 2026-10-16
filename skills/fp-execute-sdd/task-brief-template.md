@@ -48,6 +48,8 @@ Copy only the constraints that apply to this task, preserving exact values:
 
 ## Relevant Project Information Layer
 
+- Code standards: `<resolved common/end plugin paths and project rule sources, or N/A>`; applies to: `<appRoot/version>`; confirmed overrides: `<rule IDs, scope and reasons, or none>`. Each independent worker reads the applicable resources under engineering-quality; do not copy their bodies.
+
 This section is the task's `dynamic task context`. Missing optional information-layer files are `N/A`, not blockers.
 
 | Source class | Exact path/query | Relevant excerpt or result | Freshness/revalidation |

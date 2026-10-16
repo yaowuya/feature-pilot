@@ -67,7 +67,14 @@ Invalid internal input must fail closed before investigation: do not infer missi
 
 ## Internal return contract
 
-Every internal invocation returns exactly one block. Use `none` for empty common fields and `n/a` for non-applicable profile fields.
+Every internal invocation produces exactly one caller-owned result using the schema below. This is an internal handoff, not a user-facing response. Use `none` for empty common fields and `n/a` for non-applicable profile fields.
+
+Delivery follows the actual runtime boundary:
+
+- **Same-context skill loading** (`Skill` or reading this file): keep the result in the current context and resume the caller without emitting a chat reply. Loading a skill does not create a private return channel.
+- **Private return channel** (an already-established agent/tool result consumed by the caller): return exactly one block through that channel. The caller consumes the fields and presents its own user-facing response.
+
+Apply these rules to complete, partial, blocked, and invalid results. User-facing output belongs to the caller: concise conclusions, necessary risks or blocking questions, and the caller's next step. Keep invocation/return blocks and raw field dumps out of chat; HTML comments and code fences are not private channels. Do not create a file to hide or transport the result, or spawn an agent just to obtain a private channel. Public standalone exploration keeps its conversational output.
 
 <!-- fp-explore-return
 profile: prd-facts|start-routing|quick|invalid
@@ -122,7 +129,7 @@ Use the bounded orientation defined under public mode. Do not scan the whole rep
 1. Validate the invocation.
 2. Investigate the profile objective within scope and budget.
 3. Return product ambiguity or missing permission as caller-owned questions.
-4. Emit one deterministic return and stop.
+4. Deliver one deterministic result under the internal return contract and end only the exploration procedure; when running in the same context, resume the caller's next step in the same turn.
 
 A caller may reinvoke with a narrower objective and still-valid verified facts. Do not silently broaden the current call.
 

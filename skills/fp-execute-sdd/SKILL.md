@@ -282,6 +282,7 @@ Before dispatching an implementer, write a brief using `${CLAUDE_PLUGIN_ROOT}/sk
 - Applicable `Global Constraints`.
 - Resolved `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` path, applicable comment conventions and approved simplification boundaries; pass this same resolved contract path to every implementer, fixer and task/final reviewer before dispatch, including final fixes without a task brief.
 - Relevant proposal/design excerpts.
+- Code standards selected by the shared engineering-quality route: resolved common/end plugin resources, appRoot/version, project rule sources and confirmed overrides (or N/A). Carry the same applicable paths into task/final review and fix contexts; independent workers read them, including final fixes without a task brief.
 - Relevant prior interface outputs from completed tasks.
 - Exact allowed file paths from the plan.
 - Required TDD commands and expected failure/pass evidence.

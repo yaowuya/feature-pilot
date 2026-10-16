@@ -526,6 +526,11 @@ Assert-Condition (Test-Path $initInformationLayerValidator) 'focused init inform
 & powershell -NoProfile -ExecutionPolicy Bypass -File $initInformationLayerValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused init information-layer contract validator failed'
 
+$stackStandardsValidator = Join-Path $root 'scripts\test-stack-standards-contract.ps1'
+Assert-Condition (Test-Path $stackStandardsValidator) 'focused stack standards contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $stackStandardsValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused stack standards contract validator failed'
+
 $figmaEvidenceValidator = Join-Path $root 'scripts\test-figma-evidence-contract.ps1'
 Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator

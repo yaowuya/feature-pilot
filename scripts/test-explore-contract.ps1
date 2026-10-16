@@ -293,6 +293,33 @@ foreach ($anchor in @(
 Assert-Condition (-not $quickSkill.Contains('用 fp-propose 探索项目背景')) 'fp-quick still delegates exploration to fp-propose'
 Assert-Condition (-not $quickCommand.Contains('复用 `fp-propose`')) 'fp-quick command still delegates exploration to fp-propose'
 Assert-Condition ($quickCommand.Contains('fp-explore')) 'fp-quick command lacks fp-explore routing'
+
+foreach ($anchor in @(
+    'internal handoff, not a user-facing response',
+    'Same-context skill loading',
+    'keep the result in the current context',
+    'resume the caller without emitting a chat reply',
+    'Private return channel',
+    'exactly one block through that channel',
+    'HTML comments and code fences are not private channels',
+    'complete, partial, blocked, and invalid results',
+    'Do not create a file to hide or transport the result'
+)) {
+    Assert-Condition ($skillText.Contains($anchor)) "explore internal delivery contract is missing $anchor"
+}
+Assert-Condition (-not $skillText.Contains('Emit one deterministic return and stop.')) 'inline exploration still stops the caller at the internal return'
+foreach ($anchor in @(
+    '内部结果消费（不展示）',
+    'fp-explore-invoke', 'fp-explore-return',
+    '同一上下文', '继续本 skill',
+    '简明中文', '阻塞', '风险',
+    'HTML 注释', '代码块'
+)) {
+    Assert-Condition ($quickSkill.Contains($anchor)) "fp-quick internal result consumption is missing $anchor"
+}
+Assert-Condition ($quickCommand.Contains('内部交接')) 'fp-quick command checksum lacks internal handoff ownership'
+Assert-Condition (-not $quickSkill.Contains('<!-- fp-explore-return')) 'fp-quick must consume, not duplicate the return schema'
+
 foreach ($gate in @('fp-docs/changes/', '等待明确确认', '验证')) {
     Assert-Condition ($quickSkill.Contains($gate)) "fp-quick lost caller-owned gate $gate"
 }

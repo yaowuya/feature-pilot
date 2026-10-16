@@ -104,7 +104,17 @@ codegraph sync <project-root> --quiet
 - 不确定就写 `Unknown`，不要猜测。
 - 现有文件不覆盖，除非用户明确批准。
 - 项目已有 `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `CURSOR.md` 时，只在 manifest 中记录引用，不复制大段内容到 `settings/agent.md`。
-- 公共 FeaturePilot 插件不内置客户组件库、后端框架、API envelope 或设计 token；客户规则应落在目标项目自己的 `fp-docs/settings/*.md`。
+- 公共 FeaturePilot 默认不强制客户技术栈、组件库、API envelope 或设计 token；客户规则保留在目标项目文档/settings 中。已验证 Django / Vue 时可直接复用通用内置规范，不引入特定客户依赖。
+
+### Django / Vue 内置代码规范
+
+`/fp-init` 根据当前应用的直接依赖及真实入口确认技术栈，按端自动选择规范：Django 后端选后端规范，Vue 前端选前端规范，双端选两份。不要求客户属于 CW 项目，也不需要再选择一套规范；非匹配端继续通用设置，证据不足记为 `Unknown`。
+
+生成获批的 `settings/backend.md` / `settings/frontend.md` 时，`Code Standards` 登记内置 preset、插件相对资源、appRoot/版本证据、客户规范来源和明确覆盖。正文只维护在插件内，不复制进客户规则目录、不写本机安装路径。设计、规划、实现和 review 按需读取公共规范及当前端规范；独立执行/审查代理也须读取实际资源。
+
+规范包含公共 Q01–Q05、Django B01–B09、Vue F01–F07，覆盖分层、输入/响应契约、ORM/事务/并发、权限审计、组件/状态/异步、样式、安全与验证。Vue 2.6/2.7/3、Pydantic v1/v2 按客户实际依赖适用，不强迫升级、安装库或采用私有基类/组件。
+
+选中规范不等于写入批准：保持 `manifest-only default`；跳过 settings 就不登记。已有 settings、`.claude/rules` 等人工规范保留，修改须先看精确 diff 并明确批准。客户明确规范优先于内置默认，未决冲突如实说明；规范符合性与功能缺陷分别报告。
 
 ### 单独初始化或刷新原型基座
 
