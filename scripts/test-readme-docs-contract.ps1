@@ -62,6 +62,7 @@ foreach ($anchor in @(
     'fp-db-adapter'
     '../user_guide/fp-coverage.md'
     '../user_guide/fp-module-review.md'
+    '../user_guide/fp-commit.md'
     '../getting-started.md'
 )) {
     Assert-Condition ($commandsReference.Contains($anchor)) "commands reference lost anchor: $anchor"

@@ -38,6 +38,7 @@ $intentTargets = @(
     '`skills/fp-start/SKILL.md`'
     '`skills/fp-prd/SKILL.md`'
     '`skills/fp-quick/SKILL.md`'
+    '`skills/fp-commit/SKILL.md`'
     '`skills/fp-figma/SKILL.md`'
     '`skills/fp-propose/SKILL.md`'
     '`skills/fp-brainstorm/SKILL.md`'

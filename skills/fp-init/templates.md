@@ -28,6 +28,7 @@ For target-state requirements, user instructions and approved active change arti
 | `settings/agent.md` | Lean FeaturePilot policy adapter | workflow, constraints, external-doc pointers | workflow/policy questions only | missing |
 | `settings/frontend.md` | Frontend/UI/visual settings | UI implementation and visual acceptance | UI/page/prototype work only | missing/not-applicable |
 | `settings/backend.md` | Backend/API/data/security settings | backend implementation and backend acceptance | backend/API/data/security/permission work only | missing/not-applicable |
+| `settings/code-standards.md` | Approved project code rules | appRoot-scoped project conventions | technical work with a registered Project rule sources reference only | missing |
 | `settings/prototype-style.md` | Prototype visual style reference | prototype generation consistency | prototype generation only | missing/not-applicable |
 
 ## Code Map
@@ -319,6 +320,31 @@ Target: `fp-docs/settings/backend.md`
 ## Unknowns
 
 - <unknown backend/API/data/security items>
+```
+
+## FeaturePilot Project Code Standards
+
+Target: `fp-docs/settings/code-standards.md`
+
+仅在用户逐文件批准创建、且适用端的 `Project rule sources` 已获批准登记时使用；不从一处存量写法生成强制规则。
+
+```markdown
+# FeaturePilot Project Code Standards
+
+## Rules
+
+No project-specific rules confirmed yet.
+
+## Rule Entry Format
+
+新增已证实的规则时，移除上方空状态行，并按 appRoot 逐条记录：
+
+### P001 — <简短规则名>
+
+- Rule ID: P001
+- Applies to: <appRoot、后端或前端及必要版本范围>
+- Rule: <可操作的项目约定>
+- Evidence: <项目明确决策或多个独立源码/测试位置及理由>
 ```
 
 ## FeaturePilot Prototype Style

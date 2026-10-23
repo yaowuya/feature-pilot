@@ -71,6 +71,12 @@ Assert-Condition ($engineering.Contains('无登记记 N/A')) 'entering an unregi
 Assert-Condition ($engineering.Contains('新增或更新登记须转 fp-init')) 'consumers must route registration writes back to fp-init'
 Assert-Condition (-not $engineering.Contains('补齐该应用的登记')) 'consumers still appear authorized to fill missing registrations'
 
+Assert-Condition ([regex]::Matches($templates, '(?m)^Target: `fp-docs/settings/code-standards\.md`\s*$').Count -eq 1) 'project standards template is missing or duplicated'
+Assert-Anchors $templates @('# FeaturePilot Project Code Standards', 'Rule ID:', 'Applies to:', 'Rule:', 'Evidence:', 'No project-specific rules confirmed yet.') 'project standards template'
+Assert-Anchors $init @('settings/code-standards.md', 'Project rule sources', '逐文件') 'init project standards route'
+Assert-Anchors $selection @('settings/code-standards.md', 'Project rule sources:', '批准') 'project standards registration'
+Assert-Anchors $workspace @('fp-commit', 'settings/code-standards.md', '已登记') 'narrow project standards owner'
+
 Assert-Condition ([regex]::Matches($templates, '(?m)^## Code Standards\s*$').Count -eq 2) 'backend and frontend templates must each own one Code Standards section'
 foreach ($heading in @('FeaturePilot Backend Settings', 'FeaturePilot Frontend Settings')) {
     $pattern = '(?ms)^## ' + [regex]::Escape($heading) + '\s*\r?\n(?<body>.*?)(?=^## FeaturePilot |\z)'

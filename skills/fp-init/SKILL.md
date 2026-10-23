@@ -17,7 +17,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 - `new-project-manifest-only`：新项目信息层默认只有 `fp-docs/manifest.md`，不预建 `settings/`、`intel/` 或任何骨架文件。
 - Explain the workflow: `/fp-prd` clarifies requirements; `/fp-start` picks up a PRD or feature description and drives design → plan → execution.
-- Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), `fp-docs/settings/backend.md` (backend/API/data/security), and/or `fp-docs/settings/prototype-style.md` (prototype visual style reference) with user confirmation.
+- Optionally generate lean `fp-docs/settings/agent.md` (general FeaturePilot policy adapter), `fp-docs/settings/frontend.md` (frontend/UI/visual), `fp-docs/settings/backend.md` (backend/API/data/security), `fp-docs/settings/code-standards.md` (registered project-only code rules), and/or `fp-docs/settings/prototype-style.md` (prototype visual style reference) with per-file user confirmation.
 - `codegraph-current-state-single-decision`：根据当前 CLI 状态，用一次选择覆盖获选路径中的 npm 安装、Agent MCP 配置与首次建图，并逐步汇报。
 - `approved-discovery-project-facts-only`：批准 discovery 后，生成的 Markdown 事实缓存最多只有 `fp-docs/intel/project-facts.md`，并配套 metadata-only 的 `fp-docs/intel/.freshness.json`。
 - `unknowns-and-decisions-human-owned-lazy`：只有本流程获得明确写入范围批准且确有项目级内容时，才创建 `intel/unknowns.md` 或 `intel/decisions.md`。
@@ -43,6 +43,7 @@ fp-docs/
     agent.md                 # Optional lean FeaturePilot policy adapter
     frontend.md              # Optional UI/frontend/visual/design-system settings
     backend.md               # Optional backend/API/data/security settings
+    code-standards.md        # Optional approved project-only code rules
     prototype-style.md       # Optional prototype visual style reference
   intel/                     # Optional; absent in the default workspace
     project-facts.md         # Optional generated facts cache
@@ -210,16 +211,21 @@ After checking project docs, run only a small read-only project-family signal ch
    → 生成（根据项目现有后端代码和依赖推断模板供你确认）/ 跳过
 4. `settings/prototype-style.md`（原型视觉与交互约束）— 原型适用场景、页面骨架与布局模式、颜色/字体/间距 token、常用组件/表格/表单/弹窗/抽屉风格、原型交互与文案规则。
    → 生成（根据已有原型、截图、Figma 或相邻页面提炼初始草稿；不确定项写 Unknown）/ 跳过
+5. `settings/code-standards.md`（项目专属代码规范）— 仅保存已证实且标注 appRoot 的项目规则；需同时批准对应 backend/frontend settings 的 `Project rule sources` 登记，已有 settings 要先确认精确 diff。
+   → 生成并登记 / 跳过
 ```
 ```
 
 Section 5b 已确认 Django / Vue 时，在对应选项中说明将直接引用匹配的内置规范及 appRoot，无需再次选择规范。批准生成后，按 `stack-standards.md` 填入 `Code Standards` 的 preset、插件相对资源、版本证据、客户规范和明确覆盖；正文只在插件维护，不复制到 settings 或 `.claude/rules`。未命中的端使用 `none`，证据不足用 `Unknown`。已有文件与项目族示例的处理仍按各自批准边界执行。
+
+项目专属规则文件单独选择。仅在新建或已批准更新的适用端 settings 中把该文件登记为 `Project rule sources` 后创建；若登记未获批准则保持未创建。已有文档不由 init 覆盖，新规则的后续维护按 workspace 契约交由 `fp-commit`，不将单项目规则加入插件通用 preset。
 
 每个被确认生成的文件都从 `${CLAUDE_PLUGIN_ROOT}/skills/fp-init/templates.md` 读取对应模板写入：
 
 - `settings/agent.md` → `FeaturePilot Agent Settings` 模板。
 - `settings/frontend.md` → 先读取轻量项目前端事实，再写 `FeaturePilot Frontend Settings` 模板。
 - `settings/backend.md` → `FeaturePilot Backend Settings` 模板。
+- `settings/code-standards.md` → `FeaturePilot Project Code Standards` 模板，仅用于已获批准登记的适用端。
 - `settings/prototype-style.md` → `FeaturePilot Prototype Style` 模板。
 
 ### 7a. Optional project-native prototype base

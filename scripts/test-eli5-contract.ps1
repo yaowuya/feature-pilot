@@ -151,7 +151,7 @@ foreach ($contract in $callerContracts) {
 
 $disallowedPaths = @(
     'skills\fp-execute\SKILL.md', 'skills\fp-execute-sdd\SKILL.md', 'skills\fp-archive\SKILL.md',
-    'skills\fp-quick\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md',
+    'skills\fp-quick\SKILL.md', 'skills\fp-commit\SKILL.md', 'skills\fp-plan-backend\SKILL.md', 'skills\fp-plan-frontend\SKILL.md',
     'skills\fp-figma\SKILL.md', 'skills\fp-frontend-spec\SKILL.md',
     'skills\fp-propose\SKILL.md', 'skills\fp-prd\SKILL.md', 'skills\fp-final-review\SKILL.md',
     'skills\fp-module-review\SKILL.md', 'skills\fp-coverage\SKILL.md',

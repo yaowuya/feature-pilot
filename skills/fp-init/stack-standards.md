@@ -34,6 +34,7 @@
 - 仅在对应 `backend.md` / `frontend.md` 创建获批时，以 templates.md 的 `Code Standards` 槽位登记引用。保持原环境、API、UI、预览与验证设置；不复制规范正文，不新增规范副本或第二份 manifest。
 - 已有 settings 不自动补写/迁移；用户明确要求更新时先展示该文件精确 diff 和写入范围，批准后才写。框架检测、项目族批准、discovery 或 CodeGraph 批准均不授权覆盖。
 - 项目族模板获准作为缺失 settings 的草稿时，在同一次已批准的新文件创建中填入经实时证据选定的 Code Standards；已经存在或已经写好的 settings 不借此回补，另走更新批准。
+- 可额外逐文件批准创建 `settings/code-standards.md`，作为已确认的项目专属规则正文；只在对应 backend/frontend settings 的 `Project rule sources:` 同时获批登记其项目相对路径后创建。已有 settings 的登记先展示精确 diff 并单独批准；未登记时不创建孤立规则文档。`fp-commit` 只可维护已存在且已登记的该文档，不补写登记，也不把项目规则写回插件通用规范。
 - 没有批准、选择跳过或仅报告时，不写 settings/manifest/规则目录。已有 manifest 的引用更新仍需其独立精确批准；不声称规范已登记。
 - 不写 `.claude/rules` / `.cursor/rules` / AGENTS 自动加载文件，不修改宿主配置、不安装依赖。
 

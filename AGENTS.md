@@ -17,6 +17,7 @@ Codex and Cursor do not run Claude Code slash commands directly. Treat `/fp-*` n
 | Full FeaturePilot workflow | `skills/fp-start/SKILL.md` |
 | Explicit PRD authoring or revision | `skills/fp-prd/SKILL.md` |
 | Small local change or bug fix without the full document chain | `skills/fp-quick/SKILL.md` |
+| Review and commit current changes, or explicitly request auto push and PR/MR | `skills/fp-commit/SKILL.md` |
 | Implement or refine UI from a Figma node URL | `skills/fp-figma/SKILL.md` |
 | Proposal only | `skills/fp-propose/SKILL.md` |
 | Technical design | `skills/fp-brainstorm/SKILL.md` |

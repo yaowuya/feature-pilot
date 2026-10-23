@@ -531,6 +531,11 @@ Assert-Condition (Test-Path $stackStandardsValidator) 'focused stack standards c
 & powershell -NoProfile -ExecutionPolicy Bypass -File $stackStandardsValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused stack standards contract validator failed'
 
+$commitContractValidator = Join-Path $root 'scripts\test-fp-commit-contract.ps1'
+Assert-Condition (Test-Path $commitContractValidator) 'focused fp-commit contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $commitContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused fp-commit contract validator failed'
+
 $figmaEvidenceValidator = Join-Path $root 'scripts\test-figma-evidence-contract.ps1'
 Assert-Condition (Test-Path $figmaEvidenceValidator) 'focused Figma evidence contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $figmaEvidenceValidator
