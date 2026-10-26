@@ -7,6 +7,7 @@ description: Use when an approved FeaturePilot proposal needs backend and/or fro
 插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before architecture questions; it owns the Decision Ledger status set, per-item confirmation, separate write authorization, persisted terminal evidence, and recovery behavior.
+For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; derive the source-backed reuse decisions before component questions and keep their single owner in frontend design. New-module directory confirmation belongs to Plan, not this design interview.
 ---
 
 # FeaturePilot Brainstorm

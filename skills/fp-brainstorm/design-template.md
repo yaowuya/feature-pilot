@@ -160,6 +160,15 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 #### 组件
 （复用/新建组件与布局层级。）
 
+#### Frontend Reuse Decisions（仅适用范围）
+（按已加载的 frontend-reuse-contract.md 在此保留能力、参考实现/调用、复用决定、缺口和验证方式的唯一详细表；计划只引用。新模块目录与文件职责的确认留到 Plan 阶段，不新增独立审批文件。）
+
+#### Figma Source Scope（仅完整大稿/多验收单元）
+（按 fp-figma 的 Figma Source Intake 记录范围、页面/弹窗/状态节点清单、Visual Checks/Case 映射和标注归属；仍与 Visual Source、组件映射及 Visual Checks 位于同一详细 owner，不另建 ui-docs。）
+
+#### Business Workflows（仅 business-flow）
+（按 ui-e2e-contract.md 的 Business Workflow Closure 在此持有唯一流程定义：Workflow ID、来源/终态、真实角色与独立会话，以及 setup/action/verify/cleanup 的有序阶段、资源交接和预期结果。不同终态分别覆盖；Task ID + Case ID 在 Plan 阶段绑定，计划和后端设计只引用此 owner，不复制流程表。）
+
 #### API 模块
 （现有客户端封装位置和契约。）
 

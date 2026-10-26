@@ -9,6 +9,7 @@ description: Use when implementing or refining UI from a user-provided Figma nod
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing design artifacts; it owns exclusive forms, manifests, hard limits, conversion, and historical-layout rejection.
 
 When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before Figma mapping or evidence planning. It owns UI Delivery Level, staged lifecycle, real frontend E2E, coverage, customer-selected browser capability, blocking, final-review, and archive rules.
+For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; keep source-backed reuse decisions in the existing frontend design. New-module paths/responsibilities require the Plan confirmation before source creation; a direct Figma task may use an inline Plan without starting the full workflow.
 ---
 
 # FeaturePilot Figma
@@ -37,6 +38,24 @@ When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract
 - 当 Figma MCP 不可用时，只有用户或已批准产物中的 explicitly approved source（Figma 导出或其他静态设计源）才可继续；没有可信 source 是 blocker，不得从记忆、代码或本地 runtime screenshot 反推并冒充设计上下文。
 - `reference.png` 只能来自 approved Figma/static design source；local runtime screenshot must not replace 它。`current.png` 只能来自 real target runtime 的实际 runtime route，使用 stable data 与 stable environment。`diff.png` 是 optional diff；missing diff 必须说明，且 must not hide 缺失 reference/current 的事实。
 - Code Connect 只是 component mapping 的 optional enhancement，受能力与许可影响；must not auto-create `.figma.ts`，must not change tsconfig，must not install dependencies。Code Connect absence does not block ordinary UI。
+
+## Figma Source Intake
+
+仅当用户提供完整文件/section、大范围 frame 或多个验收单元时，在已批准范围内建立 `Figma Source Scope`；单一已明确节点沿用现有映射，不为普通任务增加空清单。优先读取一次范围 metadata/结构清单，再定向读取实际页面、弹窗和视觉不同的状态，不能把完整画布直接当作一个页面。只处理当前选定范围，不遍历无关文件或为每个后代节点调用 design context；工具调用仍遵守上述 Figma prerequisite/source gate。
+
+把清单保存在 canonical frontend design 的既有视觉详细 owner，与 Visual Source、组件映射和 Visual Checks 同处；直接 Figma 任务无设计产物时放在其现有 case manifest，并在多个 case 间引用同一 owner。沿用 small/split 规则，不因多页面另建 `ui-docs/`、新索引体系或每节点一份 Markdown。
+
+| Source node / revision reference | UI unit / state | Scope / exclusion reason | Visual Check / Task ID + Case ID | Annotation status / source |
+| --- | --- | --- | --- | --- |
+| `<nodeId + 已有 Visual Source 身份/版本引用>` | `<页面/弹窗/验收相关状态>` | `<included 或明确排除理由>` | `<现有检查；规划时关联稳定 task/case>` | `<not-applicable / pending / resolved + 来源或待确认问题>` |
+
+清单只引用既有 Visual Source / Visual Evidence Manifest 的来源身份与版本，不复制视觉来源、viewport、reference/current/diff 等事实字段。
+
+保留真实页面/模块边界；弹窗、空态、错误态、权限态等有独立验收要求时映射为现有 Visual Cases，普通子组件或标注节点不自动增加 task/case。每个 included 单元必须有 Visual Check，进入实现前必须完成适用的 Task ID + Case ID 映射；排除项可追溯，不以整张画布的一张截图冒充完整覆盖。范围结构不可得时记录缺口，不虚构页面数量或“已完整拆解”。
+
+标注按 `fileKey + revision/time + ownerNodeId` 归属到最具体的已存在页面/弹窗/状态单元，坐标和名称仅作定位线索。只在处理该单元时读取其所需标注正文/组件说明；标注只补充该单元的要求，不另造文档、任务、截图或完成权威。记录真实来源与解析状态；已知标注缺失、版本冲突或含义不明记为 pending，不能把尚未读取当作没有标注。仅在可用来源能证明该单元没有相关标注时使用 not-applicable，不编造 node/revision 或确认记录。
+
+实现前解决会影响该单元视觉/交互验收的 pending 标注；未解决或范围覆盖不全时按现有 source/visual gate 报告 BLOCKED 或 CANNOT_VERIFY，不得标记视觉 PASS 或整体完成。复核时从清单反查 Visual Checks、case 与已解析要求；清单不是截图、真实 E2E 或独立复核的替代证据，不改变共享契约的重试、证据新鲜度和归档门禁。
 
 ## UI delivery and evidence mapping
 
@@ -78,6 +97,8 @@ RESOLVING -> DESIGN_SOURCE_GATE -> BROWSER_CAPABILITY_GATE -> PRESERVATION_BASEL
 ```
 
 实现者只按已确认 Figma mapping 写入业务 UI 并收集 case evidence，不得批准自己的结果。实现后必须由 fresh independent read-only review 加载 `figma-review-template.md`，读取 Figma source、`figma-preservation.md`、`figma-capabilities.md`、Visual Cases 与实际 diff，并写入 `.fp-execute/reviews/<timestamp>-figma-review.md`。
+
+对完整大稿/多单元范围，独立 reviewer 还须按 Figma Source Intake 核对 Figma Source Scope 的 included/excluded 单元、case 覆盖和标注归属/解析状态；沿用原有 verdict，不增加一轮 reviewer 或新的审批产物。
 
 审查分别报告 Code editing、Capability completion、Preservation、Figma visual fidelity 与 Overall。任一必需 `FIGCAP-*`、核心 `PRES-*` 或核心 Visual Case 非 `PASS` 时，总体只能为 `INCOMPLETE` 或 `BLOCKED`；不能把代码编辑、静态 UI 或截图单独称为 Figma change complete。Only all required FIGCAP-* = PASS, core PRES-* = PASS, and core Visual Cases = PASS, with no unapproved behavior change, permits Figma change complete。
 

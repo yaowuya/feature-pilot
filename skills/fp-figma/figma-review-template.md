@@ -14,6 +14,8 @@
 | Browser capability resolution | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<reuse/customer choice/command authorization>` |
 | Reference/runtime provenance | `PASS | FAIL | CANNOT_VERIFY | BLOCKED` | `<reference/current paths>` |
 
+仅对完整大稿/多验收单元，在现有 Evidence 中引用 Figma Source Scope owner，核对 included 单元到 Visual Cases 的覆盖、排除理由及验收相关标注的真实归属/解析；未解决项按已有 gate 判定，不复制清单或新增 verdict。
+
 ## Preservation Review
 
 | Preservation ID | Before baseline | After replay | Approved exception | Result | Evidence |

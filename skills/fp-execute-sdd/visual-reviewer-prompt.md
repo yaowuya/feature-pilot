@@ -35,6 +35,8 @@ The review output path is attempt-specific and append-only. If {VISUAL_REVIEW_OU
 
 Before verdict, record review start/end timestamps, the reviewed HEAD, and SHA-256 for the manifest, `reference`, `current`, and optional `diff`; these identities must still match at E2E launch.
 
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/visual-review-reuse.md` when the manifest supplies an input snapshot. Verify its complete render/capture/acceptance inventory, actual bytes and runtime binding; record the snapshot reference and SHA-256 in this review. An incomplete snapshot cannot authorize later cross-HEAD retention, and matching input hashes alone never establish visual PASS. This fresh dispatch still judges the actual visual artifacts; do not rewrite its original identity for later reuse.
+
 Verify that `reference` comes from the approved Figma/static design source and `current` comes from the real target runtime under the manifest's route, scenario/state, viewport, DPR, locale, theme, and deterministic non-sensitive fixture. A local runtime screenshot cannot replace the approved reference.
 
 Apply the manifest's case-specific acceptance rule. Use `CANNOT_VERIFY` when source/runtime provenance or required artifacts are not trustworthy; use `FAIL` when trustworthy evidence violates the acceptance rule. Do not infer pass from implementer assertions, source code, E2E evidence, or artifact presence alone.
@@ -52,6 +54,7 @@ On `FAIL`, the controller returns the case to `STATIC_UI_READY`. This reviewer d
 - Review start: <ISO timestamp>
 - Review end: <ISO timestamp>
 - Artifact SHA-256: <manifest; reference; current; optional diff or N/A>
+- Input snapshot reference / SHA-256: <verified manifest snapshot and hash; absent/incomplete means no cross-HEAD retention>
 - Visual Evidence Manifest: <path>
 - Runtime route/state: <recorded route and scenario/state>
 - Acceptance rule: <case-specific rule>

@@ -19,6 +19,8 @@ Read this task brief first and treat it as your source of truth:
 
 The brief contains task text, allowed files, reasoning, interfaces, global constraints, Relevant Project Information Layer, TDD/validation commands, scope exclusions, and commit instructions.
 
+For applicable frontend work, read the brief-supplied plugin path to frontend-reuse-contract.md before creating source files. Follow its reuse record and Plan-approved paths/responsibilities, reuse unchanged confirmation, and return directory/responsibility changes or unplanned source files to the controller; do not edit the plan or approve new structure yourself.
+
 Read the controller-resolved `skills/_shared/engineering-quality.md` path in Applicable Global Constraints before coding. It owns mandatory comments/docstrings, evidence-based simple design, simplification markers and completion checks; do not rely on inherited controller context.
 
 ## Information Layer Rules

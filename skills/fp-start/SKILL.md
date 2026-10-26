@@ -196,6 +196,7 @@ Task/Todo 更新、进度展示或其他编排记账失败不代表阶段产物�
 - 确认 task IDs/checkbox 只存在于 manifest Kind=`tasks` 的 owner files 且各有一个 unique task owner；only when both ends exist, validate overview cross-end edges/cycles and derived progress against owner checkboxes.
 - 检查每个任务都包含 Files、Reasoning、测试/验证步骤；前端任务还必须包含 Template / Script / Style / Visual Checks。
 - 向用户展示任务文件路径和任务摘要。
+- 若前端为 new-module，沿用 fp-plan 的目录确认交付：本次 Plan 开头直接展示完整目录树、逐文件职责和复用结论，并把具体结构纳入同一次确认；已有同一方案批准不重复询问，也不推迟到执行阶段。
 - 明确询问用户是否确认计划。
 
 等待用户确认计划后，输出 `✅ 计划确认，进入执行阶段`，然后才进入阶段 4。

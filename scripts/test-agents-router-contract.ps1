@@ -64,6 +64,7 @@ $contractTargets = @(
     '`skills/_shared/artifact-layout.md`'
     '`skills/_shared/decision-ledger.md`'
     '`skills/_shared/codegraph.md`'
+    '`skills/_shared/frontend-reuse-contract.md`'
     '`skills/_shared/ui-e2e-contract.md`'
 )
 foreach ($target in $contractTargets) {

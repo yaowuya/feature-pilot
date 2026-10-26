@@ -9,6 +9,7 @@ description: Use when a user explicitly requests fp-execute-sdd for a confirmed 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, customer-selected browser capability, retry, and non-waivable blocking.
+For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; pass its plugin path, reuse owner/decisions, directory responsibilities, Plan confirmation source and writable paths through the existing brief. Reuse unchanged approval; collect structural changes back into Plan, never delegate approval to a worker.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract across controller and workers.
 ---
 
@@ -262,13 +263,15 @@ After `STATIC_UI_READY` and before any E2E verifier launch, dispatch one fresh i
 
 For each Task ID + Case ID, persist `visualAttempt` separately from task-review `reviewAttempt` and `reviewScopeId`; initialize it to 0, increment exactly once immediately before each visual-review dispatch, allow dispatched values 1..3 only, and never consume a task-review attempt.
 
-Before E2E launch and again at task review, require current HEAD to equal the recorded Reviewed HEAD and require the manifest/reference/current/optional-diff SHA-256 to match; a mismatch at `visualAttempt` 1 or 2 returns the case to `STATIC_UI_READY` and requires the next `visualAttempt`, while a mismatch at `visualAttempt` 3 is `BLOCKED` and forbids a fourth dispatch.
+Before E2E launch and again at task review, verify the original review/artifact hashes and current input binding under `${CLAUDE_PLUGIN_ROOT}/skills/_shared/visual-review-reuse.md`; HEAD equality alone is neither required nor sufficient for retention. Failed retention at `visualAttempt` 1 or 2 returns the case to `STATIC_UI_READY` and requires the next `visualAttempt`, while failed retention at `visualAttempt` 3 is `BLOCKED` and forbids a fourth dispatch. Revalidation never issues a new PASS or resets counters.
 - `static-only` may proceed from `VISUAL_REVIEW_PASS` to final review only with the evidence-backed `E2E Applicability: N/A` record; it must not enter `INTERACTION_READY` or `FRONTEND_E2E_PASS`.
 - `interactive` and `business-flow` must progress `VISUAL_REVIEW_PASS -> INTERACTION_READY -> FRONTEND_E2E_PASS` with independent real-browser E2E evidence; required E2E cannot be skipped, manually waived, or satisfied by a screenshot.
 
 Before every required E2E verifier launch, the controller must place the exact `Browser capability`, `Customer approval / choice`, `Allowed real E2E test paths and scope`, and `Runner/config status` in the matching Task ID + Case ID brief UI/E2E record. If any value is missing, unresolved, unavailable, or outside the approved task scope, record `BLOCKED` and do not dispatch the verifier.
 
 For every required E2E case, dispatch one fresh independent `e2e-verifier` using `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/e2e-verifier-prompt.md`. The implementer may prepare `INTERACTION_READY` but must never self-confirm `FRONTEND_E2E_PASS`; the verifier runs only the real browser UI and records case evidence.
+
+For `business-flow`, carry the shared Business Workflow Closure definition/owner into the brief and verifier; require isolated actors, stage-bound request/response/resource continuity, terminal re-entry proof, and cleanup in the existing E2E result. A retained visual PASS does not inherit a prior E2E result.
 
 The task reviewer must verify both the existing visual evidence and the independent E2E verifier evidence; a screenshot is never a substitute for E2E, and a visual/E2E core gap or mock violation cannot be `PASS_WITH_NOTES`, review debt, or a manual waiver.
 

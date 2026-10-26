@@ -57,7 +57,8 @@ Assert-Condition ($entryRoot -eq [IO.Path]::GetFullPath($root)) 'marketplace sou
 
 $wrapper = Join-Path $root '.agents/skills/sync-plugin-runtimes/scripts/sync-plugin-runtimes.ps1'
 $tempParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([char[]]'\/')
-$fixtureName = 'fp-cursor-wrapper-' + [guid]::NewGuid().ToString('N')
+# Exercise non-ASCII paths even when the user's temporary directory is ASCII-only.
+$fixtureName = 'fp-cursor-wrapper-' + [char]0x6D4B + [char]0x8BD5 + '-' + [guid]::NewGuid().ToString('N')
 $fixtureRoot = [IO.Path]::GetFullPath((Join-Path $tempParent $fixtureName))
 Assert-Condition ((Split-Path -Parent $fixtureRoot) -eq $tempParent) 'unsafe temporary fixture root'
 $fixtureScripts = [IO.Path]::GetFullPath((Join-Path $fixtureRoot 'scripts'))
@@ -90,7 +91,7 @@ $line = ($record | ConvertTo-Json -Compress) + [Environment]::NewLine
             if ($verify) { $arguments.VerifyOnly = $true }
             if ($customHome) { $arguments.CursorHome = $cursorFixture }
             & $wrapper @arguments | Out-Null
-            $records = @(Get-Content -LiteralPath (Join-Path $fixtureScripts 'calls.jsonl') | ForEach-Object { $_ | ConvertFrom-Json })
+            $records = @(Get-Content -LiteralPath (Join-Path $fixtureScripts 'calls.jsonl') -Encoding UTF8 | ForEach-Object { $_ | ConvertFrom-Json })
             $record = $records[-1]
             Assert-Condition ($record.PluginRoot -eq $fixtureRoot) 'PluginRoot was not forwarded'
             Assert-Condition ($record.VerifyOnly -eq $verify) 'VerifyOnly was not forwarded'
@@ -104,7 +105,7 @@ $line = ($record | ConvertTo-Json -Compress) + [Environment]::NewLine
     }
     Expect-Failure { & $wrapper -PluginRoot $fixtureRoot -CursorOnly -ClaudeOnly } '-ClaudeOnly and -CursorOnly are mutually exclusive.'
     Expect-Failure { & $wrapper -PluginRoot $fixtureRoot -CursorHome $cursorFixture } '-CursorHome requires -CursorOnly.'
-    $calls = @(Get-Content -LiteralPath (Join-Path $fixtureScripts 'calls.jsonl'))
+    $calls = @(Get-Content -LiteralPath (Join-Path $fixtureScripts 'calls.jsonl') -Encoding UTF8)
     Assert-Condition ($calls.Count -eq 4) 'invalid arguments reached the installer, or delegation did not happen exactly once'
     Assert-Condition (-not (Test-Path -LiteralPath $cursorFixture)) 'wrapper created a runtime home instead of delegating'
 } finally {

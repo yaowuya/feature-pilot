@@ -74,6 +74,8 @@ Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification`
 
 不要创建 `proposal.md`、`design.md`、`tasks.md`，也不要写入 `fp-docs/changes/`。
 
+仅当快速任务包含新前端模块、前端重构或新增前端源码文件时，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md`，把复用结论放在本次内联计划；新模块在此 Plan 阶段展示目录树与文件职责并一次确认，后续引用已有批准。普通修复/样式调整仅在用户明确要求时应用，不因此生成 FeaturePilot 文档链。
+
 向用户输出简短实现计划并等待明确确认。计划必须包含：
 - **背景判断**：从项目检索得出的关键事实。
 - **改动范围**：预计修改/新增的文件。

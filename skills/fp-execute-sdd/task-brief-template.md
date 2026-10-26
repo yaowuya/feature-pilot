@@ -67,6 +67,8 @@ This section is the task's `dynamic task context`. Missing optional information-
 
 ## Proposal / Design Context
 
+For new frontend modules, frontend refactors, or new frontend source files, include the installed plugin path to `skills/_shared/frontend-reuse-contract.md`, the unique reuse-record owner and relevant decisions, the Plan directory tree/responsibilities, the real confirmation source (or justified not-required), and allowed writable paths. Reuse the existing Plan approval; omit this addition for unrelated tasks. The worker returns structural deviations to the controller rather than re-requesting unchanged approval or self-approving new structure.
+
 Relevant proposal excerpt:
 
 > `<minimal exact excerpt>`
@@ -112,6 +114,8 @@ Read the shared staged contract and resolve this table by the same stable Task I
 - `static-only` records both E2E path fields as `N/A` and creates no E2E scaffolding; this is valid only after visual pass and an evidence-backed reason. `interactive` and `business-flow` need the independent verifier's real-browser `FRONTEND_E2E_PASS`.
 - The implementer produces `STATIC_UI_READY` evidence but never self-confirms `VISUAL_REVIEW_PASS`; the controller dispatches the fresh visual reviewer and persists its case-level artifact first. The implementer may prepare `INTERACTION_READY`, but never self-confirm `FRONTEND_E2E_PASS`; the controller dispatches the E2E verifier only after `VISUAL_REVIEW_PASS`.
 - This is recovery/verification evidence only. The task-owner checkbox remains the sole plan-completion authority.
+- Visual input snapshot / revalidation: <existing manifest snapshot and original independent review; when retaining PASS, follow visual-review-reuse.md and append current binding proof without changing the original review or resetting visualAttempt; no E2E inheritance>.
+- Business workflow references (business-flow only): <WF-NNN definition owner, execution Task ID + Case ID, terminal outcome/stages, isolated actors, resource handoff, re-entry/permission and cleanup requirements; shared Business Workflow Closure governs the existing e2e-result.md, not a separate report>.
 
 ### Browser Capability Authority (interactive/business-flow only)
 

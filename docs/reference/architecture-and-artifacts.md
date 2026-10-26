@@ -80,10 +80,13 @@ flowchart LR
 | [`skills/_shared/artifact-layout.md`](../../skills/_shared/artifact-layout.md) | canonical form、split manifest、hard limit、任务 owner、Producer/Consumer 校验 |
 | [`skills/_shared/decision-ledger.md`](../../skills/_shared/decision-ledger.md) | 提案与设计决策状态、逐项确认、独立写入授权和恢复证据 |
 | [`skills/_shared/codegraph.md`](../../skills/_shared/codegraph.md) | CodeGraph 安装、查询、回退、当前源码复核和写后新鲜度 |
+| [`skills/_shared/frontend-reuse-contract.md`](../../skills/_shared/frontend-reuse-contract.md) | 适用前端任务的能力复用、Plan 目录确认、执行交接和 diff 复核 |
 | [`skills/_shared/prototype-contract.md`](../../skills/_shared/prototype-contract.md) | 前端能力识别、原生基座/单 HTML 兼容、Mock 隔离、源码/静态资产、版本及保真证据 |
 | [`skills/_shared/ui-e2e-contract.md`](../../skills/_shared/ui-e2e-contract.md) | UI Delivery Level、视觉/E2E 生命周期、真实浏览器证据和不可豁免门禁 |
 
 这些 contract 是 Agent 行为的单一事实源。本文解释它们如何协作，不覆盖其精确措辞。
+
+新前端模块、前端重构和新增前端源码使用复用契约；目录按目标项目真实结构识别，能力结论进入既有设计/计划，quick 使用内联计划。新模块在 Plan 阶段展示完整目录树与文件职责，与计划一次确认，执行阶段沿用；普通修复不因此增加文档或审批流程。
 
 ## 项目信息层
 
@@ -237,6 +240,10 @@ Visual Evidence Manifest 与 UI/E2E Delivery Contract 是两个独立记录，�
 
 `interactive` and `business-flow` require real browser E2E with a zero-mock rule. A `static-only` E2E `N/A` requires visual evidence and a recorded reason. Core UI/E2E blockers cannot be waived or overridden before archive.
 
+`business-flow` 按 [Business Workflow Closure](../../skills/_shared/ui-e2e-contract.md#business-workflow-closure-business-flow-only) 逐终态、逐角色闭环：唯一 WF-NNN owner、独立登录会话、同一资源的请求/响应交接、刷新重进终态验证和 cleanup。定义保留在已有设计/计划，执行证据保留在 owner 的 `e2e-result.md`，各 case coverage matrix 引用，不新增完成台账。
+
+已获独立视觉 PASS 的 case 可按 [visual-review-reuse](../../skills/_shared/visual-review-reuse.md) 验证完整输入后沿用：判断相关渲染、截图条件和验收输入，而非只判断 HEAD。原复核和截图哈希不改，当前复验留在现有证据中；输入不明或有影响变更则重新截图复核。默认执行、SDD 和最终审查使用同一规则，不继承旧 E2E PASS，不改变三次上限或 final-review 的快照/dispatch 规则。
+
 ### 浏览器能力
 
 优先复用项目现有 runner、已安装 browser extension 或本机 `playwright-cli`。均不可用时进入 `BROWSER_CAPABILITY_GATE`，由用户选择安装方式或不安装；Never silently install or change the target project's dependencies, lockfile, configuration, CI, or browser components.
@@ -253,6 +260,8 @@ required E2E 使用真实目标浏览器和真实业务路径，不用 mock 数�
 - fresh read-only reviewer 独立判断视觉与能力结果。
 
 没有可信设计源或真实 runtime 证据时，结论是 `CANNOT_VERIFY`，不能宣称改造完成。
+
+完整大稿或多验收单元由 `fp-figma` 的 Figma Source Intake 在现有视觉 owner 中维护范围和标注归属，映射到既有 Visual Cases；不另外建立 `ui-docs/`，也不改变 canonical small/split、独立审查或真实 E2E 门禁。
 
 ### final review
 

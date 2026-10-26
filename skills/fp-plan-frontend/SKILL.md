@@ -11,6 +11,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving or writing the frontend plan. Its mutually exclusive canonical forms, semantic split selection, 500 lines / 30,000 characters hard limits, manifest schema, ownership rules, and Producer/Consumer compatibility boundaries are mandatory.
 
 When UI scope exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` before deriving frontend tasks. It owns the UI Delivery Level, allowed staged lifecycle, real frontend E2E, coverage, customer-selected browser capability, blocking, final-review, and archive rules.
+For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once. The plan references the design-owned reuse decisions; without a design record it owns them. Apply its Plan Directory Confirmation before implementation.
 ---
 
 # FeaturePilot Frontend Plan
@@ -75,11 +76,13 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 
 - Start with `Global Constraints`, extracted from proposal, design, settings, and existing code. Include only concrete values you can cite.
 - In small form, Global Constraints and file structure belong to `plan-frontend.md`; in split form, their unique owner is the `context` fragment.
+- 对适用前端范围填写 Frontend Scope；新模块在 Plan 交付开头直接展示目录树、逐文件职责、new/modify/reuse 和接入点，与计划一起明确确认。已有同一结构批准只引用；重构/新增文件不额外触发新模块首次确认。按 frontend-reuse-contract.md 处理后续结构差异，不推迟到 Execute。
 - Do not assume a framework, component prefix, or UI library. Use settings or existing code to identify them.
 - Every task must include `Interfaces`: Consumes / Produces / Contract checks.
 - In split form, the `interface` fragment is the unique detailed owner for component/state/API/route/interaction/style/visual contracts; task `Interfaces` link to those contracts without copying their bodies.
 - Keep dependencies ordered: API/client wrapper → state/composable/store → route/navigation → page skeleton → component details → style/visual refinement → lint/build/visual checks.
 - Page/component tasks must carry forward the resolved frontend design component mapping and Visual Checks. Do not invent new class names, component choices, tokens, or layout rules during execution.
+- 对完整 Figma 大稿，按设计 owner 的 Figma Source Scope 逐个映射范围内页面、弹窗、状态和已解析标注到 Task ID + Case ID；排除项保留理由。标注不另造 task/case，源范围或必要标注未明确时回到 fp-figma 补齐，不以整张画布的一张截图代替覆盖。
 - Every required `FIGCAP-*` maps to exactly one frontend task or an explicit backend dependency; a visual control alone never satisfies it.
 - Every required `PRES-*` maps to the task that may affect the behavior and declares before/after replay evidence.
 - A Figma-derived plan records `Figma only` as its visual source. Prototype is `FUNCTION_SCOPE_ONLY` only when no trustworthy Figma UI design exists; in that mode Visual Evidence is `CANNOT_VERIFY`, never `PASS`.
@@ -91,6 +94,7 @@ Use stable task IDs `frontend-001`, `frontend-002`, ... across the whole fronten
 - 每个 UI-bearing task/case 除既有 Visual Evidence Manifest 外，必须由唯一 stable task owner 在独立的 `UI/E2E Delivery Contract` 中记录 source-derived condition/requirement reference、UI Delivery Level、runtime route reference or E2E route、E2E applicability、required lifecycle stage evidence、canonical `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md` path，以及 N/A / BLOCKED rationale。该表以 `Task ID + Case ID` 关联既有 Visual Evidence Manifest，does not duplicate visual-manifest fields，且不得改变或复用既有表。
 - UI/E2E Delivery Contract 只拥有交付级别、来源条件、E2E applicability、阶段、E2E coverage 与 N/A / BLOCKED 决策；approved design source、Figma mapping、viewport/fixture、reference/current/diff、mask、visual acceptance 和 visual command 均继续由 Visual Evidence Manifest 唯一拥有。
 - Source-derived coverage 必须逐 case 映射需求、Figma/design、当前代码和真实可观察分支。`static-only` 仅可在可信视觉通过后以有证据理由记录 E2E `N/A`；`interactive` 与 `business-flow` 均为 `REQUIRED`，不得跳过、人工豁免或以截图替代。business-flow 还必须计划 real core API、`Mocked Core API: false`、真实 persistence/permission result 及 cleanup。
+- 对 business-flow 按共享 Business Workflow Closure 绑定唯一 `WF-NNN` owner 与 Task ID + Case ID；逐终态定义真实角色/独立会话、setup/action/verify/cleanup、跨角色同一资源交接、请求/响应和刷新重进后的终态证据。设计已有定义只引用；跨任务终态 case 由依赖之后的 closure owner 持有，前置 task 的 case 必须可独立验证，避免依赖后置闭环才能完成的计划死锁。不降低前置门禁或重复建立完成权威。
 - 在每个 UI task 的步骤中明确分阶段：`SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS`；`interactive` 和 `business-flow` 必须继续 `INTERACTION_READY -> FRONTEND_E2E_PASS`。Visual 和真实前端 E2E 是独立 artifact；真实 E2E 禁止 route/intercept、MSW、Cypress stubs/intercepts、fixture JSON、mock module、hard-coded API data、store/localStorage business-data injection、database seed 或绕开 UI 的 direct backend/API write。不能在真实环境安全触发的 in-scope condition 为 `BLOCKED`，不得改标为 `N/A` 或使用 mock。
 - 优先使用 existing project runner、已安装 browser extension 或本机已有 local CLI，不硬编码框架或命令，do not define a global pixel threshold。若三者都不可用，按 `BROWSER_CAPABILITY_GATE` 向客户展示已发现能力、影响与精确可选安装命令；只有客户自行执行或明确授权当前精确命令后才可继续。不得自动（do not silently install）添加项目依赖、修改 lockfile、配置、CI 或浏览器组件；无可用且获批准能力时为 `BLOCKED`。
 

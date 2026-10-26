@@ -43,6 +43,10 @@ Real E2E has an absolute zero-mock rule. It must not use `page.route`, `route.fu
 
 For a `business-flow`, prove the browser reaches the real core API, record `Mocked Core API: false`, observe the real persistence or permission result, and clean up test-created data through the approved normal UI flow or documented real-environment cleanup that does not replace the tested UI flow.
 
+Apply the shared `ui-e2e-contract.md` Business Workflow Closure: resolve the unique `WF-NNN` owner/definition, enumerate every assigned terminal outcome, and use independently authenticated actor contexts rather than shared-authentication tabs. Run ordered setup/action/verify/cleanup, bind each actor stage's real request/response to the same run/resource ID, verify terminal state by refresh/re-entry and the receiving actor's UI, and record cleanup even after failure. Reconcile workflow stages with every applicable per-case coverage row; missing closure is `FAIL` or `BLOCKED`.
+
+Before execution, independently validate the original visual PASS/artifact identity and its current input binding under `${CLAUDE_PLUGIN_ROOT}/skills/_shared/visual-review-reuse.md` when retention is used. Missing or failed binding returns `BLOCKED` to the controller before E2E; this verifier does not issue a visual verdict, alter visual evidence, or reuse an old E2E PASS.
+
 Browser capability is authorized only when the controller and brief record the exact selected capability, customer approval / choice, target frontend root, allowed real E2E test paths, runner/config status, and scoped real E2E case.
 
 Use only the recorded existing project runner, installed browser extension, or existing local `playwright-cli`. Do not install a tool or browser component, alter project manifest/lockfile/configuration/CI, overwrite an existing configuration, or upgrade unrelated dependencies. If no customer-approved usable capability exists, return `BLOCKED`.
@@ -87,6 +91,15 @@ Mocked Core API: <false | N/A>
 - covered: <conditions and evidence>
 - N/A: <only genuinely inapplicable conditions and rationale>
 - BLOCKED: <unmet safe-real-environment conditions and required decision>
+
+## Business Workflow Evidence (business-flow only)
+
+- Definition owner / execution owner: <canonical design or plan section; WF-NNN / Task ID + Case ID>
+- Coverage links: <every applicable case matrix and stage/condition IDs; no duplicate verdict>
+
+| Workflow ID / Run ID | Stage | Actor / session | Action / expected result | Request / response / resource ID | Re-entry / permission proof | Cleanup | Status / evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| <WF-NNN / real run identity> | <setup/action/verify/cleanup> | <real actor and isolated context identity; no secrets> | <actual action and expected terminal result> | <redacted method/URL, status/result and stable resource handoff> | <same resource after refresh/re-entry and relevant receiving actor> | <created resources, approved path and outcome> | <PASS/FAIL/BLOCKED and artifact location> |
 
 ## Result
 
