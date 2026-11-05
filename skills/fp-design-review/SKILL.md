@@ -6,7 +6,7 @@ description: Use when a resolved FeaturePilot design needs a development design 
 
 插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before validating design owners; it owns the exact ledger schema, terminal evidence, Covered IDs, and explicit write authorization.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before validating design owners; it owns the exact ledger schema, terminal evidence, Covered IDs, and explicit write authorization. Read the Design branch of `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` before the sufficiency check.
 
 ---
 
@@ -51,6 +51,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 - 架构主线的触发、处理、状态变化、结果和失败收束；
 - 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 检查设计是否说明满足当前验收的最简单可行方案、既有代码与框架复用，以及新增抽象、层、组件、依赖、缓存、异步或配置的当前必要性证据；未来可能需要不能单独成立；
+- 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` 的 Design 分支检查：一个决策一处；数据形状先于行为；最小可工作方案之后是从一开始就会采用的结构，并拆成可核验单元；非法状态不可表示；入口校验、边界内信任；验证描述调用方可见结果和实现前应失败的测试。缺失时按下方 targeted revision 返回 `fp-brainstorm`；
 - 已记录的简化取舍是否保留当前验收、安全、权限隔离和数据一致性；有意延后项是否在唯一决策或风险 owner 说明内容与原因、适用上限、可验证升级触发条件及升级方向，无延后项是否明确写“无”；
 - 设计代码草图是否包含共享契约要求的 docstring/必要注释，验证安排是否覆盖简化边界和实现时的注释自审；
 - 核心对象的职责、非职责、协作关系和 design 锚点；

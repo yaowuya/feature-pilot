@@ -78,13 +78,15 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 
 （按触发、处理、状态变化、结果和失败收束说明端内主线，并链接跨端 owner；不得只列文件。）
 
-（先说明满足当前验收的最简单可行方案及复用的代码、框架能力；新增抽象、层、组件、依赖、缓存、异步或配置的必要性由相应决策 owner 持有，此处只链接。简化不得削减当前验收、安全、权限隔离或数据一致性。）
+（先说明满足当前验收的最简单可行方案及复用的代码、框架能力；新增抽象、层、组件、依赖、缓存、异步或配置的必要性由相应决策 owner 持有，此处只链接。简化不得削减当前验收、安全、权限隔离或数据一致性。按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` Design 分支：先写数据形状和最小可工作方案，再写从一开始就会采用的结构，并拆成可核验单元。）
 
 ### 核心对象与职责
 
 | 对象/模块 | 职责 | 不负责 | 协作对象 | 证据 |
 | --- | --- | --- | --- | --- |
 | <对象> | <单一职责> | <明确边界> | <依赖或调用方> | <`path:line` / confirmed decision> |
+
+（对象结构使非法状态无法表示。入口校验，边界内信任。需要幂等或单一写入者时在这里说明。）
 
 ### 后端模块设计
 
@@ -192,7 +194,7 @@ Keep `design/00-index.md` metadata-only and use this exact end-map section/table
 | --- | --- | --- | --- | --- |
 | <验证> | <可执行命令/人工步骤> | <可观察结果> | <章节/决策> | <本节或引用> |
 
-（覆盖当前验收和已确认简化边界，并安排实现时的注释自审；注释与实现同步完成，不拆成事后补注释任务。）
+（覆盖当前验收和已确认简化边界，并安排实现时的注释自审；注释与实现同步完成，不拆成事后补注释任务。验证描述调用方可见的结果，并写明实现前应当失败的测试。）
 ```
 
 For every actual end, place the Decision Ledger and Pre-write Confirmation Evidence in exactly one unique detailed owner: the small end file or one manifest-listed detail fragment. All design end owners use one globally unique D-NNN sequence. Cross-end decisions have one owner only; the split index records ownership only and does not duplicate decision body content. Each owner's `Covered IDs` lists exactly that owner's persisted IDs. Persisted ledger rows need a unique ID, source, blocking value, terminal status, and confirmation evidence; `needs-user-confirmation` must not persist in final design output.

@@ -6,7 +6,7 @@ description: Use when an approved FeaturePilot proposal needs backend and/or fro
 
 插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before architecture questions; it owns the Decision Ledger status set, per-item confirmation, separate write authorization, persisted terminal evidence, and recovery behavior.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` before resolving proposal or design artifacts; it owns canonical form selection, split manifests, hard limits, conversion, and historical-layout rejection. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/decision-ledger.md` before architecture questions; it owns the Decision Ledger status set, per-item confirmation, separate write authorization, persisted terminal evidence, and recovery behavior. Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` Design branch before comparing options or writing the technical design.
 For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; derive the source-backed reuse decisions before component questions and keep their single owner in frontend design. New-module directory confirmation belongs to Plan, not this design interview.
 ---
 
@@ -146,6 +146,8 @@ return-to: <fp-brainstorm + same D-NNN/checkpoint>
 收集足够决策后（通常 3-5 轮），针对核心架构提出 **2-3 个方案**，说明各自 trade-off，并给出推荐理由。等待用户按相关 `D-NNN` 确认方案或给出替代选择后继续；整体“确认方案”不能替代仍未决行的逐项确认。
 
 方案比较必须遵循 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`：先说明满足当前验收的最简单可行方案，优先复用现有代码与框架能力。新增抽象、分层、组件、依赖、缓存、异步或配置，必须指出当前需求、已有实际变体或可验证性能约束的证据；“未来可能需要”不能单独作为依据，方案比较也不要求另造架构。
+
+方案形态同时遵循 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` 的 Design 分支：先给出数据形状和能通过当前验收的最小方案，再给出从一开始就会采用的结构，并拆成可核验单元。两个方案因同一前提失败时，先用一句话写下该前提。该结构改变已确认 proposal 的行为、接口、架构或验收时，先记入 Decision Ledger 并等待确认。
 
 有意延后复杂能力时，在既有架构决策或风险 owner 中说明简化内容与原因、适用上限、可验证的升级触发条件和升级方向；其他位置只链接。没有延后项时写“无”。简化不得削减当前验收、安全、权限隔离或数据一致性；不另建 debt 文件、表或状态机。新的取舍仍按对应 `D-NNN` 确认。
 

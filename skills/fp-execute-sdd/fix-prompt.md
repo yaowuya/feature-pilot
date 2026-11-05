@@ -37,6 +37,8 @@ Findings to fix:
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` at the absolute plugin path resolved and supplied by the controller, for both task and final scope. Missing mandatory input is BLOCKED; do not search the consumer repository for a replacement.
 
+Read the controller-resolved `skills/_shared/ub-mode.md` Implementation branch before changing code. A fix reproduces the defect and changes the cause; a guard that only hides the crash does not finish the finding.
+
 ## Required Behavior
 
 A fixer may be dispatched only after review attempt 1 or 2 of 3. If the supplied attempt is 3 of 3, stop and report `BLOCKED` because the controller must classify the remaining findings instead. Do not request or imply a fourth review.

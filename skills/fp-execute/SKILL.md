@@ -11,6 +11,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it owns canonical small/split paths, manifests, task ownership, historical-layout rejection, and Consumer validation.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, customer-selected browser capability, retry, and non-waivable blocking.
 For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; before file creation and during inline review check reuse decisions, allowed responsibilities, and the existing Plan directory confirmation. Reuse that confirmation; return only structural changes to Plan.
+Before writing or changing code, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` and the Implementation branch of `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md`.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 
 ---
@@ -64,7 +65,7 @@ Plan files:
 Base SHA: <执行开始时的 git sha>
 
 ## Completed
-- <task-id> (owner: <path>): commits <base>..<head>; tests `<command>`; inline review clean
+- <task-id> (owner: <path>): commits <base>..<head>; tests `<command>`; inline review clean; ub-mode work/right recorded
 
 ## Blocked
 - None
@@ -79,6 +80,7 @@ Base SHA: <执行开始时的 git sha>
 - Task-owner checkbox 是计划完成状态；ledger is recovery evidence, not a second completion authority。
 - Ledger 与 checkbox 不一致时检查 owner file、`git log`、实际实现和验证结果，再修正状态；不要盲目重做。
 - 每个任务完成时一起更新 checkbox、ledger、验证命令和 commit 范围；双端计划再从 owner checkboxes 重算 overview。
+- ledger 记录预期失败原因、Make it Right 的范围，以及 `crapper` / `dryer` / `mutator` 的运行结果或跳过原因。
 - UI-bearing task 同时在 ledger 记录每个 `Task ID + Case ID` 的当前 lifecycle gate、Visual Evidence Manifest reference、`.fp-execute/e2e/<task-id>/<case-id>/` evidence reference、coverage-matrix result、attempt count、cleanup and `BLOCKED` rationale。它们不得替代 checkbox 的完成权威。
 - 阻塞时记录原因、已尝试命令和需要的人工决策。
 ## Pre-flight Plan Review
@@ -113,10 +115,10 @@ After a UI/E2E failure, diagnostic retries may continue only through attempt 3. 
 
 1. 从唯一 task-owner file 读取任务、Files、Reasoning、Depends on、Interfaces 和验收标准。
 2. 核对 checkbox、ledger、git 和实际文件，确认任务尚未完成。
-3. 先写失败测试并运行，确认因缺少目标行为而失败；不适合自动测试时记录原因和替代验证。
-4. 按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 编写最小实现并同步补齐 docstring、原因注释及适用的简化标记，不顺手重构无关范围。
-5. 运行目标测试，并按任务要求运行相关 lint、typecheck、build 或视觉验证。
-6. 做一次 inline 自审，检查正确性、命名、结构、契约、安全和前端视觉约束，并按共享工程质量契约核验注释、复杂度依据与简化边界；缺失先修复，重跑受影响验证后才可完成任务。
+3. Make it Work：先写失败测试并运行，确认失败原因就是缺少目标行为；诚实测试不现实时记录替代验证。再按 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` 和 ub-mode Implementation 分支编写最小实现，并同步补齐 docstring、原因注释及适用的简化标记。
+4. 运行目标测试，并按任务要求运行相关 lint、typecheck、build 或视觉验证。
+5. Make it Right：目标测试通过后，只在本任务 diff 内按 ub-mode Implementation 分支整理结构，然后重跑受影响验证。记录 `crapper` / `dryer` / `mutator` 的结果或跳过原因。
+6. 做一次 inline 自审，检查正确性、命名、结构、契约、安全和前端视觉约束，并按共享工程质量契约与 ub-mode 核验注释、复杂度依据、简化边界、原因修复和行为验证；缺失先修复，重跑受影响验证后才可完成任务。
 7. 验证通过后更新唯一 owner checkbox；双端计划同步派生进度。
 8. 按任务提交代码，提交信息与交付行为一致。
 9. 在 ledger 记录 commit 范围、验证命令、结果、注释自审和残余风险；有意延后引用代码 `path:line` 与升级条件，无则记无。

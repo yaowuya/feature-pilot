@@ -10,6 +10,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/artifact-layout.md` once before resolving execution inputs; it is the normative layout and validation contract.
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once before executing UI-bearing work; it owns delivery levels, allowed lifecycle paths, real-E2E evidence, zero-mock rules, coverage status semantics, customer-selected browser capability, retry, and non-waivable blocking.
 For a new frontend module, frontend refactor, or new frontend source files, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` once; pass its plugin path, reuse owner/decisions, directory responsibilities, Plan confirmation source and writable paths through the existing brief. Reuse unchanged approval; collect structural changes back into Plan, never delegate approval to a worker.
+Before dispatching an implementer or fixer, resolve `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` and pass that absolute path with the engineering-quality path. Workers read its Implementation branch themselves.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract across controller and workers.
 ---
 
@@ -284,6 +285,7 @@ Before dispatching an implementer, write a brief using `${CLAUDE_PLUGIN_ROOT}/sk
 - Full task text from the plan, not a summary.
 - Applicable `Global Constraints`.
 - Resolved `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md` path, applicable comment conventions and approved simplification boundaries; pass this same resolved contract path to every implementer, fixer and task/final reviewer before dispatch, including final fixes without a task brief.
+- Resolved `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` path. Implementers and fixers read its Implementation branch; the task reviewer checks that branch against the diff.
 - Relevant proposal/design excerpts.
 - Code standards selected by the shared engineering-quality route: resolved common/end plugin resources, appRoot/version, project rule sources and confirmed overrides (or N/A). Carry the same applicable paths into task/final review and fix contexts; independent workers read them, including final fixes without a task brief.
 - Relevant prior interface outputs from completed tasks.
@@ -337,7 +339,7 @@ Use `${CLAUDE_PLUGIN_ROOT}/skills/fp-execute-sdd/task-reviewer-prompt.md` for a 
 
 Reviewer must verify two gates:
 1. **Spec Compliance:** task brief, interfaces, constraints, visual checks, and validation evidence.
-2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness; apply the shared engineering-quality checks for required comments, justified complexity and bounded simplifications.
+2. **Code Quality:** correctness bugs, contract bugs, test adequacy, maintainability, scope creep, production readiness; apply the shared engineering-quality checks for required comments, justified complexity and bounded simplifications. Also apply the ub-mode Implementation branch: the failing test shows the missing behavior, the change fixes the cause, tests assert caller-visible behavior, and Make it Right stays inside the task. A miss is at least Important and cannot become Review Debt.
 
 For frontend/UI tasks the reviewer also verifies the persisted fresh visual-review artifact that issued `VISUAL_REVIEW_PASS`, emits exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY` and `E2E evidence: PASS | FAIL | CANNOT_VERIFY`, verifies every planned case against its manifest and independent real-browser evidence, and keeps browser interaction evidence separate from screenshot evidence.
 

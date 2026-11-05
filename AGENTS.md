@@ -38,6 +38,7 @@ Codex and Cursor do not run Claude Code slash commands directly. Treat `/fp-*` n
 | A PRD, proposal, design, task plan, overview, or archive artifact is read, written, converted, validated, reviewed, or archived | `skills/_shared/artifact-layout.md` |
 | Requirement, proposal, or design questions can change scope, behavior, architecture, interfaces, or acceptance | `skills/_shared/decision-ledger.md` |
 | Technical design, task planning, code implementation/fixes, design review, or code review | `skills/_shared/engineering-quality.md` |
+| Technical design, design review, code implementation, or code repair | `skills/_shared/ub-mode.md` |
 | Prototype applicability, native base setup/refresh, or prototype read/write/validation/archive | `skills/_shared/prototype-contract.md` |
 | Code location, symbols, call/data flow, impact, graph setup/refresh, or post-write graph state is involved | `skills/_shared/codegraph.md` |
 | New frontend module, frontend refactor, or new frontend source files; ordinary edits only when explicitly requested | `skills/_shared/frontend-reuse-contract.md` |

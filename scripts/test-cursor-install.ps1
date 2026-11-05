@@ -31,6 +31,7 @@ function New-Fixture([string]$Name) {
     Put $source 'skills/fp-demo/SKILL.md' '# fixture skill'
     Put $source 'skills/_shared/workspace-rules.md' '# workspace contract'
     Put $source 'skills/_shared/engineering-quality.md' '# engineering contract'
+    Put $source 'skills/_shared/ub-mode.md' '# ub-mode contract'
     Put $source 'scripts/check.ps1' '# fixture script'
     Put $source 'adapters/cursor/rules/featurepilot.mdc' 'alwaysApply: true'
     return [pscustomobject]@{ Root = $root; Source = $source; Cursor = $cursor; Target = (Join-Path $cursor 'plugins/local/fp') }
@@ -82,13 +83,13 @@ try {
         foreach ($path in @('.git/private', '.agents/cache', '.claude/cache', 'adapters/codex/cache', 'skills/.claude/cache')) { Put $f.Source $path }
         & $installer -PluginRoot $f.Source -CursorHome $f.Cursor
         $state = Get-Content -LiteralPath (Join-Path $f.Target '.featurepilot-install.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        Assert ($state.files.Count -eq 6) 'wrong packaged file set'
+        Assert ($state.files.Count -eq 7) 'wrong packaged file set'
         foreach ($entry in $state.files) {
             $sourceHash = (Get-FileHash -LiteralPath (Join-Path $f.Source $entry.path) -Algorithm SHA256).Hash
             $targetHash = (Get-FileHash -LiteralPath (Join-Path $f.Target $entry.path) -Algorithm SHA256).Hash
             Assert ($sourceHash -eq $targetHash -and $entry.sha256 -eq $targetHash) "hash mismatch: $($entry.path)"
         }
-        Assert (@(Get-ChildItem -LiteralPath $f.Target -Force -Recurse -File).Count -eq 7) 'unexpected files copied'
+        Assert (@(Get-ChildItem -LiteralPath $f.Target -Force -Recurse -File).Count -eq 8) 'unexpected files copied'
         $before = Snapshot $f.Root
         & $installer -PluginRoot $f.Source -CursorHome $f.Cursor -VerifyOnly
         Assert ((Snapshot $f.Root) -eq $before) 'successful VerifyOnly wrote files'
@@ -163,7 +164,7 @@ try {
         Expect-Failure { & $installer -PluginRoot $f.Target -CursorHome $f.Cursor } 'overlap'
     }
     Run-Test 'missing manifest, skill, or required bootstrap resource rejects initial install' {
-        foreach ($relative in @('.cursor-plugin/plugin.json', 'skills/fp-demo/SKILL.md', 'skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'adapters/cursor/rules/featurepilot.mdc')) {
+        foreach ($relative in @('.cursor-plugin/plugin.json', 'skills/fp-demo/SKILL.md', 'skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'skills/_shared/ub-mode.md', 'adapters/cursor/rules/featurepilot.mdc')) {
             $f = New-Fixture ('missing-' + [guid]::NewGuid().ToString('N'))
             Put $f.Source 'adapters/cursor/rules/other.mdc' '# not the bootstrap rule'
             Remove-Item -LiteralPath (Join-Path $f.Source $relative)
@@ -172,7 +173,7 @@ try {
         }
     }
     Run-Test 'missing required bootstrap resource rejects update and preserves the old install' {
-        foreach ($relative in @('skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'adapters/cursor/rules/featurepilot.mdc')) {
+        foreach ($relative in @('skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'skills/_shared/ub-mode.md', 'adapters/cursor/rules/featurepilot.mdc')) {
             $f = New-Fixture ('incomplete-update-' + [guid]::NewGuid().ToString('N'))
             & $installer -PluginRoot $f.Source -CursorHome $f.Cursor
             Put $f.Source 'adapters/cursor/rules/other.mdc' '# unrelated rule remains'

@@ -7,7 +7,7 @@ description: Use when a user asks to 提交代码, commit reviewed changes, or e
 
 插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting. Before code review or repair, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`; its registered `Code Standards` section is the only built-in rule-consumption entry. If this project already has `.codegraph/` and code location or source writes are involved, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` and follow its dirty-after-write/post-write-sync rules; never create an index for this workflow.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting. Before code review or repair, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`; its registered `Code Standards` section is the only built-in rule-consumption entry. Before a repair that changes code, also read the Implementation branch of `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md`. If this project already has `.codegraph/` and code location or source writes are involved, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` and follow its dirty-after-write/post-write-sync rules; never create an index for this workflow.
 
 # FeaturePilot Commit
 
@@ -57,7 +57,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 ## 2. 双轨 review、修复与项目规范沉淀
 
-1. 按本次改动的完整 diff、受影响调用链及必要测试检查，分别报告 **规范符合性**（规则编号、`path:line`、偏差）和 **代码缺陷**（具体输入/状态、错误结果、根因及证据）。已确认问题先在本轮范围内修复；涉及新需求、越权文件或无法安全验证的阻塞项不继续提交。修复后重新审查实际 diff，运行项目已有的相关测试/静态检查及必要负向用例，逐项记录通过、失败、未验证。
+1. 按本次改动的完整 diff、受影响调用链及必要测试检查，分别报告 **规范符合性**（规则编号、`path:line`、偏差）和 **代码缺陷**（具体输入/状态、错误结果、根因及证据）。已确认问题先在本轮范围内修复；修复代码时按 ub-mode Implementation 分支先复现再改原因，并在修复后的 diff 内完成 Make it Right。涉及新需求、越权文件或无法安全验证的阻塞项不继续提交。修复后重新审查实际 diff，运行项目已有的相关测试/静态检查及必要负向用例，逐项记录通过、失败、未验证。
 2. 只有显式项目约定或多个独立的当前源码/测试证据支持、且无相反约定时，才把尚未记录的可执行项目规则视为“新规范”。单个文件的偶然命名或单次缺陷只报告为候选，不升级为强制规则。对确定的新规范检查重复/冲突及适用端，在 `fp-docs/settings/code-standards.md` 的 `## Rules` 中按递增 `P001` 等 Rule ID 写入 Rule、Applies to（appRoot、端、版本）和 Evidence；移除空状态行。只维护已存在、已获批准且列于当前应用 `Project rule sources` 的该文件，不创建或更新其他规则源。
 3. 若已经确认需要沉淀新规范，但上述文档缺失、未登记或只读，先停止并引导 `/fp-init` 完成逐文件批准与登记；自动模式同样停止。尚不成立的候选只在报告中说明，不阻塞已验证代码的提交。规范沉淀本身进入本次审查、验证及暂存范围，不能在提交后悄悄补写。
 4. 检查本次新/改变行为对象的契约说明、非显然约束注释和复杂度依据；无依据新增复杂度或失效说明按共享工程质量契约修复。必要验证缺失时普通模式需用户明确接受具体缺口；自动模式以**检查失败**处理并停止，不把未验证冒充通过。

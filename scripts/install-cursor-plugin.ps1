@@ -18,7 +18,7 @@ Set-StrictMode -Version Latest
 $utf8 = New-Object Text.UTF8Encoding($false)
 $markerName = '.featurepilot-install.json'
 $packageRoots = @('.cursor-plugin', 'skills', 'scripts', 'adapters/cursor')
-$requiredResources = @('skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'adapters/cursor/rules/featurepilot.mdc')
+$requiredResources = @('skills/_shared/workspace-rules.md', 'skills/_shared/engineering-quality.md', 'skills/_shared/ub-mode.md', 'adapters/cursor/rules/featurepilot.mdc')
 $excludedDirectories = @('.git', '.agents', '.claude', '.codex', 'node_modules', '__pycache__', '.pytest_cache')
 
 function Get-AbsolutePath([string]$Path) {
