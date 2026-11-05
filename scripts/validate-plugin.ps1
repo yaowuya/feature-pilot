@@ -602,6 +602,11 @@ Assert-Condition (
 & powershell -NoProfile -ExecutionPolicy Bypass -File $designReviewContractValidator
 Assert-Condition ($LASTEXITCODE -eq 0) 'focused design-review contract validator failed'
 
+$ubModeContractValidator = Join-Path $root 'scripts\test-ub-mode-contract.ps1'
+Assert-Condition (Test-Path $ubModeContractValidator) 'focused ub-mode contract validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $ubModeContractValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused ub-mode contract validator failed'
+
 $prdBusinessContractValidator = Join-Path $root 'scripts\test-prd-business-contract.ps1'
 Assert-Condition (Test-Path $prdBusinessContractValidator) 'focused PRD business contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $prdBusinessContractValidator

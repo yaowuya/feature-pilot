@@ -41,6 +41,7 @@ $rules = @(Get-ChildItem -LiteralPath $rulesRoot -Filter '*.mdc' -File)
 Assert-Condition ($skills.Count -gt 0 -and $rules.Count -gt 0) 'manifest paths do not contain skills and rules'
 Assert-Condition (Test-Path -LiteralPath (Join-Path $skillsRoot '_shared/workspace-rules.md') -PathType Leaf) 'shared workspace contract is missing'
 Assert-Condition (Test-Path -LiteralPath (Join-Path $skillsRoot '_shared/engineering-quality.md') -PathType Leaf) 'shared engineering contract is missing'
+Assert-Condition (Test-Path -LiteralPath (Join-Path $skillsRoot '_shared/ub-mode.md') -PathType Leaf) 'shared ub-mode contract is missing'
 foreach ($rule in $rules) {
     $text = [IO.File]::ReadAllText($rule.FullName, $utf8)
     $frontmatter = [regex]::Match($text, '\A---\r?\n(?<body>.*?)\r?\n---', [Text.RegularExpressions.RegexOptions]::Singleline)

@@ -7,6 +7,7 @@ description: Use when a user wants a small, local feature change, bug fix, or re
 插件资源锚定、`${CLAUDE_PLUGIN_ROOT}` 路径映射与缺失即停止规则见 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md`；不要在消费者项目中搜索 `skills/**`。
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before acting; it owns root resolution, `fp-docs/manifest.md` read order, lazy context, stale-intel evidence, precedence, neutrality, compatibility, and artifact ownership.
+After the user confirms the inline plan, read the Implementation branch of `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` before writing code. The planning step itself stays on the engineering-quality contract.
 If `<project-root>/.codegraph/` exists, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md` once and preserve its write-invalidation contract.
 ---
 
@@ -88,7 +89,8 @@ Use `quick-candidate-files`, `quick-reusable-patterns`, and `quick-verification`
 ### 4. 按计划实现
 
 执行时遵循项目现有模式：
-- 优先补充或调整测试，再写实现；若需求不适合自动化测试，说明原因并提供替代验证。
+- Make it Work：先写失败测试并确认失败原因是缺少目标行为，再写最小实现；诚实测试不现实时说明替代验证。
+- Make it Right：测试通过后只整理本次 diff，钉住行为后再改结构，并记录 `crapper` / `dryer` / `mutator` 的结果或跳过原因。
 - 后端按项目已有分层和依赖顺序修改，不为本次小需求补建不存在的层。
 - 前端按现有工程约束修改；优先遵循项目现有前端框架、脚本/状态管理写法、项目配置的设计系统、组件和样式 token。
 - 控制改动范围，不顺手重构无关代码。
@@ -110,6 +112,7 @@ codegraph sync <project-root> --quiet
 - 改了哪些关键文件
 - 验证命令及结果
 - 注释自审结果；有意延后的 `path:line`、边界与升级条件（无则写无）
+- ub-mode：预期失败原因、Make it Right 范围、质量工具结果或跳过原因
 - CodeGraph `post-write-sync` 的执行、跳过或失败状态
 - 未验证项或残余风险
 

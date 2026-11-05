@@ -63,6 +63,7 @@ $contractTargets = @(
     '`skills/_shared/workspace-rules.md`'
     '`skills/_shared/artifact-layout.md`'
     '`skills/_shared/decision-ledger.md`'
+    '`skills/_shared/ub-mode.md`'
     '`skills/_shared/codegraph.md`'
     '`skills/_shared/ui-e2e-contract.md`'
 )

@@ -147,6 +147,7 @@ For the full flow, pass `start-reusable-context` to `fp-propose` together with t
 - Socratic 架构决策问答（后端 + 前端维度）
 - 如果包含前端需求，利用 **本插件内** 的 `fp-figma` skill 分析设计稿，完成精准的前端页面与组件映射设计；**禁止回退到全局 `figma-to-vue` skill**。
 - 按实际涉及端生成设计文档：每一端选择 small file 或 split directory 的一个 canonical form；始终生成 `design/00-index.md` 并让它直指所选端入口；没有前端计划时不得生成前端设计入口、分片或空占位文件。
+- 方案比较、架构主线和验证方案遵循 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` 的 Design 分支。`fp-brainstorm` 把它写进设计，`fp-design-review` 按同一分支做充分性检查。
 
 ### No second design finalizer
 

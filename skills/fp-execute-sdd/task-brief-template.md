@@ -45,6 +45,7 @@ Copy only the constraints that apply to this task, preserving exact values:
 
 - `<constraint>`
 - Engineering quality contract: `<controller-resolved absolute plugin path to skills/_shared/engineering-quality.md; mandatory read>`; applicable comment/docstring convention: `<project convention or shared default>`; approved simplification boundaries: `<design owner reference or none>`.
+- ub-mode contract: `<controller-resolved absolute plugin path to skills/_shared/ub-mode.md Implementation branch; mandatory read>`.
 
 ## Relevant Project Information Layer
 

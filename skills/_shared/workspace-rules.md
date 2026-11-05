@@ -43,6 +43,10 @@ A `manifest-only workspace is valid`. Optional settings, `intel/project-facts.md
 
 技术设计、任务规划、代码实现/修复及设计或代码 review，必须先读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/engineering-quality.md`；它统一规定有意义的强制注释、Python/Django 条件细则、避免过度设计、有意简化记录和完成前检查，并通过“已登记技术栈规范”按相关 settings 消费内置规范及客户覆盖。独立子代理必须收到控制器解析后的契约路径并自行读取；不得只依赖会话继承。纯产品讨论和只读探索不触发此契约。
 
+## ub-mode route
+
+技术方案设计，以及对该设计的充分性检查，读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ub-mode.md` 的 Design 分支。代码实现和代码修复读取同一文件的 Implementation 分支。独立 implementer、fixer 和 task reviewer 必须收到解析后的绝对路径并自行读取。提案、任务计划编排和只读探索不读本文件。
+
 ## Optional CodeGraph route
 
 需要定位代码、符号、调用链、数据流、影响范围或相关源码候选时，按需读取 `${CLAUDE_PLUGIN_ROOT}/skills/_shared/codegraph.md`。CodeGraph 只加速候选定位；不可用时继续现有搜索，不降低当前源码验证、读取预算、只读和授权边界。无需代码调查的阶段不得为了“预热”而加载、安装或构建代码图。
