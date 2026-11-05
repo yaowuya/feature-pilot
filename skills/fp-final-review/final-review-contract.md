@@ -12,6 +12,8 @@ Mandatory engineering-quality violations map to at least `High` in final review 
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md` once when final review includes UI-bearing scope; it owns the UI lifecycle and non-waiver policy, while this file projects only final-review fields.
 
+For new frontend modules, frontend refactors, or new frontend source files in the reviewed scope, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/frontend-reuse-contract.md` and compare the diff with its single reuse record and Plan directory responsibilities/confirmation. Apply this only to current relevant scope, not unrelated historical artifacts.
+
 Local package/report templates retain their own headings, metadata, evidence rows, findings, and verdict output. Every local table shell below is a checked projection of this contract rather than an independent definition.
 
 ## Review Identity and Phase
@@ -137,6 +139,8 @@ Figma Completion Status: `COMPLETE | INCOMPLETE | BLOCKED`. `COMPLETE` requires 
 
 ## Visual Evidence
 
+For full-source or multi-unit Figma scope, reconcile the frontend design owner's Figma Source Scope against Visual Checks, task/case mappings and annotation resolutions under fp-figma's Figma Source Intake. A missing in-scope unit or unresolved acceptance-relevant annotation follows the existing visual FAIL/CANNOT_VERIFY blocking rules; do not introduce a second verdict, alter evidence freshness, or substitute this inventory for runtime evidence.
+
 Canonical Visual Evidence projection:
 
 | Case ID | Approved design source | Figma node | revision/time | Frame/variant | variables / Auto Layout / assets | Runtime route | Scenario/state | Viewport | DPR | Locale | Theme | Deterministic non-sensitive fixture | Reference path | Current path | Diff path / missing diff | Mask | Acceptance rule | Command/tool | Failure class | Result |
@@ -150,6 +154,8 @@ Local runtime screenshot must not replace reference.png. current.png requires st
 Evidence channels: browser interaction evidence is separate from screenshot evidence; browser interaction evidence must exercise approved states, and screenshot evidence must record case artifacts.
 
 Record exactly `Visual evidence: PASS | FAIL | CANNOT_VERIFY`. Core source/runtime missing is CANNOT_VERIFY and a main-flow blocker; it never becomes review debt. At attempt 3, only a reproducible non-core cosmetic FAIL difference may become review debt; all other non-core FAIL/CANNOT_VERIFY cases are BLOCKER.
+
+When retaining an earlier visual PASS, read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/visual-review-reuse.md` and independently verify the immutable original review/artifact hashes, complete render/capture/acceptance input snapshot, current changed/dirty/untracked paths, and actual runtime binding. Include current revalidation evidence and original review references in the existing visual evidence entry; different HEAD alone is not failure, identical HEAD alone is not proof. Missing or changed inputs follow the existing visual blocker/attempt rules, never an inherited E2E result. Final-review snapshot/dispatch identities above remain unchanged.
 
 ## UI Case Inventory / N/A Reconciliation
 
@@ -174,5 +180,7 @@ Canonical gate projection:
 | `<task-id>` | `<case-id>` | `static-only / interactive / business-flow` | `<required lifecycle path>` | `<last completed stage>` | `<Visual Evidence row + manifest path>` | `<REQUIRED/N/A + PASS/FAIL/BLOCKED>` | `.fp-execute/e2e/<task-id>/<case-id>/coverage-matrix.md; <artifacts>` | `false / N/A` | `<result/path or N/A>` | `<real persistence/permission result or N/A>` | `<None or exact core gap + repair owner>` |
 
 Apply delivery-level, real-browser, zero-mock, business-result, cleanup, retry, and non-waiver semantics from `${CLAUDE_PLUGIN_ROOT}/skills/_shared/ui-e2e-contract.md`; this section only projects final-review evidence and result fields.
+
+For business-flow, reconcile Business Workflow Closure against approved requirements/state branches and the UI Case Inventory, not only completed task claims. Every required WF-NNN terminal outcome has one execution owner and stage-bound same-run request/response/resource evidence, isolated actor handoffs, terminal refresh/re-entry/permission proof, and cleanup in the existing E2E result. All applicable case matrices link to that evidence; missing outcomes or closure remain `FAIL` or `BLOCKED` without adding another completion authority.
 
 UI/E2E Gate is exactly `UI/E2E Gate: PASS | N/A | FAIL | BLOCKED`. `N/A` remains governed by the reconciled inventory above. Any upstream core blocker maps to `FAIL` or `BLOCKED`, names its repair owner, and cannot become `PASS`, `PASS_WITH_NOTES`, review debt, manual override, or waiver.

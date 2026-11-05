@@ -88,6 +88,28 @@ function Test-SharedContractReference([string]$text) {
     return Test-EffectiveLineRegex $text '(?i)^\s*(?:When UI scope exists, )?Read `?\$\{CLAUDE_PLUGIN_ROOT\}/skills/_shared/ui-e2e-contract\.md`?.*$'
 }
 
+function Test-VisualReuseSchema([string]$text) {
+    $active = Get-EffectiveNormativeText $text
+    foreach ($field in @('Render inputs', 'Capture inputs', 'Acceptance inputs', 'Input fingerprint', 'Input snapshot reference / SHA-256', 'Original review / attempt', 'Original Reviewed HEAD', 'Current HEAD / dirty paths', 'Input snapshot / current fingerprint', 'Changed paths / exclusion proof', 'Runtime state proof', 'Artifact hash checks', 'Checked at / checker', 'retained | fresh-review-required | BLOCKED')) {
+        if (-not $active.Contains($field)) { return $false }
+    }
+    return $true
+}
+
+function Get-EffectiveConsumerText([string]$text, [string]$path) {
+    $normalized = $text -replace "`r`n?", "`n"
+    $outer = Get-EffectiveNormativeText $normalized
+    if ($path -like '*-template.md') {
+        $template = [regex]::Match($normalized, '(?ms)^ {0,3}\x60{3}markdown[ \t]*\n(?<body>.*)^ {0,3}\x60{3}[ \t]*$')
+        if ($template.Success) { return Get-EffectiveNormativeText $template.Groups['body'].Value }
+        return $outer
+    }
+    if ($path -notlike '*-prompt.md') { return $outer }
+    $prompt = [regex]::Match($normalized, '(?ms)^ {0,3}\x60{3}text[ \t]*\n(?<body>.*?)^ {0,3}\x60{3,}[ \t]*$')
+    if (-not $prompt.Success) { return $outer }
+    return $outer + "`n" + (Get-EffectiveNormativeText $prompt.Groups['body'].Value)
+}
+
 function Test-ValidatorRegistration([string]$validatorText, [string[]]$registrationLines) {
     $tokens = $null
     $parseErrors = $null
@@ -247,6 +269,8 @@ $archive = Read-Utf8 'skills\fp-archive\SKILL.md'
 $validator = Read-Utf8 'scripts\validate-plugin.ps1'
 $architectureReference = Read-Utf8 'docs\reference\architecture-and-artifacts.md'
 $userGuide = Read-Utf8 'docs\user_guide\init-prd-start.md'
+$visualReuse = Read-Utf8 'skills\_shared\visual-review-reuse.md'
+$e2eVerifier = Read-Utf8 'skills\fp-execute-sdd\e2e-verifier-prompt.md'
 
 $consumers = @{
     'fp-figma' = $figma
@@ -265,6 +289,28 @@ Assert-Condition (Test-EffectiveTextRegex $shared '(?s)SOURCE_READY\s*->\s*STATI
 Assert-Condition (Test-EffectiveTextRegex $shared '(?i)absolute zero-mock rule') 'shared contract lost the zero-mock rule'
 Assert-Condition (Test-EffectiveTextRegex $shared '(?is)playwright-cli.*?BROWSER_CAPABILITY_GATE.*?Never silently install') 'shared contract lost customer-selected browser capability gate'
 Assert-Condition (Test-EffectiveTextRegex $shared '(?i)Mocked Core API: false.*?real persistence or permission result.*?cleanup') 'shared contract lost business-flow closure'
+
+# These assertions check contract discovery/schema only. Decision behavior is forward-tested separately.
+Assert-Condition (Test-VisualReuseSchema $visualReuse) 'visual retention lost its complete input snapshot or current revalidation schema'
+foreach ($path in @('skills\_shared\ui-e2e-contract.md', 'skills\fp-execute\SKILL.md', 'skills\fp-execute-sdd\SKILL.md', 'skills\fp-execute-sdd\visual-reviewer-prompt.md', 'skills\fp-execute-sdd\e2e-verifier-prompt.md', 'skills\fp-execute-sdd\task-reviewer-prompt.md', 'skills\fp-final-review\final-review-contract.md')) {
+    $body = Read-Utf8 $path
+    $reference = '${CLAUDE_PLUGIN_ROOT}/skills/_shared/visual-review-reuse.md'
+    Assert-Condition ((Get-EffectiveConsumerText $body $path).Contains($reference)) "missing active visual input-binding contract: $path"
+    $removed = $body.Replace($reference, 'REMOVED_REUSE_REFERENCE')
+    $commentOnly = $removed + "`n<!-- $reference -->`n~~~text`n$reference`n~~~"
+    Assert-Condition (-not (Get-EffectiveConsumerText $commentOnly $path).Contains($reference)) "comment/fence-only retention reference accepted: $path"
+}
+foreach ($field in @('Render inputs', 'Capture inputs', 'Acceptance inputs', 'Input fingerprint', 'Changed paths / exclusion proof', 'Runtime state proof', 'Artifact hash checks')) {
+    $mutated = Replace-Required $visualReuse $field 'REMOVED_SNAPSHOT_FIELD' "remove $field"
+    Assert-Condition (-not (Test-VisualReuseSchema $mutated)) "incomplete visual retention schema accepted: $field"
+}
+$workflowHeader = '| Workflow ID | Source / terminal outcome | Owner Task ID + Case ID | Actors / isolated sessions | Stages / resource handoff / expected result |'
+$stageHeader = '| Workflow ID / Run ID | Stage | Actor / session | Action / expected result | Request / response / resource ID | Re-entry / permission proof | Cleanup | Status / evidence |'
+Assert-Condition ($planTemplateBody.Contains($workflowHeader)) 'frontend plan lost workflow owner/terminal outcome/actor/stage bindings'
+Assert-Condition ($e2eVerifier.Contains($stageHeader)) 'business E2E result lost stage-bound actor/request/resource/re-entry/cleanup evidence'
+foreach ($path in @('skills\fp-execute\SKILL.md', 'skills\fp-execute-sdd\SKILL.md', 'skills\fp-execute-sdd\task-brief-template.md', 'skills\fp-execute-sdd\e2e-verifier-prompt.md', 'skills\fp-execute-sdd\task-reviewer-prompt.md', 'skills\fp-execute-sdd\review-package-template.md', 'skills\fp-final-review\final-review-contract.md')) {
+    Assert-Condition ((Get-EffectiveConsumerText (Read-Utf8 $path) $path).Contains('Business Workflow Closure')) "business workflow contract is not carried into execution/review: $path"
+}
 
 Assert-Condition (Test-EffectiveTextRegex $figma '(?i)Visual and E2E evidence are distinct channels') 'fp-figma must keep visual and E2E evidence distinct'
 Assert-Condition (Test-EffectiveTextRegex $figma '(?i)Task ID \+ Case ID.*?does not duplicate visual-manifest fields') 'fp-figma must link evidence only by Task ID + Case ID'

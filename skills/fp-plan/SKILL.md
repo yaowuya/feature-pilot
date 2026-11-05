@@ -105,6 +105,8 @@ return-to: <fp-plan + explicit plan confirmation>
 
 输出计划摘要后，明确询问用户是否确认计划。
 
+若前端计划的 Frontend Scope 为 new-module，按其 frontend-reuse-contract.md 确认规则，在本次用户可见交付开头直接展示目录树与逐文件职责，并把具体结构纳入同一次 Plan 确认；不能只给子计划链接，也不延迟到 Execute。非新模块不增加这一首次确认。
+
 写出每端所选的 canonical small file 或 split directory 只表示计划草案已生成，不等于用户确认。没有用户明确确认前，不得进入 `fp-execute`、`fp-execute-sdd`，也不得修改业务代码。
 
 用户确认后输出：`✅ 执行计划已确认，进入执行阶段`

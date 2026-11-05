@@ -478,6 +478,11 @@ foreach ($skill in $skills) {
     Assert-Condition ($skillText.Contains($anchoredWorkspaceContract)) "$($skill.Name)/SKILL.md does not load the anchored shared workspace contract"
 }
 
+$frontendReuseIntakeValidator = Join-Path $root 'scripts\test-frontend-reuse-intake-contract.ps1'
+Assert-Condition (Test-Path $frontendReuseIntakeValidator) 'focused frontend reuse/source-intake validator is missing'
+& powershell -NoProfile -ExecutionPolicy Bypass -File $frontendReuseIntakeValidator
+Assert-Condition ($LASTEXITCODE -eq 0) 'focused frontend reuse/source-intake validator failed'
+
 $readmeDocsContractValidator = Join-Path $root 'scripts\test-readme-docs-contract.ps1'
 Assert-Condition (Test-Path $readmeDocsContractValidator) 'focused README/docs contract validator is missing'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $readmeDocsContractValidator

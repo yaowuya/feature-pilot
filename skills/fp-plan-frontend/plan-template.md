@@ -16,6 +16,17 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 
 > **For agentic workers:** REQUIRED FLOW: Use `fp-execute` to implement this plan task-by-task. Only task markers use checkbox (`- [ ] **Task frontend-NNN: ...**`) syntax for tracking; substeps are plain ordered instructions.
 
+## Frontend Reuse And Directory Confirmation（仅适用范围）
+
+- Frontend Scope: `new-module | refactor | new-files | not-applicable`
+- Reference Modules: <已读同类模块及入口；没有则说明调查范围>
+- Reuse Decisions: <canonical frontend design 中唯一复用表的位置及影响文件划分的结论；没有设计记录时在本计划持有>
+- Directory Proposal: <下方 File Structure 的完整项目相对树、逐文件职责、[new]/[modify]/[reuse] 和路由/注册/API 接入点>
+- Directory Confirmation: `pending | confirmed | not-required`
+- Confirmation Source: <用户批准该具体方案的回复与 Plan/Design 位置；not-required 说明原因>
+
+新模块按 frontend-reuse-contract.md 在用户可见 Plan 开头展示“待确认：新模块目录与文件职责（一次性）”及具体结构，与原有计划批准合并确认；执行阶段沿用，不逐文件重问。非适用范围删除本节，不增加空记录。
+
 ## Global Constraints
 - Framework/runtime: <source>
 - Component library/design system: <source>
@@ -27,9 +38,11 @@ Every output file stays within 500 lines and 30,000 characters. Only a `tasks`-k
 
 ## File Structure
 
+新模块在此展示完整目录树及 `[new]` / `[modify]` / `[reuse]`；逐文件职责与接入点由下表持有，不在其他文档复制。
+
 | Path | Action | Responsibility |
 | --- | --- | --- |
-| `<exact/path>` | create / modify / test | `<single responsibility in this change>` |
+| `<exact/path>` | create / modify / reuse / test | `<single responsibility and integration point in this change>` |
 
 ## 1. Page goal and visual contract
 
@@ -88,6 +101,16 @@ For `business-flow`, record real core API proof, `Mocked Core API: false`, real 
 
 The per-case coverage matrix is source-derived and must cover happy paths and branches; validation and boundaries; loading, empty, error, and retry states; permissions and isolation; persistence and navigation; state transitions and concurrency; and applicable API pagination, filtering, sorting, and compatibility. Record each condition as `covered`, `N/A`, or `BLOCKED` with rationale and real evidence.
 
+### 2.7 Business Workflows (business-flow only)
+
+Workflow definition owner: <canonical frontend design section; without one, this section owns the definition below>. Follow the shared Business Workflow Closure. If design owns the details, reference them and bind the execution owner without copying the definition.
+
+| Workflow ID | Source / terminal outcome | Owner Task ID + Case ID | Actors / isolated sessions | Stages / resource handoff / expected result |
+| --- | --- | --- | --- | --- |
+| `WF-NNN` | <requirement and one terminal outcome> | `frontend-NNN / <case-id>` | <real actors and independent authenticated contexts> | <definition reference or ordered setup/action/verify/cleanup; same resource continuity and re-entry proof> |
+
+Place a cross-task closure owner after its existing implementation dependencies and assign the terminal workflow case to it. Prerequisite task cases must be independently verifiable without later closure; otherwise correct case ownership/dependencies under the existing Plan confirmation rather than weakening gates or bypassing execution order. Each applicable per-case coverage row references its workflow/stage evidence in the owner's existing `e2e-result.md`; no new task checkbox or duplicate verdict. Plan every required terminal branch, role handoff, real request/response/resource identity, refresh/re-entry verification, and failure-path cleanup. Do not treat shared-authentication tabs as actor isolation.
+
 ## 3. Task breakdown
 
 - [ ] **Task frontend-NNN: <component or behavior>**
@@ -144,6 +167,7 @@ Expected: FAIL with `<specific missing behavior>`
 - UI Delivery Level and Contract cases: <the task/case rows owned in section 2.6>
 - Source and stages: <SOURCE_READY -> STATIC_UI_READY -> VISUAL_REVIEW_PASS; add INTERACTION_READY -> FRONTEND_E2E_PASS when required>
 - E2E evidence: <real browser command, `.fp-execute/e2e/<task-id>/<case-id>/` artifacts, and canonical coverage matrix; visual evidence remains separate>
+- Business workflow ownership/references: <WF-NNN and source owner, required stages/terminal outcome, actor isolation, resource handoff, re-entry/permission proof and cleanup; omit outside business-flow>
 - BLOCKED handling: <real-environment limitation, safe trigger constraint, and unresolved source-derived coverage condition>
 
 **Step 4: Run test to verify it passes**
