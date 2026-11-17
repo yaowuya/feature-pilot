@@ -28,9 +28,9 @@ Django、Vue 规范正文保留在插件中。项目专属规范可由 `/fp-init
 
 ## 显式 auto 模式
 
-运行 `/fp-commit auto`。技能不再展示普通模式问卷，而是使用固定方案：review、必要修复、验证、commit、push，以及向**实际推送目的地的默认分支**创建 PR/MR，且不合并。它先解析有效 push remote、pushurl 和 URL rewriting，再向唯一的实际 push URL 查询远端 HEAD；fetch 地址与 push 地址不同时，不能混用两个仓库。它不根据本地分支名称猜 `main` 或 `master`。创建请求后立即停止，不执行 merge，也不启用平台 auto-merge。
+运行 `/fp-commit auto`，并给出要合并进的目标分支。技能不再展示普通模式问卷，而是使用固定方案：review、必要修复、验证、commit、push，以及向**用户本轮选定的合并目标**创建 PR/MR，且不合并。未给出目标时只补问这一项，不用远端默认分支填充。所选目标与远端默认分支不同不是冲突，不得因此停止或改推默认分支。它先解析有效 push remote、pushurl 和 URL rewriting，再向唯一的实际 push URL 核实所选目标存在；fetch 地址与 push 地址不同时，不能混用两个仓库。它不根据本地分支名称猜 `main` 或 `master`。创建请求后立即停止，不执行 merge，也不启用平台 auto-merge。
 
-`auto` 不是 Claude/Codex/Cursor 的权限模式，不能绕过宿主工具审批。规范未初始化、必要验证失败、改动范围不明、默认分支无法核实、远端能力不可用或请求冲突时，技能会停下说明已完成的步骤，不以猜测代替确认。
+`auto` 不是 Claude/Codex/Cursor 的权限模式，不能绕过宿主工具审批。规范未初始化、必要验证失败、改动范围不明、合并目标未选定或远端不存在、远端能力不可用或请求冲突时，技能会停下说明已完成的步骤，不以猜测代替确认。
 
 ## 规范沉淀与结果
 

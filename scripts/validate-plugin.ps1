@@ -451,6 +451,7 @@ foreach ($command in $commands) {
 $expectedTriggerOnlyDescriptions = @{
     'fp-archive' = 'Use when a completed FeaturePilot change has passed final review and the user wants to archive its artifacts and update project history.'
     'fp-brainstorm' = 'Use when an approved FeaturePilot proposal needs backend and/or frontend technical design before task planning.'
+    'fp-commit' = '提交代码时必须加载 fp-commit。Use when the user says 提交代码, asks to review and commit current changes, or explicitly invokes fp-commit or fp-commit auto.'
     'fp-explore' = 'Use when a user asks to investigate repository facts, behavior, options, constraints, or risks without modifying files or advancing a FeaturePilot workflow.'
     'fp-propose' = 'Use when a FeaturePilot change needs a reviewable proposal derived from an approved PRD or confirmed feature description before technical design.'
     'fp-quick' = 'Use when a user wants a small, local feature change, bug fix, or refinement handled without the full FeaturePilot proposal-design-plan document chain.'

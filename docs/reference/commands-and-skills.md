@@ -15,7 +15,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | 把模糊想法澄清成 PRD | `fp-prd` | 经产品访谈和确认的 PRD；原型需用户显式选择 |
 | 从 PRD 或需求启动完整开发 | `fp-start` | 提案、设计、计划、执行、终审与归档主线 |
 | 快速完成一个小而明确的修改 | `fp-quick` | 跳过完整文档链，但保留探索、确认与验证 |
-| 审查后提交当前代码 | `fp-commit` | 检查规范、修复问题并提交；显式 auto 可推送并创建未合并的 PR/MR |
+| 提交代码，或审查后提交当前代码 | `fp-commit` | 检查规范、修复问题并提交；显式 auto 按用户选定的合并目标推送并创建未合并的 PR/MR |
 | 根据 Figma 改造 UI | `fp-figma` | 设计映射、实现、视觉与能力证据 |
 | 从已确认设计准备开发评审 | `fp-design-review` | 独立可读的完整 review.md 评审文档 |
 | 审计或实施达梦、OceanBase 适配 | `fp-db-adapter` skill | 两阶段数据库适配方案、确认、实施与验证 |
@@ -37,7 +37,7 @@ FeaturePilot 的公开入口按“你现在要解决什么问题”组织。Clau
 | `/fp-prd <想法>` | `fp-prd`、`fp-prd-grill-me` | 明确要创建、编写、修订或补全 PRD 时 |
 | `/fp-start <slug 或需求>` | `fp-start` | 执行从提案到归档的完整主线，或恢复中段产物 |
 | `/fp-quick <需求>` | `fp-quick` | 单一模块内的小功能、局部 bugfix、文案或状态微调 |
-| `/fp-commit [auto]` | `fp-commit` | 审查修复后提交；显式 auto 推送并向远端默认分支创建 PR/MR，不自动合并 |
+| `/fp-commit [auto]` | `fp-commit` | 审查修复后提交；显式 auto 推送并向用户选定的合并目标创建 PR/MR，不自动合并 |
 | `/fp-figma <Figma node URL>` | `fp-figma` | 从可信 Figma 节点实现或完善当前项目 UI |
 | `/fp-design-review <slug>` | `fp-design-review` | 从已确认设计生成或刷新开发设计评审入口 |
 | `/fp-coverage <目标>` | `fp-coverage` | 提升 line、branch、function、statement 或组合覆盖率 |
