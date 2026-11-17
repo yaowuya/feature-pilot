@@ -1,6 +1,6 @@
 ---
 name: fp-commit
-description: Use when a user asks to 提交代码, commit reviewed changes, or explicitly invokes fp-commit auto on a Git branch.
+description: 提交代码时必须加载 fp-commit。Use when the user says 提交代码, asks to review and commit current changes, or explicitly invokes fp-commit or fp-commit auto.
 ---
 
 ## FeaturePilot workspace and information layer
@@ -16,7 +16,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 ## 输入和授权
 
 - **普通模式**为默认。仅本轮用户显式选择 `fp-commit auto` 或明确要求本技能的 `auto` 模式，才启用自动模式；不能从宿主权限的 Auto/Bypass、历史选择或配置推断。保留宿主工具的审批和安全限制，技能本身不能绕过。
-- **自动模式**不逐步询问：预检通过后自行完成 review、必要修复、验证、commit、push 和 PR/MR 创建。创建 PR/MR 后停止，**不自动合并**，也不启用平台 auto-merge。步骤中遇到阻塞时立即停止，报告已发生的写入/远端动作，不降级为跳过门禁。
+- **自动模式**不逐步询问：预检通过后自行完成 review、必要修复、验证、commit、push 和 PR/MR 创建。PR/MR 目标是用户选定的合并目标，不是远端默认分支；未选定时只补问这一项。创建 PR/MR 后停止，**不自动合并**，也不启用平台 auto-merge。步骤中遇到阻塞时立即停止，报告已发生的写入/远端动作，不降级为跳过门禁。
 - 普通模式使用下节的入口选择；选择推送或 PR/MR 不等于开启 `auto`。用户明确说“只提交”“不推送”“不建 PR”时，遵守当前更窄授权，不再邀请扩大执行范围。
 
 ## 0. 入口一次性选择
@@ -32,7 +32,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 | 合并意向 | 选 PR/MR 时选择不合并（默认）或检查通过后申请最终合并；入口合并意向不等于最终合并授权。 |
 
 - 按用户已给出的执行终点裁剪问题；条件字段可在同一表单选“不适用”。仅本地提交时远端字段记为 N/A，不要求远端查询或 PR/MR 鉴权。未选 PR/MR 时，其目标和合并意向记为 N/A；明确“不合并”不再提问合并意向。仅有“提交代码”尚未选定执行终点，先展示上述选择，而不是先 commit。
-- 本轮已显式选择 `auto` 时，按自动模式固定完整执行终点、实际推送仓库的已核实默认目标和“不合并”，不再展示普通问卷。回答中选择 `auto` 同样是本轮显式选择；相互冲突、遗漏的必要选项属于输入阻塞，普通模式只补冲突或缺失项，自动模式停止。
+- 本轮已显式选择 `auto` 时，固定完整执行终点和“不合并”。PR/MR 目标用用户本轮选定的合并目标；未选定时只补问这一项，不展示其余问卷，也不用远端默认分支填充。回答中选择 `auto` 同样是本轮显式选择；两个合并目标相互冲突，或与完整执行终点、“不合并”相互冲突时停止。普通模式只补冲突或缺失项。
 - 入口选择仅授权所选阶段及目的地，未选阶段不执行。收齐后用一段摘要记录本轮方案并执行，commit 后不再询问是否 push，push 后不再询问是否创建 PR/MR。恢复同一工作流时复用已确认选项和完成状态，不重复提交；其他轮次的选择不作为本轮授权。
 - 目的地、源分支、目标分支或变更范围变化时停止，仅重新确认变化项；范围内修复产生的新提交 SHA 在提交后核验，不要求入口预知哈希。规范初始化、必要验证缺口、宿主工具审批和最终合并仍按各自门禁处理，入口选择不提供豁免。
 
@@ -52,8 +52,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 自动模式在任何 Git 写入前完成下列预检；普通模式按入口选定的远端阶段复用相关检查，不因入口已授权而省略核验。
 
 1. 按 Git 的有效推送配置解析 remote：依次核对 `branch.<branch>.pushRemote`、`remote.pushDefault`、`branch.<branch>.remote` 及已确认的选择。配置缺失或多个候选无法唯一确定时停止，不拿 fetch 上游代替推送目的地。
-2. 用 `git remote get-url --push --all <remote>` 取得 Git 已处理 `pushurl`、`pushInsteadOf` / URL rewriting 的**实际 push URL**；必须唯一。多个 push URL、无法解析或指向不同仓库时停止。用 `git ls-remote --symref <push-url> HEAD` 查询这个确切目的地的远端默认分支，不通过 remote 别名查询 fetch URL。核实 PR/MR 宿主识别的仓库与该目的地是**同一仓库**，后续请求固定该仓库标识；输出 URL 时脱敏，凭据不进入日志/正文。
-3. 确认当前分支是可发 PR/MR 的 topic 分支、源/目标不同、远端目标存在，且宿主有可用并已认证的 GitHub/GitLab 创建能力。无法确定默认分支、当前就在默认分支、目的地不明或目标不存在时停止，不能猜 `main` / `master`。普通模式使用入口选定的目标分支；核实结果与该选择不符时按入口变更门禁停止。
+2. 用 `git remote get-url --push --all <remote>` 取得 Git 已处理 `pushurl`、`pushInsteadOf` / URL rewriting 的**实际 push URL**；必须唯一。多个 push URL、无法解析或指向不同仓库时停止。用 `git ls-remote --symref <push-url> HEAD` 只核对当前分支是不是这个目的地的远端默认分支，不把查询结果当作 PR/MR 目标，不通过 remote 别名查询 fetch URL。核实 PR/MR 宿主识别的仓库与该目的地是**同一仓库**，后续请求固定该仓库标识；输出 URL 时脱敏，凭据不进入日志/正文。
+3. 确认当前分支是可发 PR/MR 的 topic 分支、源/目标不同、用户所选合并目标在该 push URL 上存在，且宿主有可用并已认证的 GitHub/GitLab 创建能力。用户未选定合并目标、目的地不明、所选目标不存在或源分支与目标相同时停止，不能猜 `main` / `master`，也不能改用远端默认分支。当前就在远端默认分支时停止。查不到默认分支，或所选目标与远端默认分支不同，都不是冲突，不得因此停止或改写目标。普通模式使用入口选定的目标分支；核实结果与该选择不符时按入口变更门禁停止。
 
 ## 2. 双轨 review、修复与项目规范沉淀
 
@@ -70,7 +70,7 @@ Read `${CLAUDE_PLUGIN_ROOT}/skills/_shared/workspace-rules.md` once before actin
 
 ## 4. PR/MR 与合并
 
-- 普通模式按入口选定的执行终点、仓库和**目标分支**创建或复用 PR/MR，不再询问是否创建或目标；入口未选 PR/MR 则在推送后结束。创建前复核远端目标存在、源分支不同，使用适用的已认证 GitHub/GitLab 能力；当前宿主不支持时报告阻塞，不为此安装 CLI。自动模式使用预检中核实的远端默认分支，**创建 PR/MR 后停止**。
+- 普通模式按入口选定的执行终点、仓库和**目标分支**创建或复用 PR/MR，不再询问是否创建或目标；入口未选 PR/MR 则在推送后结束。创建前复核远端目标存在、源分支不同，使用适用的已认证 GitHub/GitLab 能力；当前宿主不支持时报告阻塞，不为此安装 CLI。自动模式使用入口选定并已核实存在的合并目标，**创建 PR/MR 后停止**。该目标与远端默认分支不同不是冲突，不得改推默认分支。
 - 创建前查找同仓同源同目标的开放 PR/MR：**已存在**时复用链接并核对当前 push 是否属于它，不创建重复请求；目标不一致或现有状态冲突时停止。标题和正文遵守目标仓库语言/模板要求，Summary、测试结果、未验证项、冲突和阻塞如实填写。当前仓库若要求中文则中文，精确技术标识符保留英文。
 - 创建后读取宿主提供的 PR/MR 状态；在 Claude Desktop 有绑定状态工具时按宿主流程绑定并读取 CI，不自行轮询。自动模式报告链接、目标与当前检查状态，**不自动合并**。普通模式只有在用户询问或明确选择合并时，才核实当前检查、冲突、保护规则和目标；条件满足后再次取得**确认合并**授权，才执行平台 merge。检查未完成、失败、冲突或权限不足时停止并说明，不启用平台 auto-merge。
 

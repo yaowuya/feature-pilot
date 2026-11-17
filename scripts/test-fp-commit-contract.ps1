@@ -45,7 +45,11 @@ function Test-UnsafeCommitPolicy([string]$text) {
         '(?im)^\s*(?:-\s*)?An upfront merge preference authorizes merging without final confirmation',
         '(?m)^\s*(?:-\s*)?普通模式在提交后询问是否推送',
         '(?m)^\s*(?:-\s*)?普通模式推送后询问是否创建 PR/MR',
-        '(?m)^\s*(?:-\s*)?入口合并意向直接授权最终合并'
+        '(?m)^\s*(?:-\s*)?入口合并意向直接授权最终合并',
+        '(?m)^\s*(?:-\s*)?自动模式的 PR/MR 目标必须是远端默认分支',
+        '(?m)^\s*(?:-\s*)?所选目标与远端默认分支不同时停止',
+        '(?im)^\s*(?:-\s*)?Auto mode uses the remote default branch as the PR/MR target',
+        '(?m)^\s*(?:-\s*)?自动模式使用预检中核实的远端默认分支'
     )) {
         if ($text -match $pattern) { return $true }
     }
@@ -82,7 +86,8 @@ function Assert-CommitSafetyPolicy([string]$text) {
         '实际 push URL', 'git ls-remote --symref <push-url> HEAD',
         '必须唯一。多个 push URL、无法解析或指向不同仓库时停止',
         '核实 PR/MR 宿主识别的仓库与该目的地是**同一仓库**',
-        '无法确定默认分支、当前就在默认分支、目的地不明或目标不存在时停止，不能猜 `main` / `master`'
+        '用户未选定合并目标、目的地不明、所选目标不存在或源分支与目标相同时停止，不能猜 `main` / `master`，也不能改用远端默认分支',
+        '所选目标与远端默认分支不同，都不是冲突，不得因此停止或改写目标'
     ) 'auto destination preflight'
     Assert-Condition (-not $autoPreflight.Contains('git ls-remote --symref <remote> HEAD')) 'default lookup still uses a fetch remote alias'
     $review = Get-Section $text '## 2. 双轨 review、修复与项目规范沉淀' '## 3. 精确暂存、commit 和 push'
@@ -91,7 +96,7 @@ function Assert-CommitSafetyPolicy([string]$text) {
     Assert-Anchors $push @('推送前', '按入口已确认的推送授权执行，不再提问', 'refs/heads/<source>:refs/heads/<source>') 'push authorization and refspec'
     Assert-Condition (-not $push.Contains('单独确认后再推送')) 'push still asks for duplicate approval'
     $merge = Get-Section $text '## 4. PR/MR 与合并' '## 完成报告'
-    Assert-Anchors $merge @('按入口选定的执行终点、仓库和**目标分支**创建或复用 PR/MR，不再询问是否创建或目标', '创建 PR/MR 后停止', '再次取得**确认合并**授权') 'PR and merge authorization'
+    Assert-Anchors $merge @('按入口选定的执行终点、仓库和**目标分支**创建或复用 PR/MR，不再询问是否创建或目标', '创建 PR/MR 后停止', '该目标与远端默认分支不同不是冲突，不得改推默认分支', '再次取得**确认合并**授权') 'PR and merge authorization'
     Assert-Condition (-not $merge.Contains('普通模式推送后询问')) 'PR selection still happens after pushing'
     Assert-Condition (-not (Test-UnsafeCommitPolicy $text)) 'skill contains an unsafe authorization or stop policy'
     Assert-Condition (-not ($text -match '(?m)^.*(?:默认目标分支[：:]\s*`?main`?|自动合并[：:]\s*是).*$')) 'skill guesses main or allows automatic merge'
@@ -135,7 +140,8 @@ $livePolicies = @(
     @{ Original = '此时停止并要求运行 `/fp-init` 创建/更新相关 settings'; Inverted = '此时继续提交，不需要初始化 settings' },
     @{ Original = '必须唯一。多个 push URL、无法解析或指向不同仓库时停止'; Inverted = '有多个 push URL 时选第一个继续' },
     @{ Original = '核实 PR/MR 宿主识别的仓库与该目的地是**同一仓库**'; Inverted = 'PR/MR 使用 fetch URL 的仓库而非 push 目的地' },
-    @{ Original = '无法确定默认分支、当前就在默认分支、目的地不明或目标不存在时停止，不能猜 `main` / `master`'; Inverted = '无法确定默认分支时猜 `main` 并继续' },
+    @{ Original = '用户未选定合并目标、目的地不明、所选目标不存在或源分支与目标相同时停止，不能猜 `main` / `master`，也不能改用远端默认分支'; Inverted = '无法确定默认分支时猜 `main` 并继续' },
+    @{ Original = '所选目标与远端默认分支不同，都不是冲突，不得因此停止或改写目标'; Inverted = '所选目标与远端默认分支不同时停止，并改用远端默认分支' },
     @{ Original = '本地 review、修复、验证和 commit 不需要远端配置或 PR/MR 鉴权'; Inverted = '本地 commit 之前必须先通过 PR/MR 鉴权' },
     @{ Original = '在 review、修复和任何 Git 写入前完成入口选择'; Inverted = '在 commit 完成后再开始入口选择' },
     @{ Original = '本轮已明确的选项直接复用，不重复询问'; Inverted = '本轮已明确的选项也必须逐阶段重新询问' },
@@ -176,7 +182,11 @@ foreach ($mutation in @(
     'An upfront merge preference authorizes merging without final confirmation.',
     '普通模式在提交后询问是否推送。',
     '普通模式推送后询问是否创建 PR/MR。',
-    '入口合并意向直接授权最终合并。'
+    '入口合并意向直接授权最终合并。',
+    '自动模式的 PR/MR 目标必须是远端默认分支。',
+    '所选目标与远端默认分支不同时停止，并改用远端默认分支。',
+    'Auto mode uses the remote default branch as the PR/MR target.',
+    '自动模式使用预检中核实的远端默认分支。'
 )) {
     Assert-Condition (Test-PolicyRejected ($skill + "`n" + $mutation)) "unsafe mutation was accepted: $mutation"
 }
@@ -194,6 +204,15 @@ foreach ($control in @(
 Assert-Anchors $guide @('入口一次性选择', '执行终点', '推送目的地', '目标分支', '合并意向', '不重复询问', '最终合并授权') 'guide upfront choices'
 Assert-Anchors $reference @('入口一次性选择', '最终合并') 'reference upfront choices'
 Assert-Condition (-not $guide.Contains('提交后，技能展示')) 'guide still describes late push selection'
+Assert-Condition ($guide.Contains('用户本轮选定的合并目标')) 'guide does not use the user-selected merge target'
+Assert-Condition (-not $guide.Contains('实际推送目的地的默认分支')) 'guide still locks auto to the default branch'
+Assert-Condition (-not $reference.Contains('向远端默认分支创建')) 'reference still locks auto to the default branch'
+Assert-Condition ($skill -match '(?m)^description:\s*提交代码时必须加载 fp-commit。') 'skill description does not front-load 提交代码'
+Assert-Condition ($command -match '(?m)^description:\s*提交代码') 'command description does not front-load 提交代码'
+$agents = Read-Utf8 'AGENTS.md'
+Assert-Condition ($agents.Contains('| 提交代码')) 'AGENTS.md commit route does not front-load 提交代码'
+Assert-Condition (-not $skill.Contains('已核实默认目标')) 'auto still locks the PR/MR target to the verified default branch'
+Assert-Condition (-not $skill.Contains('自动模式使用预检中核实的远端默认分支')) 'auto still creates the PR/MR against the remote default branch'
 Assert-Condition (-not $reference.Contains('普通模式分别确认推送与合并')) 'reference still describes staged selection'
 Assert-Anchors $workspace @('fp-commit', 'settings/code-standards.md', '已登记') 'workspace ownership'
 Assert-Anchors $stackSelection @('settings/code-standards.md', 'Project rule sources:') 'init registration'

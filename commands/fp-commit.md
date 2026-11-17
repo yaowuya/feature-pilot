@@ -1,5 +1,5 @@
 ---
-description: 审查并提交当前代码；显式 auto 模式推送后创建 PR/MR，不自动合并
+description: 提交代码：审查并提交当前代码；显式 auto 按用户选定的合并目标创建 PR/MR，不自动合并
 ---
 
 读取并严格执行 `${CLAUDE_PLUGIN_ROOT}/skills/fp-commit/SKILL.md`，将「$ARGUMENTS」作为本轮输入；该 skill 与共享 workspace contract 是完整事实源。
